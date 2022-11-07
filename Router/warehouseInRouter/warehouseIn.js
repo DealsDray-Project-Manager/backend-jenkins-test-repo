@@ -20,10 +20,10 @@ router.get("/dashboard", async (req, res, next) => {
 });
 /******************************************************STOCK IN********************************************************************* */
 /* Check Bag ID */
-router.post("/checkBagId/:bagId", async (req, res, next) => {
+router.post("/checkBagId", async (req, res, next) => {
   try {
-    let data = await warehouseInController.checkBagId(req.params.bagId);
-    console.log(data);
+    const { bagId, location } = req.body;
+    let data = await warehouseInController.checkBagId(bagId, location);
     if (data.status == 1) {
       res.status(400).json({
         message: "Bag ID Does Not Exist",
@@ -49,7 +49,6 @@ router.post("/checkBagId/:bagId", async (req, res, next) => {
 router.post("/getBagItem/:bagId", async (req, res, next) => {
   try {
     let data = await warehouseInController.getBagOne(req.params.bagId);
-    console.log(data);
     if (data.length != 0) {
       res.status(200).json({
         data: data,
@@ -88,8 +87,8 @@ router.post("/getBagItemRequest/:bagId", async (req, res, next) => {
 /* Awbn Number Checking */
 router.post("/checkAwbn", async (req, res, next) => {
   try {
-    const { awbn, bagId } = req.body;
-    let data = await warehouseInController.checkAwbin(awbn, bagId);
+    const { awbn, bagId, location } = req.body;
+    let data = await warehouseInController.checkAwbin(awbn, bagId, location);
 
     if (data.status == 1) {
       res.status(400).json({
@@ -172,8 +171,8 @@ router.put("/stockin", async (req, res, next) => {
 });
 /****************************************************BAG ISSUE REQUEST****************************************************************** */
 /* Get Requests */
-router.post("/getRequests", async (req, res, next) => {
-  let data = await warehouseInController.getRequests();
+router.post("/getRequests/:location", async (req, res, next) => {
+  let data = await warehouseInController.getRequests(req.params.location);
   if (data) {
     res.status(200).json({
       data: data,
@@ -186,7 +185,6 @@ router.post("/actualCheckAwbn", async (req, res, next) => {
   try {
     const { awbn, id } = req.body;
     let data = await warehouseInController.checkActualAwbn(awbn, id);
-    console.log(data);
     if (data.status == 1) {
       res.status(200).json({
         message: "Valid AWBN",
@@ -265,9 +263,12 @@ router.post("/issueToBot", async (req, res, next) => {
 });
 /*********************************************************TRAY ASSIGNMENT***************************************************************/
 /* CHECK MMT TRAY */
-router.post("/checkMmtTray/:id", async (req, res, next) => {
+router.post("/checkMmtTray/:id/:location", async (req, res, next) => {
   try {
-    let data = await warehouseInController.checkMmtTray(req.params.id);
+    let data = await warehouseInController.checkMmtTray(
+      req.params.id,
+      req.params.location
+    );
 
     if (data.status == 1) {
       res.status(200).json({
@@ -293,9 +294,12 @@ router.post("/checkMmtTray/:id", async (req, res, next) => {
   }
 });
 /* CHECK PMT TRAY */
-router.post("/checkPmtTray/:id", async (req, res, next) => {
+router.post("/checkPmtTray/:id/:location", async (req, res, next) => {
   try {
-    let data = await warehouseInController.checkPmtTray(req.params.id);
+    let data = await warehouseInController.checkPmtTray(
+      req.params.id,
+      req.params.location
+    );
 
     if (data.status == 1) {
       res.status(200).json({
@@ -321,10 +325,12 @@ router.post("/checkPmtTray/:id", async (req, res, next) => {
   }
 });
 /* CHECK BOT TRAY */
-router.post("/checkBotTray/:id", async (req, res, next) => {
+router.post("/checkBotTray/:id/:location", async (req, res, next) => {
   try {
-    let data = await warehouseInController.checkBotTray(req.params.id);
-    console.log(data);
+    let data = await warehouseInController.checkBotTray(
+      req.params.id,
+      req.params.location
+    );
     if (data.status == 1) {
       res.status(200).json({
         message: "Valid Tray ID",
@@ -349,10 +355,11 @@ router.post("/checkBotTray/:id", async (req, res, next) => {
   }
 });
 /************************************TRAY CLOSE REQUEST********************************************************* */
-router.post("/trayCloseRequest", async (req, res, next) => {
+router.post("/trayCloseRequest/:location", async (req, res, next) => {
   try {
-    let data = await warehouseInController.trayCloseRequest();
-    console.log(data);
+    let data = await warehouseInController.trayCloseRequest(
+      req.params.location
+    );
     if (data) {
       res.status(200).json({
         data: data,
@@ -398,7 +405,6 @@ router.post("/checkBotUserTray", async (req, res, next) => {
   try {
     const { username, trayType } = req.body;
     let data = await warehouseInController.checkBotUserTray(username, trayType);
-    console.log(data);
     if (data.status === 1) {
       res.status(200).json({
         message: "Success",
@@ -415,7 +421,6 @@ router.post("/checkBotUserTray", async (req, res, next) => {
 /* ASSIGN NEW TRAY */
 router.post("/assignNewTray", async (req, res, next) => {
   try {
-    console.log(req.body);
     let data = await warehouseInController.assignNewTrayIndv(req.body);
     if (data) {
       res.status(200).json({
@@ -465,9 +470,11 @@ router.post("/traycloseBot", async (req, res, next) => {
   }
 });
 /* GET BOT TRAY FOR RELEASE */
-router.post("/release-bot-tray", async (req, res, next) => {
+router.post("/release-bot-tray/:location", async (req, res, next) => {
   try {
-    let data = await warehouseInController.getBotWarehouseClosed();
+    let data = await warehouseInController.getBotWarehouseClosed(
+      req.params.location
+    );
     if (data) {
       res.status(200).json({
         data: data,
@@ -496,7 +503,6 @@ router.post(
   async (req, res, next) => {
     try {
       let data = await warehouseInController.autoFetchTray(req.params.username);
-      console.log(data);
       if (data) {
         res.status(200).json({
           pmtTray: data.pmtTray,
@@ -510,9 +516,9 @@ router.post(
 );
 /*************************************BAG CLOSE************************************************************** */
 /* GET BOT TRAY CLOSE */
-router.post("/closeBotTray", async (req, res, next) => {
+router.post("/closeBotTray/:location", async (req, res, next) => {
   try {
-    let data = await warehouseInController.closeBotTrayGet();
+    let data = await warehouseInController.closeBotTrayGet(req.params.location);
     if (data) {
       res.status(200).json({
         data: data,
@@ -537,11 +543,14 @@ router.post("/summeryBotTrayBag/:bagId", async (req, res, next) => {
 });
 /**********************************PICKLIST********************************************** */
 /* GET PICKLIST DATA */
-router.post("/picklist", async (req, res, next) => {
+router.post("/picklist/:location", async (req, res, next) => {
   try {
     let date = new Date(); // Today!
     date.setDate(date.getDate() - 1);
-    let data = await warehouseInController.picklistRequest(date);
+    let data = await warehouseInController.picklistRequest(
+      date,
+      req.params.location
+    );
     if (data) {
       res.status(200).json({
         data: data,
@@ -552,12 +561,13 @@ router.post("/picklist", async (req, res, next) => {
   }
 });
 /* PICKLIST PAGE VIEW */
-router.post("/viewModelClub/:vendor_sku_id", async (req, res, next) => {
+router.post("/viewModelClub", async (req, res, next) => {
   try {
+    const { listId, vendor_sku_id } = req.body;
     let data = await warehouseInController.viewModelClubItem(
-      req.params.vendor_sku_id
+      listId,
+      vendor_sku_id
     );
-    console.log(data);
     if (data) {
       res.status(200).json({
         data: data,
@@ -570,12 +580,13 @@ router.post("/viewModelClub/:vendor_sku_id", async (req, res, next) => {
 /* ASSIGN NEW WHT TRAY GET TRAY */
 router.post("/getWhtTray", async (req, res, next) => {
   try {
-    const { type, vendor_sku_id, brand_name, model_name } = req.body;
+    const { type, vendor_sku_id, brand_name, model_name, location } = req.body;
     let data = await warehouseInController.getWhtTray(
       type,
       vendor_sku_id,
       brand_name,
-      model_name
+      model_name,
+      location
     );
     if (data) {
       res.status(200).json({
@@ -600,10 +611,12 @@ router.post("/itemAssignToWht", async (req, res, next) => {
   }
 });
 /* GET ASSIGNED TRAY */
-router.post("/getAssignedTray/:sku", async (req, res, next) => {
+router.post("/getAssignedTray/:itemClub/:location", async (req, res, next) => {
   try {
-    let data = await warehouseInController.getAssignedTray(req.params.sku);
-    console.log(data);
+    let data = await warehouseInController.getAssignedTray(
+      req.params.itemClub,
+      req.params.location
+    );
     if (data) {
       res.status(200).json({
         data: data,
@@ -641,9 +654,11 @@ router.post("/createPickList", async (req, res, next) => {
 });
 /**********************************WHT TRAY******************************* */
 /* ALL WHT TRAY */
-router.post("/whtTray", async (req, res, next) => {
+router.post("/whtTray/:location", async (req, res, next) => {
   try {
-    let data = await warehouseInController.getWhtTrayWareHouse();
+    let data = await warehouseInController.getWhtTrayWareHouse(
+      req.params.location
+    );
     if (data) {
       res.status(200).json({
         data: data,
@@ -654,9 +669,12 @@ router.post("/whtTray", async (req, res, next) => {
   }
 });
 /* IN USE WHT TRAY */
-router.post("/wht-tray/:status", async (req, res, next) => {
+router.post("/wht-tray/:status/:location", async (req, res, next) => {
   try {
-    let data = await warehouseInController.getInUseWhtTray(req.params.status);
+    let data = await warehouseInController.getInUseWhtTray(
+      req.params.status,
+      req.params.location
+    );
     if (data) {
       res.status(200).json({
         data: data,
@@ -669,10 +687,8 @@ router.post("/wht-tray/:status", async (req, res, next) => {
 /***************************************PICKLIST DATE WISE SORTING*************************************** */
 router.post("/picklist-sort", async (req, res, next) => {
   try {
-    const { date } = req.body;
-    console.log(new Date(date));
-    let data = await warehouseInController.sortPicklist(date);
-    console.log(data);
+    const { date, location } = req.body;
+    let data = await warehouseInController.sortPicklist(date, location);
     if (data) {
       res.status(200).json({
         data: data,
@@ -686,7 +702,6 @@ router.post("/picklist-sort", async (req, res, next) => {
 router.post("/getWhtTrayItem/:trayId", async (req, res, next) => {
   try {
     let data = await warehouseInController.getWhtTrayitem(req.params.trayId);
-    console.log(data);
     if (data) {
       res.status(200).json({
         data: data,
@@ -700,7 +715,6 @@ router.post("/getWhtTrayItem/:trayId", async (req, res, next) => {
 router.post("/getPickList/:pick_list_id", async (req, res, next) => {
   try {
     let data = await warehouseInController.getPickList(req.params.pick_list_id);
-    console.log(data);
     if (data) {
       res.status(200).json({
         data: data,
@@ -794,7 +808,6 @@ router.post("/close-pick-list/:pickListId", async (req, res, next) => {
 router.post("/get-all-pick-list", async (req, res, next) => {
   try {
     let data = await warehouseInController.getAllPicklist();
-    console.log(data);
     if (data) {
       res.status(200).json({
         data: data,
@@ -825,9 +838,12 @@ router.post("/send-wh-mis-whtTray", async (req, res, next) => {
   }
 });
 /* CHARGING REQUEST RECIEVED*/
-router.post("/charging-request-recieved", async (req, res, next) => {
+router.post("/request-for-assign/:status/:location", async (req, res, next) => {
   try {
-    let data = await warehouseInController.getChargingRequest();
+    let data = await warehouseInController.getChargingRequest(
+      req.params.status,
+      req.params.location
+    );
     if (data) {
       res.status(200).json({
         data: data,
@@ -842,7 +858,6 @@ router.post("/check-uic", async (req, res, next) => {
   try {
     const { trayId, uic } = req.body;
     let data = await warehouseInController.checkUicCode(uic, trayId);
-    console.log(data);
     if (data.status == 1) {
       res.status(403).json({
         message: "UIC Does Not Exists",
@@ -867,7 +882,6 @@ router.post("/check-uic", async (req, res, next) => {
 });
 /* ADD ATUCAL ITEM TO WHT TRAY */
 router.post("/wht-add-actual-item", async (req, res, next) => {
-  console.log("ff");
   try {
     let data = await warehouseInController.addWhtActual(req.body);
     if (data) {
@@ -901,12 +915,128 @@ router.post("/issue-to-agent-wht", async (req, res, next) => {
   }
 });
 /* TRAY RETURN FROM CHARGING*/
-router.post("/wht-return-from-charging", async (req, res, next) => {
+router.post("/wht-return-from-charging/:location", async (req, res, next) => {
   try {
-    let data = await warehouseInController.returnFromChargingWht();
+    let data = await warehouseInController.returnFromChargingWht(
+      req.params.location
+    );
     if (data) {
       res.status(200).json({
         data: data,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+/* GET TRAY AFTER RECIEVED BY WAREHOUSE CHARGING DONE */
+router.post("/charging-done-recieved/:trayId", async (req, res, next) => {
+  try {
+    let data = await warehouseInController.chargingDoneRecieved(
+      req.params.trayId
+    );
+    if (data) {
+      res.status(200).json({
+        data: data,
+      });
+    } else {
+      res.status(403).json({
+        message: "Tray is not recieved",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+/* UIC CHECKING */
+/* CHECK UIC CODE */
+router.post("/check-uic-charging-done", async (req, res, next) => {
+  try {
+    const { trayId, uic } = req.body;
+    let data = await warehouseInController.checkUicCodeChargeDone(uic, trayId);
+    if (data.status == 1) {
+      res.status(403).json({
+        message: "UIC Does Not Exists",
+      });
+    } else if (data.status == 2) {
+      res.status(403).json({
+        message: "UIC Not Exists In This Tray",
+      });
+    } else if (data.status == 3) {
+      res.status(403).json({
+        message: "Already Added",
+      });
+    } else if (data.status == 4) {
+      res.status(200).json({
+        message: "Valid UIC",
+        data: data.data,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+/* CHARGING DONE WAREHOUSE RECEIVED THE TRAY THEN EXTUAL AND EXPECTED */
+/* Check AWBN NUMBER */
+router.post("/charging-done-put-item", async (req, res, next) => {
+  try {
+    let data = await warehouseInController.chargingDoneActualItemPut(req.body);
+    if (data) {
+      res.status(200).json({
+        message: "Successfully Added",
+      });
+    } else {
+      res.status(403).json({
+        message: "Failed",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+/* WHT TRAY CLOSE BY WAREHOSUE WHEN CHARGE IS DONE THEN RECEIVE AND CLOSE */
+router.post("/close-wht-tray-ready-to-next", async (req, res, next) => {
+  try {
+    let data = await warehouseInController.readyToBqc(req.body);
+    if (data) {
+      res.status(200).json({
+        message: "Successfully Closed",
+      });
+    } else {
+      res.status(403).json({
+        message: "Failed",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+/* TRAY RETURN FROM CHARGING*/
+router.post("/return-from-bqc-wht/:location", async (req, res, next) => {
+  try {
+    let data = await warehouseInController.returnFromBqcWht(
+      req.params.location
+    );
+    if (data) {
+      res.status(200).json({
+        data: data,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+/* ACCEPTE AFTER BQC DONE */
+router.post("/recieved-from-bqc", async (req, res, next) => {
+  try {
+    let data = await warehouseInController.bqcDoneRecieved(req.body);
+    if (data) {
+      res.status(200).json({
+        message: "Successfully Received",
+      });
+    } else {
+      res.status(403).json({
+        message: "Failed",
       });
     }
   } catch (error) {

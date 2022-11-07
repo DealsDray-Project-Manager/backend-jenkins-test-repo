@@ -33,7 +33,6 @@ module.exports = {
           let orderExists = await orders.findOne({
             order_id: x.order_id,
           });
-          console.log(orderExists);
           if (orderExists) {
             order_id.push(x.order_id);
             err["order_id_is_duplicate"] = order_id;
@@ -114,34 +113,6 @@ module.exports = {
               err["imei_number_is_duplicate"] = imei;
             }
           }
-          // if(x.order_date != undefined){
-          //   let dateCheck=new Date(x.order_date)
-          //   if(dateCheck == "Invalid Date"){
-          //     order_date.push(x.order_date)
-          //     err["order_date"]=order_date
-          //   }
-          // }
-          // if(x.order_timestamp != undefined){
-          //   let dateCheck=new Date(x.order_timestamp)
-          //   if(dateCheck == "Invalid Date"){
-          //     order_timestamp.push(x.order_timestamp)
-          //     err["order_timestamp"]=order_timestamp
-          //   }
-          // }
-          // if(x.delivery_date != undefined){
-          //   let dateCheck=new Date(x.delivery_date)
-          //   if(dateCheck == "Invalid Date"){
-          //     delivery_date.push(x.delivery_date)
-          //     err["delivery_date"]=delivery_date
-          //   }
-          // }
-          // if(x.gc_redeem_time != undefined){
-          //   let dateCheck=new Date(x.gc_redeem_time)
-          //   if(dateCheck == "Invalid Date"){
-          //     gc_redeem_time.push(x.gc_redeem_time)
-          //     err["gc_redeem_time"]=gc_redeem_time
-          //   }
-          // }
         } else {
           order_status.push(x.order_status);
           err["order_status"] = order_status;
@@ -156,7 +127,6 @@ module.exports = {
     });
   },
   importOrdersData: (ordersData) => {
-    console.log(ordersData.invalidItem.length);
     return new Promise(async (resolve, reject) => {
       let data = await orders
         .create(ordersData.validItem)
@@ -181,9 +151,6 @@ module.exports = {
             as: "products",
           },
         },
-        // {
-        //     $unwind: "$products"
-        // }
       ]);
 
       if (allOrders) {
@@ -192,7 +159,6 @@ module.exports = {
     });
   },
   getBadOrders: (location) => {
-    console.log(location);
     return new Promise(async (resolve, reject) => {
       let data = await badOrders.find({ partner_shop: location });
 
@@ -220,9 +186,6 @@ module.exports = {
               as: "products",
             },
           },
-          // {
-          //     $unwind: "$products"
-          // }
         ]);
       } else if (searchType == "tracking_id") {
         allOrders = await orders.aggregate([
@@ -243,7 +206,12 @@ module.exports = {
         ]);
       } else if (searchType == "imei") {
         allOrders = await orders.aggregate([
-          { $match: { imei: { $regex: ".*" + value + ".*", $options: "i" } } },
+          {
+            $match: {
+              imei: { $regex: ".*" + value + ".*", $options: "i" },
+              partner_shop: location,
+            },
+          },
           {
             $lookup: {
               from: "products",
@@ -252,9 +220,6 @@ module.exports = {
               as: "products",
             },
           },
-          // {
-          //     $unwind: "$products"
-          // }
         ]);
       } else if (searchType == "order_status") {
         allOrders = await orders.aggregate([
@@ -272,9 +237,6 @@ module.exports = {
               as: "products",
             },
           },
-          // {
-          //     $unwind: "$products"
-          // }
         ]);
       } else if (searchType == "order_date") {
         // let  date=new Date(value)
@@ -382,7 +344,12 @@ module.exports = {
         ]);
       } else if (searchType == "imei") {
         allOrders = await badOrders.aggregate([
-          { $match: { imei: { $regex: ".*" + value + ".*", $options: "i" } } },
+          {
+            $match: {
+              imei: { $regex: ".*" + value + ".*", $options: "i" },
+              partner_shop: location,
+            },
+          },
           {
             $lookup: {
               from: "products",
@@ -396,7 +363,6 @@ module.exports = {
           // }
         ]);
       } else if (searchType == "order_status") {
-        console.log("ff");
         allOrders = await badOrders.aggregate([
           {
             $match: {
@@ -551,7 +517,6 @@ module.exports = {
     });
   },
   searchUicPageAll: (searchType, value, location, uic_status) => {
-    console.log(uic_status);
     return new Promise(async (resolve, reject) => {
       let allOrders;
       if (searchType == "order_id") {
@@ -698,6 +663,26 @@ module.exports = {
             $unwind: "$order",
           },
         ]);
+      } else if (searchType == "uic") {
+        allOrders = await delivery.aggregate([
+          {
+            $match: {
+              partner_shop: location,
+              "uic_code.code": { $regex: "^" + value + ".*", $options: "i" },
+            },
+          },
+          {
+            $lookup: {
+              from: "orders",
+              localField: "order_id",
+              foreignField: "order_id",
+              as: "order",
+            },
+          },
+          {
+            $unwind: "$order",
+          },
+        ]);
       } else if (searchType == "old_item_details") {
         allOrders = await badOrders.aggregate([
           {
@@ -764,7 +749,6 @@ module.exports = {
             $match: {
               partner_shop: location,
               delivery_status: "Delivered",
-              tracking_id: { $regex: ".*" + value + ".*", $options: "i" },
             },
           },
           {
@@ -777,6 +761,16 @@ module.exports = {
           },
           {
             $unwind: "$delivery",
+          },
+          {
+            $match: {
+              partner_shop: location,
+              delivery_status: "Delivered",
+              "delivery.tracking_id": {
+                $regex: ".*" + value + ".*",
+                $options: "i",
+              },
+            },
           },
         ]);
       } else if (searchType == "imei") {
@@ -874,7 +868,6 @@ module.exports = {
     });
   },
   bulkValidationDelivery: (deliveryData) => {
-    console.log(deliveryData);
     return new Promise(async (resolve, reject) => {
       let err = {};
       let tracking_id = [];
@@ -989,8 +982,25 @@ module.exports = {
         {
           $lookup: {
             from: "orders",
-            localField: "order_id",
-            foreignField: "order_id",
+            let: {
+              order_id: "$order_id",
+            },
+            pipeline: [
+              {
+                $match: {
+                  $expr: {
+                    $and: [
+                      {
+                        $eq: ["$order_status", "NEW"],
+                      },
+                      {
+                        $eq: ["$order_id", "$$order_id"],
+                      },
+                    ],
+                  },
+                },
+              },
+            ],
             as: "result",
           },
         },
@@ -1006,46 +1016,273 @@ module.exports = {
       }
     });
   },
+
   searchDeliveryData: (searchType, value, location) => {
     return new Promise(async (resolve, reject) => {
       let allOrders;
       if (searchType == "order_id") {
-        allOrders = await delivery.find({
-          partner_shop: location,
-          order_id: { $regex: "^" + value + ".*", $options: "i" },
-        });
+        allOrders = await delivery.aggregate([
+          {
+            $match: {
+              partner_shop: location,
+              order_id: { $regex: "^" + value + ".*", $options: "i" },
+            },
+          },
+          {
+            $lookup: {
+              from: "orders",
+              let: {
+                order_id: "$order_id",
+              },
+              pipeline: [
+                {
+                  $match: {
+                    $expr: {
+                      $and: [
+                        {
+                          $eq: ["$order_status", "NEW"],
+                        },
+                        {
+                          $eq: ["$order_id", "$$order_id"],
+                        },
+                      ],
+                    },
+                  },
+                },
+              ],
+              as: "result",
+            },
+          },
+        ]);
       } else if (searchType == "tracking_id") {
-        allOrders = await delivery.find({
-          partner_shop: location,
-          tracking_id: { $regex: ".*" + value + ".*", $options: "i" },
-        });
+        allOrders = await delivery.aggregate([
+          {
+            $match: {
+              partner_shop: location,
+              tracking_id: { $regex: ".*" + value + ".*", $options: "i" },
+            },
+          },
+          {
+            $lookup: {
+              from: "orders",
+              let: {
+                order_id: "$order_id",
+              },
+              pipeline: [
+                {
+                  $match: {
+                    $expr: {
+                      $and: [
+                        {
+                          $eq: ["$order_status", "NEW"],
+                        },
+                        {
+                          $eq: ["$order_id", "$$order_id"],
+                        },
+                      ],
+                    },
+                  },
+                },
+              ],
+              as: "result",
+            },
+          },
+        ]);
       } else if (searchType == "imei") {
-        allOrders = await delivery.find({
-          imei: { $regex: ".*" + value + ".*", $options: "i" },
-          partner_shop: location,
-        });
+        allOrders = await delivery.aggregate([
+          {
+            $match: {
+              partner_shop: location,
+              imei: { $regex: ".*" + value + ".*", $options: "i" },
+            },
+          },
+          {
+            $lookup: {
+              from: "orders",
+              let: {
+                order_id: "$order_id",
+              },
+              pipeline: [
+                {
+                  $match: {
+                    $expr: {
+                      $and: [
+                        {
+                          $eq: ["$order_status", "NEW"],
+                        },
+                        {
+                          $eq: ["$order_id", "$$order_id"],
+                        },
+                      ],
+                    },
+                  },
+                },
+              ],
+              as: "result",
+            },
+          },
+        ]);
       } else if (searchType == "uic_status") {
-        allOrders = await delivery.find({
-          partner_shop: location,
-          order_status: { $regex: "^" + value + ".*", $options: "i" },
-        });
-      } else if (searchType == "order_date") {
-        value = value.split("/");
-        value = value.reverse();
-        value = value.join("-");
-        allOrders = await delivery.find({
-          partner_shop: location,
-          order_date: { $regex: ".*" + value + ".*", $options: "i" },
-        });
+        allOrders = await delivery.aggregate([
+          {
+            $match: {
+              partner_shop: location,
+              order_status: { $regex: "^" + value + ".*", $options: "i" },
+            },
+          },
+          {
+            $lookup: {
+              from: "orders",
+              let: {
+                order_id: "$order_id",
+              },
+              pipeline: [
+                {
+                  $match: {
+                    $expr: {
+                      $and: [
+                        {
+                          $eq: ["$order_status", "NEW"],
+                        },
+                        {
+                          $eq: ["$order_id", "$$order_id"],
+                        },
+                      ],
+                    },
+                  },
+                },
+              ],
+              as: "result",
+            },
+          },
+        ]);
       } else if (searchType == "item_id") {
-        allOrders = await delivery.find({
-          partner_shop: location,
-          item_id: { $regex: "^" + value + ".*", $options: "i" },
-        });
+        allOrders = await delivery.aggregate([
+          {
+            $match: {
+              partner_shop: location,
+              item_id: { $regex: "^" + value + ".*", $options: "i" },
+            },
+          },
+          {
+            $lookup: {
+              from: "orders",
+              let: {
+                order_id: "$order_id",
+              },
+              pipeline: [
+                {
+                  $match: {
+                    $expr: {
+                      $and: [
+                        {
+                          $eq: ["$order_status", "NEW"],
+                        },
+                        {
+                          $eq: ["$order_id", "$$order_id"],
+                        },
+                      ],
+                    },
+                  },
+                },
+              ],
+              as: "result",
+            },
+          },
+        ]);
       }
-
       if (allOrders) {
         resolve(allOrders);
+      }
+    });
+  },
+  searchMisTrackItem: (searchType, value, location) => {
+    let allData;
+    return new Promise(async (resolve, reject) => {
+      if (searchType == "order_id") {
+        allData = await orders.aggregate([
+          {
+            $match: {
+              delivery_status: "Delivered",
+              partner_shop: location,
+              order_id: { $regex: "^" + value + ".*", $options: "i" },
+            },
+          },
+          {
+            $lookup: {
+              from: "deliveries",
+              localField: "order_id",
+              foreignField: "order_id",
+              as: "delivery",
+            },
+          },
+          {
+            $unwind: "$delivery",
+          },
+        ]);
+      } else if (searchType == "tracking_id") {
+        allData = await orders.aggregate([
+          {
+            $match: {
+              delivery_status: "Delivered",
+              partner_shop: location,
+            },
+          },
+          {
+            $lookup: {
+              from: "deliveries",
+              localField: "order_id",
+              foreignField: "order_id",
+              as: "delivery",
+            },
+          },
+          {
+            $unwind: "$delivery",
+          },
+          {
+            $match: {
+              delivery_status: "Delivered",
+              partner_shop: location,
+              "delivery.tracking_id": {
+                $regex: ".*" + value + ".*",
+                $options: "i",
+              },
+            },
+          },
+        ]);
+      } else if (searchType == "uic") {
+        allData = await orders.aggregate([
+          {
+            $match: {
+              delivery_status: "Delivered",
+              partner_shop: location,
+            },
+          },
+          {
+            $lookup: {
+              from: "deliveries",
+              localField: "order_id",
+              foreignField: "order_id",
+              as: "delivery",
+            },
+          },
+          {
+            $unwind: "$delivery",
+          },
+          {
+            $match: {
+              delivery_status: "Delivered",
+              partner_shop: location,
+              "delivery.uic_code.code": {
+                $regex: ".*" + value + ".*",
+                $options: "i",
+              },
+            },
+          },
+        ]);
+      }
+      if (allData) {
+        resolve(allData);
       }
     });
   },
@@ -1068,7 +1305,6 @@ module.exports = {
           imei: { $regex: ".*" + value + ".*", $options: "i" },
         });
       } else if (searchType == "uic_status") {
-        console.log("ff");
         allOrders = await badDelivery.find({
           partner_shop: location,
           order_status: { $regex: "^" + value + ".*", $options: "i" },
@@ -1125,7 +1361,7 @@ module.exports = {
           count = "0" + total;
         }
       }
-      console.log(count);
+
       var date = new Date();
       let uic_code =
         "9" +
@@ -1148,7 +1384,6 @@ module.exports = {
         { upsert: true }
       );
       if (data.modifiedCount != 0) {
-        console.log(data);
         resolve(data);
       } else {
         resolve();
@@ -1176,7 +1411,6 @@ module.exports = {
           $unwind: "$order",
         },
       ]);
-      console.log(data[0]);
       resolve(data);
     });
   },
@@ -1222,20 +1456,22 @@ module.exports = {
       }
     });
   },
-  getStockin: () => {
+  getStockin: (location) => {
     return new Promise(async (resolve, reject) => {
       let data = await masters.find({
         sort_id: { $ne: "No Status" },
         prefix: "bag-master",
+        cpc: location,
       });
-      console.log(data);
       resolve(data);
     });
   },
-  getBot: () => {
+  getBot: (location) => {
     return new Promise(async (resolve, reject) => {
       let data = await user.aggregate([
-        { $match: { user_type: "Bag Opening" } },
+        {
+          $match: { user_type: "Bag Opening", status: "Active", cpc: location },
+        },
         {
           $lookup: {
             from: "masters",
@@ -1266,6 +1502,7 @@ module.exports = {
             if (status != true) {
               arr.push(data[i]);
             }
+            status = false;
           }
         }
         resolve(arr);
@@ -1287,7 +1524,6 @@ module.exports = {
       ]);
       let check = true;
       for (let x of uicChecking?.[0]?.delivery) {
-        console.log(x);
         if (x.uic_status != "Printed") {
           check = false;
           resolve({ status: 0 });
@@ -1313,7 +1549,6 @@ module.exports = {
     });
   },
   deleteBadOrders: (badOrdersData) => {
-    console.log(badOrdersData);
     return new Promise(async (resolve, reject) => {
       let data;
       for (let x of badOrdersData) {
@@ -1386,7 +1621,6 @@ module.exports = {
           $unwind: "$product",
         },
       ]);
-      console.log(data);
       if (data) {
         resolve(data);
       }
@@ -1431,9 +1665,11 @@ module.exports = {
       }
     });
   },
-  getChargingUsers: () => {
+  getChargingUsers: (userType, location) => {
     return new Promise(async (resolve, reject) => {
-      let data = await user.find({ user_type: "Charging" });
+      let data = await user
+        .find({ user_type: userType, status: "Active", cpc: location })
+        .sort({ user_name: 1 });
       if (data) {
         resolve(data);
       }
@@ -1447,7 +1683,7 @@ module.exports = {
           { code: x },
           {
             $set: {
-              sort_id: "Send for charging",
+              sort_id: whtTrayData.sort_id,
               issued_user_name: whtTrayData.user_name,
             },
           }

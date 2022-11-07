@@ -15,7 +15,7 @@ const ordersSchema=mongoose.Schema({
       },
       buyback_category: {
         type: String,
-      },
+      },  
       partner_id: {
         type: String,
       },
@@ -27,6 +27,7 @@ const ordersSchema=mongoose.Schema({
       },
       item_id: {
         type: String,
+        index: true,
       },
       old_item_details: {
         type: String,

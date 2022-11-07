@@ -14,6 +14,7 @@ router.post(
   "/create",
   upload.userProfile.single("profile"),
   async (req, res, next) => {
+    1;
     try {
       let data = await superAdminController.createUser(
         req.body,
@@ -59,6 +60,24 @@ router.post("/login", async (req, res, next) => {
     next(error);
   }
 });
+/*CHECK ADMIN DEACTIVATED OR NOT */
+router.post("/check-user-status/:username", async (req, res, next) => {
+  try {
+    const { username } = req.params;
+    let data = await superAdminController.checkUserStatus(username);
+    if (data) {
+      res.status(200).json({
+        message: "Active user",
+      });
+    } else {
+      res.status(403).json({
+        message: "Admin deactivated",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
 /* Get users history */
 router.post("/getUsersHistoy/:username", async (req, res, next) => {
   try {
@@ -75,7 +94,6 @@ router.post("/getUsersHistoy/:username", async (req, res, next) => {
 /* Change password */
 router.post("/changePassword", async (req, res, next) => {
   try {
-    console.log("calll");
     let data = await superAdminController.changePassword(req.body);
     if (data) {
       res.status(200).json({
@@ -100,10 +118,10 @@ router.get("/getCpc/", async (req, res) => {
   }
 });
 /* Get CPC Data */
-router.get("/getWarehouse/:code", async (req, res) => {
+router.post("/getWarehouseByLocation", async (req, res) => {
   try {
-    let warehouse = await superAdminController.getWarehouse(req.params.code);
-    console.log(warehouse);
+    const { name } = req.body;
+    let warehouse = await superAdminController.getWarehouse(name);
     if (warehouse) {
       res.status(200).json({ data: { warehouse } });
     }
@@ -148,7 +166,6 @@ router.put("/userActivate/:userId", async (req, res) => {
 router.get("/getEditData/:userId", async (req, res) => {
   try {
     let user = await superAdminController.getEditData(req.params.userId);
-    console.log(user);
     if (user) {
       res.status(200).json({ data: user });
     }
@@ -214,7 +231,6 @@ router.post("/ordersImport", async (req, res, next) => {
 router.post("/getOrders", async (req, res, next) => {
   try {
     let data = await superAdminController.getOrders();
-    console.log(data[0]);
     if (data) {
       res.status(200).json({
         data: data,
@@ -234,7 +250,6 @@ router.post("/getOrders", async (req, res, next) => {
 router.post("/createBrands", async (req, res, next) => {
   try {
     let length = 0;
-    console.log(req.body.length);
     if (req.body.length == undefined) {
       length = length + 1;
     } else {
@@ -247,7 +262,6 @@ router.post("/createBrands", async (req, res, next) => {
         "utf8",
         function readFileCallback(err, datafile) {
           if (err) {
-            console.log(err);
           } else {
             obj = JSON.parse(datafile); //now it an object
             obj.brandcount = obj.brandcount + length; //add some data
@@ -258,7 +272,6 @@ router.post("/createBrands", async (req, res, next) => {
               "utf8",
               function readFileCallback(err, data) {
                 if (err) {
-                  console.log(err);
                 }
               }
             ); // write it back
@@ -281,7 +294,6 @@ router.post("/createBrands", async (req, res, next) => {
 router.post("/bulkValidationBrands", async (req, res, next) => {
   try {
     let data = await superAdminController.bulkValidationBrands(req.body);
-    console.log(data);
     if (data.status == true) {
       res.status(200).json({
         message: "Successfully Validated",
@@ -305,7 +317,6 @@ router.post("/getBrandIdHighest", async (req, res, next) => {
       "utf8",
       function readFileCallback(err, data) {
         if (err) {
-          console.log(err);
         } else {
           obj = JSON.parse(data); //now it an object
           res.status(200).json({
@@ -407,7 +418,6 @@ router.delete("/deleteBrand/:brandId", async (req, res, next) => {
 router.post("/bulkValidationProduct", async (req, res, next) => {
   try {
     let data = await superAdminController.validationBulkProduct(req.body);
-    console.log(data);
     if (data.status == true) {
       res.status(200).json({
         message: "Successfully Validated",
@@ -484,7 +494,6 @@ router.put(
   upload.productImage.single("image"),
   async (req, res, next) => {
     try {
-      console.log(req.file);
       let data = await superAdminController.editproductImage(
         req.body,
         req.file.filename
@@ -507,7 +516,6 @@ router.put(
 router.get("/getEditProduct/:productId", async (req, res, next) => {
   try {
     let data = await superAdminController.getEditProduct(req.params.productId);
-    console.log(data);
     if (data.status == 1) {
       res.status(200).json({
         data: data.data,
@@ -563,11 +571,9 @@ router.delete("/deleteProduct/:productId", async (req, res, next) => {
 /* GET PRODUCT BASED ON THE BRAND */
 router.post("/get-product-model/:brandName", async (req, res, next) => {
   try {
-    console.log(req.params);
     let data = await superAdminController.getBrandBasedPrdouct(
       req.params.brandName
     );
-    console.log(data);
     if (data) {
       res.status(200).json({
         data: data,
@@ -682,7 +688,6 @@ router.post("/getWarehouse", async (req, res, next) => {
 router.post("/bulkValidationBag", async (req, res, next) => {
   try {
     let data = await superAdminController.bulkBagValidation(req.body);
-    console.log(data);
     if (data.status == true) {
       res.status(200).json({
         message: "Successfully Validated",
@@ -707,7 +712,6 @@ router.post("/trayIdGenrate/:type", async (req, res, next) => {
       "utf8",
       function readFileCallback(err, data) {
         if (err) {
-          console.log(err);
         } else {
           obj = JSON.parse(data); //now it an object
           if (type == "PMT") {
@@ -741,18 +745,37 @@ router.post("/trayIdGenrate/:type", async (req, res, next) => {
 /* Get Highest Master Id */
 router.post("/getMasterHighest/:prefix", async (req, res, next) => {
   try {
-    if (req.params.prefix == "bag-master") {
+    if (req.params.prefix == "Gurgaon_122016") {
       let obj;
       fs.readFile(
         "myjsonfile.json",
         "utf8",
         function readFileCallback(err, data) {
           if (err) {
-            console.log(err);
           } else {
             obj = JSON.parse(data); //now it an object
+
             res.status(200).json({
-              data: obj.bagcount,
+              data: obj.bagGurgaon,
+            });
+          }
+        }
+      );
+    } else if (req.params.prefix == "bag-master") {
+      let obj;
+      fs.readFile(
+        "myjsonfile.json",
+        "utf8",
+        function readFileCallback(err, data) {
+          if (err) {
+          } else {
+            obj = JSON.parse(data); //now it an object
+            let count = {
+              bagBanglore: obj.bagBanglore,
+              bagGurgaon: obj.bagGurgaon,
+            };
+            res.status(200).json({
+              data: count,
             });
           }
         }
@@ -764,11 +787,10 @@ router.post("/getMasterHighest/:prefix", async (req, res, next) => {
         "utf8",
         function readFileCallback(err, data) {
           if (err) {
-            console.log(err);
           } else {
             obj = JSON.parse(data); //now it an object
             res.status(200).json({
-              data: obj.traycount,
+              data: obj.bagBanglore,
             });
           }
         }
@@ -782,8 +804,8 @@ router.post("/getMasterHighest/:prefix", async (req, res, next) => {
 /* Bulk Validation for Tray */
 router.post("/bulkValidationTray", async (req, res, next) => {
   try {
-    let data = await superAdminController.bulkBagValidationTray(req.body);
-    console.log(data);
+    let data = await superAdminController.bulkValidationTray(req.body);
+
     if (data.status == true) {
       res.status(200).json({
         message: "Successfully Validated",
@@ -801,7 +823,6 @@ router.post("/bulkValidationTray", async (req, res, next) => {
 /* Bulk tray create */
 router.post("/createBulkTray", async (req, res, next) => {
   try {
-    console.log(req.body.allCount);
     let data = await superAdminController.addbulkTray(req.body.item);
     if (data) {
       fs.readFile(
@@ -809,7 +830,6 @@ router.post("/createBulkTray", async (req, res, next) => {
         "utf8",
         function readFileCallback(err, datafile) {
           if (err) {
-            console.log(err);
           } else {
             obj = JSON.parse(datafile); //now it an object
             obj.BOT = req.body.allCount.BOT;
@@ -823,7 +843,6 @@ router.post("/createBulkTray", async (req, res, next) => {
               "utf8",
               function readFileCallback(err, data) {
                 if (err) {
-                  console.log(err);
                 }
               }
             ); // write it back
@@ -848,10 +867,16 @@ router.post("/createBulkBag", async (req, res, next) => {
         "utf8",
         function readFileCallback(err, datafile) {
           if (err) {
-            console.log(err);
           } else {
             obj = JSON.parse(datafile); //now it an object
-            obj.bagcount = obj.bagcount + req.body.length; //add some data
+            let blr = req.body.filter(
+              (data) => data.cpc == "Bangalore_560067"
+            ).length;
+            obj.bagBanglore = obj.bagBanglore + blr; //add some data
+            let ggrn = req.body.filter(
+              (data) => data.cpc == "Gurgaon_122016"
+            ).length;
+            obj.bagGurgaon = obj.bagGurgaon + ggrn; //add some data
             json = JSON.stringify(obj); //convert it back to json
             fs.writeFile(
               "myjsonfile.json",
@@ -859,7 +884,6 @@ router.post("/createBulkBag", async (req, res, next) => {
               "utf8",
               function readFileCallback(err, data) {
                 if (err) {
-                  console.log(err);
                 }
               }
             ); // write it back
@@ -890,7 +914,8 @@ router.post("/getAudit/:bagId", async (req, res, next) => {
 /* Create Bag */
 router.post("/createMasters", async (req, res, next) => {
   try {
-    const { type_taxanomy } = req.body;
+    const { type_taxanomy, cpc } = req.body;
+
     let data = await superAdminController.createMasters(req.body);
     if (data) {
       if (req.body.prefix == "bag-master") {
@@ -899,10 +924,13 @@ router.post("/createMasters", async (req, res, next) => {
           "utf8",
           function readFileCallback(err, datafile) {
             if (err) {
-              console.log(err);
             } else {
               obj = JSON.parse(datafile); //now it an object
-              obj.bagcount = obj.bagcount + 1; //add some data
+              if (cpc == "Gurgaon_122016") {
+                obj.bagGurgaon = obj.bagGurgaon + 1; //add some data
+              } else if (cpc == "Bangalore_560067") {
+                obj.bagBanglore = obj.bagBanglore + 1; //add some data
+              }
               json = JSON.stringify(obj); //convert it back to json
               fs.writeFile(
                 "myjsonfile.json",
@@ -910,7 +938,6 @@ router.post("/createMasters", async (req, res, next) => {
                 "utf8",
                 function readFileCallback(err, data) {
                   if (err) {
-                    console.log(err);
                   }
                 }
               ); // write it back
@@ -923,7 +950,6 @@ router.post("/createMasters", async (req, res, next) => {
           "utf8",
           function readFileCallback(err, datafile) {
             if (err) {
-              console.log(err);
             } else {
               obj = JSON.parse(datafile); //now it an object
               if (type_taxanomy == "BOT") {
@@ -942,7 +968,6 @@ router.post("/createMasters", async (req, res, next) => {
                 "utf8",
                 function readFileCallback(err, data) {
                   if (err) {
-                    console.log(err);
                   }
                 }
               ); // write it back
@@ -1035,6 +1060,41 @@ router.post("/itemTracking", async (req, res, next) => {
     if (data) {
       res.status(200).json({
         data: data,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+/* SEARCH TRACK ITEM DATA */
+router.post("/search-admin-track-item", async (req, res, next) => {
+  try {
+    const { type, searchData, location } = req.body;
+    let data = await superAdminController.searchAdminTrackItem(
+      type,
+      searchData,
+      location
+    );
+    if (data) {
+      res.status(200).json({
+        data: data,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+/***********************************************EXTRA QUREY SECTION*********************************************************** */
+router.post("/update-cpc", async (req, res, next) => {
+  try {
+    let data = await superAdminController.updateCPCExtra();
+    if (data) {
+      res.status(200).json({
+        message: "Successfully updated",
+      });
+    } else {
+      res.status(403).json({
+        message: "Failed",
       });
     }
   } catch (error) {

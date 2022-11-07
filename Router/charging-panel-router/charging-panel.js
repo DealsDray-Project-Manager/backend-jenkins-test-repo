@@ -9,7 +9,6 @@ const chargingController = require("../../Controller/charging-panel-controller/c
 router.post("/assigned-tray/:userName", async (req, res, next) => {
   try {
     let data = await chargingController.getAssignedTray(req.params.userName);
-    console.log(data);
     if (data) {
       res.status(200).json({
         data: data,
@@ -42,7 +41,7 @@ router.post("/charge-in", async (req, res, next) => {
     let data = await chargingController.chargingStationIN(req.body);
     if (data) {
       res.status(200).json({
-        message: "Successfully ChargeIN",
+        message: "Successfully Charge IN",
       });
     } else {
       res.status(403).json({

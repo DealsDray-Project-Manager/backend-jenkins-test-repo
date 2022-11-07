@@ -1,21 +1,13 @@
-const { orders } = require("../../Model/ordersModel/ordersModel");
-const { delivery } = require("../../Model/deliveryModel/delivery");
-const { infra } = require("../../Model/infraModel");
-const { products } = require("../../Model/productModel/product");
-const { brands } = require("../../Model/brandModel/brand");
-const { user } = require("../../Model/userModel");
+const {delivery} = require("../../Model/deliveryModel/delivery");
 const { masters } = require("../../Model/mastersModel");
-const { badOrders } = require("../../Model/ordersModel/bad-orders-model");
-const { badDelivery } = require("../../Model/deliveryModel/bad-delivery");
-/********************************************************************************** */
-
+/****************************************************************** */
 module.exports = {
   getAssignedTray: (username) => {
     return new Promise(async (resolve, reject) => {
       let data = await masters.find({
         $or: [
-          { issued_user_name: username, sort_id: "Issued to Charging" },
-          { issued_user_name: username, sort_id: "Charging Station IN" },
+          { issued_user_name: username, sort_id: "Issued to BQC" },
+          { issued_user_name: username, sort_id: "BQC IN" },
         ],
       });
       if (data) {
@@ -23,23 +15,20 @@ module.exports = {
       }
     });
   },
-  getTrayDetails: (trayId) => {
+  getWhtTrayitem: (trayId) => {
+   
     return new Promise(async (resolve, reject) => {
       let data = await masters.findOne({ code: trayId });
-      if (data) {
-        resolve(data);
-      } else {
-        resolve();
-      }
+      resolve(data);
     });
   },
-  chargingStationIN: (trayData) => {
+  bqcIn: (trayData) => {
     return new Promise(async (resolve, reject) => {
       let data = await masters.findOneAndUpdate(
         { code: trayData.trayId },
         {
           $set: {
-            sort_id: "Charging Station IN",
+            sort_id: "BQC IN",
             closed_time_bot: Date.now(),
             description: trayData.description,
             actual_items: [],
@@ -54,9 +43,9 @@ module.exports = {
             },
             {
               $set: {
-                charging_in_date: Date.now(),
-                tray_status: "Charging In",
-                tray_location: "Charging",
+                bqc_in_date: Date.now(),
+                tray_status: "BQC IN",
+                tray_location: "BQC",
               },
             }
           );
@@ -67,14 +56,15 @@ module.exports = {
       }
     });
   },
-  chargeDone: (trayData) => {
+  bqcOut: (trayData) => {
     return new Promise(async (resolve, reject) => {
       let data = await masters.findOneAndUpdate(
         { code: trayData.trayId },
         {
           $set: {
-            sort_id: "Charge Done",
+            sort_id: "BQC Done",
             closed_time_bot: Date.now(),
+            
             description: trayData.description,
             items: [],
           },
@@ -88,9 +78,9 @@ module.exports = {
             },
             {
               $set: {
-                charging_done_date: Date.now(),
-                tray_status: "Charging Done",
-                tray_location: "Send to warehouse",
+                bqc_out_date: Date.now(),
+                tray_status: "BQC Done",
+                tray_location: "BQC",
               },
             }
           );

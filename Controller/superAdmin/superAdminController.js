@@ -6,8 +6,10 @@ const { brands } = require("../../Model/brandModel/brand");
 const { products } = require("../../Model/productModel/product");
 const { admin } = require("../../Model/adminModel/admins");
 const { usersHistory } = require("../../Model/users-history-model/model");
-const IISDOMAIN = "http://prexo-v1-dev-api.dealsdray.com/user/profile/";
-const IISDOMAINPRDT = "http://prexo-v1-dev-api.dealsdray.com/product/image/";
+const { delivery } = require("../../Model/deliveryModel/delivery");
+const { itemClub } = require("../../Model/itemClubModel/club");
+const IISDOMAIN = "https://prexo-v1-dev-api.dealsdray.com/user/profile/";
+const IISDOMAINPRDT = "https://prexo-v1-dev-api.dealsdray.com/product/image/";
 
 /************************************************************************************************** */
 module.exports = {
@@ -37,6 +39,16 @@ module.exports = {
           }
         }
         resolve({ status: 2 });
+      }
+    });
+  },
+  checkUserStatus: (userName) => {
+    return new Promise(async (resolve, reject) => {
+      let data = await user.findOne({ user_name: userName, status: "Active" });
+      if (data) {
+        resolve(data);
+      } else {
+        resolve();
       }
     });
   },
@@ -93,7 +105,10 @@ module.exports = {
   },
   getWarehouse: (code) => {
     return new Promise(async (resolve, reject) => {
-      let warehouse = await infra.find({ parent_id: code });
+      let warehouse = await infra.find({
+        parent_id: code,
+        type_taxanomy: "Warehouse",
+      });
       resolve(warehouse);
     });
   },
@@ -102,7 +117,6 @@ module.exports = {
       let designation = await masters.find({
         type_taxanomy: "designation-type",
       });
-      console.log(designation);
     });
   },
   getUsers: () => {
@@ -174,14 +188,12 @@ module.exports = {
   getMasters: () => {
     return new Promise(async (resolve, reject) => {
       let mastersData = await masters.find({});
-      console.log(mastersData);
       resolve(mastersData);
     });
   },
   getInfra: () => {
     return new Promise(async (resolve, reject) => {
       let infraData = await infra.find({});
-      console.log(infraData);
       resolve(infraData);
     });
   },
@@ -253,7 +265,6 @@ module.exports = {
         resolve({ status: false });
       } else {
         let data = await brands.create(brandsData).catch((err) => reject(err));
-        console.log(data);
         if (data) {
           resolve({ status: true });
         }
@@ -281,18 +292,15 @@ module.exports = {
         .sort({ code: -1 })
         .collation({ locale: "en_US", numericOrdering: true })
         .limit(1);
-      console.log(id);
       if (id.length != 0) {
         if (prefix == "bag-master") {
           let count = id[0].code.split("B")[1];
           let nextID = Number(count) + 1;
-          console.log(nextID);
           resolve(nextID);
         } else if (prefix == "tray-master") {
           if (prefix == "tray-master") {
             let count = id[0].code.split("T")[1];
             let nextID = Number(count) + 1;
-            console.log(nextID);
             resolve(nextID);
           } else {
             resolve(1);
@@ -346,7 +354,6 @@ module.exports = {
     });
   },
   editBrands: (editData) => {
-    console.log(editData);
     return new Promise(async (resolve, reject) => {
       let data = await brands
         .updateOne(
@@ -358,7 +365,6 @@ module.exports = {
           }
         )
         .catch((err) => reject(err));
-      console.log(data);
       if (data.modifiedCount != 0) {
         resolve({ status: true });
       } else {
@@ -379,7 +385,6 @@ module.exports = {
     });
   },
   validationBulkProduct: (productsData) => {
-    console.log(productsData);
     return new Promise(async (resolve, reject) => {
       let err = {};
       let vendor_sku_id = [];
@@ -456,7 +461,6 @@ module.exports = {
         let data = await products
           .create(productData)
           .catch((err) => reject(err));
-        console.log(data);
         if (data) {
           resolve({ status: true });
         }
@@ -509,7 +513,6 @@ module.exports = {
         .findOne({ _id: productId })
         .catch((err) => reject(err));
       if (data) {
-        console.log(data.model_name);
         let ordersCheck = await orders.findOne({ item_id: data.vendor_sku_id });
         if (ordersCheck) {
           resolve({ status: 3, data: data });
@@ -529,7 +532,6 @@ module.exports = {
     });
   },
   editproduct: (productData) => {
-    console.log(productData);
     return new Promise(async (resolve, reject) => {
       let data = await products.updateOne(
         { _id: productData._id },
@@ -573,7 +575,6 @@ module.exports = {
           },
         ],
       });
-      console.log(checkNameExists);
       if (checkNameExists) {
         resolve({ status: false });
       } else {
@@ -595,7 +596,6 @@ module.exports = {
     });
   },
   editInfra: (infraId) => {
-    console.log(infraId);
     return new Promise(async (resolve, reject) => {
       let data = await infra.updateOne(
         { _id: infraId._id },
@@ -645,22 +645,38 @@ module.exports = {
   bulkBagValidation: (bagData) => {
     return new Promise(async (resolve, reject) => {
       let err = {};
-      let bag_id = [];
+      let cpc = [];
       let bag_display_name = [];
       let dispaly_name = [];
       let warehouse = [];
+      let bagLimit = [];
       for (let i = 0; i < bagData.length; i++) {
-        // let bagIdCheck = await masters.findOne({ prefix: "bag-master", code: bagData[i].bag_id })
-        // if (bagIdCheck) {
-        //     bag_id.push(bagData[i]?.bag_id)
-        //     err["bag_id_is_duplicate"] = bag_id
-        // }
-        // else {
-        //     if (bagData.some((data, index) => data?.bag_id == bagData[i]?.bag_id && index != i)) {
-        //         bag_id.push(bagData[i]?.bag_id)
-        //         err["bag_id_is_duplicate"] = bag_id
-        //     }
-        // }
+        console.log(bagData[i]);
+        if (
+          bagData[i].bag_limit <= 0 ||
+          bagData[i].bag_limit > 99 ||
+          /[0-9]/.test(bagData[i].bag_limit) == false
+        ) {
+          bagLimit.push(bagData[i].bag_id);
+          err["limit"] = bagLimit;
+        }
+        let cpcCheck = await infra.findOne({ code: bagData[i].cpc });
+        if (cpcCheck == null) {
+          cpc.push(bagData[i]?.cpc);
+          err["cpc"] = cpc;
+          warehouse.push(bagData[i]?.warehouse);
+          err["warehouse_does_not_exist"] = warehouse;
+        } else {
+          let warehouseCheck = await infra.findOne({
+            type_taxanomy: "Warehouse",
+            name: bagData[i]?.warehouse,
+            parent_id: cpcCheck.name,
+          });
+          if (warehouseCheck == null) {
+            warehouse.push(bagData[i]?.bag_id);
+            err["warehouse_does_not_exist"] = warehouse;
+          }
+        }
         let bagName = await masters.findOne({
           prefix: "bag-master",
           name: bagData[i].bag_display_name,
@@ -698,14 +714,6 @@ module.exports = {
             err["bag_display_is_duplicate"] = dispaly_name;
           }
         }
-        let warehouseCheck = await infra.findOne({
-          type_taxanomy: "Warehouse",
-          name: bagData[i]?.warehouse,
-        });
-        if (warehouseCheck == null) {
-          warehouse.push(bagData[i]?.warehouse);
-          err["warehouse_does_not_exist"] = warehouse;
-        }
       }
       if (Object.keys(err).length === 0) {
         resolve({ status: true });
@@ -714,7 +722,7 @@ module.exports = {
       }
     });
   },
-  bulkBagValidationTray: (trayData) => {
+  bulkValidationTray: (trayData) => {
     return new Promise(async (resolve, reject) => {
       let err = {};
       let tray_id = [];
@@ -723,7 +731,35 @@ module.exports = {
       let brand = [];
       let model = [];
       let warehouse = [];
+      let cpc = [];
+      let trayLimit = [];
+
       for (let i = 0; i < trayData.length; i++) {
+        if (
+          trayData[i].tray_limit <= 0 ||
+          trayData[i].tray_limit > 99 ||
+          /[0-9]/.test(trayData[i].tray_limit) == false
+        ) {
+          trayLimit.push(trayData[i].tray_id);
+          err["limit"] = trayLimit;
+        }
+        let cpcCheck = await infra.findOne({ code: trayData[i].cpc });
+        if (cpcCheck == null) {
+          cpc.push(trayData[i]?.cpc);
+          err["cpc"] = cpc;
+          warehouse.push(trayData[i]?.warehouse);
+          err["warehouse_does_not_exist"] = warehouse;
+        } else {
+          let warehouseCheck = await infra.findOne({
+            type_taxanomy: "Warehouse",
+            name: trayData[i]?.warehouse,
+            parent_id: cpcCheck.name,
+          });
+          if (warehouseCheck == null) {
+            warehouse.push(trayData[i]?.tray_id);
+            err["warehouse_does_not_exist"] = warehouse;
+          }
+        }
         let trayID = trayData[i].tray_id.split(
           `${trayData[i].tray_category}`
         )[1];
@@ -779,14 +815,7 @@ module.exports = {
             err["tray_display_is_duplicate"] = tray_dispaly_name;
           }
         }
-        let warehouseCheck = await infra.findOne({
-          type_taxanomy: "Warehouse",
-          name: trayData[i]?.warehouse,
-        });
-        if (warehouseCheck == null) {
-          warehouse.push(trayData[i]?.warehouse);
-          err["warehouse_does_not_exist"] = warehouse;
-        }
+
         let brandModel = await brands.findOne({
           brand_name: trayData[i].tray_brand,
         });
@@ -859,17 +888,14 @@ module.exports = {
     );
     return new Promise(async (resolve, reject) => {
       let data = await masters.create(newArrayOfObj);
-      console.log(data);
       if (data) {
         resolve(data);
       }
     });
   },
   getAudit: (bagId) => {
-    console.log(bagId);
     return new Promise(async (resolve, reject) => {
       let data = await masters.find({ code: bagId });
-      console.log(data);
       resolve(data);
     });
   },
@@ -894,7 +920,6 @@ module.exports = {
     });
   },
   getMasters: (type) => {
-    console.log(type);
     return new Promise(async (resolve, reject) => {
       let data = await masters
         .find({ prefix: type.master_type })
@@ -931,6 +956,7 @@ module.exports = {
             model: editData.model,
             brand: editData.brand,
             warehouse: editData.warehouse,
+            cpc: editData.cpc,
           },
         }
       );
@@ -971,8 +997,363 @@ module.exports = {
           $unwind: "$delivery",
         },
       ]);
-      console.log(data[1]);
       resolve(data);
+    });
+  },
+  searchAdminTrackItem: (searchType, value, location) => {
+    let allData;
+    return new Promise(async (resolve, reject) => {
+      if (searchType == "order_id") {
+        allData = await orders.aggregate([
+          {
+            $match: {
+              delivery_status: "Delivered",
+              order_id: { $regex: "^" + value + ".*", $options: "i" },
+            },
+          },
+          {
+            $lookup: {
+              from: "deliveries",
+              localField: "order_id",
+              foreignField: "order_id",
+              as: "delivery",
+            },
+          },
+          {
+            $unwind: "$delivery",
+          },
+        ]);
+      } else if (searchType == "tracking_id") {
+        allData = await orders.aggregate([
+          {
+            $match: {
+              delivery_status: "Delivered",
+            },
+          },
+          {
+            $lookup: {
+              from: "deliveries",
+              localField: "order_id",
+              foreignField: "order_id",
+              as: "delivery",
+            },
+          },
+          {
+            $unwind: "$delivery",
+          },
+          {
+            $match: {
+              delivery_status: "Delivered",
+              "delivery.tracking_id": {
+                $regex: ".*" + value + ".*",
+                $options: "i",
+              },
+            },
+          },
+        ]);
+      } else if (searchType == "uic") {
+        allData = await orders.aggregate([
+          {
+            $match: {
+              delivery_status: "Delivered",
+            },
+          },
+          {
+            $lookup: {
+              from: "deliveries",
+              localField: "order_id",
+              foreignField: "order_id",
+              as: "delivery",
+            },
+          },
+          {
+            $unwind: "$delivery",
+          },
+          {
+            $match: {
+              delivery_status: "Delivered",
+              "delivery.uic_code.code": {
+                $regex: ".*" + value + ".*",
+                $options: "i",
+              },
+            },
+          },
+        ]);
+      }
+      if (allData) {
+        resolve(allData);
+      }
+    });
+  },
+  updateCPCExtra: () => {
+    let arr = [
+      "B0110",
+      "B0111",
+      "B0112",
+      "B0113",
+      "B0114",
+      "B0115",
+      "B0116",
+      "B0117",
+      "B0118",
+      "B0119",
+      "B0120",
+      "B0121",
+      "B0122",
+      "B0123",
+      "B0124",
+      "B0125",
+      "B0126",
+      "B0127",
+      "B0128",
+      "B0129",
+      "B0130",
+      "B0131",
+      "B0132",
+      "B0133",
+      "B0134",
+      "B0135",
+      "B0136",
+      "B0137",
+      "B0138",
+      "B0139",
+      "B0140",
+      "B0141",
+      "B0142",
+      "B0143",
+      "B0144",
+      "B0145",
+      "B0146",
+      "B0147",
+      "B0148",
+      "B0149",
+      "B0150",
+      "B0151",
+      "B0152",
+      "B0153",
+      "B0154",
+      "B0201",
+      "B0202",
+      "B0203",
+      "B0204",
+      "B0205",
+      "B0206",
+      "B0207",
+      "B0208",
+      "B0209",
+      "B0210",
+      "B0211",
+      "B0212",
+      "B0213",
+      "B0214",
+      "B0215",
+      "B0216",
+      "B0217",
+      "B0218",
+      "B0219",
+      "B0220",
+      "B0221",
+      "B0222",
+      "B0223",
+      "B0224",
+      "B0225",
+      "B0226",
+      "B0227",
+      "B0228",
+      "B0229",
+      "B0230",
+      "B0231",
+      "B0232",
+      "B0233",
+      "B0234",
+      "B0235",
+      "B0236",
+      "B0237",
+      "B0238",
+      "B0239",
+      "B0240",
+      "B0241",
+      "B0242",
+      "B0243",
+      "B0244",
+      "B0245",
+      "B0246",
+      "B0247",
+      "B0248",
+      "B0249",
+      "B0250",
+      "B0251",
+      "B0252",
+      "B0253",
+      "B0254",
+      "B0255",
+      "B0256",
+      "B0257",
+      "B0258",
+      "B0259",
+      "B0260",
+      "B0261",
+      "B0262",
+      "B0263",
+      "B0264",
+      "B0265",
+      "B0266",
+      "B0267",
+      "B0268",
+      "B0269",
+      "B0270",
+      "B0271",
+      "B0272",
+      "B0273",
+      "B0274",
+      "B0275",
+      "B0276",
+      "B0277",
+      "B0278",
+      "B0279",
+      "B0280",
+      "B0281",
+      "B0282",
+      "B0283",
+      "B0284",
+      "B0285",
+      "B0286",
+      "B0287",
+      "B0288",
+      "B0289",
+      "B0290",
+      "B0291",
+      "B0292",
+      "B0293",
+      "B0294",
+      "B0295",
+      "B0296",
+      "B0297",
+      "B0298",
+      "B0299",
+      "B0300",
+    ];
+    return new Promise(async (resolve, reject) => {
+      let updateData;
+      for (let i = 0; i < arr.length; i++) {
+        updateData = await masters.updateOne(
+          { code: arr[i] },
+          {
+            cpc: "Bangalore_560067",
+          }
+        );
+      }
+      if (updateData) {
+        resolve(updateData);
+      }
+      // let updateData=await masters.updateMany({cpc:{$exists:false}},{
+      //   $set:{
+      //     cpc:"Gurgaon_122016"
+      //   }
+      // })
+      // if(updateData){
+      //   resolve(updateData)
+      // }
+      // let updateBag
+      // let getAllBag = await masters.find({
+      //   cpc: "Bangalore_560067",
+      //   prefix: "bag-master",
+      // });
+      // console.log(getAllBag);
+      // for (let i = 0; i < getAllBag.length; i++) {
+      //   let data = await masters.updateMany(
+      //     { "items.bag_id": getAllBag[i].code },
+      //     {
+      //       $set: {
+      //         "items.$.bag_id": "DDB-BLR-" + (2000 + i),
+      //       },
+      //     }
+      //   );
+
+      //   let updateDelivery = await delivery.updateMany(
+      //     { bag_id: getAllBag[i].code },
+      //     {
+      //       $set: {
+      //         bag_id: "DDB-BLR-" + (2000 + i),
+      //       },
+      //     }
+      //   );
+
+      //   updateBag = await masters.updateOne(
+      //     { code: getAllBag[i].code },
+      //     {
+      //       $set: {
+      //         code: "DDB-BLR-" + (2000 + i),
+      //       },
+      //     }
+      //   );
+      // }
+      // console.log(updateBag);
+      // resolve(updateBag)
+      // let getDelivery = await delivery.find({
+      //   tray_type: { $exists: true },
+      // });
+      // for (let i = 0; i < getDelivery.length; i++) {
+      //   if (getDelivery[i].tray_type == "BOT") {
+      //     let getTray = await masters.findOne({
+      //       code: getDelivery[i].tray_id,
+      //       "items.awbn_number": { $ne: getDelivery[i].tracking_id },
+      //     });
+      //     if (getTray) {
+      //       let obj = {
+      //         tracking_id: getDelivery[i].tracking_id,
+      //         bot_agent: getDelivery[i].agent_name,
+      //         tray_id: getDelivery[i].tray_id,
+      //         uic: getDelivery[i].uic_code.code,
+      //         imei: getDelivery[i].imei,
+      //         closed_time: new Date(new Date().toISOString().split("T")[0]),
+      //         wht_tray: null,
+      //         status: getDelivery[i].stock_in_status,
+      //       };
+      //       let checkModel = await itemClub.findOne({
+      //         vendor_sku_id: getDelivery[i].item_id,
+      //         cpc: getDelivery[i].partner_shop,
+      //         created_at: new Date(new Date().toISOString().split("T")[0]),
+      //       });
+      //       console.log(checkModel);
+      //       if (checkModel != null) {
+      //         let findProductData = await itemClub.updateOne(
+      //           {
+      //             vendor_sku_id: getDelivery[i].item_id,
+      //             cpc: getDelivery[i].partner_shop,
+      //             created_at: new Date(new Date().toISOString().split("T")[0]),
+      //           },
+      //           {
+      //             $push: {
+      //               item: obj,
+      //             },
+      //           }
+      //         );
+      //       } else {
+      //         let newObj = {
+      //           vendor_sku_id: getDelivery[i].item_id,
+      //           cpc: getDelivery[i].partner_shop,
+      //           created_at: new Date(new Date().toISOString().split("T")[0]),
+      //           item: [],
+      //         };
+      //         newObj.item.push(obj);
+      //         let findProductData = await itemClub.create(newObj);
+      //         for (let I of getTray.items) {
+      //           let deliveryTrack = await delivery.updateMany(
+      //             { tracking_id: i.awbn_number },
+      //             {
+      //               $set: {
+      //                 warehouse_close_date: Date.now(),
+      //                 tray_status: "Closed By Warehouse",
+      //               },
+      //             }
+      //           );
+      //         }
+      //         resolve(findProductData);
+      //       }
+      //     }
+      //   }
+      // }
     });
   },
 };

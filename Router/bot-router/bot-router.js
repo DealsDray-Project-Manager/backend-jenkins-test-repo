@@ -8,7 +8,6 @@ const upload = require("../../utils/multer");
 /* Get Assigned Bag */
 router.post("/getAssignedBag/:userName", async (req, res, next) => {
   try {
-    console.log("called");
     let data = await botController.getAssignedBag(req.params.userName);
     if (data) {
       res.status(200).json({
@@ -60,7 +59,6 @@ router.post("/awbnScanning", async (req, res, next) => {
   try {
     const { bagId, awbn_number, username } = req.body;
     let data = await botController.scanAwbn(bagId, awbn_number, username);
-    console.log(data);
     if (data.status == 1) {
       res.status(200).json({
         data: data.data,

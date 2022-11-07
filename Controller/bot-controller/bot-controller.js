@@ -26,7 +26,6 @@ module.exports = {
             assign: "New Assign",
           })
           .sort({ sort_id: 1 });
-        console.log(tray);
         if (tray) {
           let obj = {
             tray: tray,
@@ -76,14 +75,12 @@ module.exports = {
     });
   },
   getAssignedBag: (username) => {
-    console.log(username);
     return new Promise(async (resolve, reject) => {
       let data = await masters.find({
         issued_user_name: username,
         sort_id: "Issued",
         prefix: "bag-master",
       });
-      console.log(data);
       if (data) {
         resolve(data);
       }
@@ -114,7 +111,6 @@ module.exports = {
             },
           }
         );
-        console.log(itemExistThisBag);
         if (itemExistThisBag) {
           let data = await delivery.aggregate([
             {
@@ -137,7 +133,6 @@ module.exports = {
           let ordersGet = await orders.findOne({ order_id: data[0].order_id });
           data[0].order_date = ordersGet.order_date;
           data[0].status = itemExistThisBag.items[0].status;
-          console.log(data);
           if (data.length != 0) {
             resolve({ status: 1, data: data });
           } else {
@@ -150,7 +145,6 @@ module.exports = {
     });
   },
   traySegrigation: (trayData) => {
-    console.log(trayData);
     trayData.added_time = Date.now();
     trayData._id = mongoose.Types.ObjectId();
     return new Promise(async (resolve, reject) => {
@@ -269,7 +263,6 @@ module.exports = {
     return new Promise(async (resolve, reject) => {
       let data = await masters.findOne({ code: trayId });
       if (data) {
-        console.log(data);
         resolve(data);
       }
     });

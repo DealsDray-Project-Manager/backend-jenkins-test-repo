@@ -5,7 +5,7 @@ const deliverySchema = mongoose.Schema({
   },
   order_id: {
     type: String,
-    index:true
+    index: true,
   },
   order_date: {
     type: Date,
@@ -69,10 +69,22 @@ const deliverySchema = mongoose.Schema({
   agent_name: {
     type: String,
   },
+  agent_name_charging: {
+    type: String,
+  },
+  agent_name_bqc: {
+    type: String,
+  },
   tray_id: {
     type: String,
   },
   assign_to_agent: {
+    type: Date,
+  },
+  assign_to_agent_charging: {
+    type: Date,
+  },
+  assign_to_agent_bqc: {
     type: Date,
   },
   stock_in_status: {
@@ -109,6 +121,33 @@ const deliverySchema = mongoose.Schema({
   tray_close_wh_date: {
     type: Date,
   },
+  charging_in_date: {
+    type: Date,
+  },
+  charging_done_date: {
+    type: Date,
+  },
+  bqc_in_date: {
+    type: Date,
+  },
+  bqc_out_date: {
+    type: Date,
+  },
+  bot_done_received:{
+    type:Date
+  },
+  charging_done_received:{
+    type:Date
+  },
+  bqc_done_received:{
+    type:Date
+  },
+  charging_done_close:{
+    type:Date
+  },
+  bqc_done_close:{
+    type:Date
+  }
 });
 
 const delivery = mongoose.model("delivery", deliverySchema);

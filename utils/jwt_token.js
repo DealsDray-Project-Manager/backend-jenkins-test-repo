@@ -3,7 +3,6 @@ const jwt = require("jsonwebtoken")
 
 module.exports = {
     jwtSign: (admin) => {
-        console.log(admin);
         const token = jwt.sign(
             {
                 adminId: admin._id,
@@ -28,7 +27,7 @@ module.exports = {
                 res.status(401).json({ message: "UnAuthorized" })
             }
         } catch (error) {
-            console.log(error);
+          
             return error
         }
     },

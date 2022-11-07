@@ -6,7 +6,7 @@ const mastersSchema = mongoose.Schema({
   },
   code: {
     type: String,
-    index:true
+    index: true,
   },
   type_taxanomy: {
     type: String,
@@ -68,8 +68,8 @@ const mastersSchema = mongoose.Schema({
   closed_time_bot: {
     type: Date,
   },
-  closed_time_wharehouse:{
-    type: Date
+  closed_time_wharehouse: {
+    type: Date,
   },
   issued_user_name: {
     type: String,
@@ -81,6 +81,10 @@ const mastersSchema = mongoose.Schema({
   assigned_date: {
     type: Date,
   },
+  cpc:{
+    type:String
+  },
+  item_club:[{ type: mongoose.Types.ObjectId, ref: 'itemClub' }]
 });
 const masters = mongoose.model("masters", mastersSchema);
 module.exports = {

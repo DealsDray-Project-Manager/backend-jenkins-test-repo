@@ -11,7 +11,6 @@ const upload = require("../../utils/multer");
 router.post("/bulkOrdersValidation", async (req, res, next) => {
   try {
     let data = await misUserController.bulkOrdersValidation(req.body);
-    console.log(data);
     if (data.status == true) {
       res.status(200).json({
         message: "Successfully Validated",
@@ -48,7 +47,6 @@ router.post("/getBadOrders/:location", async (req, res, next) => {
   try {
     let data = await misUserController.getBadOrders(req.params.location);
     if (data) {
-      console.log(data);
       res.status(200).json({
         data: data,
         message: "Success",
@@ -65,10 +63,8 @@ router.post("/getBadOrders/:location", async (req, res, next) => {
 /* SEARCH ORDERS */
 router.post("/ordersSearch", async (req, res, next) => {
   try {
-    console.log(req.body);
     const { type, searchData, location } = req.body;
     let data = await misUserController.searchOrders(type, searchData, location);
-    console.log(data);
     if (data) {
       res.status(200).json({
         data: data,
@@ -81,14 +77,12 @@ router.post("/ordersSearch", async (req, res, next) => {
 /* SEARCH BAD ORDERS */
 router.post("/badOrdersSearch", async (req, res, next) => {
   try {
-    console.log(req.body);
     const { type, searchData, location } = req.body;
     let data = await misUserController.badOrdersSearch(
       type,
       searchData,
       location
     );
-    console.log(data);
     if (data) {
       res.status(200).json({
         data: data,
@@ -103,7 +97,6 @@ router.post("/badOrdersSearch", async (req, res, next) => {
 router.post("/getOrders/:location", async (req, res, next) => {
   try {
     let data = await misUserController.getOrders(req.params.location);
-    console.log(data);
     if (data) {
       res.status(200).json({
         data: data,
@@ -160,14 +153,12 @@ router.post("/notDeliveredOrders/:location", async (req, res, next) => {
 /* SEARCH BAD ORDERS */
 router.post("/searchDeliveredOrders", async (req, res, next) => {
   try {
-    console.log(req.body);
     const { type, searchData, location } = req.body;
     let data = await misUserController.searchDeliveredOrders(
       type,
       searchData,
       location
     );
-    console.log(data);
     if (data) {
       res.status(200).json({
         data: data,
@@ -196,9 +187,7 @@ router.post("/deliveredNoOrderId/:location", async (req, res, next) => {
 /* Bulk Delivery Validation */
 router.post("/bulkValidationDelivery", async (req, res, next) => {
   try {
-    console.log(req.body);
     let data = await misUserController.bulkValidationDelivery(req.body);
-    console.log(data);
     if (data.status == true) {
       res.status(200).json({
         message: "Successfully Validated",
@@ -233,7 +222,6 @@ router.post("/importDelivery", async (req, res, next) => {
 router.post("/getAllDelivery/:location", async (req, res, next) => {
   try {
     let data = await misUserController.getDelivery(req.params.location);
-    console.log(data);
     if (data) {
       res.status(200).json({
         data: data,
@@ -248,7 +236,6 @@ router.post("/getAllDelivery/:location", async (req, res, next) => {
 router.post("/getBadDelivery/:location", async (req, res, next) => {
   try {
     let data = await misUserController.getBadDelivery(req.params.location);
-    console.log(data);
     if (data) {
       res.status(200).json({
         data: data,
@@ -262,14 +249,30 @@ router.post("/getBadDelivery/:location", async (req, res, next) => {
 /* SEARCH DELIVERY DATA */
 router.post("/searchDelivery", async (req, res, next) => {
   try {
-    console.log(req.body);
     const { type, searchData, location } = req.body;
     let data = await misUserController.searchDeliveryData(
       type,
       searchData,
       location
     );
-    console.log(data);
+    if (data) {
+      res.status(200).json({
+        data: data,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+/* SEARCH TRACK ITEM DATA */
+router.post("/search-mis-track-item", async (req, res, next) => {
+  try {
+    const { type, searchData, location } = req.body;
+    let data = await misUserController.searchMisTrackItem(
+      type,
+      searchData,
+      location
+    );
     if (data) {
       res.status(200).json({
         data: data,
@@ -282,14 +285,12 @@ router.post("/searchDelivery", async (req, res, next) => {
 /* SEARCH BAD DELIVERY DATA */
 router.post("/searchBadDelivery", async (req, res, next) => {
   try {
-    console.log(req.body);
     const { type, searchData, location } = req.body;
     let data = await misUserController.searchBagDeliveryData(
       type,
       searchData,
       location
     );
-    console.log(data);
     if (data) {
       res.status(200).json({
         data: data,
@@ -331,7 +332,6 @@ router.post("/uicPageData/:location", async (req, res, next) => {
 /* SEARCH BAD DELIVERY DATA */
 router.post("/searchUicPageAll", async (req, res, next) => {
   try {
-    console.log(req.body);
     const { type, searchData, location, uic_status } = req.body;
     let data = await misUserController.searchUicPageAll(
       type,
@@ -339,7 +339,6 @@ router.post("/searchUicPageAll", async (req, res, next) => {
       location,
       uic_status
     );
-    console.log(data);
     if (data) {
       res.status(200).json({
         data: data,
@@ -382,14 +381,12 @@ router.post("/uicGeneratedRecon", async (req, res, next) => {
 /* Get uic genrated */
 router.post("/SearchUicGeneratedReconPage", async (req, res, next) => {
   try {
-    console.log(req.body);
     const { type, searchData, location, stage } = req.body;
     let data = await misUserController.searchUicReconPage(
       type,
       searchData,
       location
     );
-    console.log(data);
     if (data) {
       res.status(200).json({
         data: data,
@@ -402,7 +399,6 @@ router.post("/SearchUicGeneratedReconPage", async (req, res, next) => {
 /* Change uic Status */
 router.put("/changeUicStatus/:id", async (req, res, next) => {
   try {
-    console.log("called");
     let data = await misUserController.changeUicStatus(req.params.id);
     if (data.status) {
       res.status(200).json({
@@ -419,9 +415,9 @@ router.put("/changeUicStatus/:id", async (req, res, next) => {
 });
 /******************************************************BAG ASSIGN*********************************************************************** */
 /* Bag Assign */
-router.post("/getStockin", async (req, res, next) => {
+router.post("/getStockin/:location", async (req, res, next) => {
   try {
-    let data = await misUserController.getStockin();
+    let data = await misUserController.getStockin(req.params.location);
     if (data) {
       res.status(200).json({
         data: data,
@@ -433,9 +429,9 @@ router.post("/getStockin", async (req, res, next) => {
   }
 });
 /* GET BOT TEAM */
-router.post("/getBot", async (req, res, next) => {
+router.post("/getBot/:location", async (req, res, next) => {
   try {
-    let data = await misUserController.getBot();
+    let data = await misUserController.getBot(req.params.location);
     if (data) {
       res.status(200).json({
         data: data,
@@ -467,7 +463,6 @@ router.post("/issueRequestSend", async (req, res, next) => {
 /******************************REMOVE BAD ORDERS************************************************ */
 router.post("/deleteBadOrders", async (req, res, next) => {
   try {
-    console.log(req.body);
     let data = await misUserController.deleteBadOrders(req.body);
     if (data) {
       res.status(200).json({
@@ -517,7 +512,6 @@ router.post("/getBagItemWithUic/:bagId", async (req, res, next) => {
 router.post("/pickupListData", async (req, res, next) => {
   try {
     let data = await misUserController.getPickUpListData();
-    console.log(data);
     if (data) {
       res.status(200).json({
         data: data,
@@ -569,9 +563,9 @@ router.post("/ready-for-charging-wht",async(req,res,next)=>{
   }
 })
 /* GET CHARGING USERS FOR ASSIGN WHT TRAY */
-router.post("/get-charging-users",async(req,res,next)=>{
+router.post("/get-charging-users/:user_type/:location",async(req,res,next)=>{
   try {
-    let data=await misUserController.getChargingUsers()
+    let data=await misUserController.getChargingUsers(req.params.user_type,req.params.location)
     if(data){
       res.status(200).json({
         data:data
