@@ -1466,6 +1466,16 @@ module.exports = {
       resolve(data);
     });
   },
+  getSortingAgent: (location) => {
+    return new Promise(async (resolve, reject) => {
+      let data = await user.find({
+        user_type: "Sorting Agent",
+        status: "Active",
+        cpc: location,
+      });
+      resolve(data);
+    });
+  },
   getBot: (location) => {
     return new Promise(async (resolve, reject) => {
       let data = await user.aggregate([
@@ -1600,50 +1610,124 @@ module.exports = {
       }
     });
   },
-  getPickUpListData: () => {
+  getModelBasedDataFromBot: (muic, trayId) => {
     return new Promise(async (resolve, reject) => {
-      let data = await delivery.aggregate([
+      let data = await masters.findOne(
+        { "temp_array.muic": muic, code: trayId },
+
         {
-          $match: {
-            tray_type: "BOT",
-            tray_status: "Closed By Warehouse",
+          _id: 0,
+          wht_tray: 1,
+          items: 1,
+          temp_array: {
+            $elemMatch: { muic: muic },
           },
-        },
+        }
+      );
+      if (data) {
+        resolve(data);
+      } else {
+        resolve();
+      }
+    });
+  },
+  botTrayAssignedToSortingAgent: (botTrayData) => {
+    return new Promise(async (resolve, reject) => {
+      let data = await masters.updateOne(
+        { code: botTrayData.trayId },
         {
-          $lookup: {
-            from: "products",
-            localField: "item_id",
-            foreignField: "vendor_sku_id",
-            as: "product",
+          $set: {
+            sort_id: "Sorting Request Sended To Warehouse",
+            issued_user_name: botTrayData.agent_name,
+            status_change_time: Date.now(),
           },
-        },
-        {
-          $unwind: "$product",
-        },
-      ]);
+        }
+      );
+      if (data.modifiedCount != 0) {
+        resolve(data);
+      } else {
+        resolve();
+      }
+    });
+  },
+  viewSortingRequests: (location, page) => {
+    return new Promise(async (resolve, reject) => {
+      if (page == "mis") {
+        let data = await masters.find({
+          sort_id: "Sorting Request Sended To Warehouse",
+          cpc: location,
+          type_taxanomy:"BOT"
+        });
+        if (data) {
+          resolve(data);
+        }
+      } else {
+        let data = await masters.find({
+          $or: [
+            {
+              sort_id: "Sorting Request Sended To Warehouse",
+              cpc: location,
+              type_taxanomy:"BOT"
+            },
+            {
+              sort_id: "Assigned to sorting agent",
+              cpc: location,
+              type_taxanomy:"BOT"
+            },
+          ],
+        });
+        if (data) {
+          resolve(data);
+        }
+      }
+    });
+  },
+  getWhClosedBotTrayTillLastDay: (date, location) => {
+    return new Promise(async (resolve, reject) => {
+      let data = await masters.find({
+        type_taxanomy: "BOT",
+        prefix: "tray-master",
+        sort_id: "Closed By Warehouse",
+        cpc: location,
+        closed_time_wharehouse_from_bot: new Date(
+          date.toISOString().split("T")[0]
+        ),
+      });
       if (data) {
         resolve(data);
       }
     });
   },
-  createPickList: (pickListData) => {
+  sortWhClosedBotTray: (date, location) => {
     return new Promise(async (resolve, reject) => {
-      let data = await pickList.create({
-        created_at: Date.now(),
-        item: pickListData,
+      let data = await masters.find({
+        type_taxanomy: "BOT",
+        prefix: "tray-master",
+        sort_id: "Closed By Warehouse",
+        cpc: location,
+        closed_time_wharehouse_from_bot: new Date(date),
+      });
+      resolve(data);
+    });
+  },
+  assignForSortingData: (trayId) => {
+    return new Promise(async (resolve, reject) => {
+      let data = await masters.findOne({
+        $or: [
+          {
+            code: trayId,
+            sort_id: "Closed By Warehouse",
+          },
+          {
+            code: trayId,
+            sort_id: "Sorting Request Sended To Warehouse",
+          },
+        ],
       });
       if (data) {
-        for (let x of pickListData) {
-          let deliveryTrack = await delivery.updateOne(
-            { tracking_id: x.tracking_id },
-            {
-              $set: {
-                pick_list_status: "Created",
-              },
-            }
-          );
-        }
         resolve(data);
+      } else {
+        resolve();
       }
     });
   },

@@ -19,6 +19,7 @@ const warehouseIn = require("./Router/warehouseInRouter/warehouseIn");
 const bot = require("./Router/bot-router/bot-router");
 const chargingPanel = require("./Router/charging-panel-router/charging-panel");
 const bqc = require("./Router/bqc-router/bqc-router");
+const sortingAgent =require("./Router/sorting-agent-router/sorting-agent-router")
 app.use(logger("dev"));
 app.use(express.json({ limit: "25mb" }));
 app.use(cors());
@@ -37,6 +38,8 @@ app.use("/api/v1/bot", bot);
 app.use("/api/v1/charging", chargingPanel);
 /* API for BQC panel */
 app.use("/api/v1/bqc", bqc);
+/* API for SORTING AGNET panel */
+app.use("/api/v1/sorting-agnet", sortingAgent);
 /* User-profile */
 app.use("/user/profile", express.static(__dirname + "/public/user-profile"));
 /* Product Image */

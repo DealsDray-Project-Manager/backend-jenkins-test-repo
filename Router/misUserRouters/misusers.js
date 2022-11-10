@@ -507,11 +507,16 @@ router.post("/getBagItemWithUic/:bagId", async (req, res, next) => {
     next(error);
   }
 });
-/************************************PICKUP LIST****************************************************** */
-/* PIKCUPLIST DATA */
-router.post("/pickupListData", async (req, res, next) => {
+/************************************MIS BOT TO WHT LIST****************************************************** */
+/* GET CLOSED BOT TRAY BASED ON THE DAY WISE DATA */
+router.post("/wh-closed-bot-tray/:location", async (req, res, next) => {
   try {
-    let data = await misUserController.getPickUpListData();
+    let date = new Date(); // Today!
+    date.setDate(date.getDate() - 1);
+    let data = await misUserController.getWhClosedBotTrayTillLastDay(
+      date,
+      req.params.location
+    );
     if (data) {
       res.status(200).json({
         data: data,
@@ -521,27 +526,101 @@ router.post("/pickupListData", async (req, res, next) => {
     next(error);
   }
 });
-/* PICKLIST CREATE */
-router.post("/createPickList", async (req, res, next) => {
+/* ASSIGN FOR SORTING PAGE DATA  */
+router.post("/assign-for-sorting/:trayId", async (req, res, next) => {
   try {
-    let data = await misUserController.createPickList(req.body);
+    const { trayId } = req.params;
+    let data = await misUserController.assignForSortingData(trayId);
     if (data) {
       res.status(200).json({
-        message: "Successfully Created",
+        data: data,
+      });
+    } else {
+      res.status(403).json({
+        message: "Tray is not exists or not in closed satge",
       });
     }
   } catch (error) {
     next(error);
   }
 });
-/*********************************************PICKLIST DATE WISE SORTING************************************************************** */
-/* Date wise sorting */
-router.post("/sort-date-wise/:date", async (req, res, next) => {
+/***************************************BOT TO WHT *************************************** */
+router.post("/wht-bot-sort", async (req, res, next) => {
   try {
-    let data = await misUserController.sortPickList(req.params.date);
+    const { date, location } = req.body;
+    let data = await misUserController.sortWhClosedBotTray(date, location);
     if (data) {
       res.status(200).json({
         data: data,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+/* GET Sorting Agent */
+router.post("/getSortingAgent/:location", async (req, res, next) => {
+  try {
+    let data = await misUserController.getSortingAgent(req.params.location);
+    if (data) {
+      res.status(200).json({
+        data: data,
+        message: "Success",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+// ASSIGN FOR SORTING VIEW CLUBED DATA
+router.post(
+  "/view-bot-clubed-data-model/:muic/:trayId",
+  async (req, res, next) => {
+    try {
+      const { muic, trayId } = req.params;
+      let data = await misUserController.getModelBasedDataFromBot(muic, trayId);
+      if (data) {
+        res.status(200).json({
+          data: data,
+        });
+      } else {
+        res.status(403).json({
+          message: "No data found",
+        });
+      }
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+/* BOT TRAY ASSIGNED TO SORTING AGENT */
+router.post("/assign-to-sorting-agent", async (req, res, next) => {
+  try {
+    let data = await misUserController.botTrayAssignedToSortingAgent(req.body);
+    if (data) {
+      res.status(200).json({
+        message: "Request Send To wareshouse",
+      });
+    } else {
+      res.status(403).json({
+        message: "Failed",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+/* VIEW SORTING REQUESTS */
+router.post("/view-sorting-item/:location/:pageType", async (req, res, next) => {
+  try {
+    let data = await misUserController.viewSortingRequests(req.params.location,req.params.pageType);
+    if (data) {
+      res.status(200).json({
+        data: data,
+      });
+    } else {
+      res.status(403).json({
+        message: "Failed",
       });
     }
   } catch (error) {
@@ -550,42 +629,48 @@ router.post("/sort-date-wise/:date", async (req, res, next) => {
 });
 /********************************************ASSIGN TO CHARGING***************************************************************************************** */
 /* GET READY FOR CHARGING WHT TRAY */
-router.post("/ready-for-charging-wht",async(req,res,next)=>{
+router.post("/ready-for-charging-wht", async (req, res, next) => {
   try {
-    let data=await misUserController.getReadyForChargingWhtTray()
-    if(data){
+    let data = await misUserController.getReadyForChargingWhtTray();
+    if (data) {
       res.status(200).json({
-        data:data
-      })
+        data: data,
+      });
     }
   } catch (error) {
-    next(error)
+    next(error);
   }
-})
+});
 /* GET CHARGING USERS FOR ASSIGN WHT TRAY */
-router.post("/get-charging-users/:user_type/:location",async(req,res,next)=>{
-  try {
-    let data=await misUserController.getChargingUsers(req.params.user_type,req.params.location)
-    if(data){
-      res.status(200).json({
-        data:data
-      })
+router.post(
+  "/get-charging-users/:user_type/:location",
+  async (req, res, next) => {
+    try {
+      let data = await misUserController.getChargingUsers(
+        req.params.user_type,
+        req.params.location
+      );
+      if (data) {
+        res.status(200).json({
+          data: data,
+        });
+      }
+    } catch (error) {
+      next(error);
     }
-  } catch (error) {
-    next(error)
   }
-})
+);
 /* AFTER SELECT THE CHARGING USER WHT TRAY WILL GO TO WH PANEL */
-router.post("/wht-sendTo-wharehouse",async(req,res,next)=>{
+router.post("/wht-sendTo-wharehouse", async (req, res, next) => {
   try {
-    let data=await misUserController.whtSendToWh(req.body)
-    if(data){
+    let data = await misUserController.whtSendToWh(req.body);
+    if (data) {
       res.status(200).json({
-        message:"Successfully Requested"
-      })
+        message: "Successfully Requested",
+      });
     }
   } catch (error) {
-    next(error)
+    next(error);
   }
-})
+});
 module.exports = router;

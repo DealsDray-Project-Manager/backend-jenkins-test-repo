@@ -8,7 +8,6 @@ const bqcController = require("../../Controller/bqc-controller/bqc-controller");
 router.post("/assigned-tray/:userName", async (req, res, next) => {
   try {
     let data = await bqcController.getAssignedTray(req.params.userName);
-    console.log(data);
     if (data) {
       res.status(200).json({
         data: data,

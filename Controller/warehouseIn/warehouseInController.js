@@ -273,7 +273,6 @@ module.exports = {
               }
             );
           }
-          console.log(getValidItemBag.items[0].sotckin_date);
           updateDelivery = await delivery.updateOne(
             { tracking_id: bgData.awbn },
             {
@@ -630,7 +629,7 @@ module.exports = {
         if (data) {
           for (let i = 0; i < data.items.length; i++) {
             let deliveryTrack = await delivery.updateMany(
-              { tracking_id: data.items[i].tracking_id },
+              { tracking_id: data.items[i].awbn_number },
               {
                 $set: {
                   tray_status: "Received From BOT",
@@ -735,6 +734,10 @@ module.exports = {
         {
           $set: {
             sort_id: "Closed By Warehouse",
+            closed_time_wharehouse_from_bot: new Date(
+              new Date().toISOString().split("T")[0]
+            ),
+            actual_items: [],
           },
         }
       );
@@ -751,52 +754,112 @@ module.exports = {
               },
             }
           );
-          let obj = {
-            tracking_id: x.awbn_number,
-            bot_agent: data.issued_user_name,
-            tray_id: data.code,
-            uic: getItemId.uic_code.code,
-            imei: x.imei,
-            closed_time: new Date(new Date().toISOString().split("T")[0]),
-            wht_tray: null,
-            status: x.status,
-          };
-          // let putToModel = await products.updateOne(
-          //   { vendor_sku_id: getItemId.item_id },
-          //   {
-          //     $push: {
-          //       item: obj,
-          //     },
-          //   }
-          // );
-          let checkModel = await itemClub.findOne({
+          let findProduct = await products.findOne({
             vendor_sku_id: getItemId.item_id,
-            cpc: trayData.location,
-            created_at: new Date(new Date().toISOString().split("T")[0]),
           });
-          if (checkModel != null) {
-            let findProductData = await itemClub.updateOne(
+          let obj = {
+            item: [],
+            muic: findProduct.muic,
+            model: findProduct.model_name,
+            brand: findProduct.brand_name,
+            vendor_sku_id: findProduct.vendor_sku_id,
+            assigned_count: 0,
+            close_date: Date.now(),
+          };
+          obj.item.push(x);
+          let updateToMuic = await masters.updateOne(
+            {
+              code: trayData.trayId,
+              items: {
+                $elemMatch: {
+                  awbn_number: x.awbn_number,
+                },
+              },
+            },
+            {
+              $set: {
+                "items.$.muic": findProduct.muic,
+                "items.$.model": findProduct.model,
+                "items.$.brand": findProduct.brand,
+                "items.$.wht_tray": null,
+              },
+            }
+          );
+          let checkAlreadyClub = await masters.findOne({
+            code: trayData.trayId,
+            "temp_array.vendor_sku_id": findProduct.vendor_sku_id,
+          });
+          x.wht_tray = null;
+          if (checkAlreadyClub) {
+            let updateTempArrayClub = await masters.updateOne(
               {
-                vendor_sku_id: getItemId.item_id,
-                cpc: trayData.location,
-                created_at: new Date(new Date().toISOString().split("T")[0]),
+                code: trayData.trayId,
+                "temp_array.vendor_sku_id": findProduct.vendor_sku_id,
               },
               {
                 $push: {
-                  item: obj,
+                  "temp_array.$.item": x,
                 },
               }
             );
           } else {
-            let newObj = {
-              created_at: new Date(new Date().toISOString().split("T")[0]),
-              vendor_sku_id: getItemId.item_id,
-              cpc: trayData.location,
-              item: [],
-            };
-            newObj.item.push(obj);
-            let findProductData = await itemClub.create(newObj);
+            let updateTempArrayClub = await masters.updateOne(
+              {
+                code: trayData.trayId,
+              },
+              {
+                $push: {
+                  temp_array: obj,
+                },
+              }
+            );
           }
+          // let obj = {
+          //   tracking_id: x.awbn_number,
+          //   bot_agent: data.issued_user_name,
+          //   tray_id: data.code,
+          //   uic: getItemId.uic_code.code,
+          //   imei: x.imei,
+          //   closed_time: new Date(new Date().toISOString().split("T")[0]),
+          //   wht_tray: null,
+          //   status: x.status,
+          // };
+          // // let putToModel = await products.updateOne(
+          // //   { vendor_sku_id: getItemId.item_id },
+          // //   {
+          // //     $push: {
+          // //       item: obj,
+          // //     },
+          // //   }
+          // // );
+          // let checkModel = await itemClub.findOne({
+          //   vendor_sku_id: getItemId.item_id,
+          //   cpc: trayData.location,
+          //   created_at: new Date(new Date().toISOString().split("T")[0]),
+          // });
+          // if (checkModel != null) {
+          //   let findProductData = await itemClub.updateOne(
+          //     {
+          //       vendor_sku_id: getItemId.item_id,
+          //       cpc: trayData.location,
+          //       created_at: new Date(new Date().toISOString().split("T")[0]),
+          //     },
+          //     {
+          //       $push: {
+          //         item: obj,
+          //       },
+          //     }
+          //   );
+          // } else {
+          //   let newObj = {
+          //     created_at: new Date(new Date().toISOString().split("T")[0]),
+          //     vendor_sku_id: getItemId.item_id,
+          //     cpc: trayData.location,
+          //     item: [],
+          //   };
+          //   newObj.item.push(obj);
+          //   let findProductData = await itemClub.create(newObj);
+          // }
         }
         let bag = await masters.updateOne(
           {
@@ -982,41 +1045,16 @@ module.exports = {
     });
   },
   assignToWht: (dataOfItem) => {
-    dataOfItem.id = mongoose.Types.ObjectId(dataOfItem.id);
     return new Promise(async (resolve, reject) => {
-      let updateProduct = await itemClub.updateOne(
-        { _id: dataOfItem.id },
-
-        {
-          $push: {
-            wht_tray: dataOfItem.wht_tray,
-          },
-          $set: {
-            count_assigned_tray: dataOfItem.count,
-          },
-        }
-      );
       let data;
       for (let x of dataOfItem.item) {
-        let updateProductWhtTray = await itemClub.updateOne(
-          {
-            item: { $elemMatch: { tracking_id: x.tracking_id } },
-            _id: dataOfItem.id,
-          },
-          {
-            $set: {
-              "item.$.wht_tray": dataOfItem.wht_tray,
-            },
-          }
-        );
         x.wht_tray = dataOfItem.wht_tray;
         x.vendor_sku_id = dataOfItem.sku;
         data = await masters.updateOne(
           { code: dataOfItem.wht_tray },
           {
             $push: {
-              items: x,
-              item_club: dataOfItem.id,
+              temp_array: x,
             },
             $set: {
               sort_id: "Inuse",
@@ -1024,19 +1062,57 @@ module.exports = {
           },
           { multi: true }
         );
+        let updateBotTraySecond = await masters.updateOne(
+          {
+            code: dataOfItem.bot_tray,
+            items: {
+              $elemMatch: {
+                awbn_number: x.awbn_number,
+              },
+            },
+          },
+          {
+            $set: {
+              "items.$.wht_tray": dataOfItem.wht_tray,
+            },
+          }
+        );
       }
+      console.log(data);
       if (data.modifiedCount !== 0) {
+        let updateBotTray = await masters.updateOne(
+          {
+            code: dataOfItem.bot_tray,
+            temp_array: {
+              $elemMatch: {
+                muic: dataOfItem.muic,
+              },
+            },
+          },
+          {
+            $set: {
+              "temp_array.$.assigned_count": dataOfItem.count,
+            },
+            $push: {
+              "temp_array.$.wht_tray":
+                dataOfItem.wht_tray + "-" + `(${dataOfItem.item.length})`,
+              wht_tray: dataOfItem.wht_tray,
+            },
+          }
+        );
         resolve(data);
       }
     });
   },
-  getAssignedTray: (itemClub, location) => {
-    itemClub = mongoose.Types.ObjectId(itemClub);
+  getAssignedTray: (trayId, location, brand, model) => {
     return new Promise(async (resolve, reject) => {
       let data = await masters.find({
-        item_club: { $in: [itemClub] },
+        "temp_array.trayId": trayId,
+        type_taxanomy: "WHT",
         sort_id: "Inuse",
         cpc: location,
+        brand: brand,
+        model: model,
       });
       if (data) {
         resolve(data);
@@ -1045,21 +1121,19 @@ module.exports = {
   },
   removeWhtTrayItem: (whtTrayDetails) => {
     return new Promise(async (resolve, reject) => {
-      let allItem = await masters.findOne({ code: whtTrayDetails.code });
+      let allItem = await masters.findOne({ code: whtTrayDetails.botTray });
       let data = await masters.findOneAndUpdate(
         { code: whtTrayDetails.code },
         {
           $pull: {
-            items: {
-              vendor_sku_id: whtTrayDetails.vendor_sku_id,
-              created: whtTrayDetails.created_at.toString(),
+            temp_array: {
+              trayId: whtTrayDetails.botTray,
             },
-            item_club: whtTrayDetails.itemClub,
           },
         },
-        { new: true }
+        { multi: true, new: true }
       );
-      if (data?.items?.length == 0) {
+      if (data?.temp_array?.length == 0) {
         let updateStatus = await masters.updateOne(
           { code: whtTrayDetails.code },
           {
@@ -1069,29 +1143,53 @@ module.exports = {
           }
         );
       }
+      // console.log(data);
       if (data) {
-        let updateProductWhtTray = await itemClub.findOneAndUpdate(
-          { _id: whtTrayDetails.itemClub },
+        // let updateProductWhtTray = await itemClub.findOneAndUpdate(
+        //   { _id: whtTrayDetails.itemClub },
+        //   {
+        //     $pull: {
+        //       wht_tray: whtTrayDetails.code,
+        //     },
+        //   }
+        // );
+        let count = 0;
+        for (let x of allItem.items) {
+          if (x.wht_tray == whtTrayDetails.code) {
+            count++;
+            let pullItemTray = await masters.updateOne(
+              {
+                items: { $elemMatch: { awbn_number: x.awbn_number } },
+                code: whtTrayDetails.botTray,
+              },
+              {
+                $set: {
+                  "items.$.wht_tray": null,
+                },
+                $pull: {
+                  wht_tray:
+                    whtTrayDetails.code +
+                    "-" +
+                    `(${whtTrayDetails.count - count})` +
+                    "-",
+                },
+              }
+            );
+          }
+        }
+        console.log(whtTrayDetails.count - count);
+        let countUpDate = await masters.updateOne(
           {
-            $pull: {
-              wht_tray: whtTrayDetails.code,
+            code: whtTrayDetails.botTray,
+            temp_array: { $elemMatch: { muic: whtTrayDetails.muic } },
+          },
+          {
+            $set: {
+              "temp_array.$.assigned_count": whtTrayDetails.count - count,
             },
           }
         );
-        for (let x of allItem.items) {
-          let pullItemTray = await itemClub.updateOne(
-            {
-              item: { $elemMatch: { tracking_id: x.tracking_id } },
-              _id: whtTrayDetails.itemClub,
-            },
-            {
-              $set: {
-                "item.$.wht_tray": null,
-              },
-            }
-          );
-        }
-
+        console.log(countUpDate);
         resolve(data);
       }
     });
@@ -1141,14 +1239,24 @@ module.exports = {
       }
     });
   },
-  getWhtTrayWareHouse: (location) => {
+  getWhtTrayWareHouse: (location, type) => {
     return new Promise(async (resolve, reject) => {
-      let data = await masters.find({
-        prefix: "tray-master",
-        type_taxanomy: "WHT",
-        cpc: location,
-      });
-      resolve(data);
+      if (type == "all-wht-tray") {
+        let data = await masters.find({
+          prefix: "tray-master",
+          type_taxanomy: "WHT",
+          cpc: location,
+        });
+        resolve(data);
+      } else {
+        let data = await masters.find({
+          prefix: "tray-master",
+          type_taxanomy: "WHT",
+          sort_id: "Issued to sorting agent",
+          cpc: location,
+        });
+        resolve(data);
+      }
     });
   },
   getInUseWhtTray: (status, location) => {
@@ -1591,6 +1699,38 @@ module.exports = {
       }
     });
   },
+  checkUicCodeSortingDone: (uic, trayId) => {
+    return new Promise(async (resolve, reject) => {
+      let data = await delivery.findOne({ "uic_code.code": uic });
+      if (data) {
+        let checkExitThisTray = await masters.findOne({
+          code: trayId,
+          items: { $elemMatch: { uic: uic } },
+        });
+        if (checkExitThisTray) {
+          let alreadyAdded = await masters.findOne({
+            code: trayId,
+            "actual_items.uic": uic,
+          });
+          if (alreadyAdded) {
+            resolve({ status: 3 });
+          } else {
+            let obj;
+            for (let x of checkExitThisTray.items) {
+              if (x.uic == uic) {
+                obj = x;
+              }
+            }
+            resolve({ status: 4, data: obj });
+          }
+        } else {
+          resolve({ status: 2 });
+        }
+      } else {
+        resolve({ status: 1 });
+      }
+    });
+  },
   chargingDoneActualItemPut: (trayItemData) => {
     return new Promise(async (resolve, reject) => {
       let data = await masters.updateOne(
@@ -1598,6 +1738,23 @@ module.exports = {
         {
           $push: {
             items: trayItemData.item,
+          },
+        }
+      );
+      if (data.matchedCount != 0) {
+        resolve(data);
+      } else {
+        resolve();
+      }
+    });
+  },
+  sortingDoneActualItemPut: (trayItemData) => {
+    return new Promise(async (resolve, reject) => {
+      let data = await masters.updateOne(
+        { code: trayItemData.trayId },
+        {
+          $push: {
+            actual_items: trayItemData.item,
           },
         }
       );
@@ -1699,6 +1856,29 @@ module.exports = {
       }
     });
   },
+  returnFromBSorting: (location) => {
+    return new Promise(async (resolve, reject) => {
+      let data = await masters.find({
+        $or: [
+          {
+            prefix: "tray-master",
+            type_taxanomy: "WHT",
+            sort_id: "Closed By Sorting Agent",
+            cpc: location,
+          },
+          {
+            prefix: "tray-master",
+            type_taxanomy: "WHT",
+            sort_id: "Received From Sorting",
+            cpc: location,
+          },
+        ],
+      });
+      if (data) {
+        resolve(data);
+      }
+    });
+  },
   bqcDoneRecieved: (trayData) => {
     return new Promise(async (resolve, reject) => {
       let data = await masters.findOneAndUpdate(
@@ -1725,6 +1905,104 @@ module.exports = {
         resolve(data);
       } else {
         resolve(data);
+      }
+    });
+  },
+  sortingDoneRecieved: (trayData) => {
+    return new Promise(async (resolve, reject) => {
+      let data = await masters.findOneAndUpdate(
+        { code: trayData.trayId },
+        {
+          $set: {
+            sort_id: "Received From Sorting",
+          },
+        }
+      );
+      if (data) {
+        resolve(data);
+      }
+    });
+  },
+  getBotAndWhtSortingRequestTray: (botTrayId) => {
+    return new Promise(async (resolve, reject) => {
+      let data = [];
+      let botTray = await masters.findOne({ code: botTrayId });
+      data.push(botTray);
+      console.log(botTray);
+      for (let x of botTray.wht_tray) {
+        let tray = await masters.findOne({ code: x });
+        data.push(tray);
+      }
+      if (data) {
+        resolve(data);
+      }
+    });
+  },
+  getTrayForSortingExVsAt: (trayId) => {
+    return new Promise(async (resolve, reject) => {
+      let data = await masters.findOne({ code: trayId });
+      if (data) {
+        resolve(data);
+      }
+    });
+  },
+  assignToSortingConfirm: (trayId, type) => {
+    return new Promise(async (resolve, reject) => {
+      let data = await masters.findOneAndUpdate(
+        { code: trayId },
+        {
+          $set: {
+            sort_id: type,
+          },
+        }
+      );
+      for (let x of data.wht_tray) {
+        let updateWhtTray = await masters.updateOne(
+          { code: x },
+          {
+            $set: {
+              sort_id: type,
+              issued_user_name: data.issued_user_name,
+            },
+          }
+        );
+      }
+      if (data) {
+        resolve(data);
+      } else {
+        resolve();
+      }
+    });
+  },
+  whtTrayCloseAfterSorting: (trayData) => {
+    return new Promise(async (resolve, reject) => {
+      let data;
+      if (trayData.items.length == trayData.limit) {
+        data = await masters.updateOne(
+          { code: trayData.code },
+          {
+            $set: {
+              sort_id: "Closed",
+              actual_items: [],
+            },
+          }
+        );
+        if (data.modifiedCount !== 0) {
+          resolve({ status: 1 });
+        }
+      } else {
+        data = await masters.updateOne(
+          { code: trayData.code },
+          {
+            $set: {
+              sort_id: "Inuse",
+              actual_items: [],
+            },
+          }
+        );
+        if (data.modifiedCount !== 0) {
+          resolve({ status: 2 });
+        }
       }
     });
   },

@@ -1,4 +1,5 @@
 /* Express */
+const { Router } = require("express");
 const express = require("express");
 const router = express.Router();
 // user controller
@@ -611,24 +612,33 @@ router.post("/itemAssignToWht", async (req, res, next) => {
   }
 });
 /* GET ASSIGNED TRAY */
-router.post("/getAssignedTray/:itemClub/:location", async (req, res, next) => {
-  try {
-    let data = await warehouseInController.getAssignedTray(
-      req.params.itemClub,
-      req.params.location
-    );
-    if (data) {
-      res.status(200).json({
-        data: data,
-      });
+router.post(
+  "/getAssignedTray/:trayId/:location/:brand/:model",
+  async (req, res, next) => {
+    try {
+      console.log(req.params);
+      const { trayId, location, brand, model } = req.params;
+      let data = await warehouseInController.getAssignedTray(
+        trayId,
+        location,
+        brand,
+        model
+      );
+      if (data) {
+        console.log(data);
+        res.status(200).json({
+          data: data,
+        });
+      }
+    } catch (error) {
+      next(error);
     }
-  } catch (error) {
-    next(error);
   }
-});
+);
 /* PULL ITEM FROM WHT TRAY */
 router.post("/removeItemWht", async (req, res, next) => {
   try {
+    console.log(req.body);
     let data = await warehouseInController.removeWhtTrayItem(req.body);
     if (data) {
       res.status(200).json({
@@ -654,11 +664,10 @@ router.post("/createPickList", async (req, res, next) => {
 });
 /**********************************WHT TRAY******************************* */
 /* ALL WHT TRAY */
-router.post("/whtTray/:location", async (req, res, next) => {
+router.post("/whtTray/:location/:type", async (req, res, next) => {
   try {
-    let data = await warehouseInController.getWhtTrayWareHouse(
-      req.params.location
-    );
+    const { location, type } = req.params;
+    let data = await warehouseInController.getWhtTrayWareHouse(location, type);
     if (data) {
       res.status(200).json({
         data: data,
@@ -935,6 +944,7 @@ router.post("/charging-done-recieved/:trayId", async (req, res, next) => {
     let data = await warehouseInController.chargingDoneRecieved(
       req.params.trayId
     );
+    console.log(data);
     if (data) {
       res.status(200).json({
         data: data,
@@ -976,11 +986,55 @@ router.post("/check-uic-charging-done", async (req, res, next) => {
     next(error);
   }
 });
+/* CHECK UIC CODE */
+router.post("/check-uic-sorting-done", async (req, res, next) => {
+  try {
+    const { trayId, uic } = req.body;
+    let data = await warehouseInController.checkUicCodeSortingDone(uic, trayId);
+    if (data.status == 1) {
+      res.status(403).json({
+        message: "UIC Does Not Exists",
+      });
+    } else if (data.status == 2) {
+      res.status(403).json({
+        message: "UIC Not Exists In This Tray",
+      });
+    } else if (data.status == 3) {
+      res.status(403).json({
+        message: "Already Added",
+      });
+    } else if (data.status == 4) {
+      res.status(200).json({
+        message: "Valid UIC",
+        data: data.data,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
 /* CHARGING DONE WAREHOUSE RECEIVED THE TRAY THEN EXTUAL AND EXPECTED */
 /* Check AWBN NUMBER */
 router.post("/charging-done-put-item", async (req, res, next) => {
   try {
     let data = await warehouseInController.chargingDoneActualItemPut(req.body);
+    if (data) {
+      res.status(200).json({
+        message: "Successfully Added",
+      });
+    } else {
+      res.status(403).json({
+        message: "Failed",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+/* Check AWBN NUMBER */
+router.post("/sorting-done-put-item", async (req, res, next) => {
+  try {
+    let data = await warehouseInController.sortingDoneActualItemPut(req.body);
     if (data) {
       res.status(200).json({
         message: "Successfully Added",
@@ -1026,6 +1080,21 @@ router.post("/return-from-bqc-wht/:location", async (req, res, next) => {
     next(error);
   }
 });
+/* TRAY RETURN FROM CHARGING*/
+router.post("/return-from-sorting-wht/:location", async (req, res, next) => {
+  try {
+    let data = await warehouseInController.returnFromBSorting(
+      req.params.location
+    );
+    if (data) {
+      res.status(200).json({
+        data: data,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
 /* ACCEPTE AFTER BQC DONE */
 router.post("/recieved-from-bqc", async (req, res, next) => {
   try {
@@ -1037,6 +1106,108 @@ router.post("/recieved-from-bqc", async (req, res, next) => {
     } else {
       res.status(403).json({
         message: "Failed",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+/* ACCEPTE AFTER BQC DONE */
+router.post("/recieved-from-sorting", async (req, res, next) => {
+  try {
+    let data = await warehouseInController.sortingDoneRecieved(req.body);
+    if (data) {
+      res.status(200).json({
+        message: "Successfully Received",
+      });
+    } else {
+      res.status(403).json({
+        message: "Failed",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+/*********************************************TRAY ISSUE TO SORTING AGENT*********************************************** */
+/* GET WHT AND BOT TRAY SORTING REQUESTS */
+router.post("/get-tray-sorting-requests/:botTrayId", async (req, res, next) => {
+  try {
+    const { botTrayId } = req.params;
+    let data = await warehouseInController.getBotAndWhtSortingRequestTray(
+      botTrayId
+    );
+    if (data) {
+      res.status(200).json({
+        data: data,
+      });
+    } else {
+      res.status(403).json({
+        message: "No Data Found",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+/* GET TRAY */
+router.post("/get-tray-sorting/:trayId", async (req, res, next) => {
+  try {
+    const { trayId } = req.params;
+    let data = await warehouseInController.getTrayForSortingExVsAt(trayId);
+    if (data) {
+      res.status(200).json({
+        data: data,
+      });
+    } else {
+      res.status(403).json({
+        message: "No Data Found",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+/*BOT TRAY AND WHT TRAY ASSIGN TO AGENT */
+router.post(
+  "/assign-to-sorting-confirm/:botTrayId/:type",
+  async (req, res, next) => {
+    try {
+      let data = await warehouseInController.assignToSortingConfirm(
+        req.params.botTrayId,
+        req.params.type
+      );
+      if (data) {
+        if (req.params.type == "Assigned to sorting agent") {
+          res.status(200).json({
+            message: "Successfully Assigned To Agent",
+          });
+        } else {
+          res.status(200).json({
+            message: "Successfully Handover To Agent",
+          });
+        }
+      } else {
+        res.status(403).json({
+          message: "Failed",
+        });
+      }
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+/* WHT TRAY RETURN FROM SORTING AGENT IF TRAY IS FULL READY TO CHARGING */
+router.post("/wht-tray-close-from-sorting", async (req, res, next) => {
+  try {
+    let data = await warehouseInController.whtTrayCloseAfterSorting(req.body);
+    if (data.status == 1) {
+      res.status(200).json({
+        message: "Successfully Closed Ready To Charging",
+      });
+    } else {
+      res.status(200).json({
+        message: "Successfully Closed Not Ready For Charging",
       });
     }
   } catch (error) {

@@ -68,8 +68,17 @@ const mastersSchema = mongoose.Schema({
   closed_time_bot: {
     type: Date,
   },
+  closed_time_sorting_agent: {
+    type: Date,
+  },
   closed_time_wharehouse: {
     type: Date,
+  },
+  closed_time_wharehouse_from_bot: {
+    type: Date,
+  },
+  temp_array:{
+    type:Array
   },
   issued_user_name: {
     type: String,
@@ -84,7 +93,9 @@ const mastersSchema = mongoose.Schema({
   cpc:{
     type:String
   },
-  item_club:[{ type: mongoose.Types.ObjectId, ref: 'itemClub' }]
+  wht_tray:{
+    type:Array
+  }
 });
 const masters = mongoose.model("masters", mastersSchema);
 module.exports = {
