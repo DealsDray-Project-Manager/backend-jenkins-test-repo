@@ -1468,12 +1468,35 @@ module.exports = {
   },
   getSortingAgent: (location) => {
     return new Promise(async (resolve, reject) => {
-      let data = await user.find({
-        user_type: "Sorting Agent",
-        status: "Active",
-        cpc: location,
-      });
-      resolve(data);
+      let data = await user.aggregate([
+        {
+          $match: {
+            user_type: "Sorting Agent",
+            status: "Active",
+            cpc: location,
+          },
+        },
+        {
+          $lookup: {
+            from: "masters",
+            localField: "user_name",
+            foreignField: "issued_user_name",
+            as: "bag",
+          },
+        },
+        {
+          $sort: {
+            user_name: 1,
+          },
+        },
+      ]);
+      let arr = [];
+      for (let x of data) {
+        if (x.bag.length === 0) {
+          arr.push(x);
+        }
+      }
+      resolve(arr);
     });
   },
   getBot: (location) => {
@@ -1610,39 +1633,89 @@ module.exports = {
       }
     });
   },
-  getModelBasedDataFromBot: (muic, trayId) => {
+  getModelBasedDataFromBot: (trayData) => {
+    console.log(trayData);
     return new Promise(async (resolve, reject) => {
-      let data = await masters.findOne(
-        { "temp_array.muic": muic, code: trayId },
-
-        {
-          _id: 0,
-          wht_tray: 1,
-          items: 1,
-          temp_array: {
-            $elemMatch: { muic: muic },
-          },
+      let temp_array = [];
+      let data;
+      let obj = {};
+      let assigned_count = 0;
+      let items = [];
+      for (let x of trayData.tray) {
+        data = await masters.findOne(
+          { "temp_array.muic": trayData.muic, code: x },
+          {
+            _id: 0,
+            items: 1,
+            temp_array: {
+              $elemMatch: { muic: trayData.muic },
+            },
+          }
+        );
+        if (data) {
+          assigned_count = data.temp_array[0]?.assigned_count + assigned_count;
+          obj[x] = data.temp_array[0]?.assigned_count;
+          temp_array.push(...data.temp_array[0].item);
+          obj.model = data.temp_array[0].model;
+          obj.brand = data.temp_array[0].brand;
+          obj.muic = data.temp_array[0].muic;
+          items.push(...data.items);
         }
-      );
-      if (data) {
-        resolve(data);
+      }
+      obj.temp_array = temp_array;
+      obj.assigned_count = assigned_count;
+      obj.items = items;
+      // console.log(obj);
+      if (temp_array) {
+        resolve(obj);
       } else {
         resolve();
       }
     });
   },
+  // whtTrayAssignScreen:(clubDate)=>{
+  //   return new Promise(async(resolve,reject)=>{
+  //     for(let x of clubDate.tray){
+  //       let  data = await masters.findOne(
+  //         { "temp_array.muic": clubDate.muic, code: x },
+  //         {
+  //           _id: 0,
+  //           temp_array: {
+  //             $elemMatch: { muic: clubDate.muic },
+  //           },
+  //         }
+  //       );
+  //       console.log(data);
+  //     }
+  //   })
+  // },
   botTrayAssignedToSortingAgent: (botTrayData) => {
     return new Promise(async (resolve, reject) => {
-      let data = await masters.updateOne(
-        { code: botTrayData.trayId },
-        {
-          $set: {
-            sort_id: "Sorting Request Sended To Warehouse",
-            issued_user_name: botTrayData.agent_name,
-            status_change_time: Date.now(),
-          },
+      let data;
+      for (let x of botTrayData.trayId) {
+        data = await masters.findOneAndUpdate(
+          { code: x },
+          {
+            $set: {
+              sort_id: "Sorting Request Sent To Warehouse",
+              issued_user_name: botTrayData.agent_name,
+              status_change_time: Date.now(),
+            },
+          }
+        );
+        for (let y of data.wht_tray) {
+          dataWht = await masters.findOneAndUpdate(
+            { code: y },
+            {
+              $set: {
+                sort_id: "Sorting Request Sent To Warehouse",
+                issued_user_name: botTrayData.agent_name,
+                status_change_time: Date.now(),
+              },
+            }
+          );
         }
-      );
+      }
       if (data.modifiedCount != 0) {
         resolve(data);
       } else {
@@ -1654,28 +1727,51 @@ module.exports = {
     return new Promise(async (resolve, reject) => {
       if (page == "mis") {
         let data = await masters.find({
-          sort_id: "Sorting Request Sended To Warehouse",
+          sort_id: "Sorting Request Sent To Warehouse",
           cpc: location,
-          type_taxanomy:"BOT"
+          type_taxanomy: "BOT",
         });
         if (data) {
           resolve(data);
         }
       } else {
-        let data = await masters.find({
-          $or: [
-            {
-              sort_id: "Sorting Request Sended To Warehouse",
-              cpc: location,
-              type_taxanomy:"BOT"
+        let data = await masters.aggregate([
+          {
+            $match: {
+              $or: [
+                {
+                  sort_id: "Sorting Request Sent To Warehouse",
+                  cpc: location,
+                  // type_taxanomy: "BOT",
+                },
+                {
+                  sort_id: "Assigned to sorting agent",
+                  cpc: location,
+                  // type_taxanomy: "BOT",
+                },
+              ],
             },
-            {
-              sort_id: "Assigned to sorting agent",
-              cpc: location,
-              type_taxanomy:"BOT"
+          },
+          {
+            $group: {
+              _id: "$issued_user_name",
+              tray: {
+                $push: "$$ROOT",
+              },
             },
-          ],
-        });
+          },
+        ]);
+        for (let y of data) {
+          y.tray[0].botTray = [];
+          y.tray[0].WhtTray = [];
+          for (let x of y.tray) {
+            if (x.type_taxanomy == "BOT") {
+              y.tray[0].botTray.push(x.code);
+            } else if (x.type_taxanomy == "WHT") {
+              y.tray[0].WhtTray.push(x.code);
+            }
+          }
+        }
         if (data) {
           resolve(data);
         }
@@ -1710,22 +1806,94 @@ module.exports = {
       resolve(data);
     });
   },
-  assignForSortingData: (trayId) => {
+  assignForSortingData: (trayData) => {
     return new Promise(async (resolve, reject) => {
-      let data = await masters.findOne({
-        $or: [
-          {
-            code: trayId,
-            sort_id: "Closed By Warehouse",
-          },
-          {
-            code: trayId,
-            sort_id: "Sorting Request Sended To Warehouse",
-          },
-        ],
-      });
-      if (data) {
-        resolve(data);
+      let temp_array = [];
+      let flag = false;
+      for (let x of trayData.trayData) {
+        let data = await masters.findOne({
+          $or: [
+            {
+              code: x,
+              sort_id: "Closed By Warehouse",
+            },
+            {
+              code: x,
+              sort_id: "Sorting Request Sent To Warehouse",
+            },
+          ],
+        });
+        temp_array.push(...data.items);
+      }
+      let arr = [];
+      for (let x of temp_array) {
+        if (x.wht_tray == null) {
+          flag = true;
+        }
+        let status = false;
+        if (arr.length != 0) {
+          for (let y of arr) {
+            if (x?.muic == y?.muic) {
+              if (
+                y.wht_tray.includes(x.wht_tray) == false &&
+                x.wht_tray !== null
+              ) {
+                y.wht_tray.push(x.wht_tray);
+              }
+              if (x.wht_tray == null) {
+                y.dis_tray_assign = false;
+              } else {
+                y.dis_tray_assign = true;
+              }
+              status = false;
+              y.item.push(x);
+              break;
+            } else {
+              status = true;
+            }
+          }
+          if (status == true) {
+            let obj = {
+              item: [x],
+              muic: x.muic,
+              model: x.model,
+              brand: x.brand,
+              wht_tray: [],
+              dis_tray_assign: false,
+            };
+            if (x.wht_tray !== null) {
+              obj.dis_tray_assign = true;
+              obj.wht_tray.push(x.wht_tray);
+            } else {
+              obj.dis_tray_assign = false;
+            }
+            arr.push(obj);
+          }
+        } else {
+          let obj = {
+            item: [x],
+            muic: x.muic,
+            model: x.model,
+            brand: x.brand,
+            wht_tray: [],
+            dis_tray_assign: false,
+          };
+          if (x.wht_tray !== null) {
+            obj.dis_tray_assign = true;
+            obj.wht_tray.push(x.wht_tray);
+          } else {
+            obj.dis_tray_assign = false;
+          }
+          arr.push(obj);
+        }
+      }
+      if (arr) {
+        let obj = {
+          temp_array: arr,
+          not_assigned: flag,
+        };
+        console.log(obj);
+        resolve(obj);
       } else {
         resolve();
       }

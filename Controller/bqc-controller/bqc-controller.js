@@ -64,7 +64,6 @@ module.exports = {
           $set: {
             sort_id: "BQC Done",
             closed_time_bot: Date.now(),
-            
             description: trayData.description,
             items: [],
           },

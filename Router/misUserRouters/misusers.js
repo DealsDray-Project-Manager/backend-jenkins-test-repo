@@ -527,10 +527,9 @@ router.post("/wh-closed-bot-tray/:location", async (req, res, next) => {
   }
 });
 /* ASSIGN FOR SORTING PAGE DATA  */
-router.post("/assign-for-sorting/:trayId", async (req, res, next) => {
+router.post("/assign-for-sorting", async (req, res, next) => {
   try {
-    const { trayId } = req.params;
-    let data = await misUserController.assignForSortingData(trayId);
+    let data = await misUserController.assignForSortingData(req.body);
     if (data) {
       res.status(200).json({
         data: data,
@@ -573,26 +572,33 @@ router.post("/getSortingAgent/:location", async (req, res, next) => {
   }
 });
 // ASSIGN FOR SORTING VIEW CLUBED DATA
-router.post(
-  "/view-bot-clubed-data-model/:muic/:trayId",
-  async (req, res, next) => {
-    try {
-      const { muic, trayId } = req.params;
-      let data = await misUserController.getModelBasedDataFromBot(muic, trayId);
-      if (data) {
-        res.status(200).json({
-          data: data,
-        });
-      } else {
-        res.status(403).json({
-          message: "No data found",
-        });
-      }
-    } catch (error) {
-      next(error);
+router.post("/view-bot-clubed-data-model", async (req, res, next) => {
+  try {
+    let data = await misUserController.getModelBasedDataFromBot(req.body);
+    if (data) {
+      res.status(200).json({
+        data: data,
+      });
+    } else {
+      res.status(403).json({
+        message: "No data found",
+      });
     }
+  } catch (error) {
+    next(error);
   }
-);
+});
+/* WHT TRAY ASSIGNEMENT */
+router.post("/wht-tray-assigne-screen",async (req, res, next) => {
+  try {
+    let data=await misUserController.whtTrayAssignScreen(req.body)
+    if(data){
+
+    }
+  } catch (error) {
+    next(error);
+  }
+});
 /* BOT TRAY ASSIGNED TO SORTING AGENT */
 router.post("/assign-to-sorting-agent", async (req, res, next) => {
   try {
@@ -611,22 +617,28 @@ router.post("/assign-to-sorting-agent", async (req, res, next) => {
   }
 });
 /* VIEW SORTING REQUESTS */
-router.post("/view-sorting-item/:location/:pageType", async (req, res, next) => {
-  try {
-    let data = await misUserController.viewSortingRequests(req.params.location,req.params.pageType);
-    if (data) {
-      res.status(200).json({
-        data: data,
-      });
-    } else {
-      res.status(403).json({
-        message: "Failed",
-      });
+router.post(
+  "/view-sorting-item/:location/:pageType",
+  async (req, res, next) => {
+    try {
+      let data = await misUserController.viewSortingRequests(
+        req.params.location,
+        req.params.pageType
+      );
+      if (data) {
+        res.status(200).json({
+          data: data,
+        });
+      } else {
+        res.status(403).json({
+          message: "Failed",
+        });
+      }
+    } catch (error) {
+      next(error);
     }
-  } catch (error) {
-    next(error);
   }
-});
+);
 /********************************************ASSIGN TO CHARGING***************************************************************************************** */
 /* GET READY FOR CHARGING WHT TRAY */
 router.post("/ready-for-charging-wht", async (req, res, next) => {

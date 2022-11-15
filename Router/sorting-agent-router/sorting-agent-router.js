@@ -85,27 +85,22 @@ router.post("/item-move-to-wht", async (req, res, next) => {
   }
 });
 /* BOT TRAY AND WHT TRAY SEND TO WAREHOUSE */
-router.post(
-  "/bot-and-wht-send-to-warehouse/:trayId",
-  async (req, res, next) => {
-    try {
-      let data = await sortingAgentController.sendToWarehouse(
-        req.params.trayId
-      );
-      if (data) {
-        res.status(200).json({
-          message: "Tray Successfully Sended to warehouse",
-        });
-      } else {
-        res.status(403).json({
-          message: "Failed",
-        });
-      }
-    } catch (error) {
-      next(error);
+router.post("/bot-and-wht-send-to-warehouse", async (req, res, next) => {
+  try {
+    let data = await sortingAgentController.sendToWarehouse(req.body);
+    if (data) {
+      res.status(200).json({
+        message: "Tray Successfully Sent to warehouse",
+      });
+    } else {
+      res.status(403).json({
+        message: "Failed",
+      });
     }
+  } catch (error) {
+    next(error);
   }
-);
+});
 /* VIEW ASSIGNED WHT TRAY */
 router.post("/view-assigned-wht-tray/:username", async (req, res, next) => {
   try {
@@ -121,17 +116,17 @@ router.post("/view-assigned-wht-tray/:username", async (req, res, next) => {
   }
 });
 /* WHT TRAY CLOSE */
-router.post("/wht-tray-close/:trayId",async(req,res,next)=>{
+router.post("/wht-tray-close/:trayId", async (req, res, next) => {
   try {
-    const {trayId}=req.params
-    let data=await sortingAgentController.trayCloseWht(trayId)
-    if(data){
+    const { trayId } = req.params;
+    let data = await sortingAgentController.trayCloseWht(trayId);
+    if (data) {
       res.status(200).json({
-        message: "Tray Successfully Sended to warehouse",
-      })
+        message: "Tray Successfully Sent to warehouse",
+      });
     }
   } catch (error) {
-    next(error)
+    next(error);
   }
-})
+});
 module.exports = router;

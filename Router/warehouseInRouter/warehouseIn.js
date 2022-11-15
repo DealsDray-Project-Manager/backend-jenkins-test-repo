@@ -581,10 +581,9 @@ router.post("/viewModelClub", async (req, res, next) => {
 /* ASSIGN NEW WHT TRAY GET TRAY */
 router.post("/getWhtTray", async (req, res, next) => {
   try {
-    const { type, vendor_sku_id, brand_name, model_name, location } = req.body;
+    const { type, brand_name, model_name, location } = req.body;
     let data = await warehouseInController.getWhtTray(
       type,
-      vendor_sku_id,
       brand_name,
       model_name,
       location
@@ -612,33 +611,21 @@ router.post("/itemAssignToWht", async (req, res, next) => {
   }
 });
 /* GET ASSIGNED TRAY */
-router.post(
-  "/getAssignedTray/:trayId/:location/:brand/:model",
-  async (req, res, next) => {
-    try {
-      console.log(req.params);
-      const { trayId, location, brand, model } = req.params;
-      let data = await warehouseInController.getAssignedTray(
-        trayId,
-        location,
-        brand,
-        model
-      );
-      if (data) {
-        console.log(data);
-        res.status(200).json({
-          data: data,
-        });
-      }
-    } catch (error) {
-      next(error);
+router.post("/getAssignedTray", async (req, res, next) => {
+  try {
+    let data = await warehouseInController.getAssignedTray(req.body);
+    if (data) {
+      res.status(200).json({
+        data: data,
+      });
     }
+  } catch (error) {
+    next(error);
   }
-);
+});
 /* PULL ITEM FROM WHT TRAY */
 router.post("/removeItemWht", async (req, res, next) => {
   try {
-    console.log(req.body);
     let data = await warehouseInController.removeWhtTrayItem(req.body);
     if (data) {
       res.status(200).json({
@@ -944,7 +931,6 @@ router.post("/charging-done-recieved/:trayId", async (req, res, next) => {
     let data = await warehouseInController.chargingDoneRecieved(
       req.params.trayId
     );
-    console.log(data);
     if (data) {
       res.status(200).json({
         data: data,
@@ -1131,11 +1117,11 @@ router.post("/recieved-from-sorting", async (req, res, next) => {
 });
 /*********************************************TRAY ISSUE TO SORTING AGENT*********************************************** */
 /* GET WHT AND BOT TRAY SORTING REQUESTS */
-router.post("/get-tray-sorting-requests/:botTrayId", async (req, res, next) => {
+router.post("/get-tray-sorting-requests/:username", async (req, res, next) => {
   try {
-    const { botTrayId } = req.params;
+    const { username } = req.params;
     let data = await warehouseInController.getBotAndWhtSortingRequestTray(
-      botTrayId
+      username
     );
     if (data) {
       res.status(200).json({
@@ -1169,34 +1155,29 @@ router.post("/get-tray-sorting/:trayId", async (req, res, next) => {
   }
 });
 /*BOT TRAY AND WHT TRAY ASSIGN TO AGENT */
-router.post(
-  "/assign-to-sorting-confirm/:botTrayId/:type",
-  async (req, res, next) => {
-    try {
-      let data = await warehouseInController.assignToSortingConfirm(
-        req.params.botTrayId,
-        req.params.type
-      );
-      if (data) {
-        if (req.params.type == "Assigned to sorting agent") {
-          res.status(200).json({
-            message: "Successfully Assigned To Agent",
-          });
-        } else {
-          res.status(200).json({
-            message: "Successfully Handover To Agent",
-          });
-        }
+router.post("/assign-to-sorting-confirm", async (req, res, next) => {
+  try {
+    console.log(req.body);
+    let data = await warehouseInController.assignToSortingConfirm(req.body);
+    if (data) {
+      if (req.body.type == "Assigned to sorting agent") {
+        res.status(200).json({
+          message: "Successfully Assigned To Agent",
+        });
       } else {
-        res.status(403).json({
-          message: "Failed",
+        res.status(200).json({
+          message: "Successfully Handover To Agent",
         });
       }
-    } catch (error) {
-      next(error);
+    } else {
+      res.status(403).json({
+        message: "Failed",
+      });
     }
+  } catch (error) {
+    next(error);
   }
-);
+});
 /* WHT TRAY RETURN FROM SORTING AGENT IF TRAY IS FULL READY TO CHARGING */
 router.post("/wht-tray-close-from-sorting", async (req, res, next) => {
   try {

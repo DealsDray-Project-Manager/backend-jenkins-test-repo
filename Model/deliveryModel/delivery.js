@@ -108,9 +108,15 @@ const deliverySchema = mongoose.Schema({
   tray_closed_by_bot: {
     type: Date,
   },
-  pick_list_status: {
+  // pick_list_status: {
+  //   type: String,
+  //   default: "Pending",
+  // },
+  handover_sorting_date: {
+    type: Date,
+  },
+  sorting_agent_name: {
     type: String,
-    default: "Pending",
   },
   wht_tray: {
     type: String,

@@ -8,8 +8,8 @@ const { admin } = require("../../Model/adminModel/admins");
 const { usersHistory } = require("../../Model/users-history-model/model");
 const { delivery } = require("../../Model/deliveryModel/delivery");
 const { itemClub } = require("../../Model/itemClubModel/club");
-const IISDOMAIN = "https://prexo-v1-dev-api.dealsdray.com/user/profile/";
-const IISDOMAINPRDT = "https://prexo-v1-dev-api.dealsdray.com/product/image/";
+const IISDOMAIN = "http://prexo-v2-uat-adminapi.dealsdray.com/user/profile/";
+const IISDOMAINPRDT = "http://prexo-v2-uat-adminapi.dealsdray.com/product/image/";
 
 /************************************************************************************************** */
 module.exports = {
@@ -220,17 +220,6 @@ module.exports = {
       let brand_id = [];
       let brand_name = [];
       for (let i = 0; i < bandData.length; i++) {
-        // let brandIdExists = await brands.findOne({ brand_id: bandData[i].brand_id })
-        // if (brandIdExists) {
-        //     brand_id.push(brandIdExists.brand_id)
-        //     err["duplicate_brand_id"] = brand_id
-        // }
-        // else {
-        //     if (bandData.some((data, index) => data.brand_id == bandData[i].brand_id && index != i)) {
-        //         brand_id.push(bandData[i].brand_id)
-        //         err["duplicate_brand_id"] = brand_id
-        //     }
-        // }
         let barndName = await brands.findOne({
           brand_name: bandData[i].brand_name,
         });
@@ -819,18 +808,19 @@ module.exports = {
         let brandModel = await brands.findOne({
           brand_name: trayData[i].tray_brand,
         });
-        if (brandModel) {
+        if (brandModel == null) {
           brand.push(trayData[i].tray_brand);
           err["brand"] = brand;
         }
         let modelName = await products.findOne({
           model_name: trayData[i].tray_model,
         });
-        if (modelName) {
+        if (modelName == null) {
           model.push(trayData[i].tray_model);
           err["model"] = model;
         }
       }
+      console.log(err);
       if (Object.keys(err).length === 0) {
         resolve({ status: true });
       } else {
@@ -1234,18 +1224,18 @@ module.exports = {
       "B0300",
     ];
     return new Promise(async (resolve, reject) => {
-      let updateData;
-      for (let i = 0; i < arr.length; i++) {
-        updateData = await masters.updateOne(
-          { code: arr[i] },
-          {
-            cpc: "Bangalore_560067",
-          }
-        );
-      }
-      if (updateData) {
-        resolve(updateData);
-      }
+      // let updateData;
+      // for (let i = 0; i < arr.length; i++) {
+      //   updateData = await masters.updateOne(
+      //     { code: arr[i] },
+      //     {
+      //       cpc: "Bangalore_560067",
+      //     }
+      //   );
+      // }
+      // if (updateData) {
+      //   resolve(updateData);
+      // }
       // let updateData=await masters.updateMany({cpc:{$exists:false}},{
       //   $set:{
       //     cpc:"Gurgaon_122016"
@@ -1290,70 +1280,61 @@ module.exports = {
       // }
       // console.log(updateBag);
       // resolve(updateBag)
-      // let getDelivery = await delivery.find({
-      //   tray_type: { $exists: true },
-      // });
-      // for (let i = 0; i < getDelivery.length; i++) {
-      //   if (getDelivery[i].tray_type == "BOT") {
-      //     let getTray = await masters.findOne({
-      //       code: getDelivery[i].tray_id,
-      //       "items.awbn_number": { $ne: getDelivery[i].tracking_id },
-      //     });
-      //     if (getTray) {
-      //       let obj = {
-      //         tracking_id: getDelivery[i].tracking_id,
-      //         bot_agent: getDelivery[i].agent_name,
-      //         tray_id: getDelivery[i].tray_id,
-      //         uic: getDelivery[i].uic_code.code,
-      //         imei: getDelivery[i].imei,
-      //         closed_time: new Date(new Date().toISOString().split("T")[0]),
-      //         wht_tray: null,
-      //         status: getDelivery[i].stock_in_status,
-      //       };
-      //       let checkModel = await itemClub.findOne({
-      //         vendor_sku_id: getDelivery[i].item_id,
-      //         cpc: getDelivery[i].partner_shop,
-      //         created_at: new Date(new Date().toISOString().split("T")[0]),
-      //       });
-      //       console.log(checkModel);
-      //       if (checkModel != null) {
-      //         let findProductData = await itemClub.updateOne(
-      //           {
-      //             vendor_sku_id: getDelivery[i].item_id,
-      //             cpc: getDelivery[i].partner_shop,
-      //             created_at: new Date(new Date().toISOString().split("T")[0]),
-      //           },
-      //           {
-      //             $push: {
-      //               item: obj,
-      //             },
-      //           }
-      //         );
-      //       } else {
-      //         let newObj = {
-      //           vendor_sku_id: getDelivery[i].item_id,
-      //           cpc: getDelivery[i].partner_shop,
-      //           created_at: new Date(new Date().toISOString().split("T")[0]),
-      //           item: [],
-      //         };
-      //         newObj.item.push(obj);
-      //         let findProductData = await itemClub.create(newObj);
-      //         for (let I of getTray.items) {
-      //           let deliveryTrack = await delivery.updateMany(
-      //             { tracking_id: i.awbn_number },
-      //             {
-      //               $set: {
-      //                 warehouse_close_date: Date.now(),
-      //                 tray_status: "Closed By Warehouse",
-      //               },
-      //             }
-      //           );
-      //         }
-      //         resolve(findProductData);
-      //       }
-      //     }
-      //   }
-      // }
+      let findClosedItem = await delivery.find({ tray_type: "BOT" });
+      for (let x of findClosedItem) {
+        let item = await products.findOne({ vendor_sku_id: x.item_id });
+        let obj = {
+          awbn_number: x.tracking_id,
+          order_id: x.order_id,
+          order_date: x.order_date,
+          imei: x.imei,
+          stickerOne: "UIC Pasted On Device",
+          stickerTwo: "Device Putin Sleeve",
+          stickerThree: "UIC Pasted On Sleeve",
+          stickerFour: "",
+          status: x.stock_in_status,
+          tray_id: x.tray_id,
+          bag_id: x.bag_id,
+          bag_assigned_date: null,
+          user_name: x.agent_name,
+          uic: x.uic_code.code,
+          body_damage: "NO",
+          added_time: null,
+          brand: item.brand_name,
+          model: item.model_name,
+          muic: item.muic,
+          wht_tray: null,
+        };
+        let find = await masters.findOne({ code: x.tray_id });
+        if (find.sort_id == "Open") {
+          let data = await masters.updateOne(
+            { code: x.tray_id, sort_id: "Open" },
+            {
+              $set: {
+                sort_id: "Closed By Warehouse",
+                issued_user_name: x.agent_name,
+                closed_time_wharehouse_from_bot: new Date(
+                  new Date().toISOString().split("T")[0]
+                ),
+              },
+
+              $push: {
+                items: obj,
+              },
+            }
+          );
+        } else {
+          let data = await masters.updateOne(
+            { code: x.tray_id, sort_id: "Closed By Warehouse" },
+            {
+              $push: {
+                items: obj,
+              },
+            }
+          );
+        }
+      }
+      resolve(findClosedItem);
     });
   },
 };

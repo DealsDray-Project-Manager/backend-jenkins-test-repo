@@ -20,6 +20,7 @@ module.exports = {
         bot: "",
         wht: [],
       };
+      let arr = [];
       tray.bot = await masters.findOne({
         code: trayId,
         issued_user_name: username,
@@ -27,9 +28,16 @@ module.exports = {
       });
       for (let x of tray.bot?.wht_tray) {
         let whtTray = await masters.findOne({ code: x });
-        tray.wht.push(whtTray);
+        if (arr.length == 0) {
+          arr.push(x);
+          tray.wht.push(whtTray);
+        } else {
+          if (arr.includes(x)) {
+          } else {
+            tray.wht.push(whtTray);
+          }
+        }
       }
-      console.log(tray);
       resolve(tray);
     });
   },
@@ -50,11 +58,11 @@ module.exports = {
           if (alreadyAdded) {
             for (let x of checkItemExistsInTheTray?.items) {
               if (x.uic == trayData.uic) {
+                console.log(x);
                 obj = x;
                 break;
               }
             }
-            console.log(obj);
             resolve({ status: 1, data: obj });
           } else {
             resolve({ status: 4 });
@@ -75,11 +83,12 @@ module.exports = {
       uic: itemData.uic,
       imei: itemData.imei,
       muic: itemData.muic,
-      brand: itemData.brand,
-      model: itemData.model,
+      brand_name: itemData.brand,
+      model_name: itemData.model,
       order_id: itemData.order_id,
       order_date: itemData.order_date,
       status: itemData.status,
+      closed_time: itemData.closed_time,
       bot_eval_result: {
         stickerOne: itemData.stickerOne,
         stickerTwo: itemData.stickerTwo,
@@ -112,8 +121,16 @@ module.exports = {
           },
         }
       );
-      console.log(data);
       if (data.modifiedCount != 0) {
+        let updateDelivery = await delivery.updateOne(
+          { tracking_id: itemData.awbn_number },
+          {
+            $set: {
+              wht_tray: itemData.wht_tray,
+              wht_tray_assigned_date: Date.now(),
+            },
+          }
+        );
         resolve(data);
       } else {
         resolve();
@@ -123,7 +140,7 @@ module.exports = {
   sendToWarehouse: (trayId) => {
     return new Promise(async (resolve, reject) => {
       let data = await masters.findOneAndUpdate(
-        { code: trayId },
+        { code: trayId.trayId },
         {
           $set: {
             sort_id: "Closed By Sorting Agent",
@@ -132,13 +149,38 @@ module.exports = {
         }
       );
       for (let x of trayId.wht) {
-        if (x.items.length == x.limit) {
-          let whtTrayUpdate = await masters.findOneAndUpdate(
-            { code: x.code },
+        let checkAnyBotTray = await masters.findOne({
+          issued_user_name: x.issued_user_name,
+          type_taxanomy: "BOT",
+          sort_id: "Issued to sorting agent",
+        });
+        if (checkAnyBotTray) {
+          if (x.items.length == x.limit) {
+            let whtTrayUpdate = await masters.findOneAndUpdate(
+              { code: x.code },
+              {
+                $set: {
+                  sort_id: "Closed By Sorting Agent",
+                  closed_time_sorting_agent: Date.now(),
+                  temp_array: [],
+                  actual_items: [],
+                },
+              }
+            );
+          }
+        } else {
+          let whtTrayUpdate = await masters.updateMany(
+            {
+              issued_user_name: x.issued_user_name,
+              type_taxanomy: "WHT",
+              sort_id: "Issued to sorting agent",
+            },
             {
               $set: {
                 sort_id: "Closed By Sorting Agent",
                 closed_time_sorting_agent: Date.now(),
+                temp_array: [],
+                actual_items: [],
               },
             }
           );
@@ -171,6 +213,8 @@ module.exports = {
           $set: {
             sort_id: "Closed By Sorting Agent",
             closed_time_sorting_agent: Date.now(),
+            temp_array: [],
+            actual_items: [],
           },
         }
       );

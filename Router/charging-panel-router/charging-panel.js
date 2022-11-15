@@ -58,7 +58,7 @@ router.post("/charging-done",async(req,res,next)=>{
     let data=await chargingController.chargeDone(req.body)
     if(data){
       res.status(200).json({
-        message:"Successfully Sended to Warehouse"
+        message:"Successfully Sent to Warehouse"
       })
     }
   } catch (error) {
