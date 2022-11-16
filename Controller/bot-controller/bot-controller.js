@@ -50,7 +50,7 @@ module.exports = {
           },
         }
       );
-      let trayClose = await masters.updateOne(
+      let trayClose = await masters.findOneAndUpdate(
         { code: bagData.trayId },
         {
           $set: {
@@ -60,16 +60,18 @@ module.exports = {
           },
         }
       );
-      if (trayClose.modifiedCount != 0 && bagClose.modifiedCount != 0) {
-        let deliveryTrck = await delivery.updateMany(
-          { tray_id: bagData.trayId },
-          {
-            $set: {
-              tray_closed_by_bot: Date.now(),
-              tray_status: "Closed By Bot",
-            },
-          }
-        );
+      if (trayClose) {
+        for (let x of trayClose.items) {
+          let deliveryTrck = await delivery.updateMany(
+            { tracking_id: x.awbn_number },
+            {
+              $set: {
+                tray_closed_by_bot: Date.now(),
+                tray_status: "Closed By Bot",
+              },
+            }
+          );
+        }
         resolve(trayClose);
       }
     });
@@ -221,7 +223,7 @@ module.exports = {
       if (closeOrNot) {
         resolve({ status: 2 });
       } else {
-        let data = await masters.updateOne(
+        let data = await masters.findOneAndUpdate(
           { code: trayId },
           {
             $set: {
@@ -230,16 +232,18 @@ module.exports = {
             },
           }
         );
-        if (data.modifiedCount != 0) {
-          let deliveryTrack = await masters.updateMany(
-            { tray_id: trayId },
-            {
-              $set: {
-                tray_closed_by_bot: Date.now(),
-                tray_status: "Closed By Bot",
-              },
-            }
-          );
+        if (data) {
+          for (let x of data.items) {
+            let deliveryTrack = await delivery.updateMany(
+              { tracking_id: x.awbn_number },
+              {
+                $set: {
+                  tray_closed_by_bot: Date.now(),
+                  tray_status: "Closed By Bot",
+                },
+              }
+            );
+          }
           resolve({ status: 1 });
         } else {
           resolve({ status: 3 });

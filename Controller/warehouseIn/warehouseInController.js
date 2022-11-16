@@ -566,6 +566,27 @@ module.exports = {
       }
     });
   },
+  getInuseMmtPmt: (location) => {
+    return new Promise(async (resolve, reject) => {
+      let data = await masters.find({
+        $or: [
+          {
+            sort_id: "Issued",
+            prefix: "tray-master",
+            type_taxanomy: "MMT",
+            cpc: location,
+          },
+          {
+            sort_id: "Issued",
+            prefix: "tray-master",
+            type_taxanomy: "PMT",
+            cpc: location,
+          },
+        ],
+      });
+      resolve(data);
+    });
+  },
   closeBotTrayGet: (location) => {
     return new Promise(async (resolve, reject) => {
       let data = await masters.find({
@@ -702,25 +723,42 @@ module.exports = {
   },
   trayClose: (trayData) => {
     return new Promise(async (resolve, reject) => {
-      let data = await masters.updateOne(
-        { code: trayData.trayId },
-        {
-          $set: {
-            sort_id: "Closed By Warehouse",
-            closed_time_wharehouse: Date.now(),
-          },
-        }
-      );
-      if (data.modifiedCount != 0) {
-        let deliveryTrack = await delivery.updateMany(
-          { tray_Id: trayData.trayId },
+      let getTray = await masters.findOne({ code: trayData.trayId });
+      let data;
+      if (getTray?.items?.length == getTray.limit) {
+        data = await masters.findOneAndUpdate(
+          { code: trayData.trayId },
           {
             $set: {
-              warehouse_close_date: Date.now(),
-              tray_status: "Closed By Warehouse",
+              sort_id: "Closed By Warehouse",
+              closed_time_wharehouse: Date.now(),
             },
           }
         );
+      } else {
+        data = await masters.findOneAndUpdate(
+          { code: trayData.trayId },
+          {
+            $set: {
+              sort_id: "Existing Tray",
+              closed_time_wharehouse: Date.now(),
+              issued_user_name: null,
+            },
+          }
+        );
+      }
+      if (data) {
+        for (let x of data.items) {
+          let deliveryTrack = await delivery.updateMany(
+            { tracking_id: x.awbn_number },
+            {
+              $set: {
+                warehouse_close_date: Date.now(),
+                tray_status: "Closed By Warehouse",
+              },
+            }
+          );
+        }
         resolve(data);
       } else {
         resolve();
@@ -749,7 +787,7 @@ module.exports = {
             },
             {
               $set: {
-                tray_close_wh_date: Date.now(),
+                closed_time_wharehouse: Date.now(),
                 tray_status: "Closed By Warehouse",
               },
             }
@@ -2022,6 +2060,32 @@ module.exports = {
           resolve({ status: 2 });
         }
       }
+    });
+  },
+  getReportMmtPmt: (reportBasis) => {
+    var d = new Date(); // Today!
+    let yesterday = d.setDate(d.getDate() - 1);
+    return new Promise(async (resolve, reject) => {
+      let data = await delivery.find({
+        tray_type: reportBasis.trayType,
+        partner_shop: reportBasis.location,
+        closed_time_wharehouse: { $gt: yesterday },
+        closed_time_wharehouse: { $lte: Date.now() },
+      });
+      resolve(data);
+    });
+  },
+  getReportMmtPmtSort: (reportBasis) => {
+    var d = new Date(); // Today!
+    let yesterday = d.setDate(d.getDate() - 1);
+    return new Promise(async (resolve, reject) => {
+      let data = await delivery.find({
+        tray_type: reportBasis.trayType,
+        partner_shop: reportBasis.location,
+        closed_time_wharehouse: { $gt: yesterday },
+        closed_time_wharehouse: { $lte: reportBasis.date },
+      });
+      resolve(data);
     });
   },
 };

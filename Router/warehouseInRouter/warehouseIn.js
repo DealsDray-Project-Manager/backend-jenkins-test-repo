@@ -370,6 +370,19 @@ router.post("/trayCloseRequest/:location", async (req, res, next) => {
     next(error);
   }
 });
+/* GET INUSE PMT OR MMT TRAY */
+router.post("/inuse-mmt-pmt/:location", async (req, res, next) => {
+  try {
+    let data = await warehouseInController.getInuseMmtPmt(req.params.location);
+    if (data) {
+      res.status(200).json({
+        data: data,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
 /* ACCEPTE TRAY */
 router.post("/receivedTray", async (req, res, next) => {
   try {
@@ -1189,6 +1202,34 @@ router.post("/wht-tray-close-from-sorting", async (req, res, next) => {
     } else {
       res.status(200).json({
         message: "Successfully Closed Not Ready For Charging",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+/***************************************MMT AND PMT DAILY WAISE REPORT************************************************************ */
+router.post("/mmt-pmt-report", async (req, res, next) => {
+  try {
+    let data = await warehouseInController.getReportMmtPmt(req.body);
+    console.log(data);
+    if (data) {
+      res.status(200).json({
+        data: data,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+/* SORT REPORT */
+router.post("/sort-mmt-pmt-report", async (req, res, next) => {
+  try {
+    let data = await warehouseInController.getReportMmtPmtSort(req.body);
+    console.log(data);
+    if (data) {
+      res.status(200).json({
+        data: data,
       });
     }
   } catch (error) {
