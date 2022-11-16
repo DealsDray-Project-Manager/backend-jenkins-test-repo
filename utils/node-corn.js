@@ -41,6 +41,7 @@ exports = module.exports = () => {
           },
         }
       );
+      console.log(getData);
     });
   } catch (error) {
     console.log(error);

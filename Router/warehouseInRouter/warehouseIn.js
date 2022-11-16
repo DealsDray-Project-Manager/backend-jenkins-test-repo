@@ -1212,7 +1212,6 @@ router.post("/wht-tray-close-from-sorting", async (req, res, next) => {
 router.post("/mmt-pmt-report", async (req, res, next) => {
   try {
     let data = await warehouseInController.getReportMmtPmt(req.body);
-    console.log(data);
     if (data) {
       res.status(200).json({
         data: data,

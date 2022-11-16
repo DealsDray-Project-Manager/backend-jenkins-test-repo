@@ -2065,12 +2065,13 @@ module.exports = {
   getReportMmtPmt: (reportBasis) => {
     var d = new Date(); // Today!
     let yesterday = d.setDate(d.getDate() - 1);
+    console.log(new Date(yesterday));
     return new Promise(async (resolve, reject) => {
       let data = await delivery.find({
         tray_type: reportBasis.trayType,
         partner_shop: reportBasis.location,
-        closed_time_wharehouse: { $gt: yesterday },
-        closed_time_wharehouse: { $lte: Date.now() },
+        warehouse_close_date: { $gt: new Date(yesterday)},
+        warehouse_close_date: { $lte: Date.now() },
       });
       resolve(data);
     });
@@ -2082,8 +2083,8 @@ module.exports = {
       let data = await delivery.find({
         tray_type: reportBasis.trayType,
         partner_shop: reportBasis.location,
-        closed_time_wharehouse: { $gt: yesterday },
-        closed_time_wharehouse: { $lte: reportBasis.date },
+        warehouse_close_date: { $gt: new Date(yesterday) },
+        warehouse_close_date: { $lte: reportBasis.date },
       });
       resolve(data);
     });
