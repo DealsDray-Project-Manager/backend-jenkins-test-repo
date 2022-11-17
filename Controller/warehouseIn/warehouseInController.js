@@ -548,15 +548,15 @@ module.exports = {
           {
             prefix: "tray-master",
             sort_id: "Closed By Bot",
-            type_taxanomy: { $ne: "BOT" },
             type_taxanomy: { $ne: "WHT" },
+            type_taxanomy: { $ne: "BOT" },
             cpc: location,
           },
           {
             prefix: "tray-master",
             sort_id: "Received From BOT",
-            type_taxanomy: { $ne: "BOT" },
             type_taxanomy: { $ne: "WHT" },
+            type_taxanomy: { $ne: "BOT" },
             cpc: location,
           },
         ],
@@ -743,6 +743,7 @@ module.exports = {
               sort_id: "Existing Tray",
               closed_time_wharehouse: Date.now(),
               issued_user_name: null,
+            
             },
           }
         );

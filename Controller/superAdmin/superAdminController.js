@@ -8,8 +8,8 @@ const { admin } = require("../../Model/adminModel/admins");
 const { usersHistory } = require("../../Model/users-history-model/model");
 const { delivery } = require("../../Model/deliveryModel/delivery");
 const { itemClub } = require("../../Model/itemClubModel/club");
-const IISDOMAIN = "https://prexo-v1-dev-api.dealsdray.com/user/profile/";
-const IISDOMAINPRDT = "https://prexo-v1-dev-api.dealsdray.com/product/image/";
+const IISDOMAIN = "http://prexo-v2-uat-adminapi.dealsdray.com/user/profile/";
+const IISDOMAINPRDT = "http://prexo-v2-uat-adminapi.dealsdray.com/product/image/";
 
 /************************************************************************************************** */
 module.exports = {
@@ -76,6 +76,7 @@ module.exports = {
     userData.creation_date = Date.now();
     return new Promise(async (resolve, rejects) => {
       let userExist = await user.findOne({ user_name: userData.user_name });
+      console.log(userExist);
       if (userExist) {
         resolve({ status: true, user: userExist });
       } else {
@@ -820,7 +821,6 @@ module.exports = {
           err["model"] = model;
         }
       }
-      console.log(err);
       if (Object.keys(err).length === 0) {
         resolve({ status: true });
       } else {
@@ -992,56 +992,44 @@ module.exports = {
   },
   searchAdminTrackItem: (searchType, value, location) => {
     let allData;
+    let date2 = moment
+      .utc(value, "DD-MM-YYYY")
+
+      .toDate();
+    let date1 = moment.utc(value, "DD-MM-YYYY").add(1, "days").toDate();
+    console.log(date1);
+    console.log(date2);
+
     return new Promise(async (resolve, reject) => {
-      if (searchType == "order_id") {
-        allData = await orders.aggregate([
-          {
-            $match: {
-              delivery_status: "Delivered",
-              order_id: { $regex: "^" + value + ".*", $options: "i" },
-            },
-          },
-          {
-            $lookup: {
-              from: "deliveries",
-              localField: "order_id",
-              foreignField: "order_id",
-              as: "delivery",
-            },
-          },
-          {
-            $unwind: "$delivery",
-          },
-        ]);
-      } else if (searchType == "tracking_id") {
-        allData = await orders.aggregate([
-          {
-            $match: {
-              delivery_status: "Delivered",
-            },
-          },
-          {
-            $lookup: {
-              from: "deliveries",
-              localField: "order_id",
-              foreignField: "order_id",
-              as: "delivery",
-            },
-          },
-          {
-            $unwind: "$delivery",
-          },
-          {
-            $match: {
-              delivery_status: "Delivered",
-              "delivery.tracking_id": {
-                $regex: ".*" + value + ".*",
-                $options: "i",
+      allData = await orders.aggregate([
+        {
+          $match: {
+            delivery_status: "Delivered",
+            $or: [
+              { order_id: { $regex: "^" + value + ".*", $options: "i" } },
+              { item_id: { $regex: "^" + value + ".*", $options: "i" } },
+              {
+                imei: {
+                  $regex: ".*" + value + ".*",
+                  $options: "i",
+                },
               },
-            },
+            ],
           },
-        ]);
-      } else if (searchType == "uic") {
+        },
+        {
+          $lookup: {
+            from: "deliveries",
+            localField: "order_id",
+            foreignField: "order_id",
+            as: "delivery",
+          },
+        },
+        {
+          $unwind: "$delivery",
+        },
+      ]);
+      if (allData.length == 0) {
         allData = await orders.aggregate([
           {
             $match: {
@@ -1062,14 +1050,250 @@ module.exports = {
           {
             $match: {
               delivery_status: "Delivered",
-              "delivery.uic_code.code": {
-                $regex: ".*" + value + ".*",
-                $options: "i",
-              },
+              $or: [
+                {
+                  "delivery.uic_status": {
+                    $regex: "^" + value + ".*",
+                    $options: "i",
+                  },
+                },
+                {
+                  "delivery.tracking_id": {
+                    $regex: ".*" + value + ".*",
+                    $options: "i",
+                  },
+                },
+                {
+                  "delivery.uic_code.code": {
+                    $regex: ".*" + value + ".*",
+                    $options: "i",
+                  },
+                },
+                {
+                  "delivery.bag_id": {
+                    $regex: ".*" + value + ".*",
+                    $options: "i",
+                  },
+                },
+                {
+                  "delivery.agent_name": {
+                    $regex: ".*" + value + ".*",
+                    $options: "i",
+                  },
+                },
+                {
+                  "delivery.tray_id": {
+                    $regex: ".*" + value + ".*",
+                    $options: "i",
+                  },
+                },
+                {
+                  "delivery.tray_location": {
+                    $regex: ".*" + value + ".*",
+                    $options: "i",
+                  },
+                },
+                {
+                  "delivery.tray_type": {
+                    $regex: ".*" + value + ".*",
+                    $options: "i",
+                  },
+                },
+                {
+                  "delivery.sorting_agent_name": {
+                    $regex: ".*" + value + ".*",
+                    $options: "i",
+                  },
+                },
+                {
+                  "delivery.wht_tray": {
+                    $regex: ".*" + value + ".*",
+                    $options: "i",
+                  },
+                },
+                {
+                  "delivery.agent_name_charging": {
+                    $regex: ".*" + value + ".*",
+                    $options: "i",
+                  },
+                },
+                {
+                  "delivery.agent_name_bqc": {
+                    $regex: ".*" + value + ".*",
+                    $options: "i",
+                  },
+                },
+                {
+                  "delivery.stockin_date": {
+                    $lt: date1,
+                    $gt: date2,
+                  },
+                },
+                {
+                  "delivery.bag_close_date": {
+                    $lt: date1,
+                    $gt: date2,
+                  },
+                },
+                {
+                  "delivery.assign_to_agent": {
+                    $lt: date1,
+                    $gt: date2,
+                  },
+                },
+                {
+                  "delivery.tray_closed_by_bot": {
+                    $lt: date1,
+                    $gt: date2,
+                  },
+                },
+                {
+                  "delivery.bot_done_received": {
+                    $lt: date1,
+                    $gt: date2,
+                  },
+                },
+                {
+                  "delivery.warehouse_close_date": {
+                    $lt: date1,
+                    $gt: date2,
+                  },
+                },
+                {
+                  "delivery.handover_sorting_date": {
+                    $lt: date1,
+                    $gt: date2,
+                  },
+                },
+                {
+                  "delivery.wht_tray_assigned_date": {
+                    $lt: date1,
+                    $gt: date2,
+                  },
+                },
+                {
+                  "delivery.assign_to_agent_charging": {
+                    $lt: date1,
+                    $gt: date2,
+                  },
+                },
+                {
+                  "delivery.assign_to_agent_bqc": {
+                    $lt: date1,
+                    $gt: date2,
+                  },
+                },
+                {
+                  "delivery.charging_in_date": {
+                    $lt: date1,
+                    $gt: date2,
+                  },
+                },
+
+                {
+                  "delivery.charging_done_date": {
+                    $lt: date1,
+                    $gt: date2,
+                  },
+                },
+                {
+                  "delivery.charging_done_received": {
+                    $lt: date1,
+                    $gt: date2,
+                  },
+                },
+                {
+                  "delivery.charging_done_close": {
+                    $lt: date1,
+                    $gt: date2,
+                  },
+                },
+                {
+                  "delivery.bqc_in_date": {
+                    $lt: date1,
+                    $gt: date2,
+                  },
+                },
+                {
+                  "delivery.bqc_out_date": {
+                    $lt: date1,
+                    $gt: date2,
+                  },
+                },
+                {
+                  "delivery.bot_done_received": {
+                    $lt: date1,
+                    $gt: date2,
+                  },
+                },
+                {
+                  "delivery.bqc_done_close": {
+                    $lt: date1,
+                    $gt: date2,
+                  },
+                },
+              ],
             },
           },
         ]);
       }
+      //   if (searchType == "tracking_id") {
+      //   allData = await orders.aggregate([
+      //     {
+      //       $match: {
+      //         delivery_status: "Delivered",
+      //       },
+      //     },
+      //     {
+      //       $lookup: {
+      //         from: "deliveries",
+      //         localField: "order_id",
+      //         foreignField: "order_id",
+      //         as: "delivery",
+      //       },
+      //     },
+      //     {
+      //       $unwind: "$delivery",
+      //     },
+      //     {
+      //       $match: {
+      //         delivery_status: "Delivered",
+      //         "delivery.tracking_id": {
+      //           $regex: ".*" + value + ".*",
+      //           $options: "i",
+      //         },
+      //       },
+      //     },
+      //   ]);
+      // } else if (searchType == "uic") {
+      //   allData = await orders.aggregate([
+      //     {
+      //       $match: {
+      //         delivery_status: "Delivered",
+      //       },
+      //     },
+      //     {
+      //       $lookup: {
+      //         from: "deliveries",
+      //         localField: "order_id",
+      //         foreignField: "order_id",
+      //         as: "delivery",
+      //       },
+      //     },
+      //     {
+      //       $unwind: "$delivery",
+      //     },
+      //     {
+      //       $match: {
+      //         delivery_status: "Delivered",
+      //         "delivery.uic_code.code": {
+      //           $regex: ".*" + value + ".*",
+      //           $options: "i",
+      //         },
+      //       },
+      //     },
+      //   ]);
+      // }
       if (allData) {
         resolve(allData);
       }
@@ -1077,6 +1301,7 @@ module.exports = {
   },
   updateCPCExtra: () => {
     let arr = [
+      "B0106",
       "B0110",
       "B0111",
       "B0112",
@@ -1246,7 +1471,7 @@ module.exports = {
       // }
       // let updateBag
       // let getAllBag = await masters.find({
-      //   cpc: "Bangalore_560067",
+      //   cpc: "Gurgaon_122016",
       //   prefix: "bag-master",
       // });
       // console.log(getAllBag);
@@ -1255,7 +1480,7 @@ module.exports = {
       //     { "items.bag_id": getAllBag[i].code },
       //     {
       //       $set: {
-      //         "items.$.bag_id": "DDB-BLR-" + (2000 + i),
+      //         "items.$.bag_id": "DDB-GGN-" + (1000 + i),
       //       },
       //     }
       //   );
@@ -1264,7 +1489,7 @@ module.exports = {
       //     { bag_id: getAllBag[i].code },
       //     {
       //       $set: {
-      //         bag_id: "DDB-BLR-" + (2000 + i),
+      //         bag_id: "DDB-GGN-" + (1000 + i),
       //       },
       //     }
       //   );
@@ -1273,68 +1498,147 @@ module.exports = {
       //     { code: getAllBag[i].code },
       //     {
       //       $set: {
-      //         code: "DDB-BLR-" + (2000 + i),
+      //         code: "DDB-GGN-" + (1000 + i),
       //       },
       //     }
       //   );
       // }
-      // console.log(updateBag);
+
       // resolve(updateBag)
-      let findClosedItem = await delivery.find({ tray_type: "BOT" });
-      for (let x of findClosedItem) {
-        let item = await products.findOne({ vendor_sku_id: x.item_id });
-        let obj = {
-          awbn_number: x.tracking_id,
-          order_id: x.order_id,
-          order_date: x.order_date,
-          imei: x.imei,
-          stickerOne: "UIC Pasted On Device",
-          stickerTwo: "Device Putin Sleeve",
-          stickerThree: "UIC Pasted On Sleeve",
-          stickerFour: "",
-          status: x.stock_in_status,
-          tray_id: x.tray_id,
-          bag_id: x.bag_id,
-          bag_assigned_date: null,
-          user_name: x.agent_name,
-          uic: x.uic_code.code,
-          body_damage: "NO",
-          added_time: null,
-          brand: item.brand_name,
-          model: item.model_name,
-          muic: item.muic,
-          wht_tray: null,
-        };
-        let find = await masters.findOne({ code: x.tray_id });
-        if (find.sort_id == "Open") {
-          let data = await masters.updateOne(
-            { code: x.tray_id, sort_id: "Open" },
+      // let findClosedItem = await delivery.find({ tray_type: "BOT" });
+      // for (let x of findClosedItem) {
+      //   let item = await products.findOne({ vendor_sku_id: x.item_id });
+      //   let obj = {
+      //     awbn_number: x.tracking_id,
+      //     order_id: x.order_id,
+      //     order_date: x.order_date,
+      //     imei: x.imei,
+      //     stickerOne: "UIC Pasted On Device",
+      //     stickerTwo: "Device Putin Sleeve",
+      //     stickerThree: "UIC Pasted On Sleeve",
+      //     stickerFour: "",
+      //     status: x.stock_in_status,
+      //     tray_id: x.tray_id,
+      //     bag_id: x.bag_id,
+      //     bag_assigned_date: null,
+      //     user_name: x.agent_name,
+      //     uic: x.uic_code.code,
+      //     body_damage: "NO",
+      //     added_time: Date.now(),
+      //     brand: item.brand_name,
+      //     model: item.model_name,
+      //     muic: item.muic,
+      //     wht_tray: null,
+      //   };
+      //   let find = await masters.findOne({ code: x.tray_id });
+      //   if (find.sort_id == "Open") {
+      //     let data = await masters.updateOne(
+      //       { code: x.tray_id, sort_id: "Open" },
+      //       {
+      //         $set: {
+      //           sort_id: "Closed By Warehouse",
+      //           issued_user_name: x.agent_name,
+      //           closed_time_wharehouse_from_bot: new Date(
+      //             new Date().toISOString().split("T")[0]
+      //           ),
+      //         },
+
+      //         $push: {
+      //           items: obj,
+      //         },
+      //       }
+      //     );
+      //   } else {
+      //     let data = await masters.updateOne(
+      //       { code: x.tray_id, sort_id: "Closed By Warehouse" },
+      //       {
+      //         $push: {
+      //           items: obj,
+      //         },
+      //       }
+      //     );
+      //   }
+      // }
+      // resolve(findClosedItem);
+      let getClosedTray = await masters.find({
+        sort_id: "Closed By Warehouse",
+      });
+      for (let x of getClosedTray) {
+        for (let y of x.items) {
+          let getItemId = await delivery.findOneAndUpdate(
+            {
+              tracking_id: y.awbn_number,
+            },
             {
               $set: {
-                sort_id: "Closed By Warehouse",
-                issued_user_name: x.agent_name,
-                closed_time_wharehouse_from_bot: new Date(
-                  new Date().toISOString().split("T")[0]
-                ),
-              },
-
-              $push: {
-                items: obj,
+                tray_close_wh_date: Date.now(),
+                tray_status: "Closed By Warehouse",
               },
             }
           );
-        } else {
-          let data = await masters.updateOne(
-            { code: x.tray_id, sort_id: "Closed By Warehouse" },
+          let findProduct = await products.findOne({
+            vendor_sku_id: getItemId.item_id,
+          });
+          let obj = {
+            item: [],
+            muic: findProduct.muic,
+            model: findProduct.model_name,
+            brand: findProduct.brand_name,
+            vendor_sku_id: findProduct.vendor_sku_id,
+            assigned_count: 0,
+            close_date: Date.now(),
+          };
+          obj.item.push(y);
+          let updateToMuic = await masters.updateOne(
             {
-              $push: {
-                items: obj,
+              code: x.code,
+              items: {
+                $elemMatch: {
+                  awbn_number: y.awbn_number,
+                },
+              },
+            },
+            {
+              $set: {
+                "items.$.muic": findProduct.muic,
+                "items.$.model": findProduct.model_name,
+                "items.$.brand": findProduct.brand_name,
+                "items.$.wht_tray": null,
               },
             }
           );
+          let checkAlreadyClub = await masters.findOne({
+            code: x.code,
+            "temp_array.vendor_sku_id": findProduct.vendor_sku_id,
+          });
+          x.wht_tray = null;
+          if (checkAlreadyClub) {
+            let updateTempArrayClub = await masters.updateOne(
+              {
+                code: x.code,
+                "temp_array.vendor_sku_id": findProduct.vendor_sku_id,
+              },
+              {
+                $push: {
+                  "temp_array.$.item": y,
+                },
+              }
+            );
+          } else {
+            let updateTempArrayClub = await masters.updateOne(
+              {
+                code: x.code,
+              },
+              {
+                $push: {
+                  temp_array: obj,
+                },
+              }
+            );
+          }
         }
       }
-      resolve(findClosedItem);
+      resolve(getClosedTray)
     });
   },
 };
