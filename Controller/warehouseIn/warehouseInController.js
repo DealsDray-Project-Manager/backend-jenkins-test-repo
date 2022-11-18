@@ -743,6 +743,7 @@ module.exports = {
               sort_id: "Existing Tray",
               closed_time_wharehouse: Date.now(),
               issued_user_name: null,
+              wht_tray_type:"Existing Tray"
             
             },
           }

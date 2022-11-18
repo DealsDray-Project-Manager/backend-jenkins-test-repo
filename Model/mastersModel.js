@@ -95,7 +95,11 @@ const mastersSchema = mongoose.Schema({
   },
   wht_tray:{
     type:Array
+  },
+  wht_tray_type:{
+    type:Array
   }
+
 });
 const masters = mongoose.model("masters", mastersSchema);
 module.exports = {
