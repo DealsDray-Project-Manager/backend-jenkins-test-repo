@@ -128,6 +128,7 @@ module.exports = {
             $set: {
               wht_tray: itemData.wht_tray,
               wht_tray_assigned_date: Date.now(),
+              tray_type: "WHT",
             },
           }
         );

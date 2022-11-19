@@ -371,9 +371,10 @@ router.post("/trayCloseRequest/:location", async (req, res, next) => {
   }
 });
 /* GET INUSE PMT OR MMT TRAY */
-router.post("/inuse-mmt-pmt/:location", async (req, res, next) => {
+router.post("/inuse-mmt-pmt/:location/:type", async (req, res, next) => {
   try {
-    let data = await warehouseInController.getInuseMmtPmt(req.params.location);
+    const {location,type}=req.params
+    let data = await warehouseInController.getInuseMmtPmt(location,type);
     if (data) {
       res.status(200).json({
         data: data,
@@ -1225,7 +1226,6 @@ router.post("/mmt-pmt-report", async (req, res, next) => {
 router.post("/sort-mmt-pmt-report", async (req, res, next) => {
   try {
     let data = await warehouseInController.getReportMmtPmtSort(req.body);
-    console.log(data);
     if (data) {
       res.status(200).json({
         data: data,

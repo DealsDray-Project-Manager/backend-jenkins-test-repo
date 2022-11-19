@@ -124,7 +124,7 @@ const deliverySchema = mongoose.Schema({
   wht_tray_assigned_date: {
     type: Date,
   },
-  closed_time_wharehouse: {
+  tray_close_wh_date: {
     type: Date,
   },
   charging_in_date: {
@@ -152,6 +152,12 @@ const deliverySchema = mongoose.Schema({
     type:Date
   },
   bqc_done_close:{
+    type:Date
+  },
+  received_from_sorting:{
+    type:Date
+  },
+  closed_from_sorting:{
     type:Date
   }
 });

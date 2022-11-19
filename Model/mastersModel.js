@@ -77,8 +77,8 @@ const mastersSchema = mongoose.Schema({
   closed_time_wharehouse_from_bot: {
     type: Date,
   },
-  temp_array:{
-    type:Array
+  temp_array: {
+    type: Array,
   },
   issued_user_name: {
     type: String,
@@ -90,16 +90,12 @@ const mastersSchema = mongoose.Schema({
   assigned_date: {
     type: Date,
   },
-  cpc:{
-    type:String
+  cpc: {
+    type: String,
   },
-  wht_tray:{
-    type:Array
+  wht_tray: {
+    type: Array,
   },
-  wht_tray_type:{
-    type:Array
-  }
-
 });
 const masters = mongoose.model("masters", mastersSchema);
 module.exports = {

@@ -8,8 +8,9 @@ const { admin } = require("../../Model/adminModel/admins");
 const { usersHistory } = require("../../Model/users-history-model/model");
 const { delivery } = require("../../Model/deliveryModel/delivery");
 const { itemClub } = require("../../Model/itemClubModel/club");
-const IISDOMAIN = "http://prexo-v2-uat-adminapi.dealsdray.com/user/profile/";
-const IISDOMAINPRDT = "http://prexo-v2-uat-adminapi.dealsdray.com/product/image/";
+const moment = require("moment");
+const IISDOMAIN = "https://prexo-v1-dev-api.dealsdray.com/user/profile/";
+const IISDOMAINPRDT = "https://prexo-v1-dev-api.dealsdray.com/product/image/";
 
 /************************************************************************************************** */
 module.exports = {
@@ -993,9 +994,7 @@ module.exports = {
   searchAdminTrackItem: (searchType, value, location) => {
     let allData;
     let date2 = moment
-      .utc(value, "DD-MM-YYYY")
-
-      .toDate();
+      .utc(value, "DD-MM-YYYY").toDate();
     let date1 = moment.utc(value, "DD-MM-YYYY").add(1, "days").toDate();
     console.log(date1);
     console.log(date2);
@@ -1638,7 +1637,7 @@ module.exports = {
           }
         }
       }
-      resolve(getClosedTray)
+      resolve(getClosedTray);
     });
   },
 };

@@ -6,6 +6,7 @@ var mongoose = require("mongoose");
 const { pickList } = require("../../Model/picklist_model/model");
 const { products } = require("../../Model/productModel/product");
 const { itemClub } = require("../../Model/itemClubModel/club");
+const moment = require("moment");
 /********************************************************************/
 module.exports = {
   dashboard: () => {
@@ -566,18 +567,18 @@ module.exports = {
       }
     });
   },
-  getInuseMmtPmt: (location) => {
+  getInuseMmtPmt: (location, type) => {
     return new Promise(async (resolve, reject) => {
       let data = await masters.find({
         $or: [
           {
-            sort_id: "Issued",
+            sort_id: type,
             prefix: "tray-master",
             type_taxanomy: "MMT",
             cpc: location,
           },
           {
-            sort_id: "Issued",
+            sort_id: type,
             prefix: "tray-master",
             type_taxanomy: "PMT",
             cpc: location,
@@ -740,11 +741,9 @@ module.exports = {
           { code: trayData.trayId },
           {
             $set: {
-              sort_id: "Existing Tray",
+              sort_id: "Inuse",
               closed_time_wharehouse: Date.now(),
               issued_user_name: null,
-              wht_tray_type:"Existing Tray"
-            
             },
           }
         );
@@ -757,6 +756,7 @@ module.exports = {
               $set: {
                 warehouse_close_date: Date.now(),
                 tray_status: "Closed By Warehouse",
+                tray_location: "Warehouse",
               },
             }
           );
@@ -789,8 +789,9 @@ module.exports = {
             },
             {
               $set: {
-                closed_time_wharehouse: Date.now(),
+                tray_close_wh_date: Date.now(),
                 tray_status: "Closed By Warehouse",
+                tray_location: "Warehouse",
               },
             }
           );
@@ -854,52 +855,6 @@ module.exports = {
               }
             );
           }
-          // let obj = {
-          //   tracking_id: x.awbn_number,
-          //   bot_agent: data.issued_user_name,
-          //   tray_id: data.code,
-          //   uic: getItemId.uic_code.code,
-          //   imei: x.imei,
-          //   closed_time: new Date(new Date().toISOString().split("T")[0]),
-          //   wht_tray: null,
-          //   status: x.status,
-          // };
-          // // let putToModel = await products.updateOne(
-          // //   { vendor_sku_id: getItemId.item_id },
-          // //   {
-          // //     $push: {
-          // //       item: obj,
-          // //     },
-          // //   }
-          // // );
-          // let checkModel = await itemClub.findOne({
-          //   vendor_sku_id: getItemId.item_id,
-          //   cpc: trayData.location,
-          //   created_at: new Date(new Date().toISOString().split("T")[0]),
-          // });
-          // if (checkModel != null) {
-          //   let findProductData = await itemClub.updateOne(
-          //     {
-          //       vendor_sku_id: getItemId.item_id,
-          //       cpc: trayData.location,
-          //       created_at: new Date(new Date().toISOString().split("T")[0]),
-          //     },
-          //     {
-          //       $push: {
-          //         item: obj,
-          //       },
-          //     }
-          //   );
-          // } else {
-          //   let newObj = {
-          //     created_at: new Date(new Date().toISOString().split("T")[0]),
-          //     vendor_sku_id: getItemId.item_id,
-          //     cpc: trayData.location,
-          //     item: [],
-          //   };
-          //   newObj.item.push(obj);
-          //   let findProductData = await itemClub.create(newObj);
-          // }
         }
         let bag = await masters.updateOne(
           {
@@ -1299,7 +1254,8 @@ module.exports = {
         status == "Ready to BQC" ||
         status == "Ready to Audit" ||
         status == "Inuse" ||
-        status == "Issued to sorting agent"
+        status == "Issued to sorting agent" ||
+        status == "Inuse"
       ) {
         data = await masters.find({
           prefix: "tray-master",
@@ -1322,12 +1278,6 @@ module.exports = {
               sort_id: "Charging Station IN",
               cpc: location,
             },
-            // {
-            //   prefix: "tray-master",
-            //   type_taxanomy: "WHT",
-            //   sort_id: "Charge Done",
-            //   cpc: location,
-            // },
           ],
         });
       }
@@ -1952,6 +1902,19 @@ module.exports = {
         }
       );
       if (data) {
+        for (let x of data.items) {
+          let updateDelivery = await delivery.updateOne(
+            {
+              tracking_id: x.tracking_id,
+            },
+            {
+              $set: {
+                tray_location: "Warehouse",
+                received_from_sorting: Date.now(),
+              },
+            }
+          );
+        }
         resolve(data);
       }
     });
@@ -2034,7 +1997,7 @@ module.exports = {
     return new Promise(async (resolve, reject) => {
       let data;
       if (trayData.items.length == trayData.limit) {
-        data = await masters.updateOne(
+        data = await masters.findOneAndUpdate(
           { code: trayData.code },
           {
             $set: {
@@ -2044,11 +2007,23 @@ module.exports = {
             },
           }
         );
-        if (data.modifiedCount !== 0) {
+        if (data) {
+          for (let x of data.items) {
+            let updateDelivery = await delivery.updateOne(
+              {
+                tracking_id: x.tracking_id,
+              },
+              {
+                $set: {
+                  closed_from_sorting: Date.now(),
+                },
+              }
+            );
+          }
           resolve({ status: 1 });
         }
       } else {
-        data = await masters.updateOne(
+        data = await masters.findOneAndUpdate(
           { code: trayData.code },
           {
             $set: {
@@ -2058,35 +2033,61 @@ module.exports = {
             },
           }
         );
-        if (data.modifiedCount !== 0) {
+        if (data) {
+          for (let x of data.items) {
+            let updateDelivery = await delivery.updateOne(
+              {
+                tracking_id: x.tracking_id,
+              },
+              {
+                $set: {
+                  closed_from_sorting: Date.now(),
+                },
+              }
+            );
+          }
           resolve({ status: 2 });
         }
       }
     });
   },
   getReportMmtPmt: (reportBasis) => {
-    var d = new Date(); // Today!
-    let yesterday = d.setDate(d.getDate() - 1);
-    console.log(new Date(yesterday));
+    let date2 = moment
+      .utc(new Date(new Date().toISOString().split("T")[0]), "DD-MM-YYYY")
+      .toDate();
+    let date1 = moment
+      .utc(new Date(new Date().toISOString().split("T")[0]), "DD-MM-YYYY")
+      .add(1, "days")
+      .toDate();
     return new Promise(async (resolve, reject) => {
       let data = await delivery.find({
         tray_type: reportBasis.trayType,
         partner_shop: reportBasis.location,
-        warehouse_close_date: { $gt: new Date(yesterday)},
-        warehouse_close_date: { $lte: Date.now() },
+        warehouse_close_date: {
+          $lte: date1,
+          $gte: date2,
+        },
       });
       resolve(data);
     });
   },
   getReportMmtPmtSort: (reportBasis) => {
-    var d = new Date(); // Today!
-    let yesterday = d.setDate(d.getDate() - 1);
+    console.log(reportBasis);
+    let date2 = moment.utc(new Date(reportBasis.date), "DD-MM-YYYY").toDate();
+    let date1 = moment
+      .utc(new Date(reportBasis.date), "DD-MM-YYYY")
+      .add(1, "days")
+      .toDate();
+    console.log(date1);
+    console.log(date2);
     return new Promise(async (resolve, reject) => {
       let data = await delivery.find({
         tray_type: reportBasis.trayType,
         partner_shop: reportBasis.location,
-        warehouse_close_date: { $gt: new Date(yesterday) },
-        warehouse_close_date: { $lte: reportBasis.date },
+        warehouse_close_date: {
+          $lt: date1,
+          $gt: date2,
+        },
       });
       resolve(data);
     });
