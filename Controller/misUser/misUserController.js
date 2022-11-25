@@ -1689,6 +1689,22 @@ module.exports = {
   //     }
   //   })
   // },
+  checkAllWhtInUseForSorting: (botTrayData) => {
+    return new Promise(async (resolve, reject) => {
+      let arr = [];
+      for (let x of botTrayData.trayId) {
+        let data = await masters.findOne({ code: x });
+        for (let y of data.wht_tray) {
+          let getWht = await masters.findOne({ code: y, sort_id: "Inuse" });
+          if (getWht) {
+          } else {
+            arr.push(y);
+          }
+        }
+      }
+      resolve(arr);
+    });
+  },
   botTrayAssignedToSortingAgent: (botTrayData) => {
     return new Promise(async (resolve, reject) => {
       let data;
@@ -1948,4 +1964,38 @@ module.exports = {
       }
     });
   },
+  sortWhtTrayBrandAndModel: (location, brand, model) => {
+    return new Promise(async (resolve, reject) => {
+      let data = await masters.find({
+        cpc: location,
+        brand: brand,
+        model: model,
+        sort_id: "Inuse",
+      });
+      resolve(data);
+    });
+  },
+  checkWhtreadyForMerge: (trayIds) => {
+    return new Promise(async (resolve, reject) => {
+      let fromTray = await masters.findOne({ code: trayIds[0] });
+      let toTray = await masters.findOne({ code: trayIds[1] });
+      let traySpace = toTray.limit - toTray.items.length;
+      if (fromTray.items.length <= traySpace) {
+        resolve({ status: true });
+      } else {
+        resolve({ status: false });
+      }
+    });
+  },
+  // mergRegquestSendToWh:(trayDetails)=>{
+  //   return new Promise(async(resolve,reject)=>{
+  //     for(let x of trayDetails){
+  //       let dataUpdate=await masters.updateOne({code:x},{
+  //         $set:{
+  //           sort_id:""
+  //         }
+  //       })
+  //     }
+  //   })
+  // }
 };

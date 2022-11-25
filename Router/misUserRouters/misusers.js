@@ -589,11 +589,29 @@ router.post("/view-bot-clubed-data-model", async (req, res, next) => {
   }
 });
 /* WHT TRAY ASSIGNEMENT */
-router.post("/wht-tray-assigne-screen",async (req, res, next) => {
+router.post("/wht-tray-assigne-screen", async (req, res, next) => {
   try {
-    let data=await misUserController.whtTrayAssignScreen(req.body)
-    if(data){
-
+    let data = await misUserController.whtTrayAssignScreen(req.body);
+    if (data) {
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+/* CHECK READY FOR SORTING */
+router.post("/check-all-wht-inuse-for-sorting", async (req, res, next) => {
+  try {
+    let data = await misUserController.checkAllWhtInUseForSorting(req.body);
+    if (data.length == 0) {
+      res.status(200).json({
+        message: "Ready For Sorting",
+      });
+    } else if (data.length !== 0) {
+      let arr = data.toString();
+      res.status(403).json({
+        message: `${arr} - This Tray's Are Already In Sorting`,
+        data:data
+      });
     }
   } catch (error) {
     next(error);
@@ -679,6 +697,63 @@ router.post("/wht-sendTo-wharehouse", async (req, res, next) => {
     if (data) {
       res.status(200).json({
         message: "Successfully Requested",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+/********************************WHT TRAY MERGE****************************************************** */
+/* SORT TRAY BASED ON THE BRAND AND MODEL */
+router.post("/sort-wht-tray-brand-model", async (req, res, next) => {
+  try {
+    const { location, brand, model } = req.body;
+    let data = await misUserController.sortWhtTrayBrandAndModel(
+      location,
+      brand,
+      model
+    );
+    if (data) {
+      res.status(200).json({
+        data: data,
+      });
+    } else {
+      res.status(403).json({
+        message: "No wht tray found",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+/* TWO TRAY CHECK READY FOR MERGING */
+router.post("/check-ready-for-merge", async (req, res, next) => {
+  try {
+    let data = await misUserController.checkWhtreadyForMerge(req.body);
+    if (data.status) {
+      res.status(200).json({
+        message: "Ready for merge",
+      });
+    } else {
+      res.status(403).json({
+        message: "Sorry You can't Send to Sorting",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+/* MERGE REQUEST SENT TO WAREHOUSE */
+router.post("/merge-request-sent-to-wh", async (req, res, next) => {
+  try {
+    let data = await misUserController.mergRegquestSendToWh(req.body);
+    if (data) {
+      res.status(200).json({
+        message: "Request Sent to Warehouse",
+      });
+    } else {
+      res.status(403).json({
+        message: "Failed",
       });
     }
   } catch (error) {

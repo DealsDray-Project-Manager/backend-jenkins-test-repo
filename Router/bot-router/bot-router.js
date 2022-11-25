@@ -47,7 +47,7 @@ router.post("/closeBag", async (req, res, next) => {
       });
     } else {
       res.status(403).json({
-        message: "Failed",
+        message: "Please try again",
       });
     }
   } catch (error) {
@@ -86,9 +86,13 @@ router.post("/awbnScanning", async (req, res, next) => {
 router.post("/traySegregation", async (req, res, next) => {
   try {
     let data = await botController.traySegrigation(req.body);
-    if (data) {
+    if (data.status == 1) {
       res.status(200).json({
         message: "Successfully Added",
+      });
+    } else if (data.status == 3) {
+      res.status(403).json({
+        message: "Already Added",
       });
     } else {
       res.status(403).json({

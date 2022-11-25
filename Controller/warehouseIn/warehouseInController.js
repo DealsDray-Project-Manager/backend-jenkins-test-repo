@@ -273,17 +273,30 @@ module.exports = {
                 },
               }
             );
-          }
-          updateDelivery = await delivery.updateOne(
-            { tracking_id: bgData.awbn },
-            {
-              $set: {
-                bag_id: getValidItemBag.code,
-                stockin_date: getValidItemBag.items[0].sotckin_date,
-                stock_in_status: getValidItemBag.items[0].status,
-              },
+            if (getValidItemBag) {
+              updateDelivery = await delivery.updateOne(
+                { tracking_id: bgData.awbn },
+                {
+                  $set: {
+                    bag_id: getValidItemBag.code,
+                    stockin_date: getValidItemBag.items[0].sotckin_date,
+                    stock_in_status: getValidItemBag.items[0].status,
+                  },
+                }
+              );
             }
-          );
+          } else {
+            updateDelivery = await delivery.updateOne(
+              { tracking_id: bgData.awbn },
+              {
+                $set: {
+                  bag_id: getValidItemBag.code,
+                  stockin_date: getValidItemBag.items[0].sotckin_date,
+                  stock_in_status: getValidItemBag.items[0].status,
+                },
+              }
+            );
+          }
         } else {
           updateDelivery = await delivery.updateOne(
             { tracking_id: bgData.awbn },
@@ -304,7 +317,6 @@ module.exports = {
   },
   removeActualItem: (bgData) => {
     bgData.id = mongoose.Types.ObjectId(bgData.id);
-    // console.log(id);
     return new Promise(async (resolve, reject) => {
       let data = await masters.updateOne(
         { code: bgData.bagId },
@@ -668,12 +680,13 @@ module.exports = {
       }
     });
   },
-  getBotUsersNewTrayAssing: () => {
+  getBotUsersNewTrayAssing: (location) => {
     return new Promise(async (resolve, reject) => {
       let data = await user
         .find({
           status: "Active",
           user_type: "Bag Opening",
+          cpc: location,
         })
         .sort({ user_name: 1 });
       if (data) {
@@ -1019,7 +1032,6 @@ module.exports = {
           model: model,
           cpc: location,
           sort_id: "Open",
-          items: { $exists: true, $eq: [] },
         });
       } else {
         data = await masters.find({
@@ -1029,12 +1041,12 @@ module.exports = {
           model: model,
           sort_id: "Inuse",
           cpc: location,
-          $expr: {
-            $and: [
-              { $lt: [{ $size: "$items" }, "$limit"] },
-              { $gte: [{ $size: "$items" }, 1] },
-            ],
-          },
+          // $expr: {
+          //   $and: [
+          //     { $lt: [{ $size: "$items" }, "$limit"] },
+          //     { $gte: [{ $size: "$items" }, 1] },
+          //   ],
+          // },
         });
       }
       resolve(data);
@@ -1056,67 +1068,63 @@ module.exports = {
             },
           }
         );
-        let updateBotTraySecond = await masters.updateOne(
-          {
-            code: x.tray_id,
-            items: {
-              $elemMatch: {
-                awbn_number: x.awbn_number,
-              },
-            },
-          },
-          {
-            $set: {
-              "items.$.wht_tray": dataOfItem.wht_tray,
-            },
-          }
-        );
-      }
-      if (data.modifiedCount !== 0) {
-        for (let x of dataOfItem.botTray) {
-          let updateBotTray = await masters.updateOne(
+        if (data.modifiedCount !== 0) {
+          let updateBotTraySecond = await masters.updateOne(
             {
-              code: x,
-              temp_array: {
+              code: x.tray_id,
+              items: {
                 $elemMatch: {
-                  muic: dataOfItem.muic,
+                  awbn_number: x.awbn_number,
                 },
               },
             },
             {
-              $push: {
-                wht_tray: dataOfItem.wht_tray,
+              $set: {
+                "items.$.wht_tray": dataOfItem.wht_tray,
               },
             }
           );
-          console.log(updateBotTray);
         }
-        resolve(data);
       }
+      for (let x of dataOfItem.botTray) {
+        let updateBotTray = await masters.updateOne(
+          {
+            code: x,
+            temp_array: {
+              $elemMatch: {
+                muic: dataOfItem.muic,
+              },
+            },
+          },
+          {
+            $push: {
+              wht_tray: dataOfItem.wht_tray,
+            },
+          }
+        );
+      }
+      resolve(data);
     });
   },
   getAssignedTray: (details) => {
     return new Promise(async (resolve, reject) => {
       let arr = [];
-      for (let x of details.trayId) {
-        let data = await masters.find({
-          "temp_array.tray_id": x,
-          type_taxanomy: "WHT",
-          sort_id: "Inuse",
-          cpc: details.location,
-          brand: details.brand,
-          model: details.model,
-        });
-        let falg = false;
-        for (let x of arr) {
-          for (let y of data) {
-            if (y.code == x.code) {
-              falg = true;
+      let arr1 = [];
+      if (details?.whtTrayId !== undefined) {
+        for (let x of details?.whtTrayId) {
+          if (arr1.includes(x.wht_tray) == false && x.wht_tray !== null) {
+            let data = await masters.findOne({
+              code: x.wht_tray,
+              type_taxanomy: "WHT",
+              cpc: details.location,
+              brand: details.brand,
+              model: details.model,
+            });
+            if (data) {
+              arr.push(data);
             }
           }
-        }
-        if (falg == false) {
-          arr.push(...data);
+          arr1.push(x.wht_tray);
         }
       }
       if (arr) {
@@ -1144,7 +1152,7 @@ module.exports = {
           { new: true }
         );
       }
-      if (data?.items?.length == 0) {
+      if (data?.items?.length == 0 && data?.temp_array?.length == 0) {
         let updateStatus = await masters.updateOne(
           { code: whtTrayDetails.code },
           {
@@ -1174,7 +1182,6 @@ module.exports = {
                 },
               }
             );
-            console.log(pullItemTray);
           }
         }
         resolve(data);
@@ -1541,18 +1548,26 @@ module.exports = {
   },
   addWhtActual: (trayItemData) => {
     return new Promise(async (resolve, reject) => {
-      let data = await masters.updateOne(
-        { code: trayItemData.trayId },
-        {
-          $push: {
-            actual_items: trayItemData.item,
-          },
-        }
-      );
-      if (data.matchedCount != 0) {
-        resolve(data);
+      let checkAlreadyAdded = await masters.findOne({
+        code: trayItemData.trayId,
+        "actual_items.uic": trayItemData.item.uic,
+      });
+      if (checkAlreadyAdded) {
+        resolve({ status: 3 });
       } else {
-        resolve();
+        let data = await masters.updateOne(
+          { code: trayItemData.trayId },
+          {
+            $push: {
+              actual_items: trayItemData.item,
+            },
+          }
+        );
+        if (data.matchedCount != 0) {
+          resolve({ status: 1 });
+        } else {
+          resolve({ status: 2 });
+        }
       }
     });
   },
@@ -1733,18 +1748,26 @@ module.exports = {
   },
   sortingDoneActualItemPut: (trayItemData) => {
     return new Promise(async (resolve, reject) => {
-      let data = await masters.updateOne(
-        { code: trayItemData.trayId },
-        {
-          $push: {
-            actual_items: trayItemData.item,
-          },
+      let checkItemPutedOrNot = await masters.findOne({
+        code: trayItemData.trayId,
+        "actual_items.uic": trayItemData.item.uic,
+      });
+      if (checkItemPutedOrNot == null) {
+        let data = await masters.updateOne(
+          { code: trayItemData.trayId },
+          {
+            $push: {
+              actual_items: trayItemData.item,
+            },
+          }
+        );
+        if (data.matchedCount != 0) {
+          resolve({ status: 1 });
+        } else {
+          resolve({ status: 2 });
         }
-      );
-      if (data.matchedCount != 0) {
-        resolve(data);
       } else {
-        resolve();
+        resolve({ status: 3 });
       }
     });
   },
@@ -2060,35 +2083,73 @@ module.exports = {
       .add(1, "days")
       .toDate();
     return new Promise(async (resolve, reject) => {
-      let data = await delivery.find({
-        tray_type: reportBasis.trayType,
-        partner_shop: reportBasis.location,
-        warehouse_close_date: {
-          $lte: date1,
-          $gte: date2,
+      let data = await delivery.aggregate([
+        {
+          $match: {
+            tray_type: reportBasis.trayType,
+            partner_shop: reportBasis.location,
+            warehouse_close_date: {
+              $lte: date1,
+              $gte: date2,
+            },
+          },
         },
-      });
+        {
+          $lookup: {
+            from: "products",
+            localField: "item_id",
+            foreignField: "vendor_sku_id",
+            as: "product",
+          },
+        },
+        {
+          $lookup: {
+            from: "orders",
+            localField: "order_id",
+            foreignField: "order_id",
+            as: "order",
+          },
+        },
+      ]);
       resolve(data);
     });
   },
   getReportMmtPmtSort: (reportBasis) => {
-    console.log(reportBasis);
     let date2 = moment.utc(new Date(reportBasis.date), "DD-MM-YYYY").toDate();
     let date1 = moment
       .utc(new Date(reportBasis.date), "DD-MM-YYYY")
       .add(1, "days")
       .toDate();
-    console.log(date1);
-    console.log(date2);
+
     return new Promise(async (resolve, reject) => {
-      let data = await delivery.find({
-        tray_type: reportBasis.trayType,
-        partner_shop: reportBasis.location,
-        warehouse_close_date: {
-          $lt: date1,
-          $gt: date2,
+      let data = await delivery.aggregate([
+        {
+          $match: {
+            tray_type: reportBasis.trayType,
+            partner_shop: reportBasis.location,
+            warehouse_close_date: {
+              $lt: date1,
+              $gt: date2,
+            },
+          },
         },
-      });
+        {
+          $lookup: {
+            from: "products",
+            localField: "item_id",
+            foreignField: "vendor_sku_id",
+            as: "product",
+          },
+        },
+        {
+          $lookup: {
+            from: "orders",
+            localField: "order_id",
+            foreignField: "order_id",
+            as: "order",
+          },
+        },
+      ]);
       resolve(data);
     });
   },

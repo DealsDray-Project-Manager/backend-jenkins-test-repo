@@ -140,7 +140,6 @@ router.get("/designation", async (req, res) => {
 router.get("/getUsers", async (req, res) => {
   try {
     let user = await superAdminController.getUsers();
-    // console.log(user);
     if (user) {
       res.status(200).json({ data: { user } });
     }
@@ -805,7 +804,6 @@ router.post("/getMasterHighest/:prefix", async (req, res, next) => {
 router.post("/bulkValidationTray", async (req, res, next) => {
   try {
     let data = await superAdminController.bulkValidationTray(req.body);
-
     if (data.status == true) {
       res.status(200).json({
         message: "Successfully Validated",

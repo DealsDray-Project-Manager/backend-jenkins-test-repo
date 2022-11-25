@@ -23,8 +23,8 @@ module.exports = {
       let arr = [];
       tray.bot = await masters.findOne({
         code: trayId,
-        issued_user_name: username,
         type_taxanomy: "BOT",
+        issued_user_name: username,
       });
       for (let x of tray.bot?.wht_tray) {
         let whtTray = await masters.findOne({ code: x });
@@ -58,7 +58,6 @@ module.exports = {
           if (alreadyAdded) {
             for (let x of checkItemExistsInTheTray?.items) {
               if (x.uic == trayData.uic) {
-                console.log(x);
                 obj = x;
                 break;
               }
@@ -98,43 +97,53 @@ module.exports = {
       },
     };
     return new Promise(async (resolve, reject) => {
-      let assignToWht = await masters.updateOne(
-        {
-          code: itemData.wht_tray,
-        },
-        {
-          $push: {
-            items: obj,
-          },
-        }
-      );
-      let data = await masters.updateOne(
-        {
-          code: itemData.tray_id,
-          actual_items: { $elemMatch: { uic: itemData.uic } },
-        },
-        {
-          $pull: {
-            actual_items: {
-              uic: itemData.uic,
-            },
-          },
-        }
-      );
-      if (data.modifiedCount != 0) {
-        let updateDelivery = await delivery.updateOne(
-          { tracking_id: itemData.awbn_number },
+      let checkItemExist = await masters.findOne({
+        code: itemData.wht_tray,
+        "items.uic": obj.uic,
+      });
+      if (checkItemExist == null) {
+        let assignToWht = await masters.updateOne(
           {
-            $set: {
-              wht_tray: itemData.wht_tray,
-              wht_tray_assigned_date: Date.now(),
-              tray_type: "WHT",
+            code: itemData.wht_tray,
+          },
+          {
+            $push: {
+              items: obj,
             },
           }
         );
-        resolve(data);
+        let data = await masters.updateOne(
+          {
+            code: itemData.tray_id,
+            actual_items: { $elemMatch: { uic: itemData.uic } },
+          },
+          {
+            $pull: {
+              actual_items: {
+                uic: itemData.uic,
+              },
+            },
+          }
+        );
+        if (data.modifiedCount != 0) {
+          let updateDelivery = await delivery.updateOne(
+            { tracking_id: itemData.awbn_number },
+            {
+              $set: {
+                wht_tray: itemData.wht_tray,
+                wht_tray_assigned_date: Date.now(),
+                tray_type: "WHT",
+              },
+            }
+          );
+          if (updateDelivery.modifiedCount !== 0) {
+            resolve({ status: 3 });
+          }
+        } else {
+          resolve({ status: 1 });
+        }
       } else {
-        resolve();
+        resolve({ status: 2 });
       }
     });
   },
@@ -151,9 +160,9 @@ module.exports = {
       );
       for (let x of trayId.wht) {
         let checkAnyBotTray = await masters.findOne({
-          issued_user_name: x.issued_user_name,
           type_taxanomy: "BOT",
           sort_id: "Issued to sorting agent",
+          issued_user_name: x.issued_user_name,
         });
         if (checkAnyBotTray) {
           if (x.items.length == x.limit) {
@@ -163,7 +172,6 @@ module.exports = {
                 $set: {
                   sort_id: "Closed By Sorting Agent",
                   closed_time_sorting_agent: Date.now(),
-                  temp_array: [],
                   actual_items: [],
                 },
               }
@@ -172,9 +180,9 @@ module.exports = {
         } else {
           let whtTrayUpdate = await masters.updateMany(
             {
-              issued_user_name: x.issued_user_name,
               type_taxanomy: "WHT",
               sort_id: "Issued to sorting agent",
+              issued_user_name: x.issued_user_name,
             },
             {
               $set: {

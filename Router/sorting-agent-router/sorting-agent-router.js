@@ -60,7 +60,7 @@ router.post("/cheack-uic-for-sorting", async (req, res, next) => {
       });
     } else if (data.status == 4) {
       res.status(403).json({
-        message: "Item Aleady added",
+        message: "Item Already added",
       });
     }
   } catch (error) {
@@ -71,13 +71,17 @@ router.post("/cheack-uic-for-sorting", async (req, res, next) => {
 router.post("/item-move-to-wht", async (req, res, next) => {
   try {
     let data = await sortingAgentController.itemShiftToWht(req.body);
-    if (data) {
+    if (data.status == 3) {
       res.status(200).json({
         message: "Successfully Added",
       });
-    } else {
+    } else if (data.status == 1) {
       res.status(403).json({
         message: "Failed",
+      });
+    } else if (data.status == 2) {
+      res.status(403).json({
+        message: "Already Added",
       });
     }
   } catch (error) {
@@ -105,7 +109,6 @@ router.post("/bot-and-wht-send-to-warehouse", async (req, res, next) => {
 router.post("/view-assigned-wht-tray/:username", async (req, res, next) => {
   try {
     let data = await sortingAgentController.getAssignedWht(req.params.username);
-    console.log(data);
     if (data) {
       res.status(200).json({
         data: data,

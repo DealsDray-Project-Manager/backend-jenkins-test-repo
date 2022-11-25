@@ -12,7 +12,7 @@ const connectDb = require("./config/db");
 const cors = require("cors");
 connectDb();
 /* NODE CRON */
-const corn =require("./utils/node-corn")()
+const corn = require("./utils/node-corn")();
 // Routers
 const superAdmin = require("./Router/superAdmin/superAdminRouter");
 const mobileUserRouter = require("./Router/MobileRouters/Users/user");
@@ -21,10 +21,14 @@ const warehouseIn = require("./Router/warehouseInRouter/warehouseIn");
 const bot = require("./Router/bot-router/bot-router");
 const chargingPanel = require("./Router/charging-panel-router/charging-panel");
 const bqc = require("./Router/bqc-router/bqc-router");
-const sortingAgent =require("./Router/sorting-agent-router/sorting-agent-router")
+const sortingAgent = require("./Router/sorting-agent-router/sorting-agent-router");
 app.use(logger("dev"));
 app.use(express.json({ limit: "25mb" }));
-app.use(cors());
+app.use(
+  cors({
+    origin: "https://prexo-v1-dev-api.dealsdray.com",
+  })
+);
 app.use(express.urlencoded({ limit: "25mb", extended: false }));
 // API for web
 app.use("/api/v1/superAdmin", superAdmin);

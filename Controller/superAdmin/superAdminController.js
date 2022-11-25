@@ -77,7 +77,6 @@ module.exports = {
     userData.creation_date = Date.now();
     return new Promise(async (resolve, rejects) => {
       let userExist = await user.findOne({ user_name: userData.user_name });
-      console.log(userExist);
       if (userExist) {
         resolve({ status: true, user: userExist });
       } else {
@@ -642,7 +641,6 @@ module.exports = {
       let warehouse = [];
       let bagLimit = [];
       for (let i = 0; i < bagData.length; i++) {
-        console.log(bagData[i]);
         if (
           bagData[i].bag_limit <= 0 ||
           bagData[i].bag_limit > 99 ||
@@ -806,20 +804,21 @@ module.exports = {
             err["tray_display_is_duplicate"] = tray_dispaly_name;
           }
         }
-
-        let brandModel = await brands.findOne({
-          brand_name: trayData[i].tray_brand,
-        });
-        if (brandModel == null) {
-          brand.push(trayData[i].tray_brand);
-          err["brand"] = brand;
-        }
-        let modelName = await products.findOne({
-          model_name: trayData[i].tray_model,
-        });
-        if (modelName == null) {
-          model.push(trayData[i].tray_model);
-          err["model"] = model;
+        if (trayData[i].tray_category == "WHT") {
+          let brandModel = await brands.findOne({
+            brand_name: trayData[i].tray_brand,
+          });
+          if (brandModel == null) {
+            brand.push(trayData[i].tray_brand);
+            err["brand"] = brand;
+          }
+          let modelName = await products.findOne({
+            model_name: trayData[i].tray_model,
+          });
+          if (modelName == null) {
+            model.push(trayData[i].tray_model);
+            err["model"] = model;
+          }
         }
       }
       if (Object.keys(err).length === 0) {
@@ -993,11 +992,9 @@ module.exports = {
   },
   searchAdminTrackItem: (searchType, value, location) => {
     let allData;
-    let date2 = moment
-      .utc(value, "DD-MM-YYYY").toDate();
+    let date2 = moment.utc(value, "DD-MM-YYYY").toDate();
     let date1 = moment.utc(value, "DD-MM-YYYY").add(1, "days").toDate();
-    console.log(date1);
-    console.log(date2);
+ 
 
     return new Promise(async (resolve, reject) => {
       allData = await orders.aggregate([
@@ -1448,196 +1445,69 @@ module.exports = {
       "B0300",
     ];
     return new Promise(async (resolve, reject) => {
-      // let updateData;
-      // for (let i = 0; i < arr.length; i++) {
-      //   updateData = await masters.updateOne(
-      //     { code: arr[i] },
-      //     {
-      //       cpc: "Bangalore_560067",
-      //     }
-      //   );
-      // }
-      // if (updateData) {
-      //   resolve(updateData);
-      // }
-      // let updateData=await masters.updateMany({cpc:{$exists:false}},{
-      //   $set:{
-      //     cpc:"Gurgaon_122016"
-      //   }
-      // })
-      // if(updateData){
-      //   resolve(updateData)
-      // }
-      // let updateBag
-      // let getAllBag = await masters.find({
-      //   cpc: "Gurgaon_122016",
-      //   prefix: "bag-master",
-      // });
-      // console.log(getAllBag);
-      // for (let i = 0; i < getAllBag.length; i++) {
-      //   let data = await masters.updateMany(
-      //     { "items.bag_id": getAllBag[i].code },
-      //     {
-      //       $set: {
-      //         "items.$.bag_id": "DDB-GGN-" + (1000 + i),
-      //       },
-      //     }
-      //   );
-
-      //   let updateDelivery = await delivery.updateMany(
-      //     { bag_id: getAllBag[i].code },
-      //     {
-      //       $set: {
-      //         bag_id: "DDB-GGN-" + (1000 + i),
-      //       },
-      //     }
-      //   );
-
-      //   updateBag = await masters.updateOne(
-      //     { code: getAllBag[i].code },
-      //     {
-      //       $set: {
-      //         code: "DDB-GGN-" + (1000 + i),
-      //       },
-      //     }
-      //   );
-      // }
-
-      // resolve(updateBag)
-      // let findClosedItem = await delivery.find({ tray_type: "BOT" });
-      // for (let x of findClosedItem) {
-      //   let item = await products.findOne({ vendor_sku_id: x.item_id });
-      //   let obj = {
-      //     awbn_number: x.tracking_id,
-      //     order_id: x.order_id,
-      //     order_date: x.order_date,
-      //     imei: x.imei,
-      //     stickerOne: "UIC Pasted On Device",
-      //     stickerTwo: "Device Putin Sleeve",
-      //     stickerThree: "UIC Pasted On Sleeve",
-      //     stickerFour: "",
-      //     status: x.stock_in_status,
-      //     tray_id: x.tray_id,
-      //     bag_id: x.bag_id,
-      //     bag_assigned_date: null,
-      //     user_name: x.agent_name,
-      //     uic: x.uic_code.code,
-      //     body_damage: "NO",
-      //     added_time: Date.now(),
-      //     brand: item.brand_name,
-      //     model: item.model_name,
-      //     muic: item.muic,
-      //     wht_tray: null,
-      //   };
-      //   let find = await masters.findOne({ code: x.tray_id });
-      //   if (find.sort_id == "Open") {
-      //     let data = await masters.updateOne(
-      //       { code: x.tray_id, sort_id: "Open" },
-      //       {
-      //         $set: {
-      //           sort_id: "Closed By Warehouse",
-      //           issued_user_name: x.agent_name,
-      //           closed_time_wharehouse_from_bot: new Date(
-      //             new Date().toISOString().split("T")[0]
-      //           ),
-      //         },
-
-      //         $push: {
-      //           items: obj,
-      //         },
-      //       }
-      //     );
-      //   } else {
-      //     let data = await masters.updateOne(
-      //       { code: x.tray_id, sort_id: "Closed By Warehouse" },
-      //       {
-      //         $push: {
-      //           items: obj,
-      //         },
-      //       }
-      //     );
-      //   }
-      // }
-      // resolve(findClosedItem);
-      let getClosedTray = await masters.find({
-        sort_id: "Closed By Warehouse",
+      let dataOfClosedPmtMMt = await masters.find({
+        $or: [
+          {
+            type_taxanomy: "PMT",
+            sort_id: "Closed By Warehouse",
+            prefix: "tray-master",
+          },
+          {
+            type_taxanomy: "MMT",
+            sort_id: "Closed By Warehouse",
+            prefix: "tray-master",
+          },
+        ],
       });
-      for (let x of getClosedTray) {
-        for (let y of x.items) {
-          let getItemId = await delivery.findOneAndUpdate(
-            {
-              tracking_id: y.awbn_number,
-            },
+      for (let x of dataOfClosedPmtMMt) {
+        if (x.items.length == x.limit) {
+          let updateData = await masters.findOneAndUpdate(
+            { code: x.code },
             {
               $set: {
-                tray_close_wh_date: Date.now(),
-                tray_status: "Closed By Warehouse",
+                sort_id: "Closed By Warehouse",
+                closed_time_wharehouse: Date.now(),
               },
             }
           );
-          let findProduct = await products.findOne({
-            vendor_sku_id: getItemId.item_id,
-          });
-          let obj = {
-            item: [],
-            muic: findProduct.muic,
-            model: findProduct.model_name,
-            brand: findProduct.brand_name,
-            vendor_sku_id: findProduct.vendor_sku_id,
-            assigned_count: 0,
-            close_date: Date.now(),
-          };
-          obj.item.push(y);
-          let updateToMuic = await masters.updateOne(
-            {
-              code: x.code,
-              items: {
-                $elemMatch: {
-                  awbn_number: y.awbn_number,
-                },
-              },
-            },
-            {
-              $set: {
-                "items.$.muic": findProduct.muic,
-                "items.$.model": findProduct.model_name,
-                "items.$.brand": findProduct.brand_name,
-                "items.$.wht_tray": null,
-              },
-            }
-          );
-          let checkAlreadyClub = await masters.findOne({
-            code: x.code,
-            "temp_array.vendor_sku_id": findProduct.vendor_sku_id,
-          });
-          x.wht_tray = null;
-          if (checkAlreadyClub) {
-            let updateTempArrayClub = await masters.updateOne(
+          for (let y of updateData.items) {
+            let deliveryTrack = await delivery.updateMany(
+              { tracking_id: y.awbn_number },
               {
-                code: x.code,
-                "temp_array.vendor_sku_id": findProduct.vendor_sku_id,
-              },
-              {
-                $push: {
-                  "temp_array.$.item": y,
+                $set: {
+                  warehouse_close_date: Date.now(),
+                  tray_status: "Closed By Warehouse",
+                  tray_location: "Warehouse",
                 },
               }
             );
-          } else {
-            let updateTempArrayClub = await masters.updateOne(
-              {
-                code: x.code,
+          }
+        } else {
+          let dataNotFull = await masters.findOneAndUpdate(
+            { code: x.code },
+            {
+              $set: {
+                sort_id: "Inuse",
+                closed_time_wharehouse: Date.now(),
+                issued_user_name: null,
               },
+            }
+          );
+          for (let m of dataNotFull.items) {
+            let deliveryTrack = await delivery.updateMany(
+              { tracking_id: m.awbn_number },
               {
-                $push: {
-                  temp_array: obj,
+                $set: {
+                  warehouse_close_date: Date.now(),
+                  tray_status: "Closed By Warehouse",
+                  tray_location: "Warehouse",
                 },
               }
             );
           }
         }
       }
-      resolve(getClosedTray);
+      resolve(dataOfClosedPmtMMt);
     });
   },
 };

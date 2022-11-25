@@ -2,7 +2,6 @@ const { delivery } = require("../../Model/deliveryModel/delivery");
 const { masters } = require("../../Model/mastersModel");
 const { orders } = require("../../Model/ordersModel/ordersModel");
 var mongoose = require("mongoose");
-
 /****************************************************************************** */
 module.exports = {
   getAssignedBagData: (userData) => {
@@ -51,29 +50,33 @@ module.exports = {
           },
         }
       );
-      let trayClose = await masters.findOneAndUpdate(
-        { code: bagData.trayId },
-        {
-          $set: {
-            sort_id: "Closed By Bot",
-            assign: "Old Assign",
-            closed_time_bot: Date.now(),
-          },
+      if (bagClose.modifiedCount !== 0) {
+        let trayClose = await masters.findOneAndUpdate(
+          { code: bagData.trayId },
+          {
+            $set: {
+              sort_id: "Closed By Bot",
+              assign: "Old Assign",
+              closed_time_bot: Date.now(),
+            },
+          }
+        );
+        if (trayClose) {
+          for (let x of trayClose.items) {
+            let deliveryTrck = await delivery.updateMany(
+              { tracking_id: x.awbn_number },
+              {
+                $set: {
+                  tray_closed_by_bot: Date.now(),
+                  tray_status: "Closed By Bot",
+                },
+              }
+            );
+          }
+          resolve(trayClose);
         }
-      );
-      if (trayClose) {
-        for (let x of trayClose.items) {
-          let deliveryTrck = await delivery.updateMany(
-            { tracking_id: x.awbn_number },
-            {
-              $set: {
-                tray_closed_by_bot: Date.now(),
-                tray_status: "Closed By Bot",
-              },
-            }
-          );
-        }
-        resolve(trayClose);
+      } else {
+        resolve();
       }
     });
   },
@@ -151,35 +154,43 @@ module.exports = {
     trayData.added_time = Date.now();
     trayData._id = mongoose.Types.ObjectId();
     return new Promise(async (resolve, reject) => {
-      let res = await masters.findOneAndUpdate(
-        {
-          code: trayData.tray_id,
-        },
-        {
-          $push: {
-            items: trayData,
-          },
-          $set: {
-            closed_time_bot: Date.now(),
-          },
-        }
-      );
-      if (res) {
-        let updateDelivery = await delivery.updateOne(
-          { tracking_id: trayData.awbn_number },
+      let checkItemAddedOrNot = await masters.findOne({
+        code: trayData.tray_id,
+        "items.awbn_number": trayData.awbn_number,
+      });
+      if (checkItemAddedOrNot == null) {
+        let res = await masters.findOneAndUpdate(
           {
+            code: trayData.tray_id,
+          },
+          {
+            $push: {
+              items: trayData,
+            },
             $set: {
-              tray_id: trayData.tray_id,
-              tray_status: res.sort_id,
-              tray_type: res.type_taxanomy,
-              tray_location: "Bag Opening",
+              closed_time_bot: Date.now(),
             },
           }
         );
+        if (res) {
+          let updateDelivery = await delivery.updateOne(
+            { tracking_id: trayData.awbn_number },
+            {
+              $set: {
+                tray_id: trayData.tray_id,
+                tray_status: res.sort_id,
+                tray_type: res.type_taxanomy,
+                tray_location: "Bag Opening",
+              },
+            }
+          );
 
-        resolve(res);
+          resolve({ status: 1 });
+        } else {
+          resolve({ status: 2 });
+        }
       } else {
-        resolve();
+        resolve({ status: 3 });
       }
     });
   },
@@ -230,6 +241,7 @@ module.exports = {
             $set: {
               sort_id: "Closed By Bot",
               closed_time_bot: Date.now(),
+              actual_items: [],
             },
           }
         );

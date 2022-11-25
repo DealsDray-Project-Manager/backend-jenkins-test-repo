@@ -373,8 +373,8 @@ router.post("/trayCloseRequest/:location", async (req, res, next) => {
 /* GET INUSE PMT OR MMT TRAY */
 router.post("/inuse-mmt-pmt/:location/:type", async (req, res, next) => {
   try {
-    const {location,type}=req.params
-    let data = await warehouseInController.getInuseMmtPmt(location,type);
+    const { location, type } = req.params;
+    let data = await warehouseInController.getInuseMmtPmt(location, type);
     if (data) {
       res.status(200).json({
         data: data,
@@ -403,9 +403,10 @@ router.post("/receivedTray", async (req, res, next) => {
 });
 /************************************NEW TRAY ASSIGNEMENT**************************************** */
 /* Get bot */
-router.post("/botUsers", async (req, res, next) => {
+router.post("/botUsers/:location", async (req, res, next) => {
   try {
-    let data = await warehouseInController.getBotUsersNewTrayAssing();
+    const { location } = req.params;
+    let data = await warehouseInController.getBotUsersNewTrayAssing(location);
     if (data) {
       res.status(200).json({
         data: data,
@@ -894,13 +895,17 @@ router.post("/check-uic", async (req, res, next) => {
 router.post("/wht-add-actual-item", async (req, res, next) => {
   try {
     let data = await warehouseInController.addWhtActual(req.body);
-    if (data) {
+    if (data.status == 1) {
       res.status(200).json({
         message: "Successfully Added",
       });
-    } else {
+    } else if (data.status == 2) {
       res.status(403).json({
         message: "Failed",
+      });
+    } else if (data.status == 3) {
+      res.status(403).json({
+        message: "Item Already Added",
       });
     }
   } catch (error) {
@@ -1035,13 +1040,17 @@ router.post("/charging-done-put-item", async (req, res, next) => {
 router.post("/sorting-done-put-item", async (req, res, next) => {
   try {
     let data = await warehouseInController.sortingDoneActualItemPut(req.body);
-    if (data) {
+    if (data.status == 1) {
       res.status(200).json({
         message: "Successfully Added",
       });
-    } else {
+    } else if (data.status == 2) {
       res.status(403).json({
         message: "Failed",
+      });
+    } else if (data.status == 3) {
+      res.status(403).json({
+        message: "Item Already Added",
       });
     }
   } catch (error) {
@@ -1171,7 +1180,6 @@ router.post("/get-tray-sorting/:trayId", async (req, res, next) => {
 /*BOT TRAY AND WHT TRAY ASSIGN TO AGENT */
 router.post("/assign-to-sorting-confirm", async (req, res, next) => {
   try {
-    console.log(req.body);
     let data = await warehouseInController.assignToSortingConfirm(req.body);
     if (data) {
       if (req.body.type == "Assigned to sorting agent") {
