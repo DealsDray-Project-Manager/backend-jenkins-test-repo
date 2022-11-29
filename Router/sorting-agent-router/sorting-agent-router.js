@@ -27,9 +27,10 @@ router.post(
         username,
         trayId
       );
-      if (data) {
+      console.log(data);
+      if (data.status == 1) {
         res.status(200).json({
-          data: data,
+          data: data.tray,
         });
       } else {
         res.status(403).json({
@@ -92,7 +93,7 @@ router.post("/item-move-to-wht", async (req, res, next) => {
 router.post("/bot-and-wht-send-to-warehouse", async (req, res, next) => {
   try {
     let data = await sortingAgentController.sendToWarehouse(req.body);
-    if (data) {
+    if (data.status == 1) {
       res.status(200).json({
         message: "Tray Successfully Sent to warehouse",
       });

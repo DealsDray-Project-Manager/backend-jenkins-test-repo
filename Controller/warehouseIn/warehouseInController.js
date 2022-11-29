@@ -5,7 +5,6 @@ const { user } = require("../../Model/userModel");
 var mongoose = require("mongoose");
 const { pickList } = require("../../Model/picklist_model/model");
 const { products } = require("../../Model/productModel/product");
-const { itemClub } = require("../../Model/itemClubModel/club");
 const moment = require("moment");
 /********************************************************************/
 module.exports = {
@@ -109,23 +108,6 @@ module.exports = {
                   code: { $ne: bagId },
                 },
               ],
-
-              // $or: [
-              //   {
-              //     "items.awbn_number": {
-              //       $regex: ".*" + awbn + ".*",
-              //       $options: "i",
-              //     },
-              //     code: { $ne: bagId },
-              //   },
-              //   {
-              //     "items.tracking_id": {
-              //       $regex: ".*" + awbn + ".*",
-              //       $options: "i",
-              //     },
-              //     code: { $ne: bagId },
-              //   },
-              // ],
             });
             if (valid) {
               resolve({ status: 2, data: deliveredOrNot });
@@ -739,7 +721,7 @@ module.exports = {
     return new Promise(async (resolve, reject) => {
       let getTray = await masters.findOne({ code: trayData.trayId });
       let data;
-      if (getTray?.items?.length == getTray.limit) {
+      if (getTray?.items?.length !== 0) {
         data = await masters.findOneAndUpdate(
           { code: trayData.trayId },
           {
@@ -883,30 +865,18 @@ module.exports = {
             },
           }
         );
-        // for (let I of trayData.items) {
-        //   let deliveryTrack = await delivery.updateMany(
-        //     { tracking_id: x.awbn_number },
-        //     {
-        //       $set: {
-        //         warehouse_close_date: Date.now(),
-        //
-        //       },
-        //     }
-        //   );
-        // }
-
         resolve(data);
       } else {
         resolve();
       }
     });
   },
-  getBotWarehouseClosed: (location) => {
+  getBotWarehouseClosed: (location, type) => {
     return new Promise(async (resolve, reject) => {
       let data = await masters.find({
         type_taxanomy: "BOT",
         prefix: "tray-master",
-        sort_id: "Closed By Sorting Agent",
+        sort_id: type,
         cpc: location,
       });
       if (data) {
@@ -2151,6 +2121,26 @@ module.exports = {
         },
       ]);
       resolve(data);
+    });
+  },
+  getBotTrayReport: (location, trayId) => {
+    return new Promise(async (resolve, reject) => {
+      let data = await masters.findOne({
+        code: trayId,
+        cpc: location,
+        sort_id: "Closed By Warehouse",
+      });
+      if (data) {
+        if (data.cpc == location && data.sort_id == "Closed By Warehouse") {
+          resolve({ status: 1, data: data });
+        } else if (data.sort_id !== "Closed By Warehouse") {
+          resolve({ status: 0 });
+        } else if (data.cpc == location) {
+          resolve({ status: 2 });
+        }
+      } else {
+        resolve({ status: 3 });
+      }
     });
   },
 };

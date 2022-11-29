@@ -24,21 +24,26 @@ module.exports = {
       tray.bot = await masters.findOne({
         code: trayId,
         type_taxanomy: "BOT",
+        sort_id: "Issued to sorting agent",
         issued_user_name: username,
       });
-      for (let x of tray.bot?.wht_tray) {
-        let whtTray = await masters.findOne({ code: x });
-        if (arr.length == 0) {
-          arr.push(x);
-          tray.wht.push(whtTray);
-        } else {
-          if (arr.includes(x)) {
-          } else {
+      if (tray.bot !== null) {
+        for (let x of tray.bot?.wht_tray) {
+          let whtTray = await masters.findOne({ code: x });
+          if (arr.length == 0) {
+            arr.push(x);
             tray.wht.push(whtTray);
+          } else {
+            if (arr.includes(x)) {
+            } else {
+              tray.wht.push(whtTray);
+            }
           }
         }
+        resolve({ tray: tray, status: 1 });
+      } else {
+        resolve({ status: 0 });
       }
-      resolve(tray);
     });
   },
   checkUic: (trayData) => {
@@ -158,47 +163,47 @@ module.exports = {
           },
         }
       );
-      for (let x of trayId.wht) {
+      if (data) {
         let checkAnyBotTray = await masters.findOne({
-          type_taxanomy: "BOT",
+          issued_user_name: data.issued_user_name,
           sort_id: "Issued to sorting agent",
-          issued_user_name: x.issued_user_name,
+          type_taxanomy: "BOT",
         });
         if (checkAnyBotTray) {
-          if (x.items.length == x.limit) {
-            let whtTrayUpdate = await masters.findOneAndUpdate(
-              { code: x.code },
-              {
-                $set: {
-                  sort_id: "Closed By Sorting Agent",
-                  closed_time_sorting_agent: Date.now(),
-                  actual_items: [],
-                },
-              }
-            );
+          for (let x of data.wht_tray) {
+            let whtTray = await masters.findOne({ code: x });
+            if (whtTray.items.length == whtTray.limit) {
+              let whtTrayUpdate = await masters.findOneAndUpdate(
+                { code: x },
+                {
+                  $set: {
+                    sort_id: "Closed By Sorting Agent",
+                    closed_time_sorting_agent: Date.now(),
+                    actual_items: [],
+                  },
+                }
+              );
+            }
           }
         } else {
           let whtTrayUpdate = await masters.updateMany(
             {
               type_taxanomy: "WHT",
               sort_id: "Issued to sorting agent",
-              issued_user_name: x.issued_user_name,
+              issued_user_name: data.issued_user_name,
             },
             {
               $set: {
                 sort_id: "Closed By Sorting Agent",
                 closed_time_sorting_agent: Date.now(),
-                temp_array: [],
                 actual_items: [],
               },
             }
           );
         }
-      }
-      if (data) {
-        resolve(data);
+        resolve({ status: 1, data: data });
       } else {
-        resolve();
+        resolve({ status: 0 });
       }
     });
   },

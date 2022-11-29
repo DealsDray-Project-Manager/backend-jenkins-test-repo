@@ -94,9 +94,31 @@ router.post("/badOrdersSearch", async (req, res, next) => {
 });
 /*********************************************Recon sheet******************************************************** */
 /*Get Orders*/
-router.post("/getOrders/:location", async (req, res, next) => {
+router.post("/getOrdersCount/:location", async (req, res, next) => {
   try {
-    let data = await misUserController.getOrders(req.params.location);
+    let data = await misUserController.getOrdersCount(req.params.location);
+    if (data) {
+      res.status(200).json({
+        data,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+router.post("/getOrders/:location/:page/:size", async (req, res, next) => {
+  try {
+    let { location, page, size } = req.params;
+    if (!page) {
+      page = 1;
+    }
+    if (!size) {
+      size = 10;
+    }
+    page++;
+    const limit = parseInt(size);
+    const skip = (page - 1) * size;
+    let data = await misUserController.getOrders(location, limit, skip);
     if (data) {
       res.status(200).json({
         data: data,
@@ -125,31 +147,67 @@ router.post("/newOrders/:location", async (req, res, next) => {
   }
 });
 /* Get Delivered Orders */
-router.post("/getDeliveredOrders/:location", async (req, res, next) => {
-  try {
-    let data = await misUserController.getDeliveredOrders(req.params.location);
-    if (data) {
-      res.status(200).json({
-        data: data,
-      });
+router.post(
+  "/getDeliveredOrders/:location/:page/:size",
+  async (req, res, next) => {
+    try {
+      let { location, page, size } = req.params;
+      if (!page) {
+        page = 1;
+      }
+      if (!size) {
+        size = 10;
+      }
+      page++;
+      const limit = parseInt(size);
+      const skip = (page - 1) * size;
+      let data = await misUserController.getDeliveredOrders(
+        location,
+        limit,
+        skip
+      );
+      if (data) {
+        res.status(200).json({
+          data: data.data,
+          count:data.count
+        });
+      }
+    } catch (error) {
+      next(error);
     }
-  } catch (error) {
-    next(error);
   }
-});
+);
 /* Not Delivered Orders */
-router.post("/notDeliveredOrders/:location", async (req, res, next) => {
-  try {
-    let data = await misUserController.notDeliveredOrders(req.params.location);
-    if (data) {
-      res.status(200).json({
-        data: data,
-      });
+router.post(
+  "/notDeliveredOrders/:location/:page/:size",
+  async (req, res, next) => {
+    try {
+      let { location, page, size } = req.params;
+      if (!page) {
+        page = 1;
+      }
+      if (!size) {
+        size = 10;
+      }
+      page++;
+      const limit = parseInt(size);
+      const skip = (page - 1) * size;
+      let data = await misUserController.notDeliveredOrders(
+        location,
+        limit,
+        skip
+      );
+      if (data) {
+        res.status(200).json({
+          data: data.data,
+          count: data.count,
+        });
+      }
+    } catch (error) {
+      next(error);
     }
-  } catch (error) {
-    next(error);
   }
-});
+);
 /* SEARCH BAD ORDERS */
 router.post("/searchDeliveredOrders", async (req, res, next) => {
   try {
@@ -219,9 +277,32 @@ router.post("/importDelivery", async (req, res, next) => {
   }
 });
 /* Get Delivery */
-router.post("/getAllDelivery/:location", async (req, res, next) => {
+router.post("/getDeliveryCount/:location", async (req, res, next) => {
   try {
-    let data = await misUserController.getDelivery(req.params.location);
+    let data = await misUserController.getDeliveryCount(req.params.location);
+    console.log(data);
+    if (data) {
+      res.status(200).json({
+        data: data,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+router.post("/getAllDelivery/:location/:page/:size", async (req, res, next) => {
+  try {
+    let { location, page, size } = req.params;
+    if (!page) {
+      page = 1;
+    }
+    if (!size) {
+      size = 10;
+    }
+    page++;
+    const limit = parseInt(size);
+    const skip = (page - 1) * size;
+    let data = await misUserController.getDelivery(location, limit, skip);
     if (data) {
       res.status(200).json({
         data: data,
@@ -316,12 +397,23 @@ router.get("/dashboard", async (req, res, next) => {
 });
 /*********************************************UIC**************************************************************************************************** */
 /* GET UIC DOWNLOAD PAGE */
-router.post("/uicPageData/:location", async (req, res, next) => {
+router.post("/uicPageData/:location/:page/:size", async (req, res, next) => {
   try {
-    let data = await misUserController.getUicPage(req.params.location);
+    let { location, page, size } = req.params;
+    if (!page) {
+      page = 1;
+    }
+    if (!size) {
+      size = 10;
+    }
+    page++;
+    const limit = parseInt(size);
+    const skip = (page - 1) * size;
+    let data = await misUserController.getUicPage(location, limit, skip);
     if (data) {
       res.status(200).json({
-        data: data,
+        data: data.data,
+        count: data.count,
       });
     }
   } catch (error) {
@@ -368,10 +460,13 @@ router.post("/addUicCode", async (req, res, next) => {
 /* Get uic genrated */
 router.post("/uicGeneratedRecon", async (req, res, next) => {
   try {
+    console.log(req.body);
     let data = await misUserController.getUicRecon(req.body);
+    console.log(data.data.length);
     if (data) {
       res.status(200).json({
-        data: data,
+        data: data.data,
+        count: data.count,
       });
     }
   } catch (error) {
@@ -610,7 +705,7 @@ router.post("/check-all-wht-inuse-for-sorting", async (req, res, next) => {
       let arr = data.toString();
       res.status(403).json({
         message: `${arr} - This Tray's Are Already In Sorting`,
-        data:data
+        data: data,
       });
     }
   } catch (error) {

@@ -7,7 +7,6 @@ const { products } = require("../../Model/productModel/product");
 const { admin } = require("../../Model/adminModel/admins");
 const { usersHistory } = require("../../Model/users-history-model/model");
 const { delivery } = require("../../Model/deliveryModel/delivery");
-const { itemClub } = require("../../Model/itemClubModel/club");
 const moment = require("moment");
 const IISDOMAIN = "https://prexo-v1-dev-api.dealsdray.com/user/profile/";
 const IISDOMAINPRDT = "https://prexo-v1-dev-api.dealsdray.com/product/image/";
@@ -967,7 +966,7 @@ module.exports = {
       }
     });
   },
-  itemTracking: () => {
+  itemTracking: (limit,skip) => {
     return new Promise(async (resolve, reject) => {
       let data = await orders.aggregate([
         {
@@ -986,15 +985,21 @@ module.exports = {
         {
           $unwind: "$delivery",
         },
+        {
+          $skip: skip,
+        },
+        {
+          $limit: limit,
+        },
       ]);
-      resolve(data);
+      let count=await orders.count({delivery_status: "Delivered",})
+      resolve({data:data,count:count});
     });
   },
   searchAdminTrackItem: (searchType, value, location) => {
     let allData;
     let date2 = moment.utc(value, "DD-MM-YYYY").toDate();
     let date1 = moment.utc(value, "DD-MM-YYYY").add(1, "days").toDate();
- 
 
     return new Promise(async (resolve, reject) => {
       allData = await orders.aggregate([

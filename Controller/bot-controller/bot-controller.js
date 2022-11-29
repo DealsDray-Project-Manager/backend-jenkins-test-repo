@@ -5,19 +5,15 @@ var mongoose = require("mongoose");
 /****************************************************************************** */
 module.exports = {
   getAssignedBagData: (userData) => {
+    let data = [];
     return new Promise(async (resolve, reject) => {
-      let data = await masters.aggregate([
-        { $match: { code: userData.bagId, sort_id: "Issued" } },
-        {
-          $lookup: {
-            from: "deliveries",
-            localField: "items.awbn_number",
-            foreignField: "tracking_id",
-            as: "delivery",
-          },
-        },
-      ]);
-      if (data.length != 0 && data?.items?.length != 0) {
+      let bagData = await masters.findOne({
+        code: userData.bagId,
+        sort_id: "Issued",
+        issued_user_name: userData.username,
+      });
+      if (bagData != null && data?.items?.length != 0) {
+        data.push(bagData);
         let tray = await masters
           .find({
             issued_user_name: userData.username,
@@ -26,15 +22,15 @@ module.exports = {
             sort_id: { $ne: "Closed By Warehouse" },
           })
           .sort({ sort_id: 1 });
-        if (tray) {
+        if (tray.length != 0) {
           let obj = {
             tray: tray,
           };
           data.push(obj);
-          resolve(data);
+          resolve({ data: data, status: 1 });
         }
       } else {
-        resolve(data);
+        resolve({ status: 0 });
       }
     });
   },
@@ -95,8 +91,8 @@ module.exports = {
   scanAwbn: (bagid, awbn, username) => {
     return new Promise(async (resolve, reject) => {
       let checkAlredyScan = await masters.findOne({
-        prefix: "tray-master",
         "items.awbn_number": { $regex: ".*" + awbn + ".*", $options: "i" },
+        prefix: "tray-master",
         issued_user_name: username,
         assign: "New Assign",
       });
@@ -184,7 +180,6 @@ module.exports = {
               },
             }
           );
-
           resolve({ status: 1 });
         } else {
           resolve({ status: 2 });

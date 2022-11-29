@@ -486,10 +486,12 @@ router.post("/traycloseBot", async (req, res, next) => {
   }
 });
 /* GET BOT TRAY FOR RELEASE */
-router.post("/release-bot-tray/:location", async (req, res, next) => {
+router.post("/release-bot-tray/:location/:type", async (req, res, next) => {
   try {
+    const { location, type } = req.params;
     let data = await warehouseInController.getBotWarehouseClosed(
-      req.params.location
+      location,
+      type
     );
     if (data) {
       res.status(200).json({
@@ -1237,6 +1239,33 @@ router.post("/sort-mmt-pmt-report", async (req, res, next) => {
     if (data) {
       res.status(200).json({
         data: data,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+/* BOT TRAY REPORT */
+router.post("/bot-tray-report", async (req, res, next) => {
+  try {
+    const { location, botTray } = req.body;
+    let data = await warehouseInController.getBotTrayReport(location, botTray);
+    console.log(data);
+    if (data.status == 1) {
+      res.status(200).json({
+        data: data.data,
+      });
+    } else if (data.status == 0) {
+      res.status(403).json({
+        message: `${botTray} - Tray in process`,
+      });
+    } else if (data.status == 2) {
+      res.status(403).json({
+        message: `You can't access this tray ${botTray} - report`,
+      });
+    } else {
+      res.status(403).json({
+        message: "please enter valid tray ID",
       });
     }
   } catch (error) {

@@ -139,7 +139,7 @@ module.exports = {
       }
     });
   },
-  getOrders: (location) => {
+  getOrders: (location, limit, skip) => {
     return new Promise(async (resolve, reject) => {
       let allOrders = await orders.aggregate([
         { $match: { partner_shop: location } },
@@ -151,8 +151,14 @@ module.exports = {
             as: "products",
           },
         },
+        {
+          $skip: skip,
+        },
+        {
+          $limit: limit,
+        },
       ]);
-
+      console.log(allOrders.length);
       if (allOrders) {
         resolve(allOrders);
       }
@@ -300,6 +306,12 @@ module.exports = {
       if (allOrders) {
         resolve(allOrders);
       }
+    });
+  },
+  getOrdersCount: (location) => {
+    return new Promise(async (resolve, reject) => {
+      let data = await orders.count({ partner_shop: location });
+      resolve(data);
     });
   },
   badOrdersSearch: (searchType, value, location) => {
@@ -469,7 +481,7 @@ module.exports = {
       resolve(data);
     });
   },
-  getDeliveredOrders: (location) => {
+  getDeliveredOrders: (location, limit, skip) => {
     return new Promise(async (resolve, reject) => {
       let data = await orders.aggregate([
         {
@@ -489,11 +501,21 @@ module.exports = {
         {
           $unwind: "$delivery",
         },
+        {
+          $skip: skip,
+        },
+        {
+          $limit: limit,
+        },
       ]);
-      resolve(data);
+      let count = await orders.count({
+        partner_shop: location,
+        delivery_status: "Delivered",
+      });
+      resolve({ data: data, count: count });
     });
   },
-  getUicPage: (location) => {
+  getUicPage: (location, limit, skip) => {
     return new Promise(async (resolve, reject) => {
       let data = await delivery.aggregate([
         {
@@ -510,10 +532,17 @@ module.exports = {
           },
         },
         {
+          $skip: skip,
+        },
+        {
+          $limit: limit,
+        },
+        {
           $unwind: "$order",
         },
       ]);
-      resolve(data);
+      let count = await delivery.count({ partner_shop: location });
+      resolve({ data: data, count: count });
     });
   },
   searchUicPageAll: (searchType, value, location, uic_status) => {
@@ -710,13 +739,20 @@ module.exports = {
       }
     });
   },
-  notDeliveredOrders: (location) => {
+  notDeliveredOrders: (location, limit, skip) => {
     return new Promise(async (resolve, reject) => {
-      let data = await orders.find({
+      let data = await orders
+        .find({
+          partner_shop: location,
+          delivery_status: "Pending",
+        })
+        .limit(limit)
+        .skip(skip);
+      let count = await orders.count({
         partner_shop: location,
         delivery_status: "Pending",
       });
-      resolve(data);
+      resolve({ data: data, count: count });
     });
   },
   searchDeliveredOrders: (searchType, value, location) => {
@@ -975,7 +1011,15 @@ module.exports = {
       resolve(obj);
     });
   },
-  getDelivery: (location) => {
+  getDeliveryCount: (location) => {
+    return new Promise(async (resolve, reject) => {
+      let data = await delivery.count({ partner_shop: location });
+      if (data) {
+        resolve(data);
+      }
+    });
+  },
+  getDelivery: (location, limit, skip) => {
     return new Promise(async (resolve, reject) => {
       let allDeliveryData = await delivery.aggregate([
         { $match: { partner_shop: location } },
@@ -1003,6 +1047,12 @@ module.exports = {
             ],
             as: "result",
           },
+        },
+        {
+          $skip: skip,
+        },
+        {
+          $limit: limit,
         },
       ]);
       resolve(allDeliveryData);
@@ -1392,6 +1442,15 @@ module.exports = {
   },
   getUicRecon: (status) => {
     return new Promise(async (resolve, reject) => {
+      if (!status.page) {
+        page = 1;
+      }
+      if (!status.size) {
+        size = 10;
+      }
+      status.page++;
+      const limit = parseInt(status.size);
+      const skip = (status.page - 1) * status.size;
       let data = await delivery.aggregate([
         {
           $match: {
@@ -1410,8 +1469,18 @@ module.exports = {
         {
           $unwind: "$order",
         },
+        {
+          $skip: skip,
+        },
+        {
+          $limit: limit,
+        },
       ]);
-      resolve(data);
+      let count = await delivery.count({
+        partner_shop: status.location,
+        uic_status: status.status,
+      });
+      resolve({ data: data, count: count });
     });
   },
   searchUicReconPage: (searchType, value, location, stage) => {

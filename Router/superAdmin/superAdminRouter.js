@@ -1052,12 +1052,23 @@ router.delete("/deleteMaster/:masterId", async (req, res, next) => {
 });
 /**************************************ITEM TRACKING************************************************ */
 /* Item tracking */
-router.post("/itemTracking", async (req, res, next) => {
+router.post("/itemTracking/:page/:size", async (req, res, next) => {
   try {
-    let data = await superAdminController.itemTracking();
+    let {  page, size } = req.params;
+    if (!page) {
+      page = 1;
+    }
+    if (!size) {
+      size = 10;
+    }
+    page++;
+    const limit = parseInt(size);
+    const skip = (page - 1) * size;
+    let data = await superAdminController.itemTracking(limit,skip);
     if (data) {
       res.status(200).json({
-        data: data,
+        data: data.data,
+        count:data.count
       });
     }
   } catch (error) {

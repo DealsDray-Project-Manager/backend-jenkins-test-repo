@@ -22,9 +22,9 @@ router.post("/getAssignedBag/:userName", async (req, res, next) => {
 router.post("/getAssignedBagItems", async (req, res, next) => {
   try {
     let data = await botController.getAssignedBagData(req.body);
-    if (data.length != 0) {
+    if (data.status == 1) {
       res.status(200).json({
-        data: data,
+        data: data.data,
         message: "Successfully Get All Data",
       });
     } else {
