@@ -26,7 +26,7 @@ app.use(logger("dev"));
 app.use(express.json({ limit: "25mb" }));
 app.use(
   cors({
-    origin: "http://localhost:3000",
+    origin: "http://localhost:3000"
   })
 );
 app.use(express.urlencoded({ limit: "25mb", extended: false }));
