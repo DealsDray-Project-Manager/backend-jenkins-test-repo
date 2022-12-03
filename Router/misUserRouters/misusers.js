@@ -169,7 +169,7 @@ router.post(
       if (data) {
         res.status(200).json({
           data: data.data,
-          count:data.count
+          count: data.count,
         });
       }
     } catch (error) {
@@ -849,6 +849,119 @@ router.post("/merge-request-sent-to-wh", async (req, res, next) => {
     } else {
       res.status(403).json({
         message: "Failed",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+/********************************BAG TRANSACTION********************************* */
+/* GET BAG FOR TRANSACTION */
+router.post("/getBag-for-transaction/:location", async (req, res, next) => {
+  try {
+    const { location } = req.params;
+    let data = await misUserController.getBagForTransfer(location);
+    if (data) {
+      res.status(200).json({
+        data: data,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+/* View Item */
+router.post("/view-bag-item/:location/:bagId", async (req, res, next) => {
+  try {
+    const { location, bagId } = req.params;
+    let data = await misUserController.viewBagitem(location, bagId);
+    if (data) {
+      res.status(200).json({
+        data: data,
+      });
+    } else {
+      res.status(403).json({
+        message: "No Data Found",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+/************************************MMT MERGE***************************************************** */
+/* GET MMT TRAY IN CLOSED STATE */
+router.post("/getClosedMmtTray/:location", async (req, res, next) => {
+  try {
+    const { location } = req.params;
+    let data = await misUserController.getClosedMmttray(location);
+    if (data) {
+      res.status(200).json({
+        data: data,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+/* GET SORTING AGENT FOR ASSIGN MMT TRAY FOR MERGE */
+router.post("/getSortingAgentMergeMmt/:location", async (req, res, next) => {
+  try {
+    const { location } = req.params;
+    let data = await misUserController.getSortingAgentForMergeMmt(location);
+    if (data.status === 1) {
+      res.status(200).json({
+        data: data.user,
+      });
+    } else {
+      res.status(403).json({
+        message: "No sorting-agent avilable for now",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+/* GET TO MMT TRAY FOR MERGE*/
+router.post(
+  "/toMmtTrayForMerge/:fromTray/:location/:itemsCount",
+  async (req, res, next) => {
+    try {
+      const { fromTray, location, itemsCount } = req.params;
+      let mmtTray = await misUserController.getToTrayMmtMerge(
+        fromTray,
+        location,
+        itemsCount
+      );
+      if (mmtTray.status === 1) {
+        res.status(200).json({
+          data: mmtTray.tray,
+        });
+      } else {
+        res.status(403).json({
+          message: "Currently no mmt tray for merge",
+        });
+      }
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+/* MMT TRAY MERGE REQUEST SEND TO WAREHOUSE */
+router.post("/mmtTrayMergeRequestSend", async (req, res, next) => {
+  try {
+    const { sort_agent, mmtTrayFrom, toMmtTray } = req.body;
+    let data = await misUserController.mmtMergeRequestSendToWh(
+      sort_agent,
+      mmtTrayFrom,
+      toMmtTray
+    );
+    if (data.status === 1) {
+      res.status(200).json({
+        message: "Request Successfully Sent to Warehouse",
+      });
+    } else {
+      res.status(403).json({
+        message: "Failed Please tray again..",
       });
     }
   } catch (error) {

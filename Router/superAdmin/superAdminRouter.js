@@ -1054,7 +1054,7 @@ router.delete("/deleteMaster/:masterId", async (req, res, next) => {
 /* Item tracking */
 router.post("/itemTracking/:page/:size", async (req, res, next) => {
   try {
-    let {  page, size } = req.params;
+    let { page, size } = req.params;
     if (!page) {
       page = 1;
     }
@@ -1064,11 +1064,11 @@ router.post("/itemTracking/:page/:size", async (req, res, next) => {
     page++;
     const limit = parseInt(size);
     const skip = (page - 1) * size;
-    let data = await superAdminController.itemTracking(limit,skip);
+    let data = await superAdminController.itemTracking(limit, skip);
     if (data) {
       res.status(200).json({
         data: data.data,
-        count:data.count
+        count: data.count,
       });
     }
   } catch (error) {
@@ -1104,6 +1104,38 @@ router.post("/update-cpc", async (req, res, next) => {
     } else {
       res.status(403).json({
         message: "Failed",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+/*************************************************************READY FOR CHARGING************************************************* */
+/* GET INUSE WHT TRAY */
+router.post("/getInuseWht", async (req, res, next) => {
+  try {
+    let whtTray = await superAdminController.getWhtTrayInuse();
+    if (whtTray) {
+      res.status(200).json({
+        data: whtTray,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+/* SEND TO WHT TO MIS READY FOR CHARGING */
+router.post("/ready-for-charging", async (req, res, next) => {
+  try {
+    const { ischeck } = req.body;
+    let data = await superAdminController.readyForCharging(ischeck);
+    if (data.status === 1) {
+      res.status(200).json({
+        message: "Successfully Sent to MIS",
+      });
+    } else {
+      res.status(403).json({
+        message: "Failed Please Try again..",
       });
     }
   } catch (error) {

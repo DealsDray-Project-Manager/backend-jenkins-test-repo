@@ -36,41 +36,18 @@ module.exports = {
   },
   closeBags: (bagData) => {
     return new Promise(async (resolve, reject) => {
-      let bagClose = await masters.updateOne(
-        { code: bagData.bagId },
+      let close = await masters.updateMany(
+        { issued_user_name: bagData.username },
         {
           $set: {
             sort_id: "Closed By Bot",
-            issued_user_name: null,
+            assign: "Old Assign",
             closed_time_bot: Date.now(),
           },
         }
       );
-      if (bagClose.modifiedCount !== 0) {
-        let trayClose = await masters.findOneAndUpdate(
-          { code: bagData.trayId },
-          {
-            $set: {
-              sort_id: "Closed By Bot",
-              assign: "Old Assign",
-              closed_time_bot: Date.now(),
-            },
-          }
-        );
-        if (trayClose) {
-          for (let x of trayClose.items) {
-            let deliveryTrck = await delivery.updateMany(
-              { tracking_id: x.awbn_number },
-              {
-                $set: {
-                  tray_closed_by_bot: Date.now(),
-                  tray_status: "Closed By Bot",
-                },
-              }
-            );
-          }
-          resolve(trayClose);
-        }
+      if (close.modifiedCount !== 0) {
+        resolve(close);
       } else {
         resolve();
       }

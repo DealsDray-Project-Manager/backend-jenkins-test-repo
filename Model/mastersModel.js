@@ -96,6 +96,12 @@ const mastersSchema = mongoose.Schema({
   wht_tray: {
     type: Array,
   },
+  from_mmt_merge: {
+    type: String,
+  },
+  to_mmt_merge: {
+    type: String,
+  },
 });
 const masters = mongoose.model("masters", mastersSchema);
 module.exports = {

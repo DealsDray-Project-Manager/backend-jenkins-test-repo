@@ -388,13 +388,17 @@ router.post("/inuse-mmt-pmt/:location/:type", async (req, res, next) => {
 router.post("/receivedTray", async (req, res, next) => {
   try {
     let data = await warehouseInController.trayReceived(req.body);
-    if (data) {
+    if (data.status === 1) {
       res.status(200).json({
         message: "Successfully Received",
       });
-    } else {
+    } else if (data.status === 2) {
       res.status(403).json({
         message: "Failed",
+      });
+    } else if (data.status === 3) {
+      res.status(403).json({
+        message: "Please Enter Valid Count",
       });
     }
   } catch (error) {
@@ -1265,7 +1269,132 @@ router.post("/bot-tray-report", async (req, res, next) => {
       });
     } else {
       res.status(403).json({
-        message: "please enter valid tray ID",
+        message: "Report Not Available",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+/* GET TRAY ITEM DETAILS BASED ON THE BRAND AND MODEL */
+router.post(
+  "/bot-tray-report-item-details/:location/:trayId/:muic",
+  async (req, res, next) => {
+    try {
+      console.log(req.params);
+      const { location, trayId, muic } = req.params;
+      let data = await warehouseInController.getItemDetailsOfBotTrayReport(
+        location,
+        trayId,
+        muic
+      );
+      if (data) {
+        res.status(200).json({
+          data: data,
+        });
+      } else {
+        res.status(403).json({
+          message: "No Data Found",
+        });
+      }
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+/* MMT MERGE */
+router.post("/mmtMergeRequest/:location", async (req, res, next) => {
+  try {
+    const { location } = req.params;
+    let data = await warehouseInController.mmtMergerequest(location);
+    if (data) {
+      res.status(200).json({
+        data: data,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+/* VIEW FROM AND TO TRAY FOR MERGE */
+router.post(
+  "/viewTrayFromAndTo/:location/:fromTray",
+  async (req, res, next) => {
+    try {
+      const { location, fromTray } = req.params;
+      let data = await warehouseInController.getFromAndToTrayMerge(
+        location,
+        fromTray
+      );
+      console.log(data);
+      if (data) {
+        res.status(200).json({
+          data: data,
+        });
+      } else {
+        res.status(403).json({
+          message: "You can't access this tray",
+        });
+      }
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+/* MMT TRAY SEND TO SORTING AGENT CONFIRM */
+router.post("/mmtTraySendToSorting", async (req, res, next) => {
+  try {
+    console.log(req.body);
+    const { username, fromTray, toTray } = req.body;
+    let data = await warehouseInController.assignToSortingAgent(
+      username,
+      fromTray,
+      toTray
+    );
+    console.log(data);
+    if (data.status === 1) {
+      res.status(200).json({
+        message: "Successfully Assigned",
+      });
+    } else if (data.status === 0) {
+      res.status(403).json({
+        message: "Failed Please Try Again",
+      });
+    } else if (data.status === 2) {
+      res.status(403).json({
+        message: `${username} - user have already mmt tray`,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+/* RETURN FROM MERGING */
+router.post("/returnFromMerging/:location", async (req, res, next) => {
+  try {
+    const { location } = req.params;
+    let data = await warehouseInController.returnFromMerging(location);
+    if (data) {
+      res.status(200).json({
+        data: data,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+/* AFTER MERGE IS DONE CLOSE MMT TRAY */
+router.post("/mergeDoneMmttrayClose", async (req, res, next) => {
+  try {
+    const {toTray,fromTray}=req.body
+    let data = await warehouseInController.mergeDoneTrayClose(fromTray,toTray);
+    if (data.status == 1) {
+      res.status(200).json({
+        message: "Successfully Closed",
+      });
+    } else {
+      res.status(403).json({
+        message: "Failed",
       });
     }
   } catch (error) {

@@ -966,7 +966,7 @@ module.exports = {
       }
     });
   },
-  itemTracking: (limit,skip) => {
+  itemTracking: (limit, skip) => {
     return new Promise(async (resolve, reject) => {
       let data = await orders.aggregate([
         {
@@ -992,8 +992,8 @@ module.exports = {
           $limit: limit,
         },
       ]);
-      let count=await orders.count({delivery_status: "Delivered",})
-      resolve({data:data,count:count});
+      let count = await orders.count({ delivery_status: "Delivered" });
+      resolve({ data: data, count: count });
     });
   },
   searchAdminTrackItem: (searchType, value, location) => {
@@ -1300,219 +1300,225 @@ module.exports = {
       }
     });
   },
-  updateCPCExtra: () => {
-    let arr = [
-      "B0106",
-      "B0110",
-      "B0111",
-      "B0112",
-      "B0113",
-      "B0114",
-      "B0115",
-      "B0116",
-      "B0117",
-      "B0118",
-      "B0119",
-      "B0120",
-      "B0121",
-      "B0122",
-      "B0123",
-      "B0124",
-      "B0125",
-      "B0126",
-      "B0127",
-      "B0128",
-      "B0129",
-      "B0130",
-      "B0131",
-      "B0132",
-      "B0133",
-      "B0134",
-      "B0135",
-      "B0136",
-      "B0137",
-      "B0138",
-      "B0139",
-      "B0140",
-      "B0141",
-      "B0142",
-      "B0143",
-      "B0144",
-      "B0145",
-      "B0146",
-      "B0147",
-      "B0148",
-      "B0149",
-      "B0150",
-      "B0151",
-      "B0152",
-      "B0153",
-      "B0154",
-      "B0201",
-      "B0202",
-      "B0203",
-      "B0204",
-      "B0205",
-      "B0206",
-      "B0207",
-      "B0208",
-      "B0209",
-      "B0210",
-      "B0211",
-      "B0212",
-      "B0213",
-      "B0214",
-      "B0215",
-      "B0216",
-      "B0217",
-      "B0218",
-      "B0219",
-      "B0220",
-      "B0221",
-      "B0222",
-      "B0223",
-      "B0224",
-      "B0225",
-      "B0226",
-      "B0227",
-      "B0228",
-      "B0229",
-      "B0230",
-      "B0231",
-      "B0232",
-      "B0233",
-      "B0234",
-      "B0235",
-      "B0236",
-      "B0237",
-      "B0238",
-      "B0239",
-      "B0240",
-      "B0241",
-      "B0242",
-      "B0243",
-      "B0244",
-      "B0245",
-      "B0246",
-      "B0247",
-      "B0248",
-      "B0249",
-      "B0250",
-      "B0251",
-      "B0252",
-      "B0253",
-      "B0254",
-      "B0255",
-      "B0256",
-      "B0257",
-      "B0258",
-      "B0259",
-      "B0260",
-      "B0261",
-      "B0262",
-      "B0263",
-      "B0264",
-      "B0265",
-      "B0266",
-      "B0267",
-      "B0268",
-      "B0269",
-      "B0270",
-      "B0271",
-      "B0272",
-      "B0273",
-      "B0274",
-      "B0275",
-      "B0276",
-      "B0277",
-      "B0278",
-      "B0279",
-      "B0280",
-      "B0281",
-      "B0282",
-      "B0283",
-      "B0284",
-      "B0285",
-      "B0286",
-      "B0287",
-      "B0288",
-      "B0289",
-      "B0290",
-      "B0291",
-      "B0292",
-      "B0293",
-      "B0294",
-      "B0295",
-      "B0296",
-      "B0297",
-      "B0298",
-      "B0299",
-      "B0300",
-    ];
+  getWhtTrayInuse: () => {
     return new Promise(async (resolve, reject) => {
-      let dataOfClosedPmtMMt = await masters.find({
-        $or: [
-          {
-            type_taxanomy: "PMT",
-            sort_id: "Closed By Warehouse",
-            prefix: "tray-master",
-          },
-          {
-            type_taxanomy: "MMT",
-            sort_id: "Closed By Warehouse",
-            prefix: "tray-master",
-          },
-        ],
+      let data = await masters.find({
+        type_taxanomy: "WHT",
+        prefix: "tray-master",
+        sort_id: "Inuse",
+        items: { $ne: [] },
       });
-      for (let x of dataOfClosedPmtMMt) {
-        if (x.items.length == x.limit) {
-          let updateData = await masters.findOneAndUpdate(
-            { code: x.code },
-            {
-              $set: {
-                sort_id: "Closed By Warehouse",
-                closed_time_wharehouse: Date.now(),
-              },
-            }
-          );
-          for (let y of updateData.items) {
-            let deliveryTrack = await delivery.updateMany(
-              { tracking_id: y.awbn_number },
-              {
-                $set: {
-                  warehouse_close_date: Date.now(),
-                  tray_status: "Closed By Warehouse",
-                  tray_location: "Warehouse",
-                },
-              }
-            );
-          }
-        } else {
-          let dataNotFull = await masters.findOneAndUpdate(
-            { code: x.code },
-            {
-              $set: {
-                sort_id: "Inuse",
-                closed_time_wharehouse: Date.now(),
-                issued_user_name: null,
-              },
-            }
-          );
-          for (let m of dataNotFull.items) {
-            let deliveryTrack = await delivery.updateMany(
-              { tracking_id: m.awbn_number },
-              {
-                $set: {
-                  warehouse_close_date: Date.now(),
-                  tray_status: "Closed By Warehouse",
-                  tray_location: "Warehouse",
-                },
-              }
-            );
-          }
-        }
+      if (data) {
+        resolve(data);
       }
-      resolve(dataOfClosedPmtMMt);
     });
   },
+  readyForCharging: (trayId) => {
+    return new Promise(async (resolve, reject) => {
+      let flag = false;
+      for (let x of trayId) {
+        let updateWht = await masters.updateOne(
+          { code: x },
+          {
+            $set: {
+              sort_id: "Closed",
+              actual_items: [],
+              issued_user_name: null,
+            },
+          }
+        );
+        if (updateWht.modifiedCount == 0) {
+          flag = true;
+        }
+      }
+      if (flag === false) {
+        resolve({ status: 1 });
+      } else {
+        resolve({ status: 0 });
+      }
+    });
+  },
+  // updateCPCExtra: () => {
+  //   let arr = [
+  //     "B0106",
+  //     "B0110",
+  //     "B0111",
+  //     "B0112",
+  //     "B0113",
+  //     "B0114",
+  //     "B0115",
+  //     "B0116",
+  //     "B0117",
+  //     "B0118",
+  //     "B0119",
+  //     "B0120",
+  //     "B0121",
+  //     "B0122",
+  //     "B0123",
+  //     "B0124",
+  //     "B0125",
+  //     "B0126",
+  //     "B0127",
+  //     "B0128",
+  //     "B0129",
+  //     "B0130",
+  //     "B0131",
+  //     "B0132",
+  //     "B0133",
+  //     "B0134",
+  //     "B0135",
+  //     "B0136",
+  //     "B0137",
+  //     "B0138",
+  //     "B0139",
+  //     "B0140",
+  //     "B0141",
+  //     "B0142",
+  //     "B0143",
+  //     "B0144",
+  //     "B0145",
+  //     "B0146",
+  //     "B0147",
+  //     "B0148",
+  //     "B0149",
+  //     "B0150",
+  //     "B0151",
+  //     "B0152",
+  //     "B0153",
+  //     "B0154",
+  //     "B0201",
+  //     "B0202",
+  //     "B0203",
+  //     "B0204",
+  //     "B0205",
+  //     "B0206",
+  //     "B0207",
+  //     "B0208",
+  //     "B0209",
+  //     "B0210",
+  //     "B0211",
+  //     "B0212",
+  //     "B0213",
+  //     "B0214",
+  //     "B0215",
+  //     "B0216",
+  //     "B0217",
+  //     "B0218",
+  //     "B0219",
+  //     "B0220",
+  //     "B0221",
+  //     "B0222",
+  //     "B0223",
+  //     "B0224",
+  //     "B0225",
+  //     "B0226",
+  //     "B0227",
+  //     "B0228",
+  //     "B0229",
+  //     "B0230",
+  //     "B0231",
+  //     "B0232",
+  //     "B0233",
+  //     "B0234",
+  //     "B0235",
+  //     "B0236",
+  //     "B0237",
+  //     "B0238",
+  //     "B0239",
+  //     "B0240",
+  //     "B0241",
+  //     "B0242",
+  //     "B0243",
+  //     "B0244",
+  //     "B0245",
+  //     "B0246",
+  //     "B0247",
+  //     "B0248",
+  //     "B0249",
+  //     "B0250",
+  //     "B0251",
+  //     "B0252",
+  //     "B0253",
+  //     "B0254",
+  //     "B0255",
+  //     "B0256",
+  //     "B0257",
+  //     "B0258",
+  //     "B0259",
+  //     "B0260",
+  //     "B0261",
+  //     "B0262",
+  //     "B0263",
+  //     "B0264",
+  //     "B0265",
+  //     "B0266",
+  //     "B0267",
+  //     "B0268",
+  //     "B0269",
+  //     "B0270",
+  //     "B0271",
+  //     "B0272",
+  //     "B0273",
+  //     "B0274",
+  //     "B0275",
+  //     "B0276",
+  //     "B0277",
+  //     "B0278",
+  //     "B0279",
+  //     "B0280",
+  //     "B0281",
+  //     "B0282",
+  //     "B0283",
+  //     "B0284",
+  //     "B0285",
+  //     "B0286",
+  //     "B0287",
+  //     "B0288",
+  //     "B0289",
+  //     "B0290",
+  //     "B0291",
+  //     "B0292",
+  //     "B0293",
+  //     "B0294",
+  //     "B0295",
+  //     "B0296",
+  //     "B0297",
+  //     "B0298",
+  //     "B0299",
+  //     "B0300",
+  //   ];
+  //   return new Promise(async (resolve, reject) => {
+  //     // let wht = await masters.find({
+  //     //   issued_user_name: "sachin.ch.op1@dealsdray.com",
+  //     // });
+  //     // for (let x of wht) {
+  //     //   let update = await masters.updateOne(
+  //     //     { code: x.code },
+  //     //     {
+  //     //       $set: {
+  //     //         issued_user_name: null,
+  //     //         sort_id: "Closed",
+  //     //       },
+  //     //     }
+  //     //   );
+  //     // }
+  //     // resolve(wht);
+  //     let blrBag = await masters.find({
+  //       cpc: "Bangalore_560067",
+  //       prefix: "tray-master",
+  //       type_taxanomy:"BOT"
+  //     });
+  //     for (let x of blrBag) {
+  //       let update = await masters.updateOne(
+  //         { code: x.code },
+  //         {
+  //           $set: {
+  //             cpc: "Gurgaon_122016",
+  //           },
+  //         }
+  //       );
+  //     }
+  //      resolve(blrBag)
+  //   });
+  // },
 };

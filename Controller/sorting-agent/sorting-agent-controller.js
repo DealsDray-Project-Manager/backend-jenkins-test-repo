@@ -237,4 +237,92 @@ module.exports = {
       }
     });
   },
+  getAssignedMmtTray: (username) => {
+    return new Promise(async (resolve, reject) => {
+      let data = await masters.find({
+        issued_user_name: username,
+        to_mmt_merge: { $ne: null },
+        type_taxanomy: "MMT",
+        sort_id: "Issued to Merging",
+      });
+      console.log(data);
+      if (data) {
+        resolve(data);
+      }
+    });
+  },
+  itemShiftToMmt: (mmtTrayData) => {
+    return new Promise(async (resolve, reject) => {
+      let data = await masters.updateOne(
+        { code: mmtTrayData.toTray },
+        {
+          $push: {
+            items: mmtTrayData.item,
+          },
+        }
+      );
+      if (data.modifiedCount !== 0) {
+        let fromTrayItemRemove = await masters.updateOne(
+          { code: mmtTrayData.fromTray },
+          {
+            $pull: {
+              actual_items: {
+                uic: mmtTrayData.item.uic,
+              },
+            },
+          }
+        );
+        let updateDelivery = await delivery.updateOne(
+          { tracking_id: mmtTrayData.item.awbn_number },
+          {
+            $set: {
+              tray_location: "Merging",
+              tray_id: mmtTrayData.toTray,
+            },
+          }
+        );
+        if (fromTrayItemRemove.modifiedCount !== 0) {
+          resolve({ status: 1 });
+        } else {
+          resolve({ status: 0 });
+        }
+      } else {
+        resolve({ status: 1 });
+      }
+    });
+  },
+  mergeDoneSendToWh: (trayData) => {
+    return new Promise(async (resolve, reject) => {
+      let fromtray = await masters.updateOne(
+        { code: trayData.fromTray },
+        {
+          $set: {
+            sort_id: "Merging Done",
+            closed_time_sorting_agent: Date.now(),
+            items: [],
+            actual_items: [],
+          },
+        }
+      );
+      if (fromtray.modifiedCount !== 0) {
+        let updateToTray = await masters.updateOne(
+          { code: trayData.toTray },
+          {
+            $set: {
+              sort_id: "Merging Done",
+              closed_time_sorting_agent: Date.now(),
+              actual_items: [],
+            },
+          }
+        );
+        if (updateToTray.modifiedCount !== 0) {
+          resolve({ status: 1 });
+        } else {
+          resolve({ status: 0 });
+        }
+      } else {
+        resolve({ status: 0 });
+      }
+    });
+  },
 };

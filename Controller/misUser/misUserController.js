@@ -2067,4 +2067,158 @@ module.exports = {
   //     }
   //   })
   // }
+  getBagForTransfer: (location) => {
+    return new Promise(async (resolve, reject) => {
+      let data = await masters
+        .find({
+          $or: [
+            {
+              sort_id: "Closed",
+              prefix: "bag-master",
+              cpc: location,
+            },
+            {
+              sort_id: "Pre-closure",
+              prefix: "bag-master",
+              cpc: location,
+            },
+          ],
+        })
+        .catch((err) => reject(err));
+      if (data) {
+        resolve(data);
+      }
+    });
+  },
+  viewBagitem: (location, bagId) => {
+    return new Promise(async (resolve, reject) => {
+      let data = await masters
+        .findOne({
+          $or: [
+            { code: bagId, sort_id: "Closed", cpc: location },
+            { code: bagId, sort_id: "Pre-closure", cpc: location },
+          ],
+        })
+        .catch((err) => reject(err));
+      if (data) {
+        console.log(data);
+        resolve(data);
+      } else {
+        resolve();
+      }
+    });
+  },
+  getClosedMmttray: (location) => {
+    return new Promise(async (resolve, reject) => {
+      let data = await masters
+        .find({
+          cpc: location,
+          type_taxanomy: "MMT",
+          prefix: "tray-master",
+          sort_id: "Closed By Warehouse",
+        })
+        .catch((err) => reject(err));
+      if (data) {
+        resolve(data);
+      }
+    });
+  },
+  getSortingAgentForMergeMmt: (location) => {
+    return new Promise(async (resolve, reject) => {
+      let arr = [];
+      let data = await user
+        .find({
+          user_type: "Sorting Agent",
+          status: "Active",
+          cpc: location,
+        })
+        .catch((err) => reject(err));
+      if (data.length !== 0) {
+        for (let x of data) {
+          let checkUserFree = await masters.findOne({
+            type_taxanomy: "MMT",
+            issued_user_name: x.user_name,
+            sort_id: "Issued to Merging",
+          });
+          if (checkUserFree == null) {
+            arr.push(x);
+          }
+        }
+        if (arr.length !== 0) {
+          resolve({ status: 1, user: arr });
+        } else {
+          resolve({ status: 2 });
+        }
+      } else {
+        resolve({ status: 2 });
+      }
+    });
+  },
+  getToTrayMmtMerge: (toTray, location, itemsCount) => {
+    return new Promise(async (resolve, reject) => {
+      let arr = [];
+      let whtTray = await masters
+        .find({
+          cpc: location,
+          type_taxanomy: "MMT",
+          sort_id: "Closed By Warehouse",
+          prefix: "tray-master",
+          code: { $ne: toTray },
+        })
+        .catch((err) => reject(err));
+      console.log(whtTray);
+      if (whtTray.length !== 0) {
+        for (let x of whtTray) {
+          let count = x.limit - x.items.length;
+          if (count >= itemsCount) {
+            arr.push(x);
+          }
+        }
+        if (arr.length !== 0) {
+          console.log(arr);
+          resolve({ status: 1, tray: arr });
+        } else {
+          resolve({ status: 2 });
+        }
+      } else {
+        resolve({ status: 2 });
+      }
+    });
+  },
+  mmtMergeRequestSendToWh: (sortingAgent, fromTray, toTray) => {
+    return new Promise(async (resolve, reject) => {
+      let updateFromTray = await masters.updateOne(
+        { code: fromTray },
+        {
+          $set: {
+            sort_id: "Merge Request Sent To Wharehouse",
+            status_change_time: Date.now(),
+            issued_user_name: sortingAgent,
+            to_mmt_merge: toTray,
+            actual_items: [],
+          },
+        }
+      );
+      if (updateFromTray.modifiedCount !== 0) {
+        let updateToTray = await masters.updateOne(
+          { code: toTray },
+          {
+            $set: {
+              sort_id: "Merge Request Sent To Wharehouse",
+              status_change_time: Date.now(),
+              issued_user_name: sortingAgent,
+              from_mmt_merge: fromTray,
+              to_mmt_merge: null,
+              actual_items: [],
+            },
+          }
+        );
+        if (updateToTray.modifiedCount !== 0) {
+          resolve({ status: 1 });
+        }
+      } else {
+        resolve({ status: 0 });
+      }
+    });
+  },
 };

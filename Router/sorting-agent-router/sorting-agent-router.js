@@ -133,4 +133,54 @@ router.post("/wht-tray-close/:trayId", async (req, res, next) => {
     next(error);
   }
 });
+/*****************************************MMT MERGE**************************************** */
+/* GET ASSIGNED MMT TRAY */
+router.post("/getAssignedFromTray/:username", async (req, res, next) => {
+  try {
+    const { username } = req.params;
+    let data = await sortingAgentController.getAssignedMmtTray(username);
+    console.log(data);
+    if (data) {
+      res.status(200).json({
+        data: data,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+/* MMT MERGE ITEM SHIFTED FROM TO */
+router.post("/itemShifteToMmtTray", async (req, res, next) => {
+  try {
+    let data = await sortingAgentController.itemShiftToMmt(req.body);
+    if (data.status === 1) {
+      res.status(200).json({
+        message: "Tray Successfully Sent to Warehouse",
+      });
+    } else {
+      res.status(403).json({
+        message: "Failed",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+/* MMT TRAY SEND TO WAREHOUSE */
+router.post("/mergeDoneTraySendToWarehouse", async (req, res, next) => {
+  try {
+    let data = await sortingAgentController.mergeDoneSendToWh(req.body);
+    if (data.status === 1) {
+      res.status(200).json({
+        message: "Successfully Sent to Warehouse",
+      });
+    } else {
+      res.status(403).json({
+        message: "Failed Please tray again",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
 module.exports = router;

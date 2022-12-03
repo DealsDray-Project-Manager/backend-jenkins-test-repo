@@ -629,35 +629,65 @@ module.exports = {
               }
             );
           }
-          resolve(data);
+          resolve({ status: 1 });
         } else {
-          resolve(data);
+          resolve({ status: 2 });
         }
-      } else {
+      } else if (trayData.type == "Merging Done") {
         let data = await masters.findOneAndUpdate(
           { code: trayData.trayId },
           {
             $set: {
-              sort_id: "Received From BOT",
+              sort_id: "Received From Merging",
             },
           }
         );
         if (data) {
-          for (let i = 0; i < data.items.length; i++) {
+          for (let i = 0; i < data.actual_items.length; i++) {
             let deliveryTrack = await delivery.updateMany(
               { tracking_id: data.items[i].awbn_number },
               {
                 $set: {
-                  tray_status: "Received From BOT",
+                  tray_status: "Received From Merging",
                   tray_location: "Warehouse",
-                  bot_done_received: Date.now(),
                 },
               }
             );
           }
-          resolve(data);
+          resolve({ status: 1 });
         } else {
-          resolve(data);
+          resolve({ status: 2 });
+        }
+      } else {
+        let checkCount = await masters.findOne({ code: trayData.trayId });
+        if (checkCount.items.length == trayData.count) {
+          let data = await masters.findOneAndUpdate(
+            { code: trayData.trayId },
+            {
+              $set: {
+                sort_id: "Received From BOT",
+              },
+            }
+          );
+          if (data) {
+            for (let i = 0; i < data.items.length; i++) {
+              let deliveryTrack = await delivery.updateMany(
+                { tracking_id: data.items[i].awbn_number },
+                {
+                  $set: {
+                    tray_status: "Received From BOT",
+                    tray_location: "Warehouse",
+                    bot_done_received: Date.now(),
+                  },
+                }
+              );
+            }
+            resolve({ status: 1 });
+          } else {
+            resolve({ status: 2 });
+          }
+        } else {
+          resolve({ status: 3 });
         }
       }
     });
@@ -736,7 +766,7 @@ module.exports = {
           { code: trayData.trayId },
           {
             $set: {
-              sort_id: "Inuse",
+              sort_id: "Open",
               closed_time_wharehouse: Date.now(),
               issued_user_name: null,
             },
@@ -2126,20 +2156,202 @@ module.exports = {
   getBotTrayReport: (location, trayId) => {
     return new Promise(async (resolve, reject) => {
       let data = await masters.findOne({
-        code: trayId,
-        cpc: location,
-        sort_id: "Closed By Warehouse",
+        $or: [
+          {
+            code: trayId,
+            cpc: location,
+            temp_array: { $ne: [] },
+          },
+        ],
       });
+      console.log(data);
       if (data) {
-        if (data.cpc == location && data.sort_id == "Closed By Warehouse") {
+        if (data.cpc == location) {
+          for (let x of data.items) {
+            for (let y of data.temp_array) {
+              if (y.wht_tray == undefined) {
+                y.wht_tray = [];
+              }
+              if (y.muic === x.muic) {
+                if (y.wht_tray.includes(x.wht_tray) === false) {
+                  y.wht_tray.push(x.wht_tray);
+                }
+              }
+            }
+          }
+          console.log(data);
           resolve({ status: 1, data: data });
-        } else if (data.sort_id !== "Closed By Warehouse") {
-          resolve({ status: 0 });
         } else if (data.cpc == location) {
           resolve({ status: 2 });
         }
       } else {
         resolve({ status: 3 });
+      }
+    });
+  },
+  getItemDetailsOfBotTrayReport: (location, trayId, muic) => {
+    return new Promise(async (resolve, reject) => {
+      let trayItem = await masters.findOne(
+        { code: trayId, cpc: location },
+        {
+          _id: 0,
+          temp_array: { $elemMatch: { muic: muic } },
+        }
+      );
+      if (trayItem) {
+        resolve(trayItem);
+      } else {
+        resolve();
+      }
+    });
+  },
+  mmtMergerequest: (location) => {
+    return new Promise(async (resolve, reject) => {
+      let getMmttray = await masters
+        .find({
+          sort_id: "Merge Request Sent To Wharehouse",
+          cpc: location,
+          to_mmt_merge: { $ne: null },
+        })
+        .catch((err) => reject(err));
+      if (getMmttray) {
+        resolve(getMmttray);
+      }
+    });
+  },
+  getFromAndToTrayMerge: (location, fromTray) => {
+    return new Promise(async (resolve, reject) => {
+      let arr = [];
+      let data = await masters.findOne({ cpc: location, code: fromTray });
+      if (data) {
+        let toTray = await masters.findOne({
+          cpc: location,
+          code: data.to_mmt_merge,
+        });
+        arr.push(data);
+        arr.push(toTray);
+        resolve(arr);
+      } else {
+        resolve();
+      }
+    });
+  },
+  assignToSortingAgent: (user_name, fromTray, toTray) => {
+    return new Promise(async (resolve, reject) => {
+      let checkMmtTray = await masters.findOne({
+        $or: [
+          {
+            type_taxanomy: "MMT",
+            prefix: "tray-master",
+            issued_user_name: user_name,
+            sort_id: "Issued to Merging",
+          },
+          {
+            type_taxanomy: "MMT",
+            prefix: "tray-master",
+            issued_user_name: user_name,
+            sort_id: "Closed By Sorting",
+          },
+        ],
+      });
+      if (checkMmtTray) {
+        resolve({ status: 2 });
+      } else {
+        let updaFromTray = await masters.updateOne(
+          { code: fromTray },
+          {
+            $set: {
+              assigned_date: Date.now(),
+              sort_id: "Issued to Merging",
+            },
+          }
+        );
+        if (updaFromTray.modifiedCount !== 0) {
+          let updaToTray = await masters.updateOne(
+            { code: toTray },
+            {
+              $set: {
+                assigned_date: Date.now(),
+                sort_id: "Issued to Merging",
+              },
+            }
+          );
+          if (updaToTray.matchedCount != 0) {
+            resolve({ status: 1 });
+          } else {
+            resolve({ status: 0 });
+          }
+        } else {
+          resolve({ status: 0 });
+        }
+      }
+    });
+  },
+  returnFromMerging: (location) => {
+    return new Promise(async (resolve, reject) => {
+      let getMmtTray = await masters.find({
+        $or: [
+          {
+            cpc: location,
+            prefix: "tray-master",
+            type_taxanomy: "MMT",
+            sort_id: "Merging Done",
+            items: { $ne: [] },
+          },
+          {
+            refix: "tray-master",
+            type_taxanomy: "MMT",
+            sort_id: "Received From Merging",
+            items: { $ne: [] },
+          },
+        ],
+      });
+      console.log(getMmtTray);
+      if (getMmtTray) {
+        resolve(getMmtTray);
+      }
+    });
+  },
+  mergeDoneTrayClose: (fromTray, toTray) => {
+    return new Promise(async (resolve, reject) => {
+      let data = await masters.findOneAndUpdate(
+        { code: toTray },
+        {
+          $set: {
+            sort_id: "Closed By Warehouse",
+            closed_time_wharehouse: Date.now(),
+          },
+        }
+      );
+      if (data) {
+        for (let x of data.items) {
+          let update = await delivery.updateOne(
+            { tracking_id: x.awbn_number },
+            {
+              tray_close_wh_date: Date.now(),
+            }
+          );
+        }
+        let updateFromTray = await masters.updateOne(
+          { code: fromTray },
+          {
+            $set: {
+              sort_id: "Open",
+              actual_items: [],
+              items: [],
+              issued_user_name: null,
+              from_mmt_merge: null,
+              to_mmt_merge: null,
+            },
+          }
+        );
+        if (updateFromTray) {
+          resolve({ status: 1 });
+        } else {
+          resolve({ status: 0 });
+        }
+      } else {
+        resolve({ status: 0 });
       }
     });
   },
