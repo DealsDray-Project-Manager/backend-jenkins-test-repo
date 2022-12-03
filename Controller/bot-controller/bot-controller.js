@@ -19,7 +19,7 @@ module.exports = {
             issued_user_name: userData.username,
             prefix: "tray-master",
             assign: "New Assign",
-            sort_id: { $ne: "Closed By Warehouse" },
+          
           })
           .sort({ sort_id: 1 });
         if (tray.length != 0) {

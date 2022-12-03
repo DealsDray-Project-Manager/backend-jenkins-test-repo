@@ -457,12 +457,13 @@ module.exports = {
           let assignedOrNot = await masters.findOne({
             type_taxanomy: "MMT",
             code: trayId,
-            issued_user_name: { $ne: null },
+            sort_id: "Open",
+           
           });
           if (assignedOrNot) {
-            resolve({ status: 2 });
-          } else {
             resolve({ status: 1, id: trayId, tray_status: data.sort_id });
+          } else {
+            resolve({ status: 2 });
           }
         } else {
           resolve({ status: 4 });
@@ -488,13 +489,14 @@ module.exports = {
         if (botTray) {
           let assignedOrNot = await masters.findOne({
             type_taxanomy: "PMT",
+            sort_id: "Open",
             code: trayId,
-            issued_user_name: { $ne: null },
+           
           });
           if (assignedOrNot) {
-            resolve({ status: 2 });
-          } else {
             resolve({ status: 1, id: trayId, tray_status: data.sort_id });
+          } else {
+            resolve({ status: 2 });
           }
         } else {
           resolve({ status: 4 });
@@ -569,13 +571,13 @@ module.exports = {
             sort_id: type,
             prefix: "tray-master",
             type_taxanomy: "MMT",
-            cpc: location,
+            // cpc: location,
           },
           {
             sort_id: type,
             prefix: "tray-master",
             type_taxanomy: "PMT",
-            cpc: location,
+            // cpc: location,
           },
         ],
       });
