@@ -2194,7 +2194,7 @@ module.exports = {
             sort_id: "Merge Request Sent To Wharehouse",
             status_change_time: Date.now(),
             issued_user_name: sortingAgent,
-            to_mmt_merge: toTray,
+            to_merge: toTray,
             actual_items: [],
           },
         }
@@ -2207,8 +2207,8 @@ module.exports = {
               sort_id: "Merge Request Sent To Wharehouse",
               status_change_time: Date.now(),
               issued_user_name: sortingAgent,
-              from_mmt_merge: fromTray,
-              to_mmt_merge: null,
+              from_merge: fromTray,
+              to_merge: null,
               actual_items: [],
             },
           }

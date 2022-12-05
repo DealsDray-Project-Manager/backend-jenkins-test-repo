@@ -2213,7 +2213,7 @@ module.exports = {
         .find({
           sort_id: "Merge Request Sent To Wharehouse",
           cpc: location,
-          to_mmt_merge: { $ne: null },
+          to_merge: { $ne: null },
         })
         .catch((err) => reject(err));
       if (getMmttray) {
@@ -2228,7 +2228,7 @@ module.exports = {
       if (data) {
         let toTray = await masters.findOne({
           cpc: location,
-          code: data.to_mmt_merge,
+          code: data.to_merge,
         });
         arr.push(data);
         arr.push(toTray);
@@ -2342,8 +2342,8 @@ module.exports = {
               actual_items: [],
               items: [],
               issued_user_name: null,
-              from_mmt_merge: null,
-              to_mmt_merge: null,
+              from_merge: null,
+              to_merge: null,
             },
           }
         );

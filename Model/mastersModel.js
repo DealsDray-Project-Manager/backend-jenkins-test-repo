@@ -96,10 +96,10 @@ const mastersSchema = mongoose.Schema({
   wht_tray: {
     type: Array,
   },
-  from_mmt_merge: {
+  from_merge: {
     type: String,
   },
-  to_mmt_merge: {
+  to_merge: {
     type: String,
   },
 });

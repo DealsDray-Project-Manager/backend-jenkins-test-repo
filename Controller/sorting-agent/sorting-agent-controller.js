@@ -241,7 +241,7 @@ module.exports = {
     return new Promise(async (resolve, reject) => {
       let data = await masters.find({
         issued_user_name: username,
-        to_mmt_merge: { $ne: null },
+        to_merge: { $ne: null },
         type_taxanomy: "MMT",
         sort_id: "Issued to Merging",
       });
