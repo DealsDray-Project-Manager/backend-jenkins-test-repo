@@ -458,7 +458,6 @@ module.exports = {
             type_taxanomy: "MMT",
             code: trayId,
             sort_id: "Open",
-           
           });
           if (assignedOrNot) {
             resolve({ status: 1, id: trayId, tray_status: data.sort_id });
@@ -491,7 +490,6 @@ module.exports = {
             type_taxanomy: "PMT",
             sort_id: "Open",
             code: trayId,
-           
           });
           if (assignedOrNot) {
             resolve({ status: 1, id: trayId, tray_status: data.sort_id });
@@ -2116,6 +2114,19 @@ module.exports = {
       resolve(data);
     });
   },
+  getBotTrayForReportScreen: (location) => {
+    return new Promise(async (resolve, reject) => {
+      let data = await masters.find({
+        cpc: location,
+        type_taxanomy: "BOT",
+        prefix: "tray-master",
+        temp_array: { $ne: [] },
+      });
+      if (data) {
+        resolve(data);
+      }
+    });
+  },
   getReportMmtPmtSort: (reportBasis) => {
     let date2 = moment.utc(new Date(reportBasis.date), "DD-MM-YYYY").toDate();
     let date1 = moment
@@ -2176,7 +2187,9 @@ module.exports = {
               }
               if (y.muic === x.muic) {
                 if (y.wht_tray.includes(x.wht_tray) === false) {
-                  y.wht_tray.push(x.wht_tray);
+                  let getCount = await masters.findOne({ code: x.wht_tray });
+                  let string = `${x.wht_tray} -(${getCount.items.length})`;
+                  y.wht_tray.push(string);
                 }
               }
             }

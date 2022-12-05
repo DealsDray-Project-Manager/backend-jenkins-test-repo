@@ -19,7 +19,6 @@ module.exports = {
             issued_user_name: userData.username,
             prefix: "tray-master",
             assign: "New Assign",
-          
           })
           .sort({ sort_id: 1 });
         if (tray.length != 0) {
@@ -37,7 +36,7 @@ module.exports = {
   closeBags: (bagData) => {
     return new Promise(async (resolve, reject) => {
       let close = await masters.updateMany(
-        { issued_user_name: bagData.username },
+        { sort_id: "Issued", issued_user_name: bagData.username },
         {
           $set: {
             sort_id: "Closed By Bot",

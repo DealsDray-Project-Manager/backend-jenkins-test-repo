@@ -1249,6 +1249,20 @@ router.post("/sort-mmt-pmt-report", async (req, res, next) => {
     next(error);
   }
 });
+/* GET BOT TRAY READY / ASSIGNED MERGE WITH WHT*/
+router.post("/getBotTrayReportScreen/:location",async (req, res, next) => {
+  try {
+    const {location}=req.params
+    let data=await warehouseInController.getBotTrayForReportScreen(location)
+    if(data){
+      res.status(200).json({
+        data:data
+      })
+    }
+  } catch (error) {
+    next(error);
+  }
+});
 /* BOT TRAY REPORT */
 router.post("/bot-tray-report", async (req, res, next) => {
   try {
@@ -1386,8 +1400,8 @@ router.post("/returnFromMerging/:location", async (req, res, next) => {
 /* AFTER MERGE IS DONE CLOSE MMT TRAY */
 router.post("/mergeDoneMmttrayClose", async (req, res, next) => {
   try {
-    const {toTray,fromTray}=req.body
-    let data = await warehouseInController.mergeDoneTrayClose(fromTray,toTray);
+    const { toTray, fromTray } = req.body;
+    let data = await warehouseInController.mergeDoneTrayClose(fromTray, toTray);
     if (data.status == 1) {
       res.status(200).json({
         message: "Successfully Closed",
