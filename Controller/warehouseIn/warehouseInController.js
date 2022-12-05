@@ -2186,10 +2186,19 @@ module.exports = {
                 y.wht_tray = [];
               }
               if (y.muic === x.muic) {
-                if (y.wht_tray.includes(x.wht_tray) === false) {
-                  let getCount = await masters.findOne({ code: x.wht_tray });
-                  let string = `${x.wht_tray} -(${getCount.items.length})`;
-                  y.wht_tray.push(string);
+                let getCount = await masters.findOne({ code: x.wht_tray });
+                if (x.wht_tray !== null) {
+                  if (getCount?.items !== undefined) {
+                    let string = `${x.wht_tray} -(${getCount.items.length})`;
+                    if (y.wht_tray.includes(string) === false) {
+                      y.wht_tray.push(string);
+                    }
+                  } else {
+                    let string = `${x.wht_tray} -0`;
+                    if (y.wht_tray.includes(string) === false) {
+                      y.wht_tray.push(string);
+                    }
+                  }
                 }
               }
             }
