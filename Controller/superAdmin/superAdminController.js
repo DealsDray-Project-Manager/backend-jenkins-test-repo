@@ -8,9 +8,8 @@ const { admin } = require("../../Model/adminModel/admins");
 const { usersHistory } = require("../../Model/users-history-model/model");
 const { delivery } = require("../../Model/deliveryModel/delivery");
 const moment = require("moment");
-const IISDOMAIN = "https://prexo-v1-dev-api.dealsdray.com/user/profile/";
-const IISDOMAINPRDT =
-  "https://prexo-v1-dev-api.dealsdray.com/product/image/";
+const IISDOMAIN = "http://prexo-v2-uat-adminapi.dealsdray.com/user/profile/";
+const IISDOMAINPRDT = "http://prexo-v2-uat-adminapi.dealsdray.com/product/image/";
 
 /************************************************************************************************** */
 module.exports = {
@@ -986,12 +985,12 @@ module.exports = {
         {
           $unwind: "$delivery",
         },
-        {
-          $skip: skip,
-        },
-        {
-          $limit: limit,
-        },
+        // {
+        //   $skip: skip,
+        // },
+        // {
+        //   $limit: limit,
+        // },
       ]);
       let count = await orders.count({ delivery_status: "Delivered" });
       resolve({ data: data, count: count });
@@ -1348,7 +1347,6 @@ module.exports = {
         ],
       });
       for (let x of getInuse) {
-       
         if (x.items.length !== 0) {
           let update = await masters.updateOne(
             { code: x.code },

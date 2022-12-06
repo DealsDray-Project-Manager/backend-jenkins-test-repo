@@ -2117,10 +2117,32 @@ module.exports = {
   getBotTrayForReportScreen: (location) => {
     return new Promise(async (resolve, reject) => {
       let data = await masters.find({
-        cpc: location,
-        type_taxanomy: "BOT",
-        prefix: "tray-master",
-        temp_array: { $ne: [] },
+        $and: [
+          {
+            cpc: location,
+            type_taxanomy: "BOT",
+            prefix: "tray-master",
+            sort_id: { $ne: "Open" },
+            temp_array: { $ne: [] },
+            temp_array: { $exists: true },
+          },
+          {
+            cpc: location,
+            type_taxanomy: "BOT",
+            prefix: "tray-master",
+            sort_id: { $ne: "Issued" },
+            temp_array: { $ne: [] },
+            temp_array: { $exists: true },
+          },
+          {
+            cpc: location,
+            type_taxanomy: "BOT",
+            prefix: "tray-master",
+            sort_id: { $ne: "Received From BOT" },
+            temp_array: { $ne: [] },
+            temp_array: { $exists: true },
+          },
+        ],
       });
       if (data) {
         resolve(data);
