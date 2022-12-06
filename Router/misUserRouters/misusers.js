@@ -949,6 +949,7 @@ router.post(
 /* MMT TRAY MERGE REQUEST SEND TO WAREHOUSE */
 router.post("/mmtTrayMergeRequestSend", async (req, res, next) => {
   try {
+    console.log(req.body);
     const { sort_agent, mmtTrayFrom, toMmtTray } = req.body;
     let data = await misUserController.mmtMergeRequestSendToWh(
       sort_agent,
