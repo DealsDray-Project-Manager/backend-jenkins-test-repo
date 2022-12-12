@@ -115,7 +115,13 @@ module.exports = {
             $push: {
               items: obj,
             },
-          }
+            $pull: {
+              temp_array: {
+                awbn_number: obj.tracking_id,
+              },
+            },
+          },
+         
         );
         let data = await masters.updateOne(
           {
@@ -227,7 +233,6 @@ module.exports = {
           $set: {
             sort_id: "Closed By Sorting Agent",
             closed_time_sorting_agent: Date.now(),
-            temp_array: [],
             actual_items: [],
           },
         }
