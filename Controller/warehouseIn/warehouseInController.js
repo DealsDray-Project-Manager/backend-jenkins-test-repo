@@ -144,7 +144,7 @@ module.exports = {
               ],
             });
             if (valid) {
-              resolve({ status: 3, data: deliveredOrNot });
+              resolve({ status: 2, data: deliveredOrNot });
             } else {
               resolve({ status: 0, data: deliveredOrNot });
             }
