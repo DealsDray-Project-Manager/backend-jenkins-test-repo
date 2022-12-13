@@ -506,6 +506,30 @@ router.post("/trayclose", async (req, res, next) => {
     next(error);
   }
 });
+/* pmt / mmt / bot vs bag  count chcking after bot closed */
+router.post("/bagValidation/:bagId", async (req, res, next) => {
+  try {
+    const { bagId } = req.params;
+    let data = await warehouseInController.bagValidationPmtMmtBot(bagId);
+    if (data.status === 1) {
+      res.status(200).json({
+        status: 1,
+      });
+    } else if (data.status === 2) {
+      res.status(403).json({
+        status: 2,
+        message: "PMT / MMT / BOT VS BAG count is not matching",
+      });
+    } else {
+      res.status(403).json({
+        status: 2,
+        message: "No Data found",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
 /* Tray Close Bot */
 router.post("/traycloseBot", async (req, res, next) => {
   try {
