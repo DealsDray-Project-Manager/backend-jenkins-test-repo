@@ -92,6 +92,32 @@ router.post("/getBagItemRequest/:bagId/:sortId", async (req, res, next) => {
     next(error);
   }
 });
+/* CHECK BOT USER */
+router.post("/checkBotUserStatus/:username", async (req, res, next) => {
+  try {
+    const { username, bagId } = req.params;
+    let data = await warehouseInController.checkBotUserStatus(username, bagId);
+    console.log(data);
+    if (data.status === 1) {
+      res.status(200).json({
+        status: 1,
+        message: "Bot user is free now",
+      });
+    } else if (data.status === 2) {
+      res.status(403).json({
+        status: 2,
+        message: `${username} -user not active`,
+      });
+    } else {
+      res.status(200).json({
+        status: 2,
+        message: "He have already one bag",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
 
 /* Awbn Number Checking */
 router.post("/checkAwbn", async (req, res, next) => {

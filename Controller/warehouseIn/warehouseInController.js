@@ -53,6 +53,36 @@ module.exports = {
       }
     });
   },
+  checkBotUserStatus: (username, bagId) => {
+    return new Promise(async (resolve, reject) => {
+      let data = await user.findOne({ user_name: username, status: "Active" });
+      if (data) {
+        let bag = await masters.findOne({
+          $or: [
+            {
+              prefix: "bag-master",
+              sort_id: "Issued",
+
+              issued_user_name: username,
+            },
+            {
+              prefix: "bag-master",
+              sort_id: "Closed By Bot",
+
+              issued_user_name: username,
+            },
+          ],
+        });
+        if (bag) {
+          resolve({ status: 3 });
+        } else {
+          resolve({ status: 1 });
+        }
+      } else {
+        resolve({ status: 2 });
+      }
+    });
+  },
   getBagOneRequest: (masterId, status) => {
     console.log(status);
     return new Promise(async (resolve, reject) => {
@@ -1229,10 +1259,12 @@ module.exports = {
       } else if (sortId === "Send for charging") {
         let data = await masters.findOne({ code: trayId });
         if (data) {
-          if(data.sort_id == "Send for BQC" || data.sort_id == "Send for charging"){
+          if (
+            data.sort_id == "Send for BQC" ||
+            data.sort_id == "Send for charging"
+          ) {
             resolve({ data: data, status: 1 });
-          }
-          else{
+          } else {
             resolve({ data: data, status: 3 });
           }
         } else {
