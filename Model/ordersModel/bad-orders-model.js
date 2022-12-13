@@ -104,6 +104,9 @@ const bardOrdersSchema = mongoose.Schema({
   created_at: {
     type: Date,
   },
+  reason:{
+    type:String
+}
 });
 
 const badOrders = mongoose.model("badOrders", bardOrdersSchema);

@@ -60,6 +60,9 @@ const badDeliverySchema = mongoose.Schema({
     },
     download_time:{
         type:Date
+    },
+    reason:{
+        type:String
     }
 })
 

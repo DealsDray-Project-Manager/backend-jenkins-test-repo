@@ -174,7 +174,7 @@ module.exports = {
               ],
             });
             if (valid) {
-              resolve({ status: 2, data: deliveredOrNot });
+              resolve({ status: 3, data: deliveredOrNot });
             } else {
               resolve({ status: 0, data: deliveredOrNot });
             }
@@ -2238,21 +2238,51 @@ module.exports = {
       }
     });
   },
-  mergeDoneTrayClose: (fromTray, toTray) => {
+  mergeDoneTrayClose: (fromTray, toTray, type, length, limit) => {
+    let data;
     return new Promise(async (resolve, reject) => {
-      let data = await masters.findOneAndUpdate(
-        { code: toTray },
-        {
-          $set: {
-            sort_id: "Closed By Warehouse",
-            closed_time_wharehouse: Date.now(),
-          },
+      if (type == "WHT") {
+        if (length == limit) {
+          data = await masters.findOneAndUpdate(
+            { code: toTray },
+            {
+              $set: {
+                sort_id: "Closed",
+                closed_time_wharehouse: Date.now(),
+              },
+            }
+          );
+        } else {
+          data = await masters.findOneAndUpdate(
+            { code: toTray },
+            {
+              $set: {
+                sort_id: "Inuse",
+                closed_time_wharehouse: Date.now(),
+              },
+            }
+          );
         }
-      );
+      } else {
+        data = await masters.findOneAndUpdate(
+          { code: toTray },
+          {
+            $set: {
+              sort_id: "Closed By Warehouse",
+              closed_time_wharehouse: Date.now(),
+            },
+          }
+        );
+      }
       if (data) {
         for (let x of data.items) {
           let update = await delivery.updateOne(
-            { tracking_id: x.awbn_number },
+            {
+              $or: [
+                { tracking_id: x.awbn_number },
+                { tracking_id: x.tracking_id },
+              ],
+            },
             {
               tray_close_wh_date: Date.now(),
             }

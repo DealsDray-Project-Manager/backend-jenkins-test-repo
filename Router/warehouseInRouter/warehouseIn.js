@@ -1489,8 +1489,8 @@ router.post("/returnFromMerging/:location", async (req, res, next) => {
 /* AFTER MERGE IS DONE CLOSE MMT TRAY */
 router.post("/mergeDoneMmttrayClose", async (req, res, next) => {
   try {
-    const { toTray, fromTray } = req.body;
-    let data = await warehouseInController.mergeDoneTrayClose(fromTray, toTray);
+    const { toTray, fromTray,type,length,limit } = req.body;
+    let data = await warehouseInController.mergeDoneTrayClose(fromTray, toTray,type,length,limit);
     if (data.status == 1) {
       res.status(200).json({
         message: "Successfully Closed",
