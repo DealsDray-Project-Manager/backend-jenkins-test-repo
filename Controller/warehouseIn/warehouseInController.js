@@ -1224,7 +1224,19 @@ module.exports = {
         if (data) {
           resolve({ data: data, status: 1 });
         } else {
-          resolve();
+          resolve({ data: data, status: 2 });
+        }
+      } else if (sortId === "Send for charging") {
+        let data = await masters.findOne({ code: trayId });
+        if (data) {
+          if(data.sort_id == "Send for BQC" || data.sort_id == "Send for charging"){
+            resolve({ data: data, status: 1 });
+          }
+          else{
+            resolve({ data: data, status: 3 });
+          }
+        } else {
+          resolve({ data: data, status: 2 });
         }
       } else {
         let data = await masters.findOne({ code: trayId });

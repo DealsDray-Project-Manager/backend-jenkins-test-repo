@@ -734,8 +734,9 @@ router.post("/picklist-sort", async (req, res, next) => {
 router.post("/getWhtTrayItem/:trayId/:sortId", async (req, res, next) => {
   try {
     const {trayId,sortId}=req.params
+    console.log(req.params);
     let data = await warehouseInController.getWhtTrayitem(trayId,sortId);
-    console.log(data.data);
+    console.log(data);
     if (data.status == 1) {
       res.status(200).json({
         data: data.data,

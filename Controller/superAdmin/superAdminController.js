@@ -8,8 +8,8 @@ const { admin } = require("../../Model/adminModel/admins");
 const { usersHistory } = require("../../Model/users-history-model/model");
 const { delivery } = require("../../Model/deliveryModel/delivery");
 const moment = require("moment");
-const IISDOMAIN = "https://prexo-v1-dev-api.dealsdray.com/user/profile/";
-const IISDOMAINPRDT = "https://prexo-v1-dev-api.dealsdray.com/product/image/";
+const IISDOMAIN = "http://prexo-v2-uat-adminapi.dealsdray.com/user/profile/";
+const IISDOMAINPRDT = "http://prexo-v2-uat-adminapi.dealsdray.com/product/image/";
 
 /************************************************************************************************** */
 module.exports = {

@@ -1,4 +1,4 @@
-const {delivery} = require("../../Model/deliveryModel/delivery");
+const { delivery } = require("../../Model/deliveryModel/delivery");
 const { masters } = require("../../Model/mastersModel");
 /****************************************************************** */
 module.exports = {
@@ -15,11 +15,20 @@ module.exports = {
       }
     });
   },
-  getWhtTrayitem: (trayId) => {
-   
+  getWhtTrayitem: (trayId, username, status) => {
     return new Promise(async (resolve, reject) => {
       let data = await masters.findOne({ code: trayId });
-      resolve(data);
+      if (data) {
+        if (data.sort_id === status && data.issued_user_name == username) {
+          resolve({ status: 1, data: data });
+        } else if (data.sort_id !== status) {
+          resolve({ status: 4, data: data });
+        }
+        } else if (data.issued_user_name !== username) {
+          resolve({ status: 2 });
+      } else {
+        resolve({ status: 3 });
+      }
     });
   },
   bqcIn: (trayData) => {

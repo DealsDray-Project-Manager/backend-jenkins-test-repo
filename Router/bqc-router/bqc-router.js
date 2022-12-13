@@ -19,18 +19,34 @@ router.post("/assigned-tray/:userName", async (req, res, next) => {
 });
 
 /*************************************GET WHT TRAY ITEM******************************************** */
-router.post("/assigned-wht-item/:trayId", async (req, res, next) => {
-  try {
-    let data = await bqcController.getWhtTrayitem(req.params.trayId);
-    if (data) {
-      res.status(200).json({
-        data: data,
-      });
+router.post(
+  "/assigned-wht-item/:trayId/:username/:status",
+  async (req, res, next) => {
+    try {
+      const { trayId, username, status } = req.params;
+      let data = await bqcController.getWhtTrayitem(trayId, username, status);
+      if (data.status === 1) {
+        res.status(200).json({
+          data: data.data,
+        });
+      } else if (data.status === 2) {
+        res.status(403).json({
+          message: "You can't access this data",
+        });
+      } else if (data.status === 3) {
+        res.status(403).json({
+          message: "Details not found",
+        });
+      } else {
+        res.status(403).json({
+          message: `${trayId} - present at ${data.data.sort_id}`,
+        });
+      }
+    } catch (error) {
+      next(error);
     }
-  } catch (error) {
-    next(error);
   }
-});
+);
 /* TRAY BQC IN  */
 router.post("/bqc-in", async (req, res, next) => {
   try {
