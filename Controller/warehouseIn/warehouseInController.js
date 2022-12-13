@@ -3,7 +3,6 @@ const { masters } = require("../../Model/mastersModel");
 const { delivery } = require("../../Model/deliveryModel/delivery");
 const { user } = require("../../Model/userModel");
 var mongoose = require("mongoose");
-const { pickList } = require("../../Model/picklist_model/model");
 const { products } = require("../../Model/productModel/product");
 const moment = require("moment");
 /********************************************************************/
@@ -54,15 +53,50 @@ module.exports = {
       }
     });
   },
-  getBagOneRequest: (masterId) => {
+  getBagOneRequest: (masterId, status) => {
+    console.log(status);
     return new Promise(async (resolve, reject) => {
       let data = await masters.find({
         code: masterId,
       });
-      if (data.length != 0 && data?.items?.length != 0) {
-        resolve(data);
+      if (data.length !== 0) {
+        if (data[0].sort_id == status) {
+          resolve({ data: data, status: 1 });
+        } else {
+          resolve({ status: 3, data: data });
+        }
       } else {
-        resolve(data);
+        resolve({ status: 2 });
+      }
+    });
+  },
+  checkBotUserStatus: (username, bagId) => {
+    return new Promise(async (resolve, reject) => {
+      let data = await user.findOne({ user_name: username, status: "Active" });
+      if (data) {
+        let bag = await masters.findOne({
+          $or: [
+            {
+              prefix: "bag-master",
+              sort_id: "Issued",
+
+              issued_user_name: username,
+            },
+            {
+              prefix: "bag-master",
+              sort_id: "Closed By Bot",
+
+              issued_user_name: username,
+            },
+          ],
+        });
+        if (bag) {
+          resolve({ status: 3 });
+        } else {
+          resolve({ status: 1 });
+        }
+      } else {
+        resolve({ status: 2 });
       }
     });
   },
@@ -110,7 +144,7 @@ module.exports = {
               ],
             });
             if (valid) {
-              resolve({ status: 2, data: deliveredOrNot });
+              resolve({ status: 3, data: deliveredOrNot });
             } else {
               resolve({ status: 0, data: deliveredOrNot });
             }
@@ -221,76 +255,16 @@ module.exports = {
         { new: true }
       );
       if (data.modifiedCount != 0 && bgData.state !== "Duplicate") {
-        let updateDelivery;
-        let getValidItemBag;
-        if (bgData.state == "Invalid") {
-          getValidItemBag = await masters
-            .findOne(
-              {
-                "items.awbn_number": bgData.awbn,
-                "items.status": "Invalid",
-                prefix: "bag-master",
-              },
-              {
-                _id: 0,
-                code: 1,
-                items: {
-                  $elemMatch: { awbn_number: bgData.awbn, status: "Invalid" },
-                },
-              }
-            )
-            .sort({ _id: -1 });
-          if (getValidItemBag == null) {
-            getValidItemBag = await masters.findOne(
-              {
-                "items.awbn_number": bgData.awbn,
-                "items.status": "Valid",
-                prefix: "bag-master",
-              },
-              {
-                _id: 0,
-                code: 1,
-                items: {
-                  $elemMatch: { awbn_number: bgData.awbn, status: "Valid" },
-                },
-              }
-            );
-            if (getValidItemBag) {
-              updateDelivery = await delivery.updateOne(
-                { tracking_id: bgData.awbn },
-                {
-                  $set: {
-                    bag_id: getValidItemBag.code,
-                    stockin_date: getValidItemBag.items[0].sotckin_date,
-                    stock_in_status: getValidItemBag.items[0].status,
-                  },
-                }
-              );
-            }
-          } else {
-            updateDelivery = await delivery.updateOne(
-              { tracking_id: bgData.awbn },
-              {
-                $set: {
-                  bag_id: getValidItemBag.code,
-                  stockin_date: getValidItemBag.items[0].sotckin_date,
-                  stock_in_status: getValidItemBag.items[0].status,
-                },
-              }
-            );
+        updateDelivery = await delivery.updateOne(
+          { tracking_id: bgData.awbn },
+          {
+            $set: {
+              bag_id: "",
+              stockin_date: "",
+              stock_in_status: "",
+            },
           }
-        } else {
-          updateDelivery = await delivery.updateOne(
-            { tracking_id: bgData.awbn },
-            {
-              $set: {
-                bag_id: "",
-                stockin_date: "",
-                stock_in_status: "",
-              },
-            }
-          );
-        }
+        );
       }
       if (data.modifiedCount !== 0) {
         resolve(data);
@@ -901,6 +875,32 @@ module.exports = {
       }
     });
   },
+  bagValidationPmtMmtBot: (bagId) => {
+    return new Promise(async (resolve, reject) => {
+      let data = await masters.aggregate([
+        { $match: { code: bagId } },
+        {
+          $lookup: {
+            from: "deliveries",
+            localField: "items.awbn_number",
+            foreignField: "tracking_id",
+            as: "delivery",
+          },
+        },
+      ]);
+      if (data[0].delivery.length !== 0) {
+        for (let x of data[0].delivery) {
+          if (x.tray_id == undefined) {
+            resolve({ status: 2 });
+            break;
+          }
+        }
+        resolve({ status: 1 });
+      } else {
+        resolve({ status: 3 });
+      }
+    });
+  },
   getBotWarehouseClosed: (location, type) => {
     return new Promise(async (resolve, reject) => {
       let data = await masters.find({
@@ -972,53 +972,22 @@ module.exports = {
           },
         },
       ]);
-      if (data) {
-        resolve(data);
+      if (data.length !== 0) {
+        let bot = await masters.findOne({
+          "items.bag_id": bagId,
+          sort_id: "Closed By Bot",
+          prefix: "tray-master",
+          type_taxanomy: "BOT",
+        });
+        console.log(bot);
+        if (bot) {
+          resolve();
+        } else {
+          resolve(data);
+        }
+      } else {
+        resolve();
       }
-    });
-  },
-  picklistRequest: (date, location) => {
-    return new Promise(async (resolve, reject) => {
-      let data = await itemClub.aggregate([
-        {
-          $match: {
-            item: { $ne: [] },
-            cpc: location,
-            created_at: new Date(date.toISOString().split("T")[0]),
-          },
-        },
-        {
-          $lookup: {
-            from: "products",
-            localField: "vendor_sku_id",
-            foreignField: "vendor_sku_id",
-            as: "product",
-          },
-        },
-      ]);
-
-      resolve(data);
-    });
-  },
-  viewModelClubItem: (id, vendor_sku_id) => {
-    id = mongoose.Types.ObjectId(id);
-    return new Promise(async (resolve, reject) => {
-      let data = await itemClub.aggregate([
-        {
-          $match: {
-            _id: id,
-          },
-        },
-        {
-          $lookup: {
-            from: "products",
-            localField: "vendor_sku_id",
-            foreignField: "vendor_sku_id",
-            as: "product",
-          },
-        },
-      ]);
-      resolve(data);
     });
   },
   getWhtTray: (trayType, brand, model, location) => {
@@ -1041,12 +1010,6 @@ module.exports = {
           model: model,
           sort_id: "Inuse",
           cpc: location,
-          // $expr: {
-          //   $and: [
-          //     { $lt: [{ $size: "$items" }, "$limit"] },
-          //     { $gte: [{ $size: "$items" }, 1] },
-          //   ],
-          // },
         });
       }
       resolve(data);
@@ -1188,51 +1151,6 @@ module.exports = {
       }
     });
   },
-  createPickList: (pickListData) => {
-    return new Promise(async (resolve, reject) => {
-      let piclListCount = await pickList.count({});
-      let whtTray = await masters.find({
-        "items.vendor_sku_id": pickListData.skuId,
-        sort_id: "Inuse",
-      });
-      let obj = {
-        created_user_name: pickListData.user_name,
-        items: [],
-        created_at: Date.now(),
-        pick_list_id: "P0" + Number(piclListCount + 1),
-        vendor_sku_id: pickListData.skuId,
-        model_name: pickListData.model_name,
-        brand_name: pickListData.brand_name,
-        muic: pickListData.muic,
-      };
-      let addPicklist;
-      if (whtTray) {
-        for (let x of whtTray) {
-          for (let y of x.items) {
-            if (y.vendor_sku_id == pickListData.skuId) {
-              obj.items.push(y);
-            }
-          }
-        }
-        addPicklist = await pickList.create(obj);
-      }
-      let data = await itemClub.updateOne(
-        { _id: pickListData._id },
-        {
-          $set: {
-            pick_list_status: "Created",
-            pick_list_id: addPicklist.pick_list_id,
-            pick_list_items: Number(
-              pickListData.picklist_items + addPicklist.items.length
-            ),
-          },
-        }
-      );
-      if (data.matchedCount !== 0) {
-        resolve(data);
-      }
-    });
-  },
   getWhtTrayWareHouse: (location, type) => {
     return new Promise(async (resolve, reject) => {
       if (type == "all-wht-tray") {
@@ -1270,6 +1188,14 @@ module.exports = {
           sort_id: status,
           cpc: location,
         });
+      } else if (status == "wht-merge") {
+        data = await masters.find({
+          cpc: location,
+          prefix: "tray-master",
+          type_taxanomy: "WHT",
+          sort_id: "Inuse",
+          items: { $ne: [] },
+        });
       } else {
         data = await masters.find({
           $or: [
@@ -1291,181 +1217,27 @@ module.exports = {
       resolve(data);
     });
   },
-  sortPicklist: (date, location) => {
+  getWhtTrayitem: (trayId, sortId) => {
     return new Promise(async (resolve, reject) => {
-      let data = await itemClub.aggregate([
-        {
-          $match: {
-            item: { $ne: [] },
-            cpc: location,
-            created_at: new Date(date),
-          },
-        },
-        {
-          $lookup: {
-            from: "products",
-            localField: "vendor_sku_id",
-            foreignField: "vendor_sku_id",
-            as: "product",
-          },
-        },
-      ]);
-      resolve(data);
-    });
-  },
-  getWhtTrayitem: (trayId) => {
-    return new Promise(async (resolve, reject) => {
-      let data = await masters.findOne({ code: trayId });
-      resolve(data);
-    });
-  },
-  getPickList: (pick_list_id) => {
-    return new Promise(async (resolve, reject) => {
-      let data = await pickList.findOne({ pick_list_id: pick_list_id });
-      if (data) {
-        resolve(data);
-      }
-    });
-  },
-  actualPickListUicCheck: (uic, picklistId) => {
-    return new Promise(async (resolve, reject) => {
-      let checkAlreadyAdded = await pickList.findOne({
-        "actual.uic": uic,
-        pick_list_id: picklistId,
-      });
-      if (checkAlreadyAdded) {
-        resolve({ status: 3 });
-      } else {
-        let uicPresent = await delivery.findOne({ "uic_code.code": uic });
-        if (uicPresent) {
-          let pickListUic = await pickList.findOne({
-            pick_list_id: picklistId,
-            "items.uic": uic,
-          });
-          if (pickListUic) {
-            resolve({ status: 1 });
-          } else {
-            resolve({ status: 4 });
-          }
-        } else {
-          resolve({ status: 2 });
-        }
-      }
-    });
-  },
-  addActualPickListItem: (itemDetails) => {
-    return new Promise(async (resolve, reject) => {
-      let data = await pickList.updateOne(
-        { pick_list_id: itemDetails.picklist_id },
-        {
-          $push: {
-            actual: itemDetails.items,
-          },
-        }
-      );
-      if (data.modifiedCount != 0) {
-        let deliveryUpdate = await delivery.updateOne(
-          {
-            tracking_id: itemDetails.items.tracking_id,
-          },
-          {
-            $set: {
-              wht_tray: itemDetails.items.wht_tray,
-              wht_tray_assigned_date: Date.now(),
-            },
-          }
-        );
-        resolve(data);
-      } else {
-        resolve(data);
-      }
-    });
-  },
-  picklistActualRemoveItem: (pickListData) => {
-    return new Promise(async (resolve, reject) => {
-      let data = await pickList.updateOne(
-        { pick_list_id: pickListData.picklistId },
-        {
-          $pull: {
-            actual: {
-              _id: pickListData.id,
-            },
-          },
-        }
-      );
-      if (data.modifiedCount != 0) {
-        resolve(data);
-      } else {
-        resolve();
-      }
-    });
-  },
-  closePicklist: (pickListId) => {
-    return new Promise(async (resolve, reject) => {
-      let data = await pickList.findOneAndUpdate(
-        { pick_list_id: pickListId },
-        {
-          $set: {
-            closed_time: Date.now(),
-            pick_list_status: "Closed",
-          },
-        }
-      );
-      if (data) {
-        let removeItem;
-        for (let x of data.items) {
-          let updateTrackingItem = await delivery.updateOne(
-            { tracking_id: x.tracking_id },
-            {
-              $set: {
-                wht_tray: x.wht_tray,
-                wht_tray_assigned_date: Date.now(),
-              },
-            }
-          );
-          let changeStatusTray = await masters.updateOne(
-            { code: x.wht_tray },
-            {
-              $set: {
-                sort_id: "Closed",
-              },
-            }
-          );
-          removeItem = await itemClub.findOneAndUpdate(
-            { pick_list_id: pickListId },
-            {
-              $pull: {
-                item: {
-                  uic: x.uic,
-                },
-                wht_tray: x.wht_tray,
-              },
-            }
-          );
-        }
-        let changeAll = await itemClub.updateOne(
-          { _id: removeItem._id },
-          {
-            $set: {
-              pick_list_id: null,
-              pick_list_items: removeItem.pick_list_items - data.items.length,
-              pick_list_status: "Pending",
-              count_assigned_tray: removeItem.item.length,
-            },
-          }
-        );
-        if (changeAll.modifiedCount != 0) {
-          resolve(changeAll);
+      if (sortId == "all-wht-tray") {
+        let data = await masters.findOne({ code: trayId });
+        if (data) {
+          resolve({ data: data, status: 1 });
         } else {
           resolve();
         }
+      } else {
+        let data = await masters.findOne({ code: trayId });
+        if (data) {
+          if (data.sort_id == sortId) {
+            resolve({ data: data, status: 1 });
+          } else {
+            resolve({ data: data, status: 3 });
+          }
+        } else {
+          resolve({ data: data, status: 2 });
+        }
       }
-    });
-  },
-  getAllPicklist: () => {
-    return new Promise(async (resolve, reject) => {
-      let data = await pickList.find({}).sort({ _id: -1 });
-      resolve(data);
     });
   },
   sendToMisWhtApproveCharging: (allTrayId) => {
@@ -1655,13 +1427,17 @@ module.exports = {
       }
     });
   },
-  chargingDoneRecieved: (trayId) => {
+  chargingDoneRecieved: (trayId, sortId) => {
     return new Promise(async (resolve, reject) => {
       let data = await masters.findOne({ code: trayId });
       if (data) {
-        resolve(data);
+        if (data.sort_id == sortId) {
+          resolve({ data: data, status: 1 });
+        } else {
+          resolve({ data: data, status: 3 });
+        }
       } else {
-        resolve();
+        resolve({ data: data, status: 2 });
       }
     });
   },
@@ -1971,9 +1747,20 @@ module.exports = {
   },
   getTrayForSortingExVsAt: (trayId) => {
     return new Promise(async (resolve, reject) => {
-      let data = await masters.findOne({ code: trayId });
+      let data = await masters.findOne({
+        code: trayId,
+      });
       if (data) {
-        resolve(data);
+        if (
+          data.sort_id === "Merge Request Sent To Wharehouse" ||
+          data.sort_id === "Sorting Request Sent To Warehouse"
+        ) {
+          resolve({ data: data, status: 1 });
+        } else {
+          resolve({ data: data, status: 2 });
+        }
+      } else {
+        resolve({ data: data, status: 3 });
       }
     });
   },
@@ -2142,10 +1929,61 @@ module.exports = {
             temp_array: { $ne: [] },
             temp_array: { $exists: true },
           },
+          {
+            cpc: location,
+            type_taxanomy: "BOT",
+            prefix: "tray-master",
+            sort_id: { $ne: "Closed By Bot" },
+            temp_array: { $ne: [] },
+            temp_array: { $exists: true },
+          },
         ],
       });
       if (data) {
-        resolve(data);
+        let arr = [];
+        arr = data;
+        for (let x of arr) {
+          let i = 1;
+          x.actual_items = [];
+          for (let y of x.temp_array) {
+            let getWht = await masters.find(
+              {
+                type_taxanomy: "WHT",
+                prefix: "tray-master",
+                "temp_array.tray_id": x.code,
+                "temp_array.muic": y.muic,
+              },
+              {
+                _id: 0,
+                code: 1,
+                temp_array: {
+                  $elemMatch: {
+                    tray_id: x.code,
+                    muic: y.muic,
+                  },
+                },
+              }
+            );
+            if (getWht.length !== 0) {
+              let arr = [];
+              for (let k of getWht) {
+                let str = `${k.code}-(${k.temp_array.length})`;
+                arr.push(str);
+              }
+              x.actual_items.push(
+                `${i}- ${y.brand} ${y.model}- units(${
+                  y.item.length
+                }) -${arr.join(", ")} `
+              );
+            } else {
+              x.actual_items.push(
+                `${i}- ${y.brand} ${y.model}- units(${y.item.length}) - No wht tray available`
+              );
+            }
+            i++;
+          }
+        }
+        resolve(arr);
       }
     });
   },
@@ -2340,13 +2178,11 @@ module.exports = {
           {
             cpc: location,
             prefix: "tray-master",
-            type_taxanomy: "MMT",
             sort_id: "Merging Done",
             items: { $ne: [] },
           },
           {
             refix: "tray-master",
-            type_taxanomy: "MMT",
             sort_id: "Received From Merging",
             items: { $ne: [] },
           },

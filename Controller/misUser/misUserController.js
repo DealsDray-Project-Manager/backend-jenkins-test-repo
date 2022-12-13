@@ -1671,7 +1671,7 @@ module.exports = {
   getBagItemForUic: (bagId) => {
     return new Promise(async (resolve, reject) => {
       let data = await masters.aggregate([
-        { $match: { code: bagId } },
+        { $match: {code: bagId  }},
         {
           $lookup: {
             from: "deliveries",
@@ -1689,16 +1689,22 @@ module.exports = {
           },
         },
       ]);
-      for (let x of data[0].delivery) {
-        for (let y of data[0].orders) {
-          if (x.order_id == y.order_id) {
-            x.order_order_date = y.order_date;
-            x.order_old_item_detail = y.old_item_details;
+      if(data.length !==0 ){
+        for (let x of data[0].delivery) {
+          for (let y of data[0].orders) {
+            if (x.order_id == y.order_id) {
+              x.order_order_date = y.order_date;
+              x.order_old_item_detail = y.old_item_details;
+            }
           }
         }
+        resolve({data:data,status:1});
       }
-      if (data) {
-        resolve(data);
+      else if(data.length ==0){
+        resolve({data:data,status:2});
+      }
+      else {
+        resolve({data:data,status:3});
       }
     });
   },

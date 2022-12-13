@@ -593,11 +593,23 @@ router.post("/deleteBadDelivery", async (req, res, next) => {
 router.post("/getBagItemWithUic/:bagId", async (req, res, next) => {
   try {
     let data = await misUserController.getBagItemForUic(req.params.bagId);
-    if (data) {
+    console.log(data);
+    if (data.status ==1) {
       res.status(200).json({
-        data: data,
+        data: data.data,
       });
     }
+    else if(data.status == 2){
+      res.status(403).json({
+        message:"Details not found"
+      });
+    }
+    else if(data.status == 3){
+      res.status(403).json({
+        message:`${req.params.bagId} - present at ${data.data[0].sort_id}`
+      });
+    }
+
   } catch (error) {
     next(error);
   }

@@ -66,18 +66,26 @@ router.post("/getBagItem/:bagId", async (req, res, next) => {
   }
 });
 /* Get Bag Data */
-router.post("/getBagItemRequest/:bagId", async (req, res, next) => {
+router.post("/getBagItemRequest/:bagId/:sortId", async (req, res, next) => {
   try {
-    let data = await warehouseInController.getBagOneRequest(req.params.bagId);
-    if (data.length != 0) {
+    const {bagId,sortId} =req.params
+    let data = await warehouseInController.getBagOneRequest(bagId,sortId);
+    console.log(data);
+    if (data.status == 1) {
       res.status(200).json({
-        data: data,
+        data: data.data,
         message: "Successfully Get All Data",
       });
-    } else {
-      res.status(201).json({
+    } else if (data.status == 2) {
+      res.status(403).json({
+        data: data.data,
+        message: "Details not found",
+      });
+    }
+    else{
+      res.status(403).json({
         data: data,
-        message: "Bag is Empty",
+        message: `${bagId} - present at ${data.data[0].sort_id}`,
       });
     }
   } catch (error) {
@@ -559,6 +567,11 @@ router.post("/summeryBotTrayBag/:bagId", async (req, res, next) => {
         data: data,
       });
     }
+    else{
+      res.status(403).json({
+        message:"You Can't access this Data"
+      })
+    }
   } catch (error) {
     next(error);
   }
@@ -688,6 +701,8 @@ router.post("/whtTray/:location/:type", async (req, res, next) => {
 /* IN USE WHT TRAY */
 router.post("/wht-tray/:status/:location", async (req, res, next) => {
   try {
+    console.log("working");
+    console.log(req.params);
     let data = await warehouseInController.getInUseWhtTray(
       req.params.status,
       req.params.location
@@ -716,13 +731,25 @@ router.post("/picklist-sort", async (req, res, next) => {
   }
 });
 /*************************************GET WHT TRAY ITEM******************************************** */
-router.post("/getWhtTrayItem/:trayId", async (req, res, next) => {
+router.post("/getWhtTrayItem/:trayId/:sortId", async (req, res, next) => {
   try {
-    let data = await warehouseInController.getWhtTrayitem(req.params.trayId);
-    if (data) {
+    const {trayId,sortId}=req.params
+    let data = await warehouseInController.getWhtTrayitem(trayId,sortId);
+    console.log(data.data);
+    if (data.status == 1) {
       res.status(200).json({
-        data: data,
+        data: data.data,
       });
+    }
+    else if(data.status ==  2){
+      res.status(403).json({
+        message:"Details not found"
+      })
+    }
+    else if(data.status ==  3){
+      res.status(403).json({
+        message:`${trayId} - present at ${data.data.sort_id}`
+      })
     }
   } catch (error) {
     next(error);
@@ -951,18 +978,24 @@ router.post("/wht-return-from-charging/:location", async (req, res, next) => {
   }
 });
 /* GET TRAY AFTER RECIEVED BY WAREHOUSE CHARGING DONE */
-router.post("/charging-done-recieved/:trayId", async (req, res, next) => {
+router.post("/charging-done-recieved/:trayId/:sortId", async (req, res, next) => {
   try {
+    const {trayId,sortId}=req.params
     let data = await warehouseInController.chargingDoneRecieved(
-      req.params.trayId
+      trayId,sortId
     );
-    if (data) {
+    if (data.status == 1) {
       res.status(200).json({
-        data: data,
+        data: data.data,
       });
-    } else {
+    } else if(data.status == 2) {
       res.status(403).json({
-        message: "Tray is not recieved",
+        message: "Details not found",
+      });
+    }
+    else{
+      res.status(403).json({
+        message: `${trayId} - present at ${data.data.sort_id}`,
       });
     }
   } catch (error) {
@@ -1170,13 +1203,18 @@ router.post("/get-tray-sorting/:trayId", async (req, res, next) => {
   try {
     const { trayId } = req.params;
     let data = await warehouseInController.getTrayForSortingExVsAt(trayId);
-    if (data) {
+    if (data.status === 1) {
       res.status(200).json({
-        data: data,
+        data: data.data,
       });
-    } else {
+    } else if(data.status === 2) {
       res.status(403).json({
-        message: "No Data Found",
+        message: `${trayId} - present at ${data.data.sort_id}`,
+      });
+    }
+    else{
+      res.status(403).json({
+        message: `Details not found`,
       });
     }
   } catch (error) {
