@@ -594,22 +594,19 @@ router.post("/getBagItemWithUic/:bagId", async (req, res, next) => {
   try {
     let data = await misUserController.getBagItemForUic(req.params.bagId);
     console.log(data);
-    if (data.status ==1) {
+    if (data.status == 1) {
       res.status(200).json({
         data: data.data,
       });
-    }
-    else if(data.status == 2){
+    } else if (data.status == 2) {
       res.status(403).json({
-        message:"Details not found"
+        message: "Details not found",
+      });
+    } else if (data.status == 3) {
+      res.status(403).json({
+        message: `${req.params.bagId} - present at ${data.data[0].sort_id}`,
       });
     }
-    else if(data.status == 3){
-      res.status(403).json({
-        message:`${req.params.bagId} - present at ${data.data[0].sort_id}`
-      });
-    }
-
   } catch (error) {
     next(error);
   }
@@ -778,6 +775,30 @@ router.post("/ready-for-charging-wht", async (req, res, next) => {
     next(error);
   }
 });
+/* SORT TRAY BASED ON THE BRAND AND MODEL */
+router.post("/toWhtTrayForMerge", async (req, res, next) => {
+  try {
+    const { location, brand, model, fromTray, itemCount } = req.body;
+    let data = await misUserController.toWhtTrayForMerging(
+      location,
+      brand,
+      model,
+      fromTray,
+      itemCount
+    );
+    if (data.status === 1) {
+      res.status(200).json({
+        data: data.tray,
+      });
+    } else if (data.status === 0) {
+      res.status(403).json({
+        message: "Currently no wht tray in this brand and model",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
 /* GET CHARGING USERS FOR ASSIGN WHT TRAY */
 router.post(
   "/get-charging-users/:user_type/:location",
@@ -920,9 +941,9 @@ router.post("/getSortingAgentMergeMmt/:location", async (req, res, next) => {
   try {
     const { location } = req.params;
     let data = await misUserController.getSortingAgentForMergeMmt(location);
-    if (data.status === 1) {
+    if (data) {
       res.status(200).json({
-        data: data.user,
+        data: data,
       });
     } else {
       res.status(403).json({
@@ -959,14 +980,14 @@ router.post(
   }
 );
 /* MMT TRAY MERGE REQUEST SEND TO WAREHOUSE */
-router.post("/mmtTrayMergeRequestSend", async (req, res, next) => {
+router.post("/TrayMergeRequestSend", async (req, res, next) => {
   try {
     console.log(req.body);
-    const { sort_agent, mmtTrayFrom, toMmtTray } = req.body;
+    const { sort_agent, fromTray, toTray } = req.body;
     let data = await misUserController.mmtMergeRequestSendToWh(
       sort_agent,
-      mmtTrayFrom,
-      toMmtTray
+      fromTray,
+      toTray
     );
     if (data.status === 1) {
       res.status(200).json({

@@ -8,8 +8,8 @@ const { admin } = require("../../Model/adminModel/admins");
 const { usersHistory } = require("../../Model/users-history-model/model");
 const { delivery } = require("../../Model/deliveryModel/delivery");
 const moment = require("moment");
-const IISDOMAIN = "https://prexo-v1-dev-api.dealsdray.com/user/profile/";
-const IISDOMAINPRDT = "https://prexo-v1-dev-api.dealsdray.com/product/image/";
+const IISDOMAIN = "http://prexo-v2-uat-adminapi.dealsdray.com/user/profile/";
+const IISDOMAINPRDT = "http://prexo-v2-uat-adminapi.dealsdray.com/product/image/";
 
 /************************************************************************************************** */
 module.exports = {
@@ -1335,6 +1335,33 @@ module.exports = {
         resolve({ status: 1 });
       } else {
         resolve({ status: 0 });
+      }
+    });
+  },
+  getInvalidItemBag: () => {
+    return new Promise(async (resolve, reject) => {
+      let data = await masters.find({
+        prefix: "bag-master",
+        sort_id: "In Progress",
+        "items.status": "Invalid",
+      });
+      console.log(data);
+      if (data) {
+        resolve(data);
+      }
+    });
+  },
+  getInvalidItemForBag: (bagId) => {
+    return new Promise(async (resolve, reject) => {
+      let data = await masters.findOne({ code: bagId });
+      if (data) {
+        if (data.sort_id == "In Progress") {
+          resolve({ data: data, status: 1 });
+        } else {
+          resolve({ status: 3 });
+        }
+      } else {
+        resolve({ sataus: 3 });
       }
     });
   },

@@ -247,7 +247,6 @@ module.exports = {
       let data = await masters.find({
         issued_user_name: username,
         to_merge: { $ne: null },
-        type_taxanomy: "MMT",
         sort_id: "Issued to Merging",
       });
       console.log(data);

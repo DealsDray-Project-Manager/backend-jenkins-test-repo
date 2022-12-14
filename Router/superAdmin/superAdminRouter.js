@@ -1142,4 +1142,43 @@ router.post("/ready-for-charging", async (req, res, next) => {
     next(error);
   }
 });
+/******************************REMOVE INVALID ITEM*************************************** */
+/* GET BAG WITH INVALID ITEM */
+router.post("/getInvalidItemPresentBag",async(req,res,next)=>{
+  try {
+    let data=await superAdminController.getInvalidItemBag()
+    if(data){
+      res.status(200).json({
+        data:data
+      })
+    }
+  } catch (error) {
+    next(error)
+  }
+})
+/* GET BAG ITEM */
+router.post("/getBagItemInvalid/:bagId",async(req,res,next)=>{
+  try {
+    const {bagId}=req.params
+    let data=await superAdminController.getInvalidItemForBag(bagId)
+    console.log(data.data);
+    if(data.status == 1){
+      res.status(200).json({
+         data:data.data
+      })
+    }
+    else if(data.status == 2){
+      res.status(403).json({
+        message:`${bagId} present at - ${data.data.sort_id}`
+      })
+    }
+    else{
+      res.status(403).json({
+        message:"details not found"
+      })
+    }
+  } catch (error) {
+    next(error)
+  }
+})
 module.exports = router;

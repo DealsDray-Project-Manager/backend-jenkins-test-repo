@@ -68,8 +68,8 @@ router.post("/getBagItem/:bagId", async (req, res, next) => {
 /* Get Bag Data */
 router.post("/getBagItemRequest/:bagId/:sortId", async (req, res, next) => {
   try {
-    const {bagId,sortId} =req.params
-    let data = await warehouseInController.getBagOneRequest(bagId,sortId);
+    const { bagId, sortId } = req.params;
+    let data = await warehouseInController.getBagOneRequest(bagId, sortId);
     console.log(data);
     if (data.status == 1) {
       res.status(200).json({
@@ -81,8 +81,7 @@ router.post("/getBagItemRequest/:bagId/:sortId", async (req, res, next) => {
         data: data.data,
         message: "Details not found",
       });
-    }
-    else{
+    } else {
       res.status(403).json({
         data: data,
         message: `${bagId} - present at ${data.data[0].sort_id}`,
@@ -124,7 +123,7 @@ router.post("/checkAwbn", async (req, res, next) => {
   try {
     const { awbn, bagId, location } = req.body;
     let data = await warehouseInController.checkAwbin(awbn, bagId, location);
-
+    console.log(data);
     if (data.status == 1) {
       res.status(400).json({
         message: "AWBN Number does Not Exist",
@@ -511,6 +510,7 @@ router.post("/bagValidation/:bagId", async (req, res, next) => {
   try {
     const { bagId } = req.params;
     let data = await warehouseInController.bagValidationPmtMmtBot(bagId);
+    console.log(data);
     if (data.status === 1) {
       res.status(200).json({
         status: 1,
@@ -616,11 +616,10 @@ router.post("/summeryBotTrayBag/:bagId", async (req, res, next) => {
       res.status(200).json({
         data: data,
       });
-    }
-    else{
+    } else {
       res.status(403).json({
-        message:"You Can't access this Data"
-      })
+        message: "You Can't access this Data",
+      });
     }
   } catch (error) {
     next(error);
@@ -783,24 +782,22 @@ router.post("/picklist-sort", async (req, res, next) => {
 /*************************************GET WHT TRAY ITEM******************************************** */
 router.post("/getWhtTrayItem/:trayId/:sortId", async (req, res, next) => {
   try {
-    const {trayId,sortId}=req.params
+    const { trayId, sortId } = req.params;
     console.log(req.params);
-    let data = await warehouseInController.getWhtTrayitem(trayId,sortId);
+    let data = await warehouseInController.getWhtTrayitem(trayId, sortId);
     console.log(data);
     if (data.status == 1) {
       res.status(200).json({
         data: data.data,
       });
-    }
-    else if(data.status ==  2){
+    } else if (data.status == 2) {
       res.status(403).json({
-        message:"Details not found"
-      })
-    }
-    else if(data.status ==  3){
+        message: "Details not found",
+      });
+    } else if (data.status == 3) {
       res.status(403).json({
-        message:`${trayId} - present at ${data.data.sort_id}`
-      })
+        message: `${trayId} - present at ${data.data.sort_id}`,
+      });
     }
   } catch (error) {
     next(error);
@@ -1029,30 +1026,33 @@ router.post("/wht-return-from-charging/:location", async (req, res, next) => {
   }
 });
 /* GET TRAY AFTER RECIEVED BY WAREHOUSE CHARGING DONE */
-router.post("/charging-done-recieved/:trayId/:sortId", async (req, res, next) => {
-  try {
-    const {trayId,sortId}=req.params
-    let data = await warehouseInController.chargingDoneRecieved(
-      trayId,sortId
-    );
-    if (data.status == 1) {
-      res.status(200).json({
-        data: data.data,
-      });
-    } else if(data.status == 2) {
-      res.status(403).json({
-        message: "Details not found",
-      });
+router.post(
+  "/charging-done-recieved/:trayId/:sortId",
+  async (req, res, next) => {
+    try {
+      const { trayId, sortId } = req.params;
+      let data = await warehouseInController.chargingDoneRecieved(
+        trayId,
+        sortId
+      );
+      if (data.status == 1) {
+        res.status(200).json({
+          data: data.data,
+        });
+      } else if (data.status == 2) {
+        res.status(403).json({
+          message: "Details not found",
+        });
+      } else {
+        res.status(403).json({
+          message: `${trayId} - present at ${data.data.sort_id}`,
+        });
+      }
+    } catch (error) {
+      next(error);
     }
-    else{
-      res.status(403).json({
-        message: `${trayId} - present at ${data.data.sort_id}`,
-      });
-    }
-  } catch (error) {
-    next(error);
   }
-});
+);
 /* UIC CHECKING */
 /* CHECK UIC CODE */
 router.post("/check-uic-charging-done", async (req, res, next) => {
@@ -1258,12 +1258,11 @@ router.post("/get-tray-sorting/:trayId", async (req, res, next) => {
       res.status(200).json({
         data: data.data,
       });
-    } else if(data.status === 2) {
+    } else if (data.status === 2) {
       res.status(403).json({
         message: `${trayId} - present at ${data.data.sort_id}`,
       });
-    }
-    else{
+    } else {
       res.status(403).json({
         message: `Details not found`,
       });
@@ -1339,14 +1338,14 @@ router.post("/sort-mmt-pmt-report", async (req, res, next) => {
   }
 });
 /* GET BOT TRAY READY / ASSIGNED MERGE WITH WHT*/
-router.post("/getBotTrayReportScreen/:location",async (req, res, next) => {
+router.post("/getBotTrayReportScreen/:location", async (req, res, next) => {
   try {
-    const {location}=req.params
-    let data=await warehouseInController.getBotTrayForReportScreen(location)
-    if(data){
+    const { location } = req.params;
+    let data = await warehouseInController.getBotTrayForReportScreen(location);
+    if (data) {
       res.status(200).json({
-        data:data
-      })
+        data: data,
+      });
     }
   } catch (error) {
     next(error);
@@ -1489,8 +1488,14 @@ router.post("/returnFromMerging/:location", async (req, res, next) => {
 /* AFTER MERGE IS DONE CLOSE MMT TRAY */
 router.post("/mergeDoneMmttrayClose", async (req, res, next) => {
   try {
-    const { toTray, fromTray,type,length,limit } = req.body;
-    let data = await warehouseInController.mergeDoneTrayClose(fromTray, toTray,type,length,limit);
+    const { toTray, fromTray, type, length, limit } = req.body;
+    let data = await warehouseInController.mergeDoneTrayClose(
+      fromTray,
+      toTray,
+      type,
+      length,
+      limit
+    );
     if (data.status == 1) {
       res.status(200).json({
         message: "Successfully Closed",
@@ -1498,6 +1503,28 @@ router.post("/mergeDoneMmttrayClose", async (req, res, next) => {
     } else {
       res.status(403).json({
         message: "Failed",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+/* ASSIGNMENT OF MMT AND WHT AND BOT FOR SORTING USER_CHECKING */
+router.post("/sortingAgnetStatus/:username", async (req, res, next) => {
+  try {
+    const { username } = req.params;
+    let data = await warehouseInController.getSortingAgentStatus(username);
+    if (data.status === 1) {
+      res.status(200).json({
+        data: "User is free",
+      });
+    } else if (data.status === 2) {
+      res.status(200).json({
+        data: "Agent already have a lot",
+      });
+    } else if (data.status === 3) {
+      res.status(200).json({
+        data: "User not active",
       });
     }
   } catch (error) {

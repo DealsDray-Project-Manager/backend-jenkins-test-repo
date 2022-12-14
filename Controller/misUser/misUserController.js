@@ -166,7 +166,11 @@ module.exports = {
   },
   getBadOrders: (location) => {
     return new Promise(async (resolve, reject) => {
-      let data = await badOrders.find({ partner_shop: location });
+      let data = await badOrders.find(
+        { partner_shop: location },
+        { _id: 0, id: 0, __v: 0 }
+      );
+      console.log(data);
 
       if (data) {
         resolve(data);
@@ -1060,13 +1064,15 @@ module.exports = {
   },
   getBadDelivery: (location) => {
     return new Promise(async (resolve, reject) => {
-      let data = await badDelivery.find({ partner_shop: location });
+      let data = await badDelivery.find(
+        { partner_shop: location },
+        { _id: 0, __v: 0, id: 0 }
+      );
       if (data) {
         resolve(data);
       }
     });
   },
-
   searchDeliveryData: (searchType, value, location) => {
     return new Promise(async (resolve, reject) => {
       let allOrders;
@@ -1559,13 +1565,9 @@ module.exports = {
           },
         },
       ]);
-      let arr = [];
-      for (let x of data) {
-        if (x.bag.length === 0) {
-          arr.push(x);
-        }
+      if (data) {
+        resolve(data);
       }
-      resolve(arr);
     });
   },
   getBot: (location) => {
@@ -1589,25 +1591,7 @@ module.exports = {
         },
       ]);
       if (data) {
-        let arr = [];
-        let status = false;
-        for (let i = 0; i < data.length; i++) {
-          if (data[i]?.bag?.length == 0) {
-            arr.push(data[i]);
-          } else {
-            for (let x of data[i]?.bag) {
-              if (x.prefix == "bag-master") {
-                status = true;
-                break;
-              }
-            }
-            if (status != true) {
-              arr.push(data[i]);
-            }
-            status = false;
-          }
-        }
-        resolve(arr);
+        resolve(data);
       }
     });
   },
@@ -1671,7 +1655,7 @@ module.exports = {
   getBagItemForUic: (bagId) => {
     return new Promise(async (resolve, reject) => {
       let data = await masters.aggregate([
-        { $match: {code: bagId  }},
+        { $match: { code: bagId } },
         {
           $lookup: {
             from: "deliveries",
@@ -1689,7 +1673,7 @@ module.exports = {
           },
         },
       ]);
-      if(data.length !==0 ){
+      if (data.length !== 0) {
         for (let x of data[0].delivery) {
           for (let y of data[0].orders) {
             if (x.order_id == y.order_id) {
@@ -1698,13 +1682,11 @@ module.exports = {
             }
           }
         }
-        resolve({data:data,status:1});
-      }
-      else if(data.length ==0){
-        resolve({data:data,status:2});
-      }
-      else {
-        resolve({data:data,status:3});
+        resolve({ data: data, status: 1 });
+      } else if (data.length == 0) {
+        resolve({ data: data, status: 2 });
+      } else {
+        resolve({ data: data, status: 3 });
       }
     });
   },
@@ -2008,6 +1990,39 @@ module.exports = {
       }
     });
   },
+  toWhtTrayForMerging: (location, brand, model, fromTray, itemCount) => {
+    return new Promise(async (resolve, reject) => {
+      let arr = [];
+      let whtTray = await masters
+        .find({
+          prefix: "tray-master",
+          type_taxanomy: "WHT",
+          brand: brand,
+          model,
+          model,
+          cpc: location,
+          items: { $ne: [] },
+          sort_id: "Inuse",
+          code: { $ne: fromTray },
+        })
+        .catch((err) => reject(err));
+      if (whtTray.length !== 0) {
+        for (let x of whtTray) {
+          let count = x.limit - x.items.length;
+          if (count >= itemCount) {
+            arr.push(x);
+          }
+        }
+        if (arr.length !== 0) {
+          resolve({ status: 1, tray: arr });
+        } else {
+          resolve({ status: 0 });
+        }
+      } else {
+        resolve({ status: 0 });
+      }
+    });
+  },
   getChargingUsers: (userType, location) => {
     return new Promise(async (resolve, reject) => {
       let data = await user
@@ -2131,7 +2146,7 @@ module.exports = {
   },
   getSortingAgentForMergeMmt: (location) => {
     return new Promise(async (resolve, reject) => {
-      let arr = [];
+     
       let data = await user
         .find({
           user_type: "Sorting Agent",
@@ -2139,24 +2154,8 @@ module.exports = {
           cpc: location,
         })
         .catch((err) => reject(err));
-      if (data.length !== 0) {
-        for (let x of data) {
-          let checkUserFree = await masters.findOne({
-            type_taxanomy: "MMT",
-            issued_user_name: x.user_name,
-            sort_id: "Issued to Merging",
-          });
-          if (checkUserFree == null) {
-            arr.push(x);
-          }
-        }
-        if (arr.length !== 0) {
-          resolve({ status: 1, user: arr });
-        } else {
-          resolve({ status: 2 });
-        }
-      } else {
-        resolve({ status: 2 });
+      if (data) {
+        resolve(data);
       }
     });
   },

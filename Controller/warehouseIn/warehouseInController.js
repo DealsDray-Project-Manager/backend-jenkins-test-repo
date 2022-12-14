@@ -107,15 +107,12 @@ module.exports = {
         let bag = await masters.findOne({
           $or: [
             {
-              prefix: "bag-master",
               sort_id: "Issued",
-
               issued_user_name: username,
             },
             {
-              prefix: "bag-master",
+              prefix: {$ne:"bag-master"},
               sort_id: "Closed By Bot",
-
               issued_user_name: username,
             },
           ],
@@ -174,7 +171,7 @@ module.exports = {
               ],
             });
             if (valid) {
-              resolve({ status: 3, data: deliveredOrNot });
+              resolve({ status: 2, data: deliveredOrNot });
             } else {
               resolve({ status: 0, data: deliveredOrNot });
             }
@@ -2308,6 +2305,28 @@ module.exports = {
         }
       } else {
         resolve({ status: 0 });
+      }
+    });
+  },
+  getSortingAgentStatus: (username) => {
+    return new Promise(async (resolve, reject) => {
+      let userActive = await user.findOne({ user_name: username });
+      if (userActive.status == "Active") {
+        let data = await masters.findOne({
+          $or: [
+            { issued_user_name: username, sort_id: "Issued to sorting agent" },
+            { issued_user_name: username, sort_id: "Closed By Sorting Agent" },
+            { issued_user_name: username, sort_id: "Issued to Merging" },
+            { issued_user_name: username, sort_id: "Merging Done" },
+          ],
+        });
+        if (data) {
+          resolve({ status: 2 });
+        } else {
+          resolve({ status: 1 });
+        }
+      } else {
+        resolve({ status: 3 });
       }
     });
   },
