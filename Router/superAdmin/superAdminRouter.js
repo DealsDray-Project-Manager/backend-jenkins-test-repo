@@ -1033,6 +1033,20 @@ router.put("/editMaster", async (req, res, next) => {
     next(error);
   }
 });
+/* MASTERS EDIT HISTORY GET */
+router.post("/mastersEditHistory/:trayId", async (req, res, next) => {
+  try {
+    const { trayId } = req.params;
+    let data = await superAdminController.getMasterEditHistory(trayId);
+    if (data) {
+      res.status(200).json({
+        data: data,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
 /* Delete Master */
 router.delete("/deleteMaster/:masterId", async (req, res, next) => {
   try {

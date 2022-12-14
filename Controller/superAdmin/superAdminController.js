@@ -934,7 +934,7 @@ module.exports = {
   },
   editMaster: (editData) => {
     return new Promise(async (resolve, reject) => {
-      let data = await masters.updateOne(
+      let data = await masters.findOneAndUpdate(
         { _id: editData._id },
         {
           $set: {
@@ -947,12 +947,43 @@ module.exports = {
             warehouse: editData.warehouse,
             cpc: editData.cpc,
           },
-        }
+        },
+        { returnOriginal: false }
       );
-      if (data.matchedCount != 0) {
-        resolve({ status: true });
+      if (data) {
+        let obj = {
+          name: data.name,
+          code: data.code,
+          type_taxanomy: data.type_taxanomy,
+          parent_id: data.parent_id,
+          sort_id: data.sort_id,
+          prefix: data.prefix,
+          display: data.display,
+          created_at: Date.now(),
+          limit: data.limit,
+          model: data.model,
+          brand: data.brand,
+          warehouse: data.warehouse,
+          cpc: data.cpc,
+        };
+        let addMasterEditHistory = await mastersEditHistory.create(obj);
+        if (addMasterEditHistory) {
+          resolve({ status: true });
+        } else {
+          resolve({ status: false });
+        }
       } else {
         resolve({ status: false });
+      }
+    });
+  },
+  getMasterEditHistory: (trayId) => {
+    return new Promise(async (resolve, reject) => {
+      let data = await mastersEditHistory
+        .find({ code: trayId })
+        .catch((err) => reject(err));
+      if (data) {
+        resolve(data);
       }
     });
   },
