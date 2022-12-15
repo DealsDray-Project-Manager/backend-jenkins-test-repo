@@ -47,6 +47,7 @@ router.post("/getBadOrders/:location", async (req, res, next) => {
   try {
     let data = await misUserController.getBadOrders(req.params.location);
     if (data) {
+      console.log(data);
       res.status(200).json({
         data: data,
         message: "Success",

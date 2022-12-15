@@ -1107,23 +1107,6 @@ router.post("/search-admin-track-item", async (req, res, next) => {
     next(error);
   }
 });
-/***********************************************EXTRA QUREY SECTION*********************************************************** */
-router.post("/update-cpc", async (req, res, next) => {
-  try {
-    let data = await superAdminController.updateCPCExtra();
-    if (data) {
-      res.status(200).json({
-        message: "Successfully updated",
-      });
-    } else {
-      res.status(403).json({
-        message: "Failed",
-      });
-    }
-  } catch (error) {
-    next(error);
-  }
-});
 /*************************************************************READY FOR CHARGING************************************************* */
 /* GET INUSE WHT TRAY */
 router.post("/getInuseWht", async (req, res, next) => {
@@ -1195,4 +1178,21 @@ router.post("/getBagItemInvalid/:bagId",async(req,res,next)=>{
     next(error)
   }
 })
+/***********************************************EXTRA QUREY SECTION*********************************************************** */
+router.post("/update-cpc", async (req, res, next) => {
+  try {
+    let data = await superAdminController.updateCPCExtra();
+    if (data) {
+      res.status(200).json({
+        message: "Successfully updated",
+      });
+    } else {
+      res.status(403).json({
+        message: "Failed",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
 module.exports = router;

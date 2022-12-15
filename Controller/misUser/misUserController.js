@@ -168,7 +168,7 @@ module.exports = {
     return new Promise(async (resolve, reject) => {
       let data = await badOrders.find(
         { partner_shop: location },
-        { _id: 0, id: 0, __v: 0 }
+        { _id: 0, __v: 0 }
       );
       console.log(data);
 
@@ -1066,7 +1066,7 @@ module.exports = {
     return new Promise(async (resolve, reject) => {
       let data = await badDelivery.find(
         { partner_shop: location },
-        { _id: 0, __v: 0, id: 0 }
+        { _id: 0, __v: 0, }
       );
       if (data) {
         resolve(data);

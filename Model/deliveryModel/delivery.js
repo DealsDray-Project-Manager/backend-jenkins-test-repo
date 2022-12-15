@@ -159,6 +159,9 @@ const deliverySchema = mongoose.Schema({
   },
   closed_from_sorting:{
     type:Date
+  },
+  charging:{
+    type:Object
   }
 });
 

@@ -2090,9 +2090,9 @@ module.exports = {
                 let getCount = await masters.findOne({ code: x.wht_tray });
                 if (x.wht_tray !== null) {
                   if (getCount?.items !== undefined) {
-                    let string = `${x.wht_tray} -(${getCount.items.length})`;
-                    if (y.wht_tray.includes(string) === false) {
-                      y.wht_tray.push(string);
+                    // let string = `${x.wht_tray} -(${getCount.items.length})`;
+                    if (y.wht_tray.includes(x.wht_tray) === false) {
+                      y.wht_tray.push(x.wht_tray);
                     }
                   } else {
                     let string = `${x.wht_tray} -0`;

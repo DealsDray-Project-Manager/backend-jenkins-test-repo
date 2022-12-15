@@ -81,7 +81,7 @@ module.exports = {
         }
       );
       if (data) {
-        for (let x of data.items) {
+        for (let x of data.actual_items) {
           let deliveryUpdate = await delivery.updateOne(
             {
               tracking_id: x.tracking_id,
@@ -91,6 +91,7 @@ module.exports = {
                 charging_done_date: Date.now(),
                 tray_status: "Charging Done",
                 tray_location: "Send to warehouse",
+                charging:x.charging
               },
             }
           );

@@ -7,9 +7,13 @@ const { products } = require("../../Model/productModel/product");
 const { admin } = require("../../Model/adminModel/admins");
 const { usersHistory } = require("../../Model/users-history-model/model");
 const { delivery } = require("../../Model/deliveryModel/delivery");
+const {
+  mastersEditHistory,
+} = require("../../Model/masterHistoryModel/mastersHistory");
 const moment = require("moment");
 const IISDOMAIN = "http://prexo-v2-uat-adminapi.dealsdray.com/user/profile/";
-const IISDOMAINPRDT = "http://prexo-v2-uat-adminapi.dealsdray.com/product/image/";
+const IISDOMAINPRDT =
+  "http://prexo-v2-uat-adminapi.dealsdray.com/product/image/";
 
 /************************************************************************************************** */
 module.exports = {
@@ -1016,12 +1020,12 @@ module.exports = {
         {
           $unwind: "$delivery",
         },
-        // {
-        //   $skip: skip,
-        // },
-        // {
-        //   $limit: limit,
-        // },
+        {
+          $skip: skip,
+        },
+        {
+          $limit: limit,
+        },
       ]);
       let count = await orders.count({ delivery_status: "Delivered" });
       resolve({ data: data, count: count });
@@ -1398,33 +1402,38 @@ module.exports = {
   },
   updateCPCExtra: () => {
     return new Promise(async (resolve, reject) => {
-      let getInuse = await masters.find({
+      let wht = await masters.find({
         $or: [
-          { prefix: "tray-master", type_taxanomy: "MMT", sort_id: "Inuse" },
-          { prefix: "tray-master", type_taxanomy: "PMT", sort_id: "Inuse" },
+          { "items.charging": { $exists: true } },
+          { "actual_items.charging": { $exists: true } },
         ],
       });
-      for (let x of getInuse) {
-        if (x.items.length !== 0) {
-          let update = await masters.updateOne(
-            { code: x.code },
+      for (let y of wht) {
+        for (let x of y.items) {
+          
+          console.log(x.charging);
+          let update = await delivery.updateOne(
+            { tracking_id: x.tracking_id },
             {
               $set: {
-                sort_id: "Closed By Warehouse",
+                charging: x.charging,
               },
             }
           );
-        } else {
-          let updateOpen = await masters.updateOne(
-            { code: x.code },
+        }
+        for (let m of y.actual_items) {
+          console.log(m.charging);
+          let update = await delivery.updateOne(
+            { tracking_id: m.tracking_id },
             {
               $set: {
-                sort_id: "Open",
+                charging: m.charging,
               },
             }
           );
         }
       }
+      resolve(wht);
     });
   },
 };
