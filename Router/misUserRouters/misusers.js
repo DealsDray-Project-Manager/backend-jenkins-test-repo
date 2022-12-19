@@ -16,7 +16,7 @@ router.post("/bulkOrdersValidation", async (req, res, next) => {
         message: "Successfully Validated",
       });
     } else {
-      res.status(400).json({
+      res.status(202).json({
         data: data.data,
         message: "Please Check Errors",
       });
@@ -252,7 +252,7 @@ router.post("/bulkValidationDelivery", async (req, res, next) => {
         message: "Successfully Validated",
       });
     } else {
-      res.status(400).json({
+      res.status(202).json({
         data: data.err,
       });
     }
@@ -269,7 +269,7 @@ router.post("/importDelivery", async (req, res, next) => {
         message: "Successfully Added",
       });
     } else {
-      res.status(403).json({
+      res.status(202).json({
         message: "Failed",
       });
     }
@@ -450,7 +450,7 @@ router.post("/addUicCode", async (req, res, next) => {
         message: "Successfully Added",
       });
     } else {
-      res.status(400).json({
+      res.status(202).json({
         message: "Creation Failed",
       });
     }
@@ -501,7 +501,7 @@ router.put("/changeUicStatus/:id", async (req, res, next) => {
         message: "Successfully Updated",
       });
     } else {
-      res.status(400).json({
+      res.status(202).json({
         message: "Failed",
       });
     }
@@ -547,7 +547,7 @@ router.post("/issueRequestSend", async (req, res, next) => {
         message: "Requested",
       });
     } else if (data.status == 0) {
-      res.status(403).json({
+      res.status(202).json({
         message: "Please confirm UIC",
         bagId: req.body.bagId,
       });
@@ -565,7 +565,7 @@ router.post("/deleteBadOrders", async (req, res, next) => {
         message: "Successfully Deleted",
       });
     } else {
-      res.status(403).json({
+      res.status(202).json({
         message: "Failed",
       });
     }
@@ -582,7 +582,7 @@ router.post("/deleteBadDelivery", async (req, res, next) => {
         message: "Successfully Deleted",
       });
     } else {
-      res.status(403).json({
+      res.status(202).json({
         message: "Failed",
       });
     }
@@ -600,11 +600,11 @@ router.post("/getBagItemWithUic/:bagId", async (req, res, next) => {
         data: data.data,
       });
     } else if (data.status == 2) {
-      res.status(403).json({
+      res.status(202).json({
         message: "Details not found",
       });
     } else if (data.status == 3) {
-      res.status(403).json({
+      res.status(202).json({
         message: `${req.params.bagId} - present at ${data.data[0].sort_id}`,
       });
     }
@@ -640,7 +640,7 @@ router.post("/assign-for-sorting", async (req, res, next) => {
         data: data,
       });
     } else {
-      res.status(403).json({
+      res.status(202).json({
         message: "Tray is not exists or not in closed satge",
       });
     }
@@ -685,7 +685,7 @@ router.post("/view-bot-clubed-data-model", async (req, res, next) => {
         data: data,
       });
     } else {
-      res.status(403).json({
+      res.status(202).json({
         message: "No data found",
       });
     }
@@ -713,7 +713,7 @@ router.post("/check-all-wht-inuse-for-sorting", async (req, res, next) => {
       });
     } else if (data.length !== 0) {
       let arr = data.toString();
-      res.status(403).json({
+      res.status(292).json({
         message: `${arr} - This Tray's Are Already In Sorting`,
         data: data,
       });
@@ -731,7 +731,7 @@ router.post("/assign-to-sorting-agent", async (req, res, next) => {
         message: "Request Send To wareshouse",
       });
     } else {
-      res.status(403).json({
+      res.status(202).json({
         message: "Failed",
       });
     }
@@ -753,7 +753,7 @@ router.post(
           data: data,
         });
       } else {
-        res.status(403).json({
+        res.status(202).json({
           message: "Failed",
         });
       }
@@ -792,7 +792,7 @@ router.post("/toWhtTrayForMerge", async (req, res, next) => {
         data: data.tray,
       });
     } else if (data.status === 0) {
-      res.status(403).json({
+      res.status(202).json({
         message: "Currently no wht tray in this brand and model",
       });
     }
@@ -847,7 +847,7 @@ router.post("/sort-wht-tray-brand-model", async (req, res, next) => {
         data: data,
       });
     } else {
-      res.status(403).json({
+      res.status(202).json({
         message: "No wht tray found",
       });
     }
@@ -864,7 +864,7 @@ router.post("/check-ready-for-merge", async (req, res, next) => {
         message: "Ready for merge",
       });
     } else {
-      res.status(403).json({
+      res.status(202).json({
         message: "Sorry You can't Send to Sorting",
       });
     }
@@ -881,7 +881,7 @@ router.post("/merge-request-sent-to-wh", async (req, res, next) => {
         message: "Request Sent to Warehouse",
       });
     } else {
-      res.status(403).json({
+      res.status(202).json({
         message: "Failed",
       });
     }
@@ -914,7 +914,7 @@ router.post("/view-bag-item/:location/:bagId", async (req, res, next) => {
         data: data,
       });
     } else {
-      res.status(403).json({
+      res.status(202).json({
         message: "No Data Found",
       });
     }
@@ -947,7 +947,7 @@ router.post("/getSortingAgentMergeMmt/:location", async (req, res, next) => {
         data: data,
       });
     } else {
-      res.status(403).json({
+      res.status(202).json({
         message: "No sorting-agent avilable for now",
       });
     }
@@ -971,7 +971,7 @@ router.post(
           data: mmtTray.tray,
         });
       } else {
-        res.status(403).json({
+        res.status(202).json({
           message: "Currently no mmt tray for merge",
         });
       }
@@ -995,7 +995,7 @@ router.post("/TrayMergeRequestSend", async (req, res, next) => {
         message: "Request Successfully Sent to Warehouse",
       });
     } else {
-      res.status(403).json({
+      res.status(202).json({
         message: "Failed Please tray again..",
       });
     }

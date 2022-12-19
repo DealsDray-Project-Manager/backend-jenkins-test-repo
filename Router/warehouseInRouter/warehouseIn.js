@@ -26,15 +26,15 @@ router.post("/checkBagId", async (req, res, next) => {
     const { bagId, location } = req.body;
     let data = await warehouseInController.checkBagId(bagId, location);
     if (data.status == 1) {
-      res.status(400).json({
+      res.status(202).json({
         message: "Bag ID Does Not Exist",
       });
     } else if (data.status == 2) {
-      res.status(400).json({
+      res.status(202).json({
         message: "Bag ID is not empty or close stage",
       });
     } else if (data.status == 3) {
-      res.status(400).json({
+      res.status(202).json({
         message: `Bag id does not exist in ${warehouse} warehouse`,
       });
     } else if (data.status == 0) {
@@ -77,12 +77,12 @@ router.post("/getBagItemRequest/:bagId/:sortId", async (req, res, next) => {
         message: "Successfully Get All Data",
       });
     } else if (data.status == 2) {
-      res.status(403).json({
+      res.status(202).json({
         data: data.data,
         message: "Details not found",
       });
     } else {
-      res.status(403).json({
+      res.status(202).json({
         data: data,
         message: `${bagId} - present at ${data.data[0].sort_id}`,
       });
@@ -103,7 +103,7 @@ router.post("/checkBotUserStatus/:username", async (req, res, next) => {
         message: "Bot user is free now",
       });
     } else if (data.status === 2) {
-      res.status(403).json({
+      res.status(202).json({
         status: 2,
         message: `${username} -user not active`,
       });
@@ -125,7 +125,7 @@ router.post("/checkAwbn", async (req, res, next) => {
     let data = await warehouseInController.checkAwbin(awbn, bagId, location);
     console.log(data);
     if (data.status == 1) {
-      res.status(400).json({
+      res.status(202).json({
         message: "AWBN Number does Not Exist",
       });
     } else if (data.status == 2) {
@@ -144,7 +144,7 @@ router.post("/checkAwbn", async (req, res, next) => {
         message: "AWBN Number Is valid",
       });
     } else if (data.status == 4) {
-      res.status(400).json({
+      res.status(202).json({
         message: "Not Delivered",
       });
     }
@@ -161,7 +161,7 @@ router.post("/stockInToWarehouse", async (req, res, next) => {
         message: "Successfully Added",
       });
     } else {
-      res.status(400).json({
+      res.status(202).json({
         message: "Failed",
       });
     }
@@ -178,7 +178,7 @@ router.post("/bagClosing", async (req, res, next) => {
         message: "Successfully Closed",
       });
     } else {
-      res.status(400).json({
+      res.status(202).json({
         message: "Failed",
       });
     }
@@ -195,7 +195,7 @@ router.put("/stockin", async (req, res, next) => {
         message: "Successfully Removed",
       });
     } else {
-      res.status(400).json({
+      res.status(202).json({
         message: "Failed",
       });
     }
@@ -225,19 +225,19 @@ router.post("/actualCheckAwbn", async (req, res, next) => {
         data: data.data,
       });
     } else if (data.status == 2) {
-      res.status(403).json({
+      res.status(202).json({
         message: "Already Added",
       });
     } else if (data.status == 3) {
-      res.status(400).json({
+      res.status(203).json({
         message: "This Item Does Not Exist",
       });
     } else if (data.status == 4) {
-      res.status(403).json({
+      res.status(202).json({
         message: "AWBN Does Not Exist",
       });
     } else if (data.status == 5) {
-      res.status(403).json({
+      res.status(202).json({
         message: "This Item Not Delivered",
       });
     }
@@ -254,7 +254,7 @@ router.post("/addActualitem", async (req, res, next) => {
         message: "Successfully Added",
       });
     } else {
-      res.status(400).json({
+      res.status(202).json({
         message: "Failed",
       });
     }
@@ -270,7 +270,7 @@ router.put("/actualBagItem", async (req, res, next) => {
         message: "Successfully Removed",
       });
     } else {
-      res.status(400).json({
+      res.status(202).json({
         message: "Failed",
       });
     }
@@ -287,7 +287,7 @@ router.post("/issueToBot", async (req, res, next) => {
         message: "Successfully Issued",
       });
     } else {
-      res.status(400).json({
+      res.status(202).json({
         message: "Failed",
       });
     }
@@ -311,15 +311,15 @@ router.post("/checkMmtTray/:id/:location", async (req, res, next) => {
         status: data.tray_status,
       });
     } else if (data.status == 2) {
-      res.status(403).json({
+      res.status(202).json({
         message: "Tray Already Assigned",
       });
     } else if (data.status == 3) {
-      res.status(403).json({
+      res.status(202).json({
         message: "Tray ID Does Not Exist",
       });
     } else if (data.status == 4) {
-      res.status(403).json({
+      res.status(202).json({
         message: "Not A MMT Tray",
       });
     }
@@ -342,15 +342,15 @@ router.post("/checkPmtTray/:id/:location", async (req, res, next) => {
         status: data.tray_status,
       });
     } else if (data.status == 2) {
-      res.status(403).json({
+      res.status(202).json({
         message: "Tray Already Assigned",
       });
     } else if (data.status == 3) {
-      res.status(403).json({
+      res.status(202).json({
         message: "Tray ID Does Not Exist",
       });
     } else if (data.status == 4) {
-      res.status(403).json({
+      res.status(202).json({
         message: "Not A PMT Tray",
       });
     }
@@ -372,15 +372,15 @@ router.post("/checkBotTray/:id/:location", async (req, res, next) => {
         status: data.tray_status,
       });
     } else if (data.status == 2) {
-      res.status(403).json({
+      res.status(202).json({
         message: "Tray Already Assigned",
       });
     } else if (data.status == 3) {
-      res.status(403).json({
+      res.status(202).json({
         message: "Tray ID Does Not Exist",
       });
     } else if (data.status == 4) {
-      res.status(403).json({
+      res.status(202).json({
         message: "Not A BOT Tray",
       });
     }
@@ -426,11 +426,11 @@ router.post("/receivedTray", async (req, res, next) => {
         message: "Successfully Received",
       });
     } else if (data.status === 2) {
-      res.status(403).json({
+      res.status(202).json({
         message: "Failed",
       });
     } else if (data.status === 3) {
-      res.status(403).json({
+      res.status(202).json({
         message: "Please Enter Valid Count",
       });
     }
@@ -463,7 +463,7 @@ router.post("/checkBotUserTray", async (req, res, next) => {
         message: "Success",
       });
     } else if (data.status === 0) {
-      res.status(403).json({
+      res.status(202).json({
         message: `${username + " have already  " + trayType + " Tray"}`,
       });
     }
@@ -480,7 +480,7 @@ router.post("/assignNewTray", async (req, res, next) => {
         message: "Successfully Assigned",
       });
     } else {
-      res.status(403).json({
+      res.status(202).json({
         message: "Failed",
       });
     }
@@ -497,7 +497,7 @@ router.post("/trayclose", async (req, res, next) => {
         message: "Successfully Closed",
       });
     } else {
-      res.status(403).json({
+      res.status(202).json({
         message: "Failed",
       });
     }
@@ -516,12 +516,12 @@ router.post("/bagValidation/:bagId", async (req, res, next) => {
         status: 1,
       });
     } else if (data.status === 2) {
-      res.status(403).json({
+      res.status(202).json({
         status: 2,
         message: "PMT / MMT / BOT VS BAG count is not matching",
       });
     } else {
-      res.status(403).json({
+      res.status(202).json({
         status: 2,
         message: "No Data found",
       });
@@ -539,7 +539,7 @@ router.post("/traycloseBot", async (req, res, next) => {
         message: "Successfully Closed",
       });
     } else {
-      res.status(403).json({
+      res.status(202).json({
         message: "Failed",
       });
     }
@@ -617,7 +617,7 @@ router.post("/summeryBotTrayBag/:bagId", async (req, res, next) => {
         data: data,
       });
     } else {
-      res.status(403).json({
+      res.status(202).json({
         message: "You Can't access this Data",
       });
     }
@@ -791,11 +791,11 @@ router.post("/getWhtTrayItem/:trayId/:sortId", async (req, res, next) => {
         data: data.data,
       });
     } else if (data.status == 2) {
-      res.status(403).json({
+      res.status(202).json({
         message: "Details not found",
       });
     } else if (data.status == 3) {
-      res.status(403).json({
+      res.status(202).json({
         message: `${trayId} - present at ${data.data.sort_id}`,
       });
     }
@@ -829,15 +829,15 @@ router.post("/actualPickList", async (req, res, next) => {
         data: uic,
       });
     } else if (data.status == 2) {
-      res.status(403).json({
+      res.status(202).json({
         message: "Invalid UIC",
       });
     } else if (data.status == 3) {
-      res.status(403).json({
+      res.status(202).json({
         message: "Already Added",
       });
     } else {
-      res.status(400).json({
+      res.status(202).json({
         message: "Not Exists",
       });
     }
@@ -854,7 +854,7 @@ router.post("/add-actual-picklist-item", async (req, res, next) => {
         message: "Successfully Added",
       });
     } else {
-      res.status(403).json({
+      res.status(202).json({
         message: "Failed",
       });
     }
@@ -871,7 +871,7 @@ router.put("/remove-actual-picklist", async (req, res, next) => {
         message: "Successfully Removed",
       });
     } else {
-      res.status(400).json({
+      res.status(202).json({
         message: "Failed",
       });
     }
@@ -888,7 +888,7 @@ router.post("/close-pick-list/:pickListId", async (req, res, next) => {
         message: "Successfully Closed",
       });
     } else {
-      res.status(403).json({
+      res.status(202).json({
         message: "Failed",
       });
     }
@@ -921,7 +921,7 @@ router.post("/send-wh-mis-whtTray", async (req, res, next) => {
         message: "Successfully Requested to MIS",
       });
     } else {
-      res.status(403).json({
+      res.status(202).json({
         message: "Failed",
       });
     }
@@ -950,16 +950,17 @@ router.post("/check-uic", async (req, res, next) => {
   try {
     const { trayId, uic } = req.body;
     let data = await warehouseInController.checkUicCode(uic, trayId);
+    console.log(data);
     if (data.status == 1) {
-      res.status(403).json({
+      res.status(202).json({
         message: "UIC Does Not Exists",
       });
     } else if (data.status == 2) {
-      res.status(403).json({
+      res.status(202).json({
         message: "UIC Not Exists In This Tray",
       });
     } else if (data.status == 3) {
-      res.status(403).json({
+      res.status(202).json({
         message: "Already Added",
       });
     } else if (data.status == 4) {
@@ -981,11 +982,11 @@ router.post("/wht-add-actual-item", async (req, res, next) => {
         message: "Successfully Added",
       });
     } else if (data.status == 2) {
-      res.status(403).json({
+      res.status(202).json({
         message: "Failed",
       });
     } else if (data.status == 3) {
-      res.status(403).json({
+      res.status(202).json({
         message: "Item Already Added",
       });
     }
@@ -1002,7 +1003,7 @@ router.post("/issue-to-agent-wht", async (req, res, next) => {
         message: "Successfully Issued",
       });
     } else {
-      res.status(403).json({
+      res.status(202).json({
         message: "Failed",
       });
     }
@@ -1040,11 +1041,11 @@ router.post(
           data: data.data,
         });
       } else if (data.status == 2) {
-        res.status(403).json({
+        res.status(202).json({
           message: "Details not found",
         });
       } else {
-        res.status(403).json({
+        res.status(202).json({
           message: `${trayId} - present at ${data.data.sort_id}`,
         });
       }
@@ -1060,15 +1061,15 @@ router.post("/check-uic-charging-done", async (req, res, next) => {
     const { trayId, uic } = req.body;
     let data = await warehouseInController.checkUicCodeChargeDone(uic, trayId);
     if (data.status == 1) {
-      res.status(403).json({
+      res.status(202).json({
         message: "UIC Does Not Exists",
       });
     } else if (data.status == 2) {
-      res.status(403).json({
+      res.status(202).json({
         message: "UIC Not Exists In This Tray",
       });
     } else if (data.status == 3) {
-      res.status(403).json({
+      res.status(202).json({
         message: "Already Added",
       });
     } else if (data.status == 4) {
@@ -1087,15 +1088,15 @@ router.post("/check-uic-sorting-done", async (req, res, next) => {
     const { trayId, uic } = req.body;
     let data = await warehouseInController.checkUicCodeSortingDone(uic, trayId);
     if (data.status == 1) {
-      res.status(403).json({
+      res.status(202).json({
         message: "UIC Does Not Exists",
       });
     } else if (data.status == 2) {
-      res.status(403).json({
+      res.status(202).json({
         message: "UIC Not Exists In This Tray",
       });
     } else if (data.status == 3) {
-      res.status(403).json({
+      res.status(202).json({
         message: "Already Added",
       });
     } else if (data.status == 4) {
@@ -1118,7 +1119,7 @@ router.post("/charging-done-put-item", async (req, res, next) => {
         message: "Successfully Added",
       });
     } else {
-      res.status(403).json({
+      res.status(202).json({
         message: "Failed",
       });
     }
@@ -1135,11 +1136,11 @@ router.post("/sorting-done-put-item", async (req, res, next) => {
         message: "Successfully Added",
       });
     } else if (data.status == 2) {
-      res.status(403).json({
+      res.status(202).json({
         message: "Failed",
       });
     } else if (data.status == 3) {
-      res.status(403).json({
+      res.status(202).json({
         message: "Item Already Added",
       });
     }
@@ -1156,7 +1157,7 @@ router.post("/close-wht-tray-ready-to-next", async (req, res, next) => {
         message: "Successfully Closed",
       });
     } else {
-      res.status(403).json({
+      res.status(202).json({
         message: "Failed",
       });
     }
@@ -1203,7 +1204,7 @@ router.post("/recieved-from-bqc", async (req, res, next) => {
         message: "Successfully Received",
       });
     } else {
-      res.status(403).json({
+      res.status(202).json({
         message: "Failed",
       });
     }
@@ -1220,7 +1221,7 @@ router.post("/recieved-from-sorting", async (req, res, next) => {
         message: "Successfully Received",
       });
     } else {
-      res.status(403).json({
+      res.status(202).json({
         message: "Failed",
       });
     }
@@ -1241,7 +1242,7 @@ router.post("/get-tray-sorting-requests/:username", async (req, res, next) => {
         data: data,
       });
     } else {
-      res.status(403).json({
+      res.status(202).json({
         message: "No Data Found",
       });
     }
@@ -1259,11 +1260,11 @@ router.post("/get-tray-sorting/:trayId", async (req, res, next) => {
         data: data.data,
       });
     } else if (data.status === 2) {
-      res.status(403).json({
+      res.status(202).json({
         message: `${trayId} - present at ${data.data.sort_id}`,
       });
     } else {
-      res.status(403).json({
+      res.status(202).json({
         message: `Details not found`,
       });
     }
@@ -1286,7 +1287,7 @@ router.post("/assign-to-sorting-confirm", async (req, res, next) => {
         });
       }
     } else {
-      res.status(403).json({
+      res.status(202).json({
         message: "Failed",
       });
     }
@@ -1362,15 +1363,15 @@ router.post("/bot-tray-report", async (req, res, next) => {
         data: data.data,
       });
     } else if (data.status == 0) {
-      res.status(403).json({
+      res.status(202).json({
         message: `${botTray} - Tray in process`,
       });
     } else if (data.status == 2) {
-      res.status(403).json({
+      res.status(202).json({
         message: `You can't access this tray ${botTray} - report`,
       });
     } else {
-      res.status(403).json({
+      res.status(202).json({
         message: "Report Not Available",
       });
     }
@@ -1395,7 +1396,7 @@ router.post(
           data: data,
         });
       } else {
-        res.status(403).json({
+        res.status(202).json({
           message: "No Data Found",
         });
       }
@@ -1434,7 +1435,7 @@ router.post(
           data: data,
         });
       } else {
-        res.status(403).json({
+        res.status(202).json({
           message: "You can't access this tray",
         });
       }
@@ -1459,11 +1460,11 @@ router.post("/mmtTraySendToSorting", async (req, res, next) => {
         message: "Successfully Assigned",
       });
     } else if (data.status === 0) {
-      res.status(403).json({
+      res.status(202).json({
         message: "Failed Please Try Again",
       });
     } else if (data.status === 2) {
-      res.status(403).json({
+      res.status(202).json({
         message: `${username} - user have already mmt tray`,
       });
     }
@@ -1501,7 +1502,7 @@ router.post("/mergeDoneMmttrayClose", async (req, res, next) => {
         message: "Successfully Closed",
       });
     } else {
-      res.status(403).json({
+      res.status(202).json({
         message: "Failed",
       });
     }

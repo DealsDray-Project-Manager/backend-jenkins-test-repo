@@ -27,7 +27,7 @@ router.post("/view-tray-details/:trayId", async (req, res, next) => {
         data: data,
       });
     } else {
-      res.status(403).json({
+      res.status(202).json({
         message: "Tray is not present",
       });
     }
@@ -44,7 +44,7 @@ router.post("/charge-in", async (req, res, next) => {
         message: "Successfully Charge IN",
       });
     } else {
-      res.status(403).json({
+      res.status(202).json({
         message: "Failed",
       });
     }

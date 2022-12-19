@@ -111,7 +111,7 @@ module.exports = {
               issued_user_name: username,
             },
             {
-              prefix: {$ne:"bag-master"},
+              prefix: { $ne: "bag-master" },
               sort_id: "Closed By Bot",
               issued_user_name: username,
             },
@@ -1361,25 +1361,52 @@ module.exports = {
   },
   addWhtActual: (trayItemData) => {
     return new Promise(async (resolve, reject) => {
-      let checkAlreadyAdded = await masters.findOne({
-        code: trayItemData.trayId,
-        "actual_items.uic": trayItemData.item.uic,
-      });
-      if (checkAlreadyAdded) {
-        resolve({ status: 3 });
-      } else {
-        let data = await masters.updateOne(
-          { code: trayItemData.trayId },
-          {
-            $push: {
-              actual_items: trayItemData.item,
-            },
-          }
-        );
-        if (data.matchedCount != 0) {
-          resolve({ status: 1 });
+      if (trayItemData?.page == "bqc") {
+        let checkAlreadyAdded = await masters.findOne({
+          code: trayItemData.trayId,
+          "items.uic": trayItemData.item.uic,
+        });
+        if (checkAlreadyAdded) {
+          resolve({ status: 3 });
         } else {
-          resolve({ status: 2 });
+          let data = await masters.updateOne(
+            { code: trayItemData.trayId },
+            {
+              $set:{
+                sort_id:"BQC work inprogress"
+              },
+              $push: {
+                items: trayItemData.item,
+              },
+            }
+          );
+          if (data.matchedCount != 0) {
+            resolve({ status: 1 });
+          } else {
+            resolve({ status: 2 });
+          }
+        }
+      } else {
+        let checkAlreadyAdded = await masters.findOne({
+          code: trayItemData.trayId,
+          "actual_items.uic": trayItemData.item.uic,
+        });
+        if (checkAlreadyAdded) {
+          resolve({ status: 3 });
+        } else {
+          let data = await masters.updateOne(
+            { code: trayItemData.trayId },
+            {
+              $push: {
+                actual_items: trayItemData.item,
+              },
+            }
+          );
+          if (data.matchedCount != 0) {
+            resolve({ status: 1 });
+          } else {
+            resolve({ status: 2 });
+          }
         }
       }
     });
@@ -1394,6 +1421,7 @@ module.exports = {
             $set: {
               actual_items: [],
               description: trayData.description,
+              temp_array: [],
               sort_id: "Issued to BQC",
               assigned_date: Date.now(),
             },

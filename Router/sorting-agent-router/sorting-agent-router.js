@@ -33,7 +33,7 @@ router.post(
           data: data.tray,
         });
       } else {
-        res.status(403).json({
+        res.status(202).json({
           message: "No data found",
         });
       }
@@ -52,15 +52,15 @@ router.post("/cheack-uic-for-sorting", async (req, res, next) => {
         message: "Valid UIC",
       });
     } else if (data.status === 2) {
-      res.status(403).json({
+      res.status(202).json({
         message: "Invalid UIC",
       });
     } else if (data.status == 3) {
-      res.status(403).json({
+      res.status(202).json({
         message: "Item does not exists in the tray",
       });
     } else if (data.status == 4) {
-      res.status(403).json({
+      res.status(202).json({
         message: "Item Already added",
       });
     }
@@ -77,11 +77,11 @@ router.post("/item-move-to-wht", async (req, res, next) => {
         message: "Successfully Added",
       });
     } else if (data.status == 1) {
-      res.status(403).json({
+      res.status(202).json({
         message: "Failed",
       });
     } else if (data.status == 2) {
-      res.status(403).json({
+      res.status(202).json({
         message: "Already Added",
       });
     }
@@ -98,7 +98,7 @@ router.post("/bot-and-wht-send-to-warehouse", async (req, res, next) => {
         message: "Tray Successfully Sent to warehouse",
       });
     } else {
-      res.status(403).json({
+      res.status(202).json({
         message: "Failed",
       });
     }
@@ -158,7 +158,7 @@ router.post("/itemShifteToMmtTray", async (req, res, next) => {
         message: "Tray Successfully Sent to Warehouse",
       });
     } else {
-      res.status(403).json({
+      res.status(202).json({
         message: "Failed",
       });
     }
@@ -175,7 +175,7 @@ router.post("/mergeDoneTraySendToWarehouse", async (req, res, next) => {
         message: "Successfully Sent to Warehouse",
       });
     } else {
-      res.status(403).json({
+      res.status(202).json({
         message: "Failed Please tray again",
       });
     }

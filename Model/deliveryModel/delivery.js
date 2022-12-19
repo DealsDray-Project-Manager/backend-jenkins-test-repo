@@ -162,6 +162,9 @@ const deliverySchema = mongoose.Schema({
   },
   charging:{
     type:Object
+  },
+  bqc_report:{
+    type:Object
   }
 });
 

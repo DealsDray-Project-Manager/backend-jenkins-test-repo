@@ -7,7 +7,7 @@ module.exports = {
       let data = await masters.find({
         $or: [
           { issued_user_name: username, sort_id: "Issued to BQC" },
-          { issued_user_name: username, sort_id: "BQC IN" },
+          { issued_user_name: username, sort_id: "BQC work inprogress" },
         ],
       });
       if (data) {
@@ -15,17 +15,132 @@ module.exports = {
       }
     });
   },
-  getWhtTrayitem: (trayId, username, status) => {
+  checkUicFirst: (uic, trayId) => {
+    return new Promise(async (resolve, reject) => {
+      let dataDelivered = await delivery.findOne({ "uic_code.code": uic });
+      if (dataDelivered) {
+        let alreadyAdded = await masters.findOne({
+          $or: [
+            { code: trayId, temp_array: { $elemMatch: { uic: uic } } },
+            { code: trayId, actual_items: { $elemMatch: { uic: uic } } },
+          ],
+        });
+        if (alreadyAdded) {
+          resolve({ status: 3 });
+        } else {
+          let checkExitThisTray = await masters.findOne({
+            code: trayId,
+            items: { $elemMatch: { uic: uic } },
+          });
+          if (checkExitThisTray) {
+            let obj;
+            for (let x of checkExitThisTray.items) {
+              if (x.uic == uic) {
+                obj = x;
+              }
+            }
+            resolve({ status: 4, data: obj });
+          } else {
+            resolve({ status: 2 });
+          }
+        }
+      } else {
+        resolve({ status: 1 });
+      }
+    });
+  },
+  addWhtitem: (itemData) => {
+    return new Promise(async (resolve, reject) => {
+      if (itemData.condiation == "Device In") {
+        let data = await masters.updateOne(
+          { code: itemData.trayId },
+          {
+            $push: {
+              actual_items: itemData.item,
+            },
+            $pull: {
+              items: {
+                uic: itemData.item.uic,
+              },
+            },
+          }
+        );
+        if (data.matchedCount != 0) {
+          resolve({ status: 1 });
+        } else {
+          resolve({ status: 2 });
+        }
+      } else {
+        let data = await masters.updateOne(
+          { code: itemData.trayId },
+          {
+            $push: {
+              temp_array: itemData.item,
+            },
+            $pull: {
+              items: {
+                uic: itemData.item.uic,
+              },
+            },
+          }
+        );
+        if (data.matchedCount != 0) {
+          resolve({ status: 1 });
+        } else {
+          resolve({ status: 2 });
+        }
+      }
+    });
+  },
+  uicCheckBqcDone:(uic,trayId)=>{
+    return new Promise(async(resolve,reject)=>{
+      let dataDelivered = await delivery.findOne({ "uic_code.code": uic });
+      if (dataDelivered) {
+        let alreadyAdded = await masters.findOne({
+         code:trayId,items:{ $elemMatch: { uic: uic } }
+        });
+        if (alreadyAdded) {
+          resolve({ status: 3 });
+        } else {
+          let checkExitThisTray = await masters.findOne({
+            code: trayId,
+            actual_items: { $elemMatch: { uic: uic } },
+          });
+          if (checkExitThisTray) {
+            let obj;
+            for (let x of checkExitThisTray.actual_items) {
+              if (x.uic == uic) {
+                obj = x;
+              }
+            }
+            resolve({ status: 4, data: obj });
+          } else {
+            resolve({ status: 2 });
+          }
+        }
+      } else {
+        resolve({ status: 1 });
+      }
+    })
+  },
+  getWhtTrayitem: (trayId, username, status,page) => {
     return new Promise(async (resolve, reject) => {
       let data = await masters.findOne({ code: trayId });
       if (data) {
-        if (data.sort_id === status && data.issued_user_name == username) {
+        if (data.sort_id === status || data.sort_id == "BQC work inprogress"  && data.issued_user_name == username && page == "Page-1") {
           resolve({ status: 1, data: data });
-        } else if (data.sort_id !== status) {
+        }
+        else if (data.sort_id === status || data.sort_id == "BQC work inprogress" && data.issued_user_name == username && page == "Page-2" && data.items.length == 0) {
           resolve({ status: 4, data: data });
         }
-        } else if (data.issued_user_name !== username) {
-          resolve({ status: 2 });
+        else if (data.sort_id === status || data.sort_id == "BQC work inprogress" && data.issued_user_name == username && page == "Page-2" && data.items.length !== 0) {
+          resolve({ status: 5, data: data });
+        }
+         else if (data.sort_id !== status || data.sort_id == "BQC work inprogress") {
+          resolve({ status: 4, data: data });
+        }
+      } else if (data.issued_user_name !== username) {
+        resolve({ status: 2 });
       } else {
         resolve({ status: 3 });
       }
@@ -67,34 +182,44 @@ module.exports = {
   },
   bqcOut: (trayData) => {
     return new Promise(async (resolve, reject) => {
-      let data = await masters.findOneAndUpdate(
-        { code: trayData.trayId },
-        {
-          $set: {
-            sort_id: "BQC Done",
-            closed_time_bot: Date.now(),
-            description: trayData.description,
-            items: [],
-          },
-        }
-      );
-      if (data) {
-        for (let x of data.items) {
-          let deliveryUpdate = await delivery.updateOne(
-            {
-              tracking_id: x.tracking_id,
+      let getTray=await masters.findOne({code:trayData.trayId})
+      if(getTray){
+        Array.prototype.push.apply(getTray.items,getTray.temp_array)
+        let data = await masters.findOneAndUpdate(
+          { code: trayData.trayId },
+          {
+            $set: {
+              sort_id: "BQC Done",
+              closed_time_bot: Date.now(),
+              description: trayData.description,
+              actual_items:getTray.items,
+              temp_array:[],
+              items: [],
             },
-            {
-              $set: {
-                bqc_out_date: Date.now(),
-                tray_status: "BQC Done",
-                tray_location: "BQC",
+          }
+        );
+        if (data) {
+          for (let x of data.items) {
+            let deliveryUpdate = await delivery.updateOne(
+              {
+                tracking_id: x.tracking_id,
               },
-            }
-          );
+              {
+                $set: {
+                  bqc_out_date: Date.now(),
+                  tray_status: "BQC Done",
+                  tray_location: "BQC",
+                  bqc_report:x.bqc_report
+                },
+              }
+            );
+          }
+          resolve(data);
+        } else {
+          resolve();
         }
-        resolve(data);
-      } else {
+      }
+      else{
         resolve();
       }
     });

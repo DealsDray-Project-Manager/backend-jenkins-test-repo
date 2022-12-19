@@ -52,9 +52,9 @@ router.post("/login", async (req, res, next) => {
         },
       });
     } else if (loginData.status == 2) {
-      res.status(401).json({ data: { message: "Wrong username or password" } });
+      res.status(202).json({ data: { message: "Wrong username or password" } });
     } else if (loginData.status == 3) {
-      res.status(401).json({ data: { message: "admin deactivated" } });
+      res.status(202).json({ data: { message: "admin deactivated" } });
     }
   } catch (error) {
     next(error);
@@ -70,7 +70,7 @@ router.post("/check-user-status/:username", async (req, res, next) => {
         message: "Active user",
       });
     } else {
-      res.status(403).json({
+      res.status(202).json({
         message: "Admin deactivated",
       });
     }
@@ -100,7 +100,7 @@ router.post("/changePassword", async (req, res, next) => {
         message: "Successfully Changed",
       });
     } else {
-      res.status(403).json({
+      res.status(202).json({
         message: "Please Enter Correct Old Password",
       });
     }
@@ -281,7 +281,7 @@ router.post("/createBrands", async (req, res, next) => {
         message: "Successfullly Created",
       });
     } else {
-      res.status(400).json({
+      res.status(202).json({
         message: "Brand Already Exists",
       });
     }
@@ -298,7 +298,7 @@ router.post("/bulkValidationBrands", async (req, res, next) => {
         message: "Successfully Validated",
       });
     } else {
-      res.status(400).json({
+      res.status(202).json({
         data: data.err,
         message: "Please Check Errors",
       });
@@ -366,11 +366,11 @@ router.get("/getBrandOne/:brandId", async (req, res, next) => {
         message: "Success",
       });
     } else if (data.status == 0) {
-      res.status(400).json({
+      res.status(202).json({
         message: "This Brand You Can't Edit",
       });
     } else {
-      res.status(400).json({
+      res.status(202).json({
         message: "No data found",
       });
     }
@@ -387,7 +387,7 @@ router.put("/editBrand", async (req, res, next) => {
         message: "Successfully Edited",
       });
     } else {
-      res.status(400).json({
+      res.status(202).json({
         message: "Failed",
       });
     }
@@ -404,7 +404,7 @@ router.delete("/deleteBrand/:brandId", async (req, res, next) => {
         message: "Successfully Deleted",
       });
     } else {
-      res.status(400).json({
+      res.status(202).json({
         message: "Failed",
       });
     }
@@ -422,7 +422,7 @@ router.post("/bulkValidationProduct", async (req, res, next) => {
         message: "Successfully Validated",
       });
     } else {
-      res.status(400).json({
+      res.status(202).json({
         data: data.err,
         message: "Please Check Errors",
       });
@@ -446,7 +446,7 @@ router.post(
           message: "Successfully Created",
         });
       } else {
-        res.status(400).json({
+        res.status(202).json({
           message: "Product Exists",
         });
       }
@@ -479,7 +479,7 @@ router.post("/getImageEditProdt/:id", async (req, res, next) => {
         data: data,
       });
     } else {
-      res.status(403).json({
+      res.status(202).json({
         message: "No Data Found",
       });
     }
@@ -502,7 +502,7 @@ router.put(
           message: "Successfully Updated",
         });
       } else {
-        res.status(403).json({
+        res.status(202).json({
           message: "Updation Failed",
         });
       }
@@ -521,11 +521,11 @@ router.get("/getEditProduct/:productId", async (req, res, next) => {
         message: "Success",
       });
     } else if (data.status == 3 || data.status == 2) {
-      res.status(400).json({
+      res.status(202).json({
         message: "You Can't Edit This Product",
       });
     } else {
-      res.status(403).json({
+      res.status(202).json({
         message: "No data found",
       });
     }
@@ -542,7 +542,7 @@ router.put("/editProduct", async (req, res, next) => {
         message: "Successfully Updated",
       });
     } else {
-      res.status(400).json({
+      res.status(202).json({
         message: "Product Edit Failed",
       });
     }
@@ -559,7 +559,7 @@ router.delete("/deleteProduct/:productId", async (req, res, next) => {
         message: "Successfully Deleted",
       });
     } else {
-      res.status(400).json({
+      res.status(202).json({
         message: "Product delete failed",
       });
     }
@@ -593,7 +593,7 @@ router.post("/addLocation", async (req, res, next) => {
         message: "Successfully Added",
       });
     } else {
-      res.status(400).json({
+      res.status(202).json({
         message: "Location Already Exists",
       });
     }
@@ -611,7 +611,7 @@ router.get("/getInfra/:infraId", async (req, res, next) => {
         message: "Success",
       });
     } else {
-      res.status(400).json({
+      res.status(202).json({
         message: "Data Not Found",
       });
     }
@@ -643,7 +643,7 @@ router.put("/editInfra", async (req, res, next) => {
         message: "Successfully Updated",
       });
     } else {
-      res.status(400).json({
+      res.status(202).json({
         message: "Updation Failed",
       });
     }
@@ -660,7 +660,7 @@ router.delete("/deleteInfra/:infraId", async (req, res, next) => {
         message: "Successfully Deleted",
       });
     } else {
-      res.status(400).json({
+      res.status(202).json({
         message: "Failed",
       });
     }
@@ -692,7 +692,7 @@ router.post("/bulkValidationBag", async (req, res, next) => {
         message: "Successfully Validated",
       });
     } else {
-      res.status(400).json({
+      res.status(202).json({
         data: data.data,
         message: "Please Check Errors",
       });
@@ -809,7 +809,7 @@ router.post("/bulkValidationTray", async (req, res, next) => {
         message: "Successfully Validated",
       });
     } else {
-      res.status(400).json({
+      res.status(202).json({
         data: data.data,
         message: "Please Check Errors",
       });
@@ -977,7 +977,7 @@ router.post("/createMasters", async (req, res, next) => {
         message: "Successfully Created",
       });
     } else {
-      res.status(400).json({
+      res.status(202).json({
         message: "Creation Failed",
       });
     }
@@ -1008,7 +1008,7 @@ router.get("/getOneMaster/:masterId", async (req, res, ne) => {
         data: data,
       });
     } else {
-      res.status(400).json({
+      res.status(202).json({
         message: "You Can't Edit This Bag",
       });
     }
@@ -1025,7 +1025,7 @@ router.put("/editMaster", async (req, res, next) => {
         message: "Successfully Updated",
       });
     } else {
-      res.status(400).json({
+      res.status(202).json({
         message: "Failed",
       });
     }
@@ -1056,7 +1056,7 @@ router.delete("/deleteMaster/:masterId", async (req, res, next) => {
         message: "Successfully Deleted",
       });
     } else {
-      res.status(400).json({
+      res.status(202).json({
         message: "Failed",
       });
     }
@@ -1131,7 +1131,7 @@ router.post("/ready-for-charging", async (req, res, next) => {
         message: "Successfully Sent to MIS",
       });
     } else {
-      res.status(403).json({
+      res.status(202).json({
         message: "Failed Please Try again..",
       });
     }
@@ -1165,12 +1165,12 @@ router.post("/getBagItemInvalid/:bagId",async(req,res,next)=>{
       })
     }
     else if(data.status == 2){
-      res.status(403).json({
+      res.status(202).json({
         message:`${bagId} present at - ${data.data.sort_id}`
       })
     }
     else{
-      res.status(403).json({
+      res.status(202).json({
         message:"details not found"
       })
     }
@@ -1187,7 +1187,7 @@ router.post("/update-cpc", async (req, res, next) => {
         message: "Successfully updated",
       });
     } else {
-      res.status(403).json({
+      res.status(202).json({
         message: "Failed",
       });
     }

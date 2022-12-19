@@ -46,7 +46,7 @@ router.post("/closeBag", async (req, res, next) => {
         message: "Successfully Closed",
       });
     } else {
-      res.status(403).json({
+      res.status(202).json({
         message: "Please try again",
       });
     }
@@ -65,15 +65,15 @@ router.post("/awbnScanning", async (req, res, next) => {
         message: "Valid AWBN Number",
       });
     } else if (data.status == 0) {
-      res.status(403).json({
+      res.status(202).json({
         message: "Already Added",
       });
     } else if (data.status == 3) {
-      res.status(403).json({
+      res.status(202).json({
         message: "AWBN Number Dose Not Exist",
       });
     } else if (data.status == 4) {
-      res.status(403).json({
+      res.status(202).json({
         message: "Item Dose Not Exist In The Bag",
       });
     }
@@ -91,11 +91,11 @@ router.post("/traySegregation", async (req, res, next) => {
         message: "Successfully Added",
       });
     } else if (data.status == 3) {
-      res.status(403).json({
+      res.status(202).json({
         message: "Already Added",
       });
     } else {
-      res.status(403).json({
+      res.status(202).json({
         message: "Failed",
       });
     }
@@ -112,7 +112,7 @@ router.put("/trayItemRemove", async (req, res, next) => {
         message: "Successfully Removed",
       });
     } else {
-      res.status(400).json({
+      res.status(202).json({
         message: "Failed",
       });
     }
@@ -129,11 +129,11 @@ router.post("/trayClose/:trayId", async (req, res, next) => {
         message: "Successfully Closed",
       });
     } else if (data.status == 2) {
-      res.status(403).json({
+      res.status(202).json({
         message: "Tray Already Closed",
       });
     } else if (data.status == 3) {
-      res.status(403).json({
+      res.status(202).json({
         message: "Failed",
       });
     }
