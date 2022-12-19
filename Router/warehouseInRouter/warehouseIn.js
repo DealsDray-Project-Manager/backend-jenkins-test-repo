@@ -783,9 +783,7 @@ router.post("/picklist-sort", async (req, res, next) => {
 router.post("/getWhtTrayItem/:trayId/:sortId", async (req, res, next) => {
   try {
     const { trayId, sortId } = req.params;
-    console.log(req.params);
     let data = await warehouseInController.getWhtTrayitem(trayId, sortId);
-    console.log(data);
     if (data.status == 1) {
       res.status(200).json({
         data: data.data,
@@ -1532,4 +1530,26 @@ router.post("/sortingAgnetStatus/:username", async (req, res, next) => {
     next(error);
   }
 });
+/* CHECK CHARGING USER STATUS */
+router.post("/bqcAgentStatus/:username",async(req,res,next)=>{
+  try {
+    const {username}=req.params
+    let data=await warehouseInController.checkBqcAgentStatus(username)
+    if (data.status === 1) {
+      res.status(200).json({
+        data: "User is free",
+      });
+    } else if (data.status === 2) {
+      res.status(200).json({
+        data: "Agent already have a lot",
+      });
+    } else if (data.status === 3) {
+      res.status(200).json({
+        data: "User not active",
+      });
+    }
+  } catch (error) {
+    next(error)
+  }
+})
 module.exports = router;

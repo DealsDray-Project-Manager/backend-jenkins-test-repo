@@ -1372,8 +1372,8 @@ module.exports = {
           let data = await masters.updateOne(
             { code: trayItemData.trayId },
             {
-              $set:{
-                sort_id:"BQC work inprogress"
+              $set: {
+                sort_id: "BQC work inprogress",
               },
               $push: {
                 items: trayItemData.item,
@@ -2346,6 +2346,48 @@ module.exports = {
             { issued_user_name: username, sort_id: "Closed By Sorting Agent" },
             { issued_user_name: username, sort_id: "Issued to Merging" },
             { issued_user_name: username, sort_id: "Merging Done" },
+          ],
+        });
+        if (data) {
+          resolve({ status: 2 });
+        } else {
+          resolve({ status: 1 });
+        }
+      } else {
+        resolve({ status: 3 });
+      }
+    });
+  },
+  checkChargingAgentStatus: (username) => {
+    return new Promise(async (resolve, reject) => {
+      let userActive = await user.findOne({ user_name: username });
+      if (userActive.status == "Active") {
+        let data = await masters.findOne({
+          $or: [
+            { issued_user_name: username, sort_id: "Issued to Charging" },
+            { issued_user_name: username, sort_id: "Charging Station IN" },
+            { issued_user_name: username, sort_id: "Charge Done" },
+          ],
+        });
+        if (data) {
+          resolve({ status: 2 });
+        } else {
+          resolve({ status: 1 });
+        }
+      } else {
+        resolve({ status: 3 });
+      }
+    });
+  },
+  checkBqcAgentStatus: (username) => {
+    return new Promise(async (resolve, reject) => {
+      let userActive = await user.findOne({ user_name: username });
+      if (userActive.status == "Active") {
+        let data = await masters.findOne({
+          $or: [
+            { issued_user_name: username, sort_id: "Issued to BQC" },
+            { issued_user_name: username, sort_id: "BQC work inprogress" },
+            { issued_user_name: username, sort_id: "BQC Done" },
           ],
         });
         if (data) {
