@@ -1531,6 +1531,28 @@ router.post("/sortingAgnetStatus/:username", async (req, res, next) => {
   }
 });
 /* CHECK CHARGING USER STATUS */
+router.post("/chargingAgentStatus/:username",async(req,res,next)=>{
+  try {
+    const {username}=req.params
+    let data=await warehouseInController.checkChargingAgentStatus(username)
+    if (data.status === 1) {
+      res.status(200).json({
+        data: "User is free",
+      });
+    } else if (data.status === 2) {
+      res.status(200).json({
+        data: "Agent already have a lot",
+      });
+    } else if (data.status === 3) {
+      res.status(200).json({
+        data: "User not active",
+      });
+    }
+  } catch (error) {
+    next(error)
+  }
+})
+/* CHECK CHARGING USER STATUS */
 router.post("/bqcAgentStatus/:username",async(req,res,next)=>{
   try {
     const {username}=req.params
