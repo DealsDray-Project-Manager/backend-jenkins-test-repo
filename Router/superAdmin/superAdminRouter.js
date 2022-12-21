@@ -40,6 +40,7 @@ router.post(
 /* Login api */
 router.post("/login", async (req, res, next) => {
   try {
+    console.log("working");
     let loginData = await superAdminController.doLogin(req.body);
     if (loginData.status == 1) {
       const jwtToken = await jwt.jwtSign(loginData.data);
