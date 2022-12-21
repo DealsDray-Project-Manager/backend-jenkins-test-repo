@@ -2273,6 +2273,8 @@ module.exports = {
             {
               $set: {
                 sort_id: "Closed",
+                actual_items: [],
+                issued_user_name: null,
                 closed_time_wharehouse: Date.now(),
               },
             }
@@ -2283,6 +2285,8 @@ module.exports = {
             {
               $set: {
                 sort_id: "Inuse",
+                actual_items: [],
+                issued_user_name: null,
                 closed_time_wharehouse: Date.now(),
               },
             }
