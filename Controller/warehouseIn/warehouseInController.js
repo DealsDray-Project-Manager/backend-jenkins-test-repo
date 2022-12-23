@@ -410,8 +410,16 @@ module.exports = {
   getRequests: (location) => {
     return new Promise(async (resolve, reject) => {
       let data = await masters.find({
-        sort_id: "Requested to Warehouse",
-        cpc: location,
+        $or: [
+          {
+            sort_id: "Requested to Warehouse",
+            cpc: location,
+          },
+          {
+            sort_id: "Ready For Issue",
+            cpc: location,
+          },
+        ],
       });
       resolve(data);
     });
