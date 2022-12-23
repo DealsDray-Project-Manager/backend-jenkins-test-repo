@@ -70,7 +70,6 @@ router.post("/getBagItemRequest/:bagId/:sortId", async (req, res, next) => {
   try {
     const { bagId, sortId } = req.params;
     let data = await warehouseInController.getBagOneRequest(bagId, sortId);
-    console.log(data);
     if (data.status == 1) {
       res.status(200).json({
         data: data.data,

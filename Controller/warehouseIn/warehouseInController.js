@@ -84,13 +84,17 @@ module.exports = {
     });
   },
   getBagOneRequest: (masterId, status) => {
-    console.log(status);
     return new Promise(async (resolve, reject) => {
       let data = await masters.find({
         code: masterId,
       });
       if (data.length !== 0) {
         if (data[0].sort_id == status) {
+          resolve({ data: data, status: 1 });
+        } else if (
+          status == "Requested to Warehouse" &&
+          data[0].sort_id == "Ready For Issue"
+        ) {
           resolve({ data: data, status: 1 });
         } else {
           resolve({ status: 3, data: data });
