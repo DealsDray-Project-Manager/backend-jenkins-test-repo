@@ -324,72 +324,86 @@ module.exports = {
   },
   issueToBot: (issueData) => {
     return new Promise(async (resolve, reject) => {
-      let data = await masters.findOneAndUpdate(
-        { code: issueData.bagId },
-        {
-          sort_id: "Issued",
-          description: issueData.description,
-          uic: issueData.uic,
-          sleaves: issueData.sleaves,
-          assigned_date: Date.now(),
-        }
-      );
-      if (data) {
-        for (let x of data.items) {
-          let updateDelivery = await delivery.updateOne(
-            { tracking_id: x.awbn_number },
-            {
-              $set: {
-                assign_to_agent: Date.now(),
-                agent_name: data.issued_user_name,
-              },
-            }
-          );
-        }
-        for (let i = 0; i < issueData.try.length; i++) {
-          let assignTray = await masters.updateOne(
-            { code: issueData.try[i] },
-            {
-              $set: {
-                issued_user_name: data.issued_user_name,
-                sort_id: "Issued",
-                status_change_time: Date.now(),
-                assign: "New Assign",
-              },
-            }
-          );
-        }
-        let newAssing = await masters.updateMany(
+      if (issueData.status == "Issued") {
+        let data = await masters.findOneAndUpdate(
+          { code: issueData.bagId },
           {
-            $or: [
-              {
-                prefix: "tray-master",
-                issued_user_name: data.issued_user_name,
-                sort_id: "Received",
-              },
-              {
-                prefix: "tray-master",
-                issued_user_name: data.issued_user_name,
-                sort_id: "Closed",
-              },
-              {
-                prefix: "tray-master",
-                issued_user_name: data.issued_user_name,
-                sort_id: "Closed By Warehouse",
-              },
-            ],
-          },
-          {
-            $set: {
-              assign: "Old Assign",
-            },
+            sort_id: issueData.status,
+            description: issueData.description,
+            assigned_date: Date.now(),
           }
         );
-        if (newAssing) {
-          resolve(data);
+        if (data) {
+          for (let x of data.items) {
+            let updateDelivery = await delivery.updateOne(
+              { tracking_id: x.awbn_number },
+              {
+                $set: {
+                  assign_to_agent: Date.now(),
+                  agent_name: data.issued_user_name,
+                },
+              }
+            );
+          }
+          for (let i = 0; i < issueData.try.length; i++) {
+            let assignTray = await masters.updateOne(
+              { code: issueData.try[i] },
+              {
+                $set: {
+                  issued_user_name: data.issued_user_name,
+                  sort_id: "Issued",
+                  status_change_time: Date.now(),
+                  assign: "New Assign",
+                },
+              }
+            );
+          }
+          let newAssing = await masters.updateMany(
+            {
+              $or: [
+                {
+                  prefix: "tray-master",
+                  issued_user_name: data.issued_user_name,
+                  sort_id: "Received",
+                },
+                {
+                  prefix: "tray-master",
+                  issued_user_name: data.issued_user_name,
+                  sort_id: "Closed",
+                },
+                {
+                  prefix: "tray-master",
+                  issued_user_name: data.issued_user_name,
+                  sort_id: "Closed By Warehouse",
+                },
+              ],
+            },
+            {
+              $set: {
+                assign: "Old Assign",
+              },
+            }
+          );
+          if (newAssing) {
+            resolve({ data: data, status: 2 });
+          }
+        } else {
+          resolve({ status: 0 });
         }
       } else {
-        resolve();
+        let data = await masters.updateOne(
+          { code: issueData.bagId },
+          {
+            sort_id: issueData.status,
+            uic: issueData.uic,
+            sleaves: issueData.sleaves,
+          }
+        );
+        if (data.modifiedCount !== 0) {
+          resolve({ data: data, status: 1 });
+        } else {
+          resolve({ status: 0 });
+        }
       }
     });
   },

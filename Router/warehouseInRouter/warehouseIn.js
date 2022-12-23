@@ -278,9 +278,13 @@ router.put("/actualBagItem", async (req, res, next) => {
 router.post("/issueToBot", async (req, res, next) => {
   try {
     let data = await warehouseInController.issueToBot(req.body);
-    if (data) {
+    if (data.status == 2) {
       res.status(200).json({
         message: "Successfully Issued",
+      });
+    } else if (data.status == 1) {
+      res.status(200).json({
+        message: "Successfully Saved",
       });
     } else {
       res.status(202).json({
