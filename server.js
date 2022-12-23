@@ -25,9 +25,7 @@ const sortingAgent = require("./Router/sorting-agent-router/sorting-agent-router
 app.use(logger("dev"));
 app.use(express.json({ limit: "25mb" }));
 app.use(
-  cors({
-    origin: "http://localhost:3001"
-  })
+  cors()
 );
 app.use(express.urlencoded({ limit: "25mb", extended: false }));
 // API for web

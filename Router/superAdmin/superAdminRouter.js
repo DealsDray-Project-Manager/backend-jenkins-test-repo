@@ -40,7 +40,6 @@ router.post(
 /* Login api */
 router.post("/login", async (req, res, next) => {
   try {
-    console.log("working");
     let loginData = await superAdminController.doLogin(req.body);
     if (loginData.status == 1) {
       const jwtToken = await jwt.jwtSign(loginData.data);
@@ -50,6 +49,7 @@ router.post("/login", async (req, res, next) => {
           message: "Login Success",
           jwt: jwtToken,
           user_type: loginData?.data?.user_type,
+          data:loginData.data
         },
       });
     } else if (loginData.status == 2) {
