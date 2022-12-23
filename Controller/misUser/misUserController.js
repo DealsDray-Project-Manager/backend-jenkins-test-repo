@@ -23,11 +23,8 @@ module.exports = {
       let model_name = [];
       let imei = [];
       let i = 0;
-      let order_date = [];
-      let order_timestamp = [];
-      let delivery_date = [];
-      let gc_redeem_time = [];
       let order_status = [];
+      let tracking_id=[]
       for (let x of ordersData.item) {
         if (x.order_status == "NEW") {
           let orderExists = await orders.findOne({
