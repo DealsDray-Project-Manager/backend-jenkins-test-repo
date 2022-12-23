@@ -98,18 +98,15 @@ router.post("/checkBotUserStatus/:username", async (req, res, next) => {
     console.log(data);
     if (data.status === 1) {
       res.status(200).json({
-        status: 1,
-        message: "Bot user is free now",
+        data: "User is free",
       });
     } else if (data.status === 2) {
       res.status(202).json({
-        status: 2,
-        message: `${username} -user not active`,
+        data: "User not active",
       });
     } else {
       res.status(200).json({
-        status: 2,
-        message: "He have already one bag",
+        data: "Agent already have a lot",
       });
     }
   } catch (error) {
