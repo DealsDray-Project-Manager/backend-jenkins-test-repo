@@ -493,7 +493,7 @@ router.post("/SearchUicGeneratedReconPage", async (req, res, next) => {
   }
 });
 /* Change uic Status */
-router.put("/changeUicStatus/:id", async (req, res, next) => {
+router.post("/changeUicStatus/:id", async (req, res, next) => {
   try {
     let data = await misUserController.changeUicStatus(req.params.id);
     if (data.status) {

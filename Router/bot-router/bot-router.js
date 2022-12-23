@@ -104,7 +104,7 @@ router.post("/traySegregation", async (req, res, next) => {
   }
 });
 /* Remove Tray Itme */
-router.put("/trayItemRemove", async (req, res, next) => {
+router.post("/trayItemRemove", async (req, res, next) => {
   try {
     let data = await botController.deleteTrayItem(req.body);
     if (data) {

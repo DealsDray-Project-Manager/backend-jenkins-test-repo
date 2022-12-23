@@ -183,7 +183,7 @@ router.post("/bagClosing", async (req, res, next) => {
   }
 });
 /* Remove Stockin */
-router.put("/stockin", async (req, res, next) => {
+router.post("/stockin", async (req, res, next) => {
   try {
     let data = await warehouseInController.deleteStockin(req.body);
     if (data) {
@@ -258,7 +258,7 @@ router.post("/addActualitem", async (req, res, next) => {
     next(error);
   }
 });
-router.put("/actualBagItem", async (req, res, next) => {
+router.post("/actualBagItem", async (req, res, next) => {
   try {
     let data = await warehouseInController.removeActualItem(req.body);
     if (data) {
@@ -863,7 +863,7 @@ router.post("/add-actual-picklist-item", async (req, res, next) => {
   }
 });
 /* Remove Actual Item */
-router.put("/remove-actual-picklist", async (req, res, next) => {
+router.post("/remove-actual-picklist", async (req, res, next) => {
   try {
     let data = await warehouseInController.picklistActualRemoveItem(req.body);
     if (data) {

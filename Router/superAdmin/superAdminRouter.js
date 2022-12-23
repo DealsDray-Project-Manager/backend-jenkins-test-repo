@@ -147,7 +147,7 @@ router.get("/getUsers", async (req, res) => {
   } catch (error) {}
 });
 /* Delete User */
-router.put("/userDeactivate/:userID", async (req, res) => {
+router.post("/userDeactivate/:userID", async (req, res) => {
   try {
     let response = await superAdminController.userDeactivate(req.params.userID);
     if (response) {
@@ -155,7 +155,7 @@ router.put("/userDeactivate/:userID", async (req, res) => {
     }
   } catch (error) {}
 });
-router.put("/userActivate/:userId", async (req, res) => {
+router.post("/userActivate/:userId", async (req, res) => {
   try {
     let response = await superAdminController.userActivate(req.params.userId);
     if (response) {
@@ -380,7 +380,7 @@ router.get("/getBrandOne/:brandId", async (req, res, next) => {
   }
 });
 /* Edit Brands */
-router.put("/editBrand", async (req, res, next) => {
+router.post("/editBrand", async (req, res, next) => {
   try {
     let data = await superAdminController.editBrands(req.body);
     if (data.status == true) {
@@ -397,7 +397,7 @@ router.put("/editBrand", async (req, res, next) => {
   }
 });
 /* Delete brands */
-router.delete("/deleteBrand/:brandId", async (req, res, next) => {
+router.post("/deleteBrand/:brandId", async (req, res, next) => {
   try {
     let data = await superAdminController.deleteBrands(req.params.brandId);
     if (data.status == true) {
@@ -489,7 +489,7 @@ router.post("/getImageEditProdt/:id", async (req, res, next) => {
   }
 });
 /* Update Product Image */
-router.put(
+router.post(
   "/editProductImage",
   upload.productImage.single("image"),
   async (req, res, next) => {
@@ -535,7 +535,7 @@ router.get("/getEditProduct/:productId", async (req, res, next) => {
   }
 });
 /* Edit Product */
-router.put("/editProduct", async (req, res, next) => {
+router.post("/editProduct", async (req, res, next) => {
   try {
     let data = await superAdminController.editproduct(req.body);
     if (data) {
@@ -552,7 +552,7 @@ router.put("/editProduct", async (req, res, next) => {
   }
 });
 /* Delete Product */
-router.delete("/deleteProduct/:productId", async (req, res, next) => {
+router.post("/deleteProduct/:productId", async (req, res, next) => {
   try {
     let data = await superAdminController.deleteProduct(req.params.productId);
     if (data) {
@@ -636,7 +636,7 @@ router.post("/getLocation", async (req, res, next) => {
 });
 
 /* Edit infra */
-router.put("/editInfra", async (req, res, next) => {
+router.post("/editInfra", async (req, res, next) => {
   try {
     let data = await superAdminController.editInfra(req.body);
     if (data) {
@@ -653,7 +653,7 @@ router.put("/editInfra", async (req, res, next) => {
   }
 });
 /* Delete Infra */
-router.delete("/deleteInfra/:infraId", async (req, res, next) => {
+router.post("/deleteInfra/:infraId", async (req, res, next) => {
   try {
     let data = await superAdminController.deleteInfra(req.params.infraId);
     if (data) {
@@ -1018,7 +1018,7 @@ router.get("/getOneMaster/:masterId", async (req, res, ne) => {
   }
 });
 /* Edit Master */
-router.put("/editMaster", async (req, res, next) => {
+router.post("/editMaster", async (req, res, next) => {
   try {
     let data = await superAdminController.editMaster(req.body);
     if (data.status) {
@@ -1049,7 +1049,7 @@ router.post("/mastersEditHistory/:trayId", async (req, res, next) => {
   }
 });
 /* Delete Master */
-router.delete("/deleteMaster/:masterId", async (req, res, next) => {
+router.post("/deleteMaster/:masterId", async (req, res, next) => {
   try {
     let data = await superAdminController.delteMaster(req.params.masterId);
     if (data.status) {
