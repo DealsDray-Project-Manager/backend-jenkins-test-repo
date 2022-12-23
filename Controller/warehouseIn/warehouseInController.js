@@ -987,19 +987,46 @@ module.exports = {
       let pmtTrayCode = null;
       let botTrayCode = null;
       let mmt = await masters.findOne({
-        type_taxanomy: "MMT",
-        issued_user_name: userName,
-        sort_id: "Issued",
+        $or: [
+          {
+            type_taxanomy: "MMT",
+            issued_user_name: userName,
+            sort_id: "Issued",
+          },
+          {
+            type_taxanomy: "MMT",
+            issued_user_name: userName,
+            sort_id: "Closed By Bot",
+          },
+        ],
       });
       let pmt = await masters.findOne({
-        type_taxanomy: "PMT",
-        issued_user_name: userName,
-        sort_id: "Issued",
+        $or: [
+          {
+            type_taxanomy: "PMT",
+            issued_user_name: userName,
+            sort_id: "Issued",
+          },
+          {
+            type_taxanomy: "PMT",
+            issued_user_name: userName,
+            sort_id: "Closed By Bot",
+          },
+        ],
       });
       let BOT = await masters.findOne({
-        type_taxanomy: "BOT",
-        issued_user_name: userName,
-        sort_id: "Issued",
+        $or: [
+          {
+            type_taxanomy: "BOT",
+            issued_user_name: userName,
+            sort_id: "Issued",
+          },
+          {
+            type_taxanomy: "BOT",
+            issued_user_name: userName,
+            sort_id: "Closed By Bot",
+          },
+        ],
       });
       if (mmt) {
         mmtTrayCode = mmt.code;
