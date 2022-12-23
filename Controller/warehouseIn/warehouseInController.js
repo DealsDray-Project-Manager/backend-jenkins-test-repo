@@ -2098,13 +2098,13 @@ module.exports = {
                 arr.push(str);
               }
               x.actual_items.push(
-                `${i}- ${y.brand} ${y.model}- units(${
+                `${y.brand} ${y.model}- units(${
                   y.item.length
                 }) -${arr.join(", ")} `
               );
             } else {
               x.actual_items.push(
-                `${i}- ${y.brand} ${y.model}- units(${y.item.length}) - No wht tray available`
+                `${y.brand} ${y.model}- units(${y.item.length}) - No wht tray available`
               );
             }
             i++;
