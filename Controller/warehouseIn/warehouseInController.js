@@ -971,6 +971,7 @@ module.exports = {
     return new Promise(async (resolve, reject) => {
       let mmtTrayCode = null;
       let pmtTrayCode = null;
+      let botTrayCode = null;
       let mmt = await masters.findOne({
         type_taxanomy: "MMT",
         issued_user_name: userName,
@@ -981,13 +982,25 @@ module.exports = {
         issued_user_name: userName,
         sort_id: "Issued",
       });
+      let BOT = await masters.findOne({
+        type_taxanomy: "BOT",
+        issued_user_name: userName,
+        sort_id: "Issued",
+      });
       if (mmt) {
         mmtTrayCode = mmt.code;
       }
       if (pmt) {
         pmtTrayCode = pmt.code;
       }
-      resolve({ mmtTray: mmtTrayCode, pmtTray: pmtTrayCode });
+      if (BOT) {
+        botTrayCode = BOT.code;
+      }
+      resolve({
+        mmtTray: mmtTrayCode,
+        pmtTray: pmtTrayCode,
+        botTray: botTrayCode,
+      });
     });
   },
   getSummeryBotTray: (bagId) => {

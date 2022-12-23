@@ -582,10 +582,12 @@ router.post(
   async (req, res, next) => {
     try {
       let data = await warehouseInController.autoFetchTray(req.params.username);
+      console.log(data);
       if (data) {
         res.status(200).json({
           pmtTray: data.pmtTray,
           mmtTray: data.mmtTray,
+          botTray: data.botTray,
         });
       }
     } catch (error) {
