@@ -22,11 +22,14 @@ module.exports = {
       let brand_name = [];
       let model_name = [];
       let imei = [];
-      let i = 0;
-      let order_status = [];
       let tracking_id=[]
+      let i = 0;
       for (let x of ordersData.item) {
         if (x.order_status == "NEW") {
+          if(x?.tracking_id?.length !== 12 && x.tracking_id !== undefined){
+            tracking_id.push(x.tracking_id);
+            err["tracking_id"] = tracking_id;
+          }
           let orderExists = await orders.findOne({
             order_id: x.order_id,
           });
