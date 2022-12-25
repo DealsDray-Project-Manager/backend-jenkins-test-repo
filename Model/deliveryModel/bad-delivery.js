@@ -62,7 +62,7 @@ const badDeliverySchema = mongoose.Schema({
         type:Date
     },
     reason:{
-        type:String
+        type:Array
     }
 })
 
