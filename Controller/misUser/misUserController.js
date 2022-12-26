@@ -23,6 +23,7 @@ module.exports = {
       let model_name = [];
       let imei = [];
       let tracking_id=[]
+      let order_status=[]
       let i = 0;
       for (let x of ordersData.item) {
         if (x.order_status == "NEW") {
