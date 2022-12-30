@@ -49,7 +49,7 @@ router.post("/login", async (req, res, next) => {
           message: "Login Success",
           jwt: jwtToken,
           user_type: loginData?.data?.user_type,
-          data:loginData.data
+          data: loginData.data,
         },
       });
     } else if (loginData.status == 2) {
@@ -138,7 +138,7 @@ router.get("/designation", async (req, res) => {
   } catch (error) {}
 });
 /* Get all users */
-router.get("/getUsers", async (req, res) => {
+router.post("/getUsers", async (req, res) => {
   try {
     let user = await superAdminController.getUsers();
     if (user) {
@@ -147,25 +147,25 @@ router.get("/getUsers", async (req, res) => {
   } catch (error) {}
 });
 /* Delete User */
-router.post("/userDeactivate/:userID", async (req, res) => {
+router.post("/userDeactivate/:username", async (req, res) => {
   try {
-    let response = await superAdminController.userDeactivate(req.params.userID);
+    let response = await superAdminController.userDeactivate(req.params.username);
     if (response) {
       res.status(200).json({ data: { message: "Deactivate" } });
     }
   } catch (error) {}
 });
-router.post("/userActivate/:userId", async (req, res) => {
+router.post("/userActivate/:username", async (req, res) => {
   try {
-    let response = await superAdminController.userActivate(req.params.userId);
+    let response = await superAdminController.userActivate(req.params.username);
     if (response) {
       res.status(200).json({ data: { message: "Activate" } });
     }
   } catch (error) {}
 });
-router.get("/getEditData/:userId", async (req, res) => {
+router.get("/getEditData/:username", async (req, res) => {
   try {
-    let user = await superAdminController.getEditData(req.params.userId);
+    let user = await superAdminController.getEditData(req.params.username);
     if (user) {
       res.status(200).json({ data: user });
     }
@@ -174,7 +174,7 @@ router.get("/getEditData/:userId", async (req, res) => {
 router.post(
   "/edituserDetails",
   upload.userProfile.single("profile"),
-  async (req, res) => {
+  async (req, res, next) => {
     try {
       let data = await superAdminController.editUserdata(
         req.body,
@@ -183,17 +183,11 @@ router.post(
       if (data) {
         res.status(200).json({ data: data });
       }
-    } catch (error) {}
+    } catch (error) {
+      next(error);
+    }
   }
 );
-router.get("/masters", async (req, res) => {
-  let data = await superAdminController.getMasters();
-  res.status(200).json({ data: data });
-});
-router.get("/infra", async (req, res) => {
-  let data = await superAdminController.getInfra();
-  res.status(200).json({ data: data });
-});
 /*********************************************DASHBOARD***********************************************************************************/
 /* Get Dashboard count */
 router.get("/dashboard", async (req, res, next) => {
@@ -343,6 +337,8 @@ router.post("/getBrands", async (req, res, next) => {
     next(error);
   }
 });
+
+
 /* GET BRAND ALPHABETICAL ORDER */
 router.post("/getBrandsAlpha", async (req, res, next) => {
   try {
@@ -357,6 +353,8 @@ router.post("/getBrandsAlpha", async (req, res, next) => {
     next(error);
   }
 });
+
+
 /* get One data */
 router.get("/getBrandOne/:brandId", async (req, res, next) => {
   try {
@@ -379,6 +377,8 @@ router.get("/getBrandOne/:brandId", async (req, res, next) => {
     next(error);
   }
 });
+
+
 /* Edit Brands */
 router.post("/editBrand", async (req, res, next) => {
   try {
@@ -396,6 +396,8 @@ router.post("/editBrand", async (req, res, next) => {
     next(error);
   }
 });
+
+
 /* Delete brands */
 router.post("/deleteBrand/:brandId", async (req, res, next) => {
   try {
@@ -432,6 +434,8 @@ router.post("/bulkValidationProduct", async (req, res, next) => {
     next(error);
   }
 });
+
+
 /* Create Products */
 router.post(
   "/createproducts",
@@ -456,6 +460,10 @@ router.post(
     }
   }
 );
+
+
+
+
 /* Get Products */
 router.post("/getAllProducts", async (req, res, next) => {
   try {
@@ -470,6 +478,7 @@ router.post("/getAllProducts", async (req, res, next) => {
     next(error);
   }
 });
+
 /* Get Image Edit */
 router.post("/getImageEditProdt/:id", async (req, res, next) => {
   try {
@@ -488,6 +497,8 @@ router.post("/getImageEditProdt/:id", async (req, res, next) => {
     next(error);
   }
 });
+
+
 /* Update Product Image */
 router.post(
   "/editProductImage",
@@ -1000,6 +1011,8 @@ router.post("/getMasters", async (req, res, next) => {
     next(error);
   }
 });
+
+
 /* Get One Master */
 router.get("/getOneMaster/:masterId", async (req, res, ne) => {
   try {
@@ -1017,6 +1030,8 @@ router.get("/getOneMaster/:masterId", async (req, res, ne) => {
     next(error);
   }
 });
+
+
 /* Edit Master */
 router.post("/editMaster", async (req, res, next) => {
   try {
@@ -1048,6 +1063,8 @@ router.post("/mastersEditHistory/:trayId", async (req, res, next) => {
     next(error);
   }
 });
+
+
 /* Delete Master */
 router.post("/deleteMaster/:masterId", async (req, res, next) => {
   try {
@@ -1142,43 +1159,41 @@ router.post("/ready-for-charging", async (req, res, next) => {
 });
 /******************************REMOVE INVALID ITEM*************************************** */
 /* GET BAG WITH INVALID ITEM */
-router.post("/getInvalidItemPresentBag",async(req,res,next)=>{
+router.post("/getInvalidItemPresentBag", async (req, res, next) => {
   try {
-    let data=await superAdminController.getInvalidItemBag()
-    if(data){
+    let data = await superAdminController.getInvalidItemBag();
+    if (data) {
       res.status(200).json({
-        data:data
-      })
+        data: data,
+      });
     }
   } catch (error) {
-    next(error)
+    next(error);
   }
-})
+});
 /* GET BAG ITEM */
-router.post("/getBagItemInvalid/:bagId",async(req,res,next)=>{
+router.post("/getBagItemInvalid/:bagId", async (req, res, next) => {
   try {
-    const {bagId}=req.params
-    let data=await superAdminController.getInvalidItemForBag(bagId)
-    console.log(data.data);
-    if(data.status == 1){
+    const { bagId } = req.params;
+    let data = await superAdminController.getInvalidItemForBag(bagId);
+    console.log(data);
+    if (data.status == 1) {
       res.status(200).json({
-         data:data.data
-      })
-    }
-    else if(data.status == 2){
+        data: data.data,
+      });
+    } else if (data.status == 2) {
       res.status(202).json({
-        message:`${bagId} present at - ${data.data.sort_id}`
-      })
-    }
-    else{
+        message: `${bagId} present at - ${data.data.sort_id}`,
+      });
+    } else {
       res.status(202).json({
-        message:"details not found"
-      })
+        message: "details not found",
+      });
     }
   } catch (error) {
-    next(error)
+    next(error);
   }
-})
+});
 /***********************************************EXTRA QUREY SECTION*********************************************************** */
 router.post("/update-cpc", async (req, res, next) => {
   try {

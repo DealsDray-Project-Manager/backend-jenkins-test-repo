@@ -998,13 +998,13 @@ module.exports = {
         $or: [
           {
             type_taxanomy: "MMT",
-            prefix:"tray-master",
+            prefix: "tray-master",
             issued_user_name: userName,
             sort_id: "Issued",
           },
           {
             type_taxanomy: "MMT",
-            prefix:"tray-master",
+            prefix: "tray-master",
             issued_user_name: userName,
             sort_id: "Closed By Bot",
           },
@@ -1014,13 +1014,13 @@ module.exports = {
         $or: [
           {
             type_taxanomy: "PMT",
-            prefix:"tray-master",
+            prefix: "tray-master",
             issued_user_name: userName,
             sort_id: "Issued",
           },
           {
             type_taxanomy: "PMT",
-            prefix:"tray-master",
+            prefix: "tray-master",
             issued_user_name: userName,
             sort_id: "Closed By Bot",
           },
@@ -1030,13 +1030,13 @@ module.exports = {
         $or: [
           {
             type_taxanomy: "BOT",
-            prefix:"tray-master",
+            prefix: "tray-master",
             issued_user_name: userName,
             sort_id: "Issued",
           },
           {
             type_taxanomy: "BOT",
-            prefix:"tray-master",
+            prefix: "tray-master",
             issued_user_name: userName,
             sort_id: "Closed By Bot",
           },
@@ -2112,9 +2112,9 @@ module.exports = {
                 arr.push(str);
               }
               x.actual_items.push(
-                `${y.brand} ${y.model}- units(${
-                  y.item.length
-                }) -${arr.join(", ")} `
+                `${y.brand} ${y.model}- units(${y.item.length}) -${arr.join(
+                  ", "
+                )} `
               );
             } else {
               x.actual_items.push(

@@ -338,6 +338,9 @@ module.exports = {
               as: "products",
             },
           },
+          {
+            $project:{ _id: 0, __v: 0 }
+          }
           // {
           //     $unwind: "$products"
           // }
@@ -358,6 +361,9 @@ module.exports = {
               as: "products",
             },
           },
+          {
+            $project:{ _id: 0, __v: 0 }
+          }
         ]);
       } else if (searchType == "imei") {
         allOrders = await badOrders.aggregate([
@@ -375,6 +381,9 @@ module.exports = {
               as: "products",
             },
           },
+          {
+            $project:{ _id: 0, __v: 0 }
+          }
           // {
           //     $unwind: "$products"
           // }
@@ -395,6 +404,9 @@ module.exports = {
               as: "products",
             },
           },
+          {
+            $project:{ _id: 0, __v: 0 }
+          }
           // {
           //     $unwind: "$products"
           // }
@@ -418,6 +430,9 @@ module.exports = {
               as: "products",
             },
           },
+          {
+            $project:{ _id: 0, __v: 0 }
+          }
         ]);
       } else if (searchType == "order_timestamp") {
         value = moment(value, "DD-MM-YYYY HH:mm").toDate();
@@ -436,6 +451,9 @@ module.exports = {
               as: "products",
             },
           },
+          {
+            $project:{ _id: 0, __v: 0 }
+          }
         ]);
       } else if (searchType == "item_id") {
         allOrders = await badOrders.aggregate([
@@ -453,6 +471,9 @@ module.exports = {
               as: "products",
             },
           },
+          {
+            $project:{ _id: 0, __v: 0 }
+          }
         ]);
       } else if (searchType == "old_item_details") {
         allOrders = await badOrders.aggregate([
@@ -470,9 +491,13 @@ module.exports = {
               as: "products",
             },
           },
+          {
+            $project:{ _id: 0, __v: 0 }
+          }
         ]);
       }
       if (allOrders) {
+        console.log(allOrders);
         resolve(allOrders);
       }
     });
@@ -1354,22 +1379,28 @@ module.exports = {
         allOrders = await badDelivery.find({
           partner_shop: location,
           order_id: { $regex: "^" + value + ".*", $options: "i" },
-        });
+        },
+        { _id: 0, __v: 0 }
+        );
       } else if (searchType == "tracking_id") {
         allOrders = await badDelivery.find({
           partner_shop: location,
           tracking_id: { $regex: ".*" + value + ".*", $options: "i" },
-        });
+        },
+        { _id: 0, __v: 0 }
+        );
       } else if (searchType == "imei") {
         allOrders = await badDelivery.find({
           partner_shop: location,
           imei: { $regex: ".*" + value + ".*", $options: "i" },
-        });
+        },
+        { _id: 0, __v: 0 });
       } else if (searchType == "uic_status") {
         allOrders = await badDelivery.find({
           partner_shop: location,
           order_status: { $regex: "^" + value + ".*", $options: "i" },
-        });
+        },
+        { _id: 0, __v: 0 });
       } else if (searchType == "order_date") {
         value = value.split("/");
         value = value.reverse();
@@ -1377,12 +1408,14 @@ module.exports = {
         allOrders = await badDelivery.find({
           partner_shop: location,
           order_date: { $regex: ".*" + value + ".*", $options: "i" },
-        });
+        },
+        { _id: 0, __v: 0 });
       } else if (searchType == "item_id") {
         allOrders = await badDelivery.find({
           partner_shop: location,
           item_id: { $regex: "^" + value + ".*", $options: "i" },
-        });
+        },
+        { _id: 0, __v: 0 });
       }
       if (allOrders) {
         resolve(allOrders);

@@ -11,9 +11,8 @@ const {
   mastersEditHistory,
 } = require("../../Model/masterHistoryModel/mastersHistory");
 const moment = require("moment");
-const IISDOMAIN = "http://prexo-v2-uat-adminapi.dealsdray.com/user/profile/";
-const IISDOMAINPRDT =
-  "http://prexo-v2-uat-adminapi.dealsdray.com/product/image/";
+const IISDOMAIN = "http://prexo-v5-adminapi.dealsdray.com/user/profile/";
+const IISDOMAINPRDT = "http://prexo-v5-adminapi.dealsdray.com/product/image/";
 
 /************************************************************************************************** */
 module.exports = {
@@ -129,21 +128,36 @@ module.exports = {
       resolve(usersData);
     });
   },
-  userDeactivate: (userId) => {
+  userDeactivate: (username) => {
     return new Promise(async (resolve, reject) => {
-      let res = await user.findByIdAndUpdate(userId, { status: "Deactivated" });
+      let res = await user.findOneAndUpdate(
+        { user_name: username },
+        {
+          $set: {
+            status: "Deactivated",
+          },
+        }
+      );
+      resolve(res);
       resolve(res);
     });
   },
-  userActivate: (userId) => {
+  userActivate: (username) => {
     return new Promise(async (resolve, reject) => {
-      let res = await user.findByIdAndUpdate(userId, { status: "Active" });
+      let res = await user.findOneAndUpdate(
+        { user_name: username },
+        {
+          $set: {
+            status: "Active",
+          },
+        }
+      );
       resolve(res);
     });
   },
-  getEditData: (userId) => {
+  getEditData: (username) => {
     return new Promise(async (resolve, reject) => {
-      let userData = await user.findOne({ _id: userId });
+      let userData = await user.findOne({ user_name: username });
       resolve(userData);
     });
   },
@@ -153,7 +167,7 @@ module.exports = {
     }
     return new Promise(async (resolve, reject) => {
       let userDetails = await user.findOneAndUpdate(
-        { _id: userData._id },
+        { user_name: userData.user_name },
         {
           $set: {
             name: userData.name,
@@ -164,7 +178,7 @@ module.exports = {
         },
         { returnOriginal: false }
       );
-
+      console.log(userDetails);
       if (userDetails) {
         let obj = {
           name: userDetails.name,
@@ -327,10 +341,11 @@ module.exports = {
       }
     });
   },
+
   getOneBrand: (brandId) => {
     return new Promise(async (resolve, reject) => {
       let data = await brands
-        .findOne({ _id: brandId })
+        .findOne({ brand_id: brandId })
         .catch((err) => reject(err));
       if (data) {
         let checkBrand = await products.findOne({
@@ -346,6 +361,7 @@ module.exports = {
       }
     });
   },
+
   editBrands: (editData) => {
     return new Promise(async (resolve, reject) => {
       let data = await brands
@@ -368,7 +384,7 @@ module.exports = {
   deleteBrands: (brandId) => {
     return new Promise(async (resolve, reject) => {
       let data = await brands
-        .deleteOne({ _id: brandId })
+        .deleteOne({ brand_id: brandId })
         .catch((err) => reject(err));
       if (data.deletedCount != 0) {
         resolve({ status: true });
@@ -474,7 +490,7 @@ module.exports = {
   },
   getImageEditData: (id) => {
     return new Promise(async (resolve, reject) => {
-      let data = await products.findOne({ _id: id });
+      let data = await products.findOne({ muic: id });
       if (data) {
         resolve(data);
       } else {
@@ -483,6 +499,7 @@ module.exports = {
     });
   },
   editproductImage: (id, image) => {
+    console.log(id);
     image = IISDOMAINPRDT + image;
     return new Promise(async (resolve, reject) => {
       let data = await products.updateOne(
@@ -493,17 +510,18 @@ module.exports = {
           },
         }
       );
+      console.log(data);
       if (data.modifiedCount != 0) {
         resolve(data);
       } else {
-        resolve(data);
+        resolve();
       }
     });
   },
   getEditProduct: (productId) => {
     return new Promise(async (resolve, reject) => {
       let data = await products
-        .findOne({ _id: productId })
+        .findOne({ muic: productId })
         .catch((err) => reject(err));
       if (data) {
         let ordersCheck = await orders.findOne({ item_id: data.vendor_sku_id });
@@ -546,7 +564,7 @@ module.exports = {
   },
   deleteProduct: (productId) => {
     return new Promise(async (resolve, reject) => {
-      let data = await products.deleteOne({ _id: productId });
+      let data = await products.deleteOne({ muic: productId });
       if (data.deletedCount != 0) {
         resolve(data);
       } else {
@@ -580,7 +598,7 @@ module.exports = {
   },
   getInfra: (infraId) => {
     return new Promise(async (resolve, reject) => {
-      let data = await infra.findOne({ _id: infraId });
+      let data = await infra.findOne({ code: infraId });
       if (data) {
         resolve(data);
       } else {
@@ -615,7 +633,7 @@ module.exports = {
   },
   deleteInfra: (infraId) => {
     return new Promise(async (resolve, reject) => {
-      let data = await infra.deleteOne({ _id: infraId });
+      let data = await infra.deleteOne({ code: infraId });
       if (data.deletedCount != 0) {
         resolve(data);
       } else {
@@ -925,8 +943,8 @@ module.exports = {
     return new Promise(async (resolve, reject) => {
       let data = await masters.findOne({
         $or: [
-          { _id: masterId, sort_id: "No Status" },
-          { _id: masterId, sort_id: "Open" },
+          { code: masterId, sort_id: "No Status" },
+          { code: masterId, sort_id: "Open" },
         ],
       });
       if (data) {
@@ -993,7 +1011,7 @@ module.exports = {
   },
   delteMaster: (masterId) => {
     return new Promise(async (resolve, reject) => {
-      let data = await masters.deleteOne({ _id: masterId });
+      let data = await masters.deleteOne({ code: masterId });
       if (data.deletedCount != 0) {
         resolve({ status: true });
       } else {
@@ -1410,7 +1428,6 @@ module.exports = {
       });
       for (let y of wht) {
         for (let x of y.items) {
-          
           console.log(x.charging);
           let update = await delivery.updateOne(
             { tracking_id: x.tracking_id },
