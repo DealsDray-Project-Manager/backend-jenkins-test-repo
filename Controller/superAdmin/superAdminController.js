@@ -11,8 +11,8 @@ const {
   mastersEditHistory,
 } = require("../../Model/masterHistoryModel/mastersHistory");
 const moment = require("moment");
-const IISDOMAIN = "http://prexo-v5-adminapi.dealsdray.com/user/profile/";
-const IISDOMAINPRDT = "http://prexo-v5-adminapi.dealsdray.com/product/image/";
+const IISDOMAIN = "http://prexo-v6-dev-api.dealsdray.com/user/profile/";
+const IISDOMAINPRDT = "http://prexo-v6-dev-api.dealsdray.com/product/image/";
 
 /************************************************************************************************** */
 module.exports = {

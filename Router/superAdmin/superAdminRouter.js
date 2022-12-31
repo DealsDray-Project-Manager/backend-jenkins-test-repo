@@ -123,6 +123,7 @@ router.post("/getWarehouseByLocation", async (req, res) => {
   try {
     const { name } = req.body;
     let warehouse = await superAdminController.getWarehouse(name);
+    console.log(warehouse);
     if (warehouse) {
       res.status(200).json({ data: { warehouse } });
     }
