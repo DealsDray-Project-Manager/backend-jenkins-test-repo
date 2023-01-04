@@ -14,6 +14,28 @@ module.exports = {
       }
     });
   },
+  dashboard:(username)=>{
+    return new Promise(async(resolve,reject)=>{
+      let count={
+        sorting:0,
+        merge:0
+      }
+      count.sorting=await  masters.count({
+        issued_user_name: username,
+        type_taxanomy: "BOT",
+        sort_id: "Issued to sorting agent",
+      });
+      count.merge=await masters.count({
+        issued_user_name: username,
+        to_merge: { $ne: null },
+        sort_id: "Issued to Merging",
+      });
+      if(count){
+        resolve(count)
+      }
+
+    })
+  },
   getDataForStartSorting: (username, trayId) => {
     return new Promise(async (resolve, reject) => {
       let tray = {

@@ -15,6 +15,22 @@ module.exports = {
       }
     });
   },
+  dashboardCount: (username) => {
+    return new Promise(async (resolve, reject) => {
+      let count = {
+        bqc: 0,
+      };
+      count.bqc = await masters.count({
+        $or: [
+          { issued_user_name: username, sort_id: "Issued to BQC" },
+          { issued_user_name: username, sort_id: "BQC work inprogress" },
+        ],
+      });
+      if (count) {
+        resolve(count);
+      }
+    });
+  },
   checkUicFirst: (uic, trayId) => {
     return new Promise(async (resolve, reject) => {
       let dataDelivered = await delivery.findOne({ "uic_code.code": uic });
@@ -92,12 +108,13 @@ module.exports = {
       }
     });
   },
-  uicCheckBqcDone:(uic,trayId)=>{
-    return new Promise(async(resolve,reject)=>{
+  uicCheckBqcDone: (uic, trayId) => {
+    return new Promise(async (resolve, reject) => {
       let dataDelivered = await delivery.findOne({ "uic_code.code": uic });
       if (dataDelivered) {
         let alreadyAdded = await masters.findOne({
-         code:trayId,items:{ $elemMatch: { uic: uic } }
+          code: trayId,
+          items: { $elemMatch: { uic: uic } },
         });
         if (alreadyAdded) {
           resolve({ status: 3 });
@@ -121,22 +138,39 @@ module.exports = {
       } else {
         resolve({ status: 1 });
       }
-    })
+    });
   },
-  getWhtTrayitem: (trayId, username, status,page) => {
+  getWhtTrayitem: (trayId, username, status, page) => {
     return new Promise(async (resolve, reject) => {
       let data = await masters.findOne({ code: trayId });
       if (data) {
-        if (data.sort_id === status || data.sort_id == "BQC work inprogress"  && data.issued_user_name == username && page == "Page-1") {
+        if (
+          data.sort_id === status ||
+          (data.sort_id == "BQC work inprogress" &&
+            data.issued_user_name == username &&
+            page == "Page-1")
+        ) {
           resolve({ status: 1, data: data });
-        }
-        else if (data.sort_id === status || data.sort_id == "BQC work inprogress" && data.issued_user_name == username && page == "Page-2" && data.items.length == 0) {
+        } else if (
+          data.sort_id === status ||
+          (data.sort_id == "BQC work inprogress" &&
+            data.issued_user_name == username &&
+            page == "Page-2" &&
+            data.items.length == 0)
+        ) {
           resolve({ status: 4, data: data });
-        }
-        else if (data.sort_id === status || data.sort_id == "BQC work inprogress" && data.issued_user_name == username && page == "Page-2" && data.items.length !== 0) {
+        } else if (
+          data.sort_id === status ||
+          (data.sort_id == "BQC work inprogress" &&
+            data.issued_user_name == username &&
+            page == "Page-2" &&
+            data.items.length !== 0)
+        ) {
           resolve({ status: 5, data: data });
-        }
-         else if (data.sort_id !== status || data.sort_id == "BQC work inprogress") {
+        } else if (
+          data.sort_id !== status ||
+          data.sort_id == "BQC work inprogress"
+        ) {
           resolve({ status: 4, data: data });
         }
       } else if (data.issued_user_name !== username) {
@@ -182,9 +216,9 @@ module.exports = {
   },
   bqcOut: (trayData) => {
     return new Promise(async (resolve, reject) => {
-      let getTray=await masters.findOne({code:trayData.trayId})
-      if(getTray){
-        Array.prototype.push.apply(getTray.items,getTray.temp_array)
+      let getTray = await masters.findOne({ code: trayData.trayId });
+      if (getTray) {
+        Array.prototype.push.apply(getTray.items, getTray.temp_array);
         let data = await masters.findOneAndUpdate(
           { code: trayData.trayId },
           {
@@ -192,8 +226,8 @@ module.exports = {
               sort_id: "BQC Done",
               closed_time_bot: Date.now(),
               description: trayData.description,
-              actual_items:getTray.items,
-              temp_array:[],
+              actual_items: getTray.items,
+              temp_array: [],
               items: [],
             },
           }
@@ -209,7 +243,7 @@ module.exports = {
                   bqc_out_date: Date.now(),
                   tray_status: "BQC Done",
                   tray_location: "BQC",
-                  bqc_report:x.bqc_report
+                  bqc_report: x.bqc_report,
                 },
               }
             );
@@ -218,8 +252,7 @@ module.exports = {
         } else {
           resolve();
         }
-      }
-      else{
+      } else {
         resolve();
       }
     });

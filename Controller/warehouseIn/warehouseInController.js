@@ -7,13 +7,216 @@ const { products } = require("../../Model/productModel/product");
 const moment = require("moment");
 /********************************************************************/
 module.exports = {
-  dashboard: () => {
+  dashboard: (location) => {
     return new Promise(async (resolve, reject) => {
-      let obj = {
-        orders: 0,
+      let count = {
+        bagIssueRequest: 0,
+        bagCloseRequest: 0,
+        issuedPmtAndMMt: 0,
+        trayCloseRequest: 0,
+        botToRelease: 0,
+        whtTray: 0,
+        inusetWht: 0,
+        chargingRequest: 0,
+        inChargingWht: 0,
+        returnFromCharging: 0,
+        bqcRequest: 0,
+        returnFromBqc: 0,
+        sortingRequest: 0,
+        inSortingWht: 0,
+        returnFromSorting: 0,
+        mergeRequest: 0,
+        returnFromMerge: 0,
       };
-      obj.orders = await orders.count({});
-      resolve(obj);
+      count.bagIssueRequest = await masters.count({
+        $or: [
+          {
+            sort_id: "Requested to Warehouse",
+            cpc: location,
+          },
+          {
+            sort_id: "Ready For Issue",
+            cpc: location,
+          },
+        ],
+      });
+      count.issuedPmtAndMMt = await masters.count({
+        $or: [
+          {
+            sort_id: "Issued",
+            prefix: "tray-master",
+            type_taxanomy: "MMT",
+            cpc: location,
+          },
+          {
+            sort_id: "Issued",
+            prefix: "tray-master",
+            type_taxanomy: "PMT",
+            cpc: location,
+          },
+        ],
+      });
+      count.bagCloseRequest = await masters.count({
+        $or: [
+          {
+            prefix: "tray-master",
+            sort_id: "Closed By Bot",
+            type_taxanomy: "BOT",
+            cpc: location,
+          },
+          {
+            prefix: "tray-master",
+            sort_id: "Received From BOT",
+            type_taxanomy: "BOT",
+            cpc: location,
+          },
+        ],
+      });
+      count.trayCloseRequest = await masters.count({
+        $or: [
+          {
+            prefix: "tray-master",
+            sort_id: "Closed By Bot",
+            type_taxanomy: { $ne: "WHT" },
+            type_taxanomy: { $ne: "BOT" },
+            cpc: location,
+          },
+          {
+            prefix: "tray-master",
+            sort_id: "Received From BOT",
+            type_taxanomy: { $ne: "WHT" },
+            type_taxanomy: { $ne: "BOT" },
+            cpc: location,
+          },
+        ],
+      });
+      count.botToRelease = await masters.count({
+        type_taxanomy: "BOT",
+        prefix: "tray-master",
+        sort_id: "Closed By Sorting Agent",
+        cpc: location,
+      });
+      count.whtTray = await masters.count({
+        prefix: "tray-master",
+        type_taxanomy: "WHT",
+        cpc: location,
+      });
+      count.inusetWht = await masters.count({
+        prefix: "tray-master",
+        type_taxanomy: "WHT",
+        sort_id: "Inuse",
+        cpc: location,
+      });
+      count.chargingRequest = await masters.count({
+        prefix: "tray-master",
+        type_taxanomy: "WHT",
+        sort_id: "Send for charging",
+        cpc: location,
+      });
+      count.inChargingWht = await masters.count({
+        $or: [
+          {
+            prefix: "tray-master",
+            type_taxanomy: "WHT",
+            sort_id: "Issued to Charging",
+            cpc: location,
+          },
+          {
+            prefix: "tray-master",
+            type_taxanomy: "WHT",
+            sort_id: "Charging Station IN",
+            cpc: location,
+          },
+        ],
+      });
+      count.returnFromCharging = await masters.count({
+        $or: [
+          {
+            prefix: "tray-master",
+            type_taxanomy: "WHT",
+            sort_id: "Charge Done",
+            cpc: location,
+          },
+          {
+            prefix: "tray-master",
+            type_taxanomy: "WHT",
+            sort_id: "Received From Charging",
+            cpc: location,
+          },
+        ],
+      });
+      count.bqcRequest = await masters.count({
+        prefix: "tray-master",
+        type_taxanomy: "WHT",
+        sort_id: "Send for charging",
+        cpc: location,
+      });
+      count.returnFromBqc = await masters.count({
+        $or: [
+          {
+            prefix: "tray-master",
+            type_taxanomy: "WHT",
+            sort_id: "BQC Done",
+            cpc: location,
+          },
+          {
+            prefix: "tray-master",
+            type_taxanomy: "WHT",
+            sort_id: "Received From BQC",
+            cpc: location,
+          },
+        ],
+      });
+      count.sortingRequest = await masters.count({
+        sort_id: "Sorting Request Sent To Warehouse",
+        cpc: location,
+        type_taxanomy: "BOT",
+      });
+      count.inSortingWht = await masters.count({
+        prefix: "tray-master",
+        type_taxanomy: "WHT",
+        sort_id: "Issued to sorting agent",
+        cpc: location,
+      });
+      count.returnFromSorting = await masters.count({
+        $or: [
+          {
+            prefix: "tray-master",
+            type_taxanomy: "WHT",
+            sort_id: "Closed By Sorting Agent",
+            cpc: location,
+          },
+          {
+            prefix: "tray-master",
+            type_taxanomy: "WHT",
+            sort_id: "Received From Sorting",
+            cpc: location,
+          },
+        ],
+      });
+      count.mergeRequest = await masters.count({
+        sort_id: "Merge Request Sent To Wharehouse",
+        cpc: location,
+        to_merge: { $ne: null },
+      });
+      count.returnFromMerge = await masters.count({
+        $or: [
+          {
+            cpc: location,
+            prefix: "tray-master",
+            sort_id: "Merging Done",
+            items: { $ne: [] },
+          },
+          {
+            refix: "tray-master",
+            sort_id: "Received From Merging",
+            items: { $ne: [] },
+          },
+        ],
+      });
+      if (count) {
+        resolve(count);
+      }
     });
   },
   checkBagId: (bagId, location) => {
@@ -596,13 +799,13 @@ module.exports = {
             sort_id: type,
             prefix: "tray-master",
             type_taxanomy: "MMT",
-            // cpc: location,
+            cpc: location,
           },
           {
             sort_id: type,
             prefix: "tray-master",
             type_taxanomy: "PMT",
-            // cpc: location,
+            cpc: location,
           },
         ],
       });

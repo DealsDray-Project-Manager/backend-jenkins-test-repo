@@ -33,6 +33,27 @@ module.exports = {
       }
     });
   },
+  dashboardCount:(username)=>{
+   return new Promise(async(resolve,reject)=>{
+    let count={
+      bag:0,
+      tray:0,
+    }
+    count.bag=await masters.count({
+      issued_user_name: username,
+      sort_id: "Issued",
+      prefix: "bag-master",
+    });
+    count.tray= await  masters.count({
+      prefix: "tray-master",
+      issued_user_name: username,
+      sort_id: "Issued",
+    });
+    if(count){
+      resolve(count)
+    }
+   })
+  },
   closeBags: (bagData) => {
     return new Promise(async (resolve, reject) => {
       let close = await masters.updateMany(
@@ -45,6 +66,20 @@ module.exports = {
           },
         }
       );
+      let bag=await masters.findOne({code:bagData.bagId})
+      if(bag){
+        for (let x of bag.items) {
+          let deliveryTrack = await delivery.updateOne(
+            { tracking_id: x.awbn_number },
+            {
+              $set: {
+                tray_closed_by_bot: Date.now(),
+                tray_status: "Closed By Bot",
+              },
+            }
+          );
+        }
+      }
       if (close.modifiedCount !== 0) {
         resolve(close);
       } else {
@@ -216,9 +251,11 @@ module.exports = {
             },
           }
         );
+        console.log(data);
         if (data) {
           for (let x of data.items) {
-            let deliveryTrack = await delivery.updateMany(
+            console.log(x.awbn_number);
+            let deliveryTrack = await delivery.updateOne(
               { tracking_id: x.awbn_number },
               {
                 $set: {

@@ -11,8 +11,8 @@ const {
   mastersEditHistory,
 } = require("../../Model/masterHistoryModel/mastersHistory");
 const moment = require("moment");
-const IISDOMAIN = "http://prexo-v6-dev-api.dealsdray.com/user/profile/";
-const IISDOMAINPRDT = "http://prexo-v6-dev-api.dealsdray.com/product/image/";
+const IISDOMAIN = "http://prexo-v6-uat-adminapi.dealsdray.com/user/profile/";
+const IISDOMAINPRDT = "http://prexo-v6-uat-adminapi.dealsdray.com/product/image/";
 
 /************************************************************************************************** */
 module.exports = {
@@ -42,6 +42,34 @@ module.exports = {
           }
         }
         resolve({ status: 2 });
+      }
+    });
+  },
+  getDashboardData: () => {
+    return new Promise(async (resolve, reject) => {
+      let count = {};
+      count.usersCount = await user.count({});
+      count.location = await infra.count({ type_taxanomy: "CPC" });
+      count.warehouse = await infra.count({ type_taxanomy: "Warehouse" });
+      count.brand = await brands.count({});
+      count.products = await products.count({});
+      count.tray = await masters.count({ prefix: "tray-master" });
+      count.bag = await masters.count({ prefix: "bag-master" });
+      count.readyForCharging = await masters.count({
+        type_taxanomy: "WHT",
+        prefix: "tray-master",
+        sort_id: "Inuse",
+        items: { $ne: [] },
+      });
+      count.removeInvalidItem=await  masters.count({
+        prefix: "bag-master",
+        sort_id: "In Progress",
+        "items.status": "Invalid",
+      });
+      count.trackItem=await orders.count({delivery_status: "Delivered"})
+      console.log(count);
+      if (count) {
+        resolve(count);
       }
     });
   },
@@ -607,6 +635,7 @@ module.exports = {
     });
   },
   editInfra: (infraId) => {
+    console.log(infraId);
     return new Promise(async (resolve, reject) => {
       let data = await infra.updateOne(
         { _id: infraId._id },

@@ -37,6 +37,21 @@ router.post(
     }
   }
 );
+
+/* SUPER ADMIN DASHBOARD */
+router.post("/superAdminDashboard",async(req,res,next)=>{
+  try {
+    let data=await superAdminController.getDashboardData()
+    if(data){
+      res.status(200).json({
+        data:data
+      })
+    }
+  } catch (error) {
+    next(error)
+  }
+})
+
 /* Login api */
 router.post("/login", async (req, res, next) => {
   try {

@@ -3,6 +3,20 @@ const router = express.Router();
 const sortingAgentController = require("../../Controller/sorting-agent/sorting-agent-controller");
 /******************************************** */
 
+/* DASHBOARD */
+router.post("/dashboard/:username", async (req, res, next) => {
+  try {
+    const { username } = req.params;
+    let data = await sortingAgentController.dashboard(username);
+    if (data) {
+      res.status(200).json({
+        data: data,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
 /* API FOR GET ASSIGNED TRAY */
 router.post("/get-assigned-sorting-tray/:username", async (req, res, next) => {
   try {

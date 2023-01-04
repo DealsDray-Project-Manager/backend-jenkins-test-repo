@@ -25,6 +25,23 @@ router.post("/bulkOrdersValidation", async (req, res, next) => {
     next(error);
   }
 });
+
+/* MIS DASHBOARD DATA */
+router.post("/dashboardData/:location",async(req,res,next)=>{
+  try {
+    const {location}=req.params
+    let data=await misUserController.dashboardData(location)
+    if(data){
+      res.status(200).json({
+        data:data
+      })
+    }
+  } catch (error) {
+    next(error)
+  }
+})
+
+
 /*Import Order*/
 router.post("/ordersImport", async (req, res, next) => {
   try {
@@ -779,6 +796,7 @@ router.post("/ready-for-charging-wht", async (req, res, next) => {
 /* SORT TRAY BASED ON THE BRAND AND MODEL */
 router.post("/toWhtTrayForMerge", async (req, res, next) => {
   try {
+    console.log(req.body);
     const { location, brand, model, fromTray, itemCount } = req.body;
     let data = await misUserController.toWhtTrayForMerging(
       location,
@@ -960,6 +978,7 @@ router.post(
   "/toMmtTrayForMerge/:fromTray/:location/:itemsCount",
   async (req, res, next) => {
     try {
+      console.log(req.params);
       const { fromTray, location, itemsCount } = req.params;
       let mmtTray = await misUserController.getToTrayMmtMerge(
         fromTray,

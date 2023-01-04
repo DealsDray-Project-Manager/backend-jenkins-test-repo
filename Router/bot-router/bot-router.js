@@ -4,7 +4,25 @@ const router = express.Router();
 const botController = require("../../Controller/bot-controller/bot-controller");
 // Multer
 const upload = require("../../utils/multer");
+
+
+
 /**********************************************BOT BAG*********************************************** */
+/* DASHBOARD */
+router.post("/dashboard/:username",async(req,res,next)=>{
+  try {
+    const {username}=req.params
+    let data=await botController.dashboardCount(username)
+    if(data){
+      res.status(200).json({
+        data:data
+      })
+    }
+  } catch (error) {
+    next(error)
+  }
+})
+
 /* Get Assigned Bag */
 router.post("/getAssignedBag/:userName", async (req, res, next) => {
   try {

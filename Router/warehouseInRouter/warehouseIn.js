@@ -6,10 +6,12 @@ const router = express.Router();
 const warehouseInController = require("../../Controller/warehouseIn/warehouseInController");
 /*******************************************************************************************************************/
 /**************************************************Dashboard**************************************************************************/
-router.get("/dashboard", async (req, res, next) => {
+router.post("/dashboard/:location", async (req, res, next) => {
   try {
-    let data = await warehouseInController.dashboard();
+    const {location}=req.params
+    let data = await warehouseInController.dashboard(location);
     if (data) {
+      console.log(data);
       res.status(200).json({
         data: data,
         message: "Success",

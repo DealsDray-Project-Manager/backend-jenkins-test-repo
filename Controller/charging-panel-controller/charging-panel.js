@@ -23,6 +23,22 @@ module.exports = {
       }
     });
   },
+  dashboardCount:(username)=>{
+     return new Promise(async(resolve,reject)=>{
+      let count={
+        charging:0
+      }
+      count.charging=await masters.count({
+        $or: [
+          { issued_user_name: username, sort_id: "Issued to Charging" },
+          { issued_user_name: username, sort_id: "Charging Station IN" },
+        ],
+      });
+      if(count){
+        resolve(count)
+      }
+     })
+  },
   getTrayDetails: (trayId) => {
     return new Promise(async (resolve, reject) => {
       let data = await masters.findOne({ code: trayId });

@@ -18,6 +18,22 @@ router.post("/assigned-tray/:userName", async (req, res, next) => {
     next(error);
   }
 });
+
+/* DASHBOARD CHARGING */
+router.post("/dashboard/:username",async(req,res,next)=>{
+  try {
+    const {username}=req.params
+    let data=await chargingController.dashboardCount(username)
+    if(data){
+      res.status(200).json({
+        data:data
+      })
+    }
+  } catch (error) {
+    next(error)
+  }
+})
+
 /* VIEW TRAY ITEM DETAIL */
 router.post("/view-tray-details/:trayId", async (req, res, next) => {
   try {
