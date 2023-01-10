@@ -27,20 +27,19 @@ router.post("/bulkOrdersValidation", async (req, res, next) => {
 });
 
 /* MIS DASHBOARD DATA */
-router.post("/dashboardData/:location",async(req,res,next)=>{
+router.post("/dashboardData/:location", async (req, res, next) => {
   try {
-    const {location}=req.params
-    let data=await misUserController.dashboardData(location)
-    if(data){
+    const { location } = req.params;
+    let data = await misUserController.dashboardData(location);
+    if (data) {
       res.status(200).json({
-        data:data
-      })
+        data: data,
+      });
     }
   } catch (error) {
-    next(error)
+    next(error);
   }
-})
-
+});
 
 /*Import Order*/
 router.post("/ordersImport", async (req, res, next) => {
@@ -229,11 +228,12 @@ router.post(
 /* SEARCH BAD ORDERS */
 router.post("/searchDeliveredOrders", async (req, res, next) => {
   try {
-    const { type, searchData, location } = req.body;
+    const { type, searchData, location, status } = req.body;
     let data = await misUserController.searchDeliveredOrders(
       type,
       searchData,
-      location
+      location,
+      status
     );
     if (data) {
       res.status(200).json({
@@ -440,10 +440,28 @@ router.post("/uicPageData/:location/:page/:size", async (req, res, next) => {
 });
 /* UIC PAGE ALL DATA SEARCH */
 /* SEARCH BAD DELIVERY DATA */
-router.post("/searchUicPageAll", async (req, res, next) => {
+router.post("/searchUicPage", async (req, res, next) => {
   try {
     const { type, searchData, location, uic_status } = req.body;
     let data = await misUserController.searchUicPageAll(
+      type,
+      searchData,
+      location,
+      uic_status
+    );
+    if (data) {
+      res.status(200).json({
+        data: data,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+router.post("/searchUicPageAllPage", async (req, res, next) => {
+  try {
+    const { type, searchData, location, uic_status } = req.body;
+    let data = await misUserController.searchUicPageAllPage(
       type,
       searchData,
       location,
@@ -482,6 +500,7 @@ router.post("/uicGeneratedRecon", async (req, res, next) => {
     let data = await misUserController.getUicRecon(req.body);
     console.log(data.data.length);
     if (data) {
+      console.log(data);
       res.status(200).json({
         data: data.data,
         count: data.count,
@@ -843,7 +862,12 @@ router.post("/wht-sendTo-wharehouse", async (req, res, next) => {
     let data = await misUserController.whtSendToWh(req.body);
     if (data) {
       res.status(200).json({
-        message: "Successfully Requested",
+        message: "Successfully Requested to Warehouse",
+      });
+    }
+    else{
+      res.status(202).json({
+        message: "Failed Tray Again..",
       });
     }
   } catch (error) {

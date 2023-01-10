@@ -108,10 +108,7 @@ const deliverySchema = mongoose.Schema({
   tray_closed_by_bot: {
     type: Date,
   },
-  // pick_list_status: {
-  //   type: String,
-  //   default: "Pending",
-  // },
+
   handover_sorting_date: {
     type: Date,
   },
@@ -165,7 +162,26 @@ const deliverySchema = mongoose.Schema({
   },
   bqc_report:{
     type:Object
+  },
+  bqc_software_report:{
+    type:Object
+  },
+  issued_to_audit:{
+    type:Date
+  },
+  audit_user_name:{
+    type:String
+  },
+  audit_done_date:{
+    type:Date
+  },
+  audit_done_recieved:{
+    type:Date
+  },
+  audit_done_close:{
+    type:Date
   }
+
 });
 
 const delivery = mongoose.model("delivery", deliverySchema);

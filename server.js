@@ -11,8 +11,8 @@ const connectDb = require("./config/db");
 // cors
 const cors = require("cors");
 connectDb();
-// /* NODE CRON */
-// const corn = require("./utils/node-corn")();
+/* NODE CRON */
+const corn = require("./utils/node-corn")();
 // Routers
 const superAdmin = require("./Router/superAdmin/superAdminRouter");
 const mobileUserRouter = require("./Router/MobileRouters/Users/user");
@@ -22,11 +22,10 @@ const bot = require("./Router/bot-router/bot-router");
 const chargingPanel = require("./Router/charging-panel-router/charging-panel");
 const bqc = require("./Router/bqc-router/bqc-router");
 const sortingAgent = require("./Router/sorting-agent-router/sorting-agent-router");
+const auditPanel = require("./Router/audit-router/audit-router");
 app.use(logger("dev"));
 app.use(express.json({ limit: "25mb" }));
-app.use(
-  cors()
-);
+app.use(cors());
 app.use(express.urlencoded({ limit: "25mb", extended: false }));
 // API for web
 app.use("/api/v1/superAdmin", superAdmin);
@@ -44,6 +43,8 @@ app.use("/api/v1/charging", chargingPanel);
 app.use("/api/v1/bqc", bqc);
 /* API for SORTING AGNET panel */
 app.use("/api/v1/sorting-agnet", sortingAgent);
+/* API for AUDIT AGNET panel */
+app.use("/api/v1/audit-agent", auditPanel);
 /* User-profile */
 app.use("/user/profile", express.static(__dirname + "/public/user-profile"));
 /* Product Image */

@@ -27,6 +27,9 @@ module.exports = {
         returnFromSorting: 0,
         mergeRequest: 0,
         returnFromMerge: 0,
+        auditRequest:0,
+        whtTrayRelease:0,
+        otherTrayAuditDone:0,
       };
       count.bagIssueRequest = await masters.count({
         $or: [
@@ -148,7 +151,7 @@ module.exports = {
       count.bqcRequest = await masters.count({
         prefix: "tray-master",
         type_taxanomy: "WHT",
-        sort_id: "Send for charging",
+        sort_id: "Send for BQC",
         cpc: location,
       });
       count.returnFromBqc = await masters.count({
@@ -198,6 +201,34 @@ module.exports = {
         sort_id: "Merge Request Sent To Wharehouse",
         cpc: location,
         to_merge: { $ne: null },
+      });
+      count.auditRequest = await masters.count({
+        prefix: "tray-master",
+        type_taxanomy: "WHT",
+        sort_id: "Send for Audit",
+        cpc: location,
+      });
+      count.whtTrayRelease = await masters.count({
+        type_taxanomy: "WHT",
+        prefix: "tray-master",
+        sort_id: "Audit Done",
+        cpc: location,
+      });
+      count.otherTrayAuditDone = await masters.count({
+        $or: [
+          {
+            prefix: "tray-master",
+            type_taxanomy: { $ne: "WHT" },
+            sort_id: "Audit Done",
+            cpc: location,
+          },
+          {
+            prefix: "tray-master",
+            type_taxanomy: { $ne: "WHT" },
+            sort_id: "Received From Audit",
+            cpc: location,
+          },
+        ],
       });
       count.returnFromMerge = await masters.count({
         $or: [
@@ -1157,10 +1188,10 @@ module.exports = {
       }
     });
   },
-  getBotWarehouseClosed: (location, type) => {
+  getBotWarehouseClosed: (location, type, taxanomy) => {
     return new Promise(async (resolve, reject) => {
       let data = await masters.find({
-        type_taxanomy: "BOT",
+        type_taxanomy: taxanomy,
         prefix: "tray-master",
         sort_id: type,
         cpc: location,
@@ -1577,6 +1608,7 @@ module.exports = {
     });
   },
   getChargingRequest: (status, location) => {
+    console.log(status);
     if (status == "Send_for_charging") {
       return new Promise(async (resolve, reject) => {
         let data = await masters.find({
@@ -1585,6 +1617,19 @@ module.exports = {
           sort_id: "Send for charging",
           cpc: location,
         });
+        if (data) {
+          resolve(data);
+        }
+      });
+    } else if (status == "Send_for_audit") {
+      return new Promise(async (resolve, reject) => {
+        let data = await masters.find({
+          prefix: "tray-master",
+          type_taxanomy: "WHT",
+          sort_id: "Send for Audit",
+          cpc: location,
+        });
+        console.log(data);
         if (data) {
           resolve(data);
         }
@@ -1772,6 +1817,7 @@ module.exports = {
     });
   },
   chargingDoneRecieved: (trayId, sortId) => {
+    console.log(sortId);
     return new Promise(async (resolve, reject) => {
       let data = await masters.findOne({ code: trayId });
       if (data) {
@@ -1959,6 +2005,37 @@ module.exports = {
       }
     });
   },
+  auditDoneClose: () => {
+    return new Promise(async (resolve, reject) => {
+      let data = await masters.findOneAndUpdate(
+        { code: trayData.trayId },
+        {
+          $set: {
+            description: trayData.description,
+            sort_id: "Closed By Warehouse",
+            actual_items: [],
+          },
+        }
+      );
+      if (data) {
+        for (let x of data.items) {
+          let deliveryUpdate = await delivery.updateOne(
+            {
+              tracking_id: x.tracking_id,
+            },
+            {
+              $set: {
+                tray_status: "Audit Done Closed By Warehouse",
+                tray_location: "Warehouse",
+                audit_done_close: Date.now(),
+              },
+            }
+          );
+        }
+        resolve(data);
+      }
+    });
+  },
   returnFromBqcWht: (location) => {
     return new Promise(async (resolve, reject) => {
       let data = await masters.find({
@@ -1973,6 +2050,29 @@ module.exports = {
             prefix: "tray-master",
             type_taxanomy: "WHT",
             sort_id: "Received From BQC",
+            cpc: location,
+          },
+        ],
+      });
+      if (data) {
+        resolve(data);
+      }
+    });
+  },
+  returnFromAuditOtherTray: (location) => {
+    return new Promise(async (resolve, reject) => {
+      let data = await masters.find({
+        $or: [
+          {
+            prefix: "tray-master",
+            type_taxanomy: { $ne: "WHT" },
+            sort_id: "Audit Done",
+            cpc: location,
+          },
+          {
+            prefix: "tray-master",
+            type_taxanomy: { $ne: "WHT" },
+            sort_id: "Received From Audit",
             cpc: location,
           },
         ],
@@ -2024,6 +2124,36 @@ module.exports = {
                 tray_status: "Received From BQC",
                 tray_location: "Warehouse",
                 bqc_done_received: Date.now(),
+              },
+            }
+          );
+        }
+        resolve(data);
+      } else {
+        resolve(data);
+      }
+    });
+  },
+  recievedFromAudit: (trayData) => {
+    console.log(trayData);
+    return new Promise(async (resolve, reject) => {
+      let data = await masters.findOneAndUpdate(
+        { code: trayData.trayId },
+        {
+          $set: {
+            sort_id: "Received From Audit",
+          },
+        }
+      );
+      if (data) {
+        for (let x of data?.items) {
+          let deliveryTrack = await delivery.updateMany(
+            { tracking_id: x.tracking_id },
+            {
+              $set: {
+                tray_status: "Received From Audit",
+                tray_location: "Warehouse",
+                audit_done_recieved: Date.now(),
               },
             }
           );
@@ -2682,6 +2812,206 @@ module.exports = {
         }
       } else {
         resolve({ status: 3 });
+      }
+    });
+  },
+  checkAuditUserFreeOrNot: (username) => {
+    return new Promise(async (resolve, reject) => {
+      let userActive = await user.findOne({ user_name: username });
+      if (userActive.status == "Active") {
+        let data = await masters.findOne({
+          $or: [
+            {
+              issued_user_name: username,
+              sort_id: "Issued to Audit",
+              type_taxanomy: "WHT",
+            },
+            {
+              issued_user_name: username,
+              sort_id: "Audit Done",
+              type_taxanomy: "WHT",
+            },
+          ],
+        });
+        if (data) {
+          resolve({ status: 2 });
+        } else {
+          resolve({ status: 1 });
+        }
+      } else {
+        resolve({ status: 3 });
+      }
+    });
+  },
+
+  checkTrayStatusAuditApprovePage: (trayId, trayType, location) => {
+    return new Promise(async (resolve, reject) => {
+      let checkId = await masters.findOne({
+        code: trayId,
+        prefix: "tray-master",
+        cpc: location,
+      });
+      if (checkId == null) {
+        resolve({ status: 4 });
+      } else if (checkId.type_taxanomy == trayType) {
+        if (checkId.sort_id == "Open") {
+          resolve({ status: 1 });
+        } else {
+          resolve({ status: 3 });
+        }
+      } else {
+        resolve({ status: 2 });
+      }
+    });
+  },
+  auditTrayAssign: (trayData) => {
+    return new Promise(async (resolve, reject) => {
+      let issue;
+      for (let x of trayData.trayId) {
+        issue = await masters.findOneAndUpdate(
+          { code: x },
+          {
+            $set: {
+              sort_id: "Issued to Audit",
+              assigned_date: Date.now(),
+              description: trayData.description,
+              issued_user_name: trayData.username,
+              actual_items: [],
+              temp_array: [],
+            },
+          }
+        );
+        if (issue.type_taxanomy === "WHT") {
+          for (let y of issue.items) {
+            let updateTrack = await delivery.updateOne(
+              { tracking_id: x.tracking_id },
+              {
+                $set: {
+                  tray_location: "Audit",
+                  issued_to_audit: Date.now(),
+                  audit_user_name: issue.issued_user_name,
+                  tray_status: "Issued to Audit",
+                },
+              }
+            );
+          }
+        }
+      }
+      if (issue) {
+        resolve({ status: 1 });
+      } else {
+        resolve({ status: 0 });
+      }
+    });
+  },
+  getAssignedTrayForAudit: (username) => {
+    console.log(username);
+    return new Promise(async (resolve, reject) => {
+      let obj = {
+        LUT: "",
+        DUT: "",
+        RBQ: "",
+        CFT: "",
+        STA: "",
+        STB: "",
+        STC: "",
+        STD: "",
+      };
+      let data = await masters.find({
+        type_taxanomy: { $ne: "WHT" },
+        issued_user_name: username,
+        sort_id: "Issued to Audit",
+      });
+      console.log(data);
+      if (data.length != 0) {
+        for (let x of data) {
+          obj[x.type_taxanomy] = x.code;
+        }
+        resolve(obj);
+      } else {
+        resolve(obj);
+      }
+    });
+  },
+  whtTrayRelease: (trayId) => {
+    return new Promise(async (resolve, reject) => {
+      let data = await masters.updateOne(
+        { code: trayId },
+        {
+          $set: {
+            items: [],
+            actual_items: [],
+            temp_array: [],
+            sort_id: "Open",
+            issued_user_name: null,
+            description: "",
+            from_merge: "",
+            to_merge: "",
+          },
+        }
+      );
+      if (data.modifiedCount !== 0) {
+        resolve(data);
+      } else {
+        resolve();
+      }
+    });
+  },
+  auditUserTray: (username, trayType, trayId,location) => {
+    console.log(location);
+    return new Promise(async (resolve, reject) => {
+      let data = await masters.findOne({ code: trayId ,cpc:location});
+      if (data) {
+        if (data.type_taxanomy == trayType) {
+          if (data.sort_id === "Open") {
+            let checkUserStatus = await masters.findOne({
+              $or: [
+                {
+                  type_taxanomy: trayType,
+                  issued_user_name: username,
+                  sort_id: "Issued to Audit",
+                },
+                {
+                  type_taxanomy: trayType,
+                  issued_user_name: username,
+                  sort_id: "Audit Done",
+                },
+              ],
+            });
+            if (checkUserStatus) {
+              resolve({ status: 2, tray_status: data.sort_id });
+            } else {
+              resolve({ status: 1, tray_status: data.sort_id });
+            }
+          } else {
+            resolve({ status: 5, tray_status: data.sort_id });
+          }
+        } else {
+          resolve({ status: 3, tray_status: data.sort_id });
+        }
+      } else {
+        resolve({ status: 4 });
+      }
+    });
+  },
+  oneTrayAssignToAudit: (userData) => {
+    return new Promise(async (resolve, reject) => {
+      let data = await masters.updateOne(
+        { code: userData.tray_id },
+        {
+          $set: {
+            issued_user_name: userData.user_name,
+            actual_items: [],
+            temp_array: [],
+            assigned_date: Date.now(),
+            sort_id: "Issued to Audit",
+          },
+        }
+      );
+      if (data.modifiedCount !== 0) {
+        resolve(data);
+      } else {
+        resolve();
       }
     });
   },

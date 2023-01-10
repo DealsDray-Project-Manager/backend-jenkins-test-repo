@@ -8,7 +8,7 @@ const warehouseInController = require("../../Controller/warehouseIn/warehouseInC
 /**************************************************Dashboard**************************************************************************/
 router.post("/dashboard/:location", async (req, res, next) => {
   try {
-    const {location}=req.params
+    const { location } = req.params;
     let data = await warehouseInController.dashboard(location);
     if (data) {
       console.log(data);
@@ -550,22 +550,26 @@ router.post("/traycloseBot", async (req, res, next) => {
   }
 });
 /* GET BOT TRAY FOR RELEASE */
-router.post("/release-bot-tray/:location/:type", async (req, res, next) => {
-  try {
-    const { location, type } = req.params;
-    let data = await warehouseInController.getBotWarehouseClosed(
-      location,
-      type
-    );
-    if (data) {
-      res.status(200).json({
-        data: data,
-      });
+router.post(
+  "/tray-for-release/:location/:type/:taxanomy",
+  async (req, res, next) => {
+    try {
+      const { location, type, taxanomy } = req.params;
+      let data = await warehouseInController.getBotWarehouseClosed(
+        location,
+        type,
+        taxanomy
+      );
+      if (data) {
+        res.status(200).json({
+          data: data,
+        });
+      }
+    } catch (error) {
+      next(error);
     }
-  } catch (error) {
-    next(error);
   }
-});
+);
 /* TRAY RELEASE CONFIRMATION */
 router.post("/approve-release-bot-tray/:trayId", async (req, res, next) => {
   try {
@@ -1084,6 +1088,7 @@ router.post("/check-uic-charging-done", async (req, res, next) => {
     next(error);
   }
 });
+
 /* CHECK UIC CODE */
 router.post("/check-uic-sorting-done", async (req, res, next) => {
   try {
@@ -1167,12 +1172,47 @@ router.post("/close-wht-tray-ready-to-next", async (req, res, next) => {
     next(error);
   }
 });
+
+/*-------------------------------AUDIT DONE CLOSE BY WAREHOUSE-------------------------------------------- */
+/* WHT TRAY CLOSE BY WAREHOSUE WHEN CHARGE IS DONE THEN RECEIVE AND CLOSE */
+router.post("/auditDoneClose", async (req, res, next) => {
+  try {
+    let data = await warehouseInController.auditDoneClose(req.body);
+    if (data) {
+      res.status(200).json({
+        message: "Successfully Closed",
+      });
+    } else {
+      res.status(202).json({
+        message: "Failed",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
 /* TRAY RETURN FROM CHARGING*/
 router.post("/return-from-bqc-wht/:location", async (req, res, next) => {
   try {
     let data = await warehouseInController.returnFromBqcWht(
       req.params.location
     );
+    if (data) {
+      res.status(200).json({
+        data: data,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
+/*---------------------OTHER TRAY RETURN FROM AUDIT--------------------------------*/
+router.post("/otherTrayRetunrFromAudit/:location", async (req, res, next) => {
+  try {
+    const { location } = req.params;
+    const data = await warehouseInController.returnFromAuditOtherTray(location);
     if (data) {
       res.status(200).json({
         data: data,
@@ -1214,6 +1254,25 @@ router.post("/recieved-from-bqc", async (req, res, next) => {
     next(error);
   }
 });
+
+/*---------------------------OTHER TRAY RECIEVED FROM AUDIT----------------------------------------------*/
+router.post("/recievedFromOtherTray", async (req, res, next) => {
+  try {
+    let data = await warehouseInController.recievedFromAudit(req.body);
+    if (data) {
+      res.status(200).json({
+        message: "Successfully Received",
+      });
+    } else {
+      res.status(202).json({
+        message: "Failed",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
 /* ACCEPTE AFTER BQC DONE */
 router.post("/recieved-from-sorting", async (req, res, next) => {
   try {
@@ -1535,10 +1594,10 @@ router.post("/sortingAgnetStatus/:username", async (req, res, next) => {
   }
 });
 /* CHECK CHARGING USER STATUS */
-router.post("/chargingAgentStatus/:username",async(req,res,next)=>{
+router.post("/chargingAgentStatus/:username", async (req, res, next) => {
   try {
-    const {username}=req.params
-    let data=await warehouseInController.checkChargingAgentStatus(username)
+    const { username } = req.params;
+    let data = await warehouseInController.checkChargingAgentStatus(username);
     if (data.status === 1) {
       res.status(200).json({
         data: "User is free",
@@ -1553,14 +1612,14 @@ router.post("/chargingAgentStatus/:username",async(req,res,next)=>{
       });
     }
   } catch (error) {
-    next(error)
+    next(error);
   }
-})
+});
 /* CHECK CHARGING USER STATUS */
-router.post("/bqcAgentStatus/:username",async(req,res,next)=>{
+router.post("/bqcAgentStatus/:username", async (req, res, next) => {
   try {
-    const {username}=req.params
-    let data=await warehouseInController.checkBqcAgentStatus(username)
+    const { username } = req.params;
+    let data = await warehouseInController.checkBqcAgentStatus(username);
     if (data.status === 1) {
       res.status(200).json({
         data: "User is free",
@@ -1574,6 +1633,181 @@ router.post("/bqcAgentStatus/:username",async(req,res,next)=>{
         data: "User not active",
       });
     }
+  } catch (error) {
+    next(error);
+  }
+});
+
+/*-------------------------------------AUDIT USER STATUS CHECKING------------------------------------------------------------*/
+router.post("/auditUserStatusChecking/:username", async (req, res, next) => {
+  try {
+    const { username } = req.params;
+    let data = await warehouseInController.checkAuditUserFreeOrNot(username);
+    if (data.status === 1) {
+      res.status(200).json({
+        data: "User is free",
+      });
+    } else if (data.status === 2) {
+      res.status(200).json({
+        data: "Agent already have a lot",
+      });
+    } else if (data.status === 3) {
+      res.status(200).json({
+        data: "User not active",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
+/*----------------------------AUDIT TRAY ASSIGN WITH OTHER TRAY CHECKING------------------------------------------------------*/
+
+router.post(
+  "/trayIdCheckAuditApprovePage/:trayId/:trayType/:location",
+  async (req, res, next) => {
+    try {
+      const { trayId, trayType, location } = req.params;
+      let data = await warehouseInController.checkTrayStatusAuditApprovePage(
+        trayId,
+        trayType,
+        location
+      );
+      console.log(data);
+      if (data.status == 1) {
+        res.status(200).json({
+          message: "Valid Tray",
+          trayId: trayId,
+        });
+      } else if (data.status == 2) {
+        res.status(202).json({
+          message: `Not a ${trayType} tray`,
+        });
+      } else if (data.status == 4) {
+        res.status(202).json({
+          message: "Tray id does not exists",
+        });
+      } else {
+        res.status(202).json({
+          message: "Tray already in process",
+        });
+      }
+    } catch (error) {}
+  }
+);
+
+/*----------------------------------------AUDIT TRAY ISSUE TO AGENT----------------------------------------------- */
+
+router.post("/auditTrayIssueToAgent", async (req, res, next) => {
+  console.log(req.body);
+  try {
+    const data = await warehouseInController.auditTrayAssign(req.body);
+    if (data.status == 1) {
+      res.status(200).json({
+        message: "Successfully Assigned to Agent",
+      });
+    } else {
+      res.status(202).json({
+        message: "Request Failed please tray again",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
+/*-------------------------------------FETCH ASSIGNED OTHER TRAY--------------------------------------------*/
+
+router.post("/fetchAssignedTrayForAudit/:username", async (req, res, next) => {
+  try {
+    const { username } = req.params;
+    let data = await warehouseInController.getAssignedTrayForAudit(username);
+    console.log(data);
+    if (data) {
+      res.status(200).json({
+        data: data,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
+/*-----------------------------------------RETURN FROM AUDIT WHT RELEASE----------------------------------------------------*/
+router.post("/wht-relase/:trayId", async (req, res, next) => {
+  try {
+    const { trayId } = req.params;
+    let data = await warehouseInController.whtTrayRelease(trayId);
+    if (data) {
+      res.status(200).json({
+        message: "Successfully Released",
+      });
+    } else {
+      res.status(202).json({
+        message: "Failed",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
+/*----------------------------------------------------------------------------------------------------*/
+
+router.post("/auditUserTrayForAssign", async (req, res, next) => {
+  try {
+    const { username, tray_type,tray_id,location } = req.body;
+    console.log(req.body);
+    let data = await warehouseInController.auditUserTray(username, tray_type,tray_id,location);
+    console.log(data);
+    if (data.status === 1) {
+      res.status(200).json({
+        message: "Valid",
+        tray_status: data.trayStatus,
+      });
+    } else if (data.status === 2) {
+      res.status(202).json({
+        message: `User have already ${tray_type} - tray`,
+        tray_status: data.trayStatus,
+      });
+    } else if (data.status == 3) {
+      res.status(202).json({
+        message: `Not a  ${tray_type} tray`,
+        tray_status: data.trayStatus,
+      });
+    }
+    else if (data.status == 4) {
+      res.status(202).json({
+        message: `Tray id does not exists`,
+        tray_status: "",
+      });
+    }
+    else if (data.status == 5) {
+      res.status(202).json({
+        message: `Tray is in process`,
+        tray_status: data.trayStatus,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
+/* -------------------------TRAY ASSIGN TO AUDIT------------------------------*/
+router.post("/oneTrayAssigToAudit",async(req,res,next)=>{
+  try {
+    let data=await warehouseInController.oneTrayAssignToAudit(req.body)
+    if(data){
+      res.status(200).json({
+        message:"Successfully Closed"
+      })
+    }
+    else{
+      res.status(200).json({
+        message:"Failed tray again"
+      })
+    }
+
   } catch (error) {
     next(error)
   }

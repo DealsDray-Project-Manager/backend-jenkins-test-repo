@@ -8,7 +8,6 @@ const { masters } = require("../../Model/mastersModel");
 const { badOrders } = require("../../Model/ordersModel/bad-orders-model");
 const { badDelivery } = require("../../Model/deliveryModel/bad-delivery");
 const moment = require("moment");
-const { pickList } = require("../../Model/picklist_model/model");
 /******************************************************************* */
 
 module.exports = {
@@ -674,6 +673,209 @@ module.exports = {
     });
   },
   searchUicPageAll: (searchType, value, location, uic_status) => {
+    return new Promise(async (resolve, reject) => {
+      let allOrders;
+      if (searchType == "order_id") {
+        allOrders = await delivery.aggregate([
+          {
+            $match: {
+              partner_shop: location,
+              uic_status:uic_status,
+              order_id: { $regex: "^" + value + ".*", $options: "i" },
+            },
+          },
+          {
+            $lookup: {
+              from: "orders",
+              localField: "order_id",
+              foreignField: "order_id",
+              as: "order",
+            },
+          },
+          {
+            $unwind: "$order",
+          },
+        ]);
+      } else if (searchType == "tracking_id") {
+        allOrders = await delivery.aggregate([
+          {
+            $match: {
+              partner_shop: location,
+              uic_status:uic_status,
+              tracking_id: { $regex: ".*" + value + ".*", $options: "i" },
+            },
+          },
+          {
+            $lookup: {
+              from: "orders",
+              localField: "order_id",
+              foreignField: "order_id",
+              as: "order",
+            },
+          },
+          {
+            $unwind: "$order",
+          },
+        ]);
+      } else if (searchType == "imei") {
+        allOrders = await delivery.aggregate([
+          {
+            $match: {
+              partner_shop: location,
+              uic_status:uic_status,
+              imei: { $regex: ".*" + value + ".*", $options: "i" },
+            },
+          },
+          {
+            $lookup: {
+              from: "orders",
+              localField: "order_id",
+              foreignField: "order_id",
+              as: "order",
+            },
+          },
+          {
+            $unwind: "$order",
+          },
+        ]);
+      } else if (searchType == "order_status") {
+        allOrders = await delivery.aggregate([
+          {
+            $match: {
+              partner_shop: location,
+              uic_status:uic_status,
+              order_status: { $regex: "^" + value + ".*", $options: "i" },
+            },
+          },
+          {
+            $lookup: {
+              from: "orders",
+              localField: "order_id",
+              foreignField: "order_id",
+              as: "order",
+            },
+          },
+          {
+            $unwind: "$order",
+          },
+        ]);
+      } else if (searchType == "order_date") {
+        value = value.split("/");
+        value = value.reverse();
+        value = value.join("-");
+        allOrders = await delivery.aggregate([
+          {
+            $match: {
+              partner_shop: location,
+              uic_status:uic_status,
+              order_date: { $regex: ".*" + value + ".*", $options: "i" },
+            },
+          },
+          {
+            $lookup: {
+              from: "orders",
+              localField: "order_id",
+              foreignField: "order_id",
+              as: "order",
+            },
+          },
+          {
+            $unwind: "$order",
+          },
+        ]);
+      } else if (searchType == "order_timestamp") {
+        value = moment(value, "DD-MM-YYYY HH:mm").toDate();
+        allOrders = await delivery.aggregate([
+          {
+            $match: {
+              partner_shop: location,
+              uic_status:uic_status,
+              order_timestamp: new Date(value),
+            },
+          },
+          {
+            $lookup: {
+              from: "orders",
+              localField: "order_id",
+              foreignField: "order_id",
+              as: "order",
+            },
+          },
+          {
+            $unwind: "$order",
+          },
+        ]);
+      } else if (searchType == "item_id") {
+        allOrders = await delivery.aggregate([
+          {
+            $match: {
+              partner_shop: location,
+              uic_status:uic_status,
+              item_id: { $regex: "^" + value + ".*", $options: "i" },
+            },
+          },
+          {
+            $lookup: {
+              from: "orders",
+              localField: "order_id",
+              foreignField: "order_id",
+              as: "order",
+            },
+          },
+          {
+            $unwind: "$order",
+          },
+        ]);
+      } else if (searchType == "uic") {
+        allOrders = await delivery.aggregate([
+          {
+            $match: {
+              partner_shop: location,
+              uic_status:uic_status,
+              "uic_code.code": { $regex: "^" + value + ".*", $options: "i" },
+            },
+          },
+          {
+            $lookup: {
+              from: "orders",
+              localField: "order_id",
+              foreignField: "order_id",
+              as: "order",
+            },
+          },
+          {
+            $unwind: "$order",
+          },
+        ]);
+      } else if (searchType == "old_item_details") {
+        allOrders = await badOrders.aggregate([
+          {
+            $match: {
+              partner_shop: location,
+              uic_status:uic_status,
+              old_item_details: { $regex: ".*" + value + ".*", $options: "i" },
+            },
+          },
+          {
+            $lookup: {
+              from: "orders",
+              localField: "order_id",
+              foreignField: "order_id",
+              as: "order",
+            },
+          },
+          {
+            $unwind: "$order",
+          },
+        ]);
+      }
+
+      if (allOrders) {
+        resolve(allOrders);
+      }
+    });
+  },
+  searchUicPageAllPage:(searchType, value, location) => {
     return new Promise(async (resolve, reject) => {
       let allOrders;
       if (searchType == "order_id") {

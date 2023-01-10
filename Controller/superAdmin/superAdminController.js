@@ -11,8 +11,9 @@ const {
   mastersEditHistory,
 } = require("../../Model/masterHistoryModel/mastersHistory");
 const moment = require("moment");
-const IISDOMAIN = "http://prexo-v6-uat-adminapi.dealsdray.com/user/profile/";
-const IISDOMAINPRDT = "http://prexo-v6-uat-adminapi.dealsdray.com/product/image/";
+const IISDOMAIN = "http://prexo-v7-dev-api.dealsdray.com/user/profile/";
+const IISDOMAINPRDT =
+  "http://prexo-v7-dev-api.dealsdray.com/product/image/";
 
 /************************************************************************************************** */
 module.exports = {
@@ -61,12 +62,12 @@ module.exports = {
         sort_id: "Inuse",
         items: { $ne: [] },
       });
-      count.removeInvalidItem=await  masters.count({
+      count.removeInvalidItem = await masters.count({
         prefix: "bag-master",
         sort_id: "In Progress",
         "items.status": "Invalid",
       });
-      count.trackItem=await orders.count({delivery_status: "Delivered"})
+      count.trackItem = await orders.count({ delivery_status: "Delivered" });
       console.log(count);
       if (count) {
         resolve(count);
@@ -241,23 +242,6 @@ module.exports = {
     return new Promise(async (resolve, reject) => {
       let infraData = await infra.find({});
       resolve(infraData);
-    });
-  },
-  dashboard: () => {
-    let obj = {
-      users: 0,
-      location: 0,
-      warehouse: 0,
-      brands: 0,
-      products: 0,
-    };
-    return new Promise(async (resolve, reject) => {
-      obj.users = await user.count({});
-      obj.location = await infra.count({});
-      obj.warehouse = await infra.count({});
-      obj.brands = await brands.count({});
-      obj.products = await products.count({});
-      resolve(obj);
     });
   },
   bulkValidationBrands: (bandData) => {
@@ -1447,39 +1431,51 @@ module.exports = {
       }
     });
   },
-  updateCPCExtra: () => {
+  getBqcReport: (uic) => {
     return new Promise(async (resolve, reject) => {
-      let wht = await masters.find({
-        $or: [
-          { "items.charging": { $exists: true } },
-          { "actual_items.charging": { $exists: true } },
-        ],
-      });
-      for (let y of wht) {
-        for (let x of y.items) {
-          console.log(x.charging);
-          let update = await delivery.updateOne(
-            { tracking_id: x.tracking_id },
-            {
-              $set: {
-                charging: x.charging,
-              },
-            }
-          );
+      let obj = {};
+      let uicExists = await delivery.findOne(
+        { "uic_code.code": uic },
+        {
+          uic_code: 1,
+          tracking_id: 1,
+          order_id: 1,
+          charging: 1,
+          bqc_report: 1,
+          bqc_done_close: 1,
+          bqc_software_report:1,
         }
-        for (let m of y.actual_items) {
-          console.log(m.charging);
-          let update = await delivery.updateOne(
-            { tracking_id: m.tracking_id },
-            {
-              $set: {
-                charging: m.charging,
-              },
-            }
-          );
+      );
+      if (uicExists) {
+        if (uicExists.bqc_done_close !== undefined) {
+          let getOrder = await orders.findOne({ order_id: uicExists.order_id });
+          obj.delivery = uicExists;
+          obj.order = getOrder;
+
+          resolve({ status: 1, data: obj });
+        } else {
+          resolve({ status: 3 });
         }
+      } else {
+        resolve({ status: 2 });
       }
-      resolve(wht);
     });
+  },
+  updateCPCExtra: () => {
+     return new Promise(async(resolve,reject)=>{
+          let findData=await masters.findOne({code:"WHT1290"})
+          
+          let arr = findData.temp_array.concat(findData.actual_items)
+          findData.actual_items=arr.concat(findData.items)
+          
+          let update=await masters.updateOne({code:"WHT1290"},{
+            $set:{
+              items:findData.actual_items
+            }
+          })
+          if(update){
+            resolve(update)
+          }
+     })
   },
 };
