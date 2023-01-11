@@ -98,9 +98,12 @@ module.exports = {
       });
       if (checkIntray) {
         let checkAlreadyAdded = await masters.findOne({
-          type_taxanomy: { $ne: "WHT" },
+          type_taxanomy: { $ne: "BOT" },
+          code:{$ne:trayId},
+          prefix:"tray-master",
           "items.uic": uic,
         });
+        console.log(checkAlreadyAdded);
         if (checkAlreadyAdded) {
           resolve({ status: 5 });
         } else {

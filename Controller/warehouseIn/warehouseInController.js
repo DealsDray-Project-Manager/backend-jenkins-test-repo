@@ -2005,7 +2005,7 @@ module.exports = {
       }
     });
   },
-  auditDoneClose: () => {
+  auditDoneClose: (trayData) => {
     return new Promise(async (resolve, reject) => {
       let data = await masters.findOneAndUpdate(
         { code: trayData.trayId },
@@ -3000,7 +3000,7 @@ module.exports = {
         { code: userData.tray_id },
         {
           $set: {
-            issued_user_name: userData.user_name,
+            issued_user_name: userData.username,
             actual_items: [],
             temp_array: [],
             assigned_date: Date.now(),

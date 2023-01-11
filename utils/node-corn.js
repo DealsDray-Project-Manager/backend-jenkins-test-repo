@@ -9,7 +9,7 @@ const { delivery } = require("../Model/deliveryModel/delivery");
 
 exports = module.exports = () => {
   try {
-    corn.schedule("35 12 * * *", () => {
+    corn.schedule("29 17 * * *", () => {
       /*---------------------------xml read ------------------------------------*/
       fs.readFile(
         "blancco_qc_data/csvRequest.xml",
@@ -44,6 +44,7 @@ exports = module.exports = () => {
           result.push(toLowerKeys(data));
         })
         .on("end", async () => {
+          console.log(result[0]);
           for (let x of result) {
             let updateBqcData = await delivery.updateOne(
               { "uic_code.code": x.uic },
@@ -59,7 +60,7 @@ exports = module.exports = () => {
         /*---------------------------------FOR OBJECT KEY CONVERT TO LOWER KEY ------------------*/
       function toLowerKeys(obj) {
         return Object.keys(obj).reduce((accumulator, key) => {
-          accumulator[key.toLowerCase()?.split(" ").join("_")] = obj[key];
+          accumulator[key.toLowerCase()?.split(/[-" "./]/).join("_")] = obj[key];
           return accumulator;
         }, {});
       }

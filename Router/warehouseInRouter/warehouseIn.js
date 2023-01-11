@@ -1763,29 +1763,29 @@ router.post("/auditUserTrayForAssign", async (req, res, next) => {
     if (data.status === 1) {
       res.status(200).json({
         message: "Valid",
-        tray_status: data.trayStatus,
+        trayStatus: data.tray_status,
       });
     } else if (data.status === 2) {
       res.status(202).json({
         message: `User have already ${tray_type} - tray`,
-        tray_status: data.trayStatus,
+        trayStatus: data.tray_status,
       });
     } else if (data.status == 3) {
       res.status(202).json({
         message: `Not a  ${tray_type} tray`,
-        tray_status: data.trayStatus,
+        trayStatus: data.tray_status,
       });
     }
     else if (data.status == 4) {
       res.status(202).json({
         message: `Tray id does not exists`,
-        tray_status: "",
+        trayStatus: "",
       });
     }
     else if (data.status == 5) {
       res.status(202).json({
         message: `Tray is in process`,
-        tray_status: data.trayStatus,
+        trayStatus: data.tray_status,
       });
     }
   } catch (error) {
@@ -1799,7 +1799,7 @@ router.post("/oneTrayAssigToAudit",async(req,res,next)=>{
     let data=await warehouseInController.oneTrayAssignToAudit(req.body)
     if(data){
       res.status(200).json({
-        message:"Successfully Closed"
+        message:"Successfully Assigned"
       })
     }
     else{
