@@ -2881,10 +2881,10 @@ module.exports = {
             },
           }
         );
-        if (issue.type_taxanomy === "WHT") {
+        if (issue.type_taxanomy == "WHT") {
           for (let y of issue.items) {
             let updateTrack = await delivery.updateOne(
-              { tracking_id: x.tracking_id },
+              { tracking_id: y.tracking_id },
               {
                 $set: {
                   tray_location: "Audit",

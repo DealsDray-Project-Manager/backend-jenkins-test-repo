@@ -230,10 +230,12 @@ module.exports = {
               temp_array: [],
               items: [],
             },
-          }
+          },
+          {new: true}
         );
+        console.log(data);
         if (data) {
-          for (let x of data.items) {
+          for (let x of data.actual_items) {
             let deliveryUpdate = await delivery.updateOne(
               {
                 tracking_id: x.tracking_id,
