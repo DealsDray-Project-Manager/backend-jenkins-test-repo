@@ -2937,7 +2937,7 @@ module.exports = {
           { code: toTray },
           {
             $set: {
-              sort_id: "Ready for RDL",
+              sort_id: "Ready to RDL",
               actual_items: [],
               issued_user_name: null,
               from_merge: null,
