@@ -937,7 +937,7 @@ module.exports = {
         }
       } else if (trayData.type == "Merging Done") {
         let checktray = await masters.findOne({ code: trayData.trayId });
-        if (checktray.sort == "Audit Done Return from Merging") {
+        if (checktray.sort_id == "Audit Done Return from Merging") {
           let data = await masters.findOneAndUpdate(
             { code: trayData.trayId },
             {
