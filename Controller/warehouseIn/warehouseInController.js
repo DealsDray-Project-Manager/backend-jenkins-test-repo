@@ -2912,12 +2912,14 @@ module.exports = {
           {
             cpc: location,
             refix: "tray-master",
+            items: { $ne: [] },
             sort_id: "Audit Done Return from Merging",
           },
           {
             cpc: location,
             refix: "tray-master",
-            sort_id: "Received From Merging",
+            items: { $ne: [] },
+            sort_id: "Audit Done Received From Merging",
           },
         ],
       });
