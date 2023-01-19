@@ -14,27 +14,35 @@ module.exports = {
       }
     });
   },
-  dashboard:(username)=>{
-    return new Promise(async(resolve,reject)=>{
-      let count={
-        sorting:0,
-        merge:0
-      }
-      count.sorting=await  masters.count({
+  dashboard: (username) => {
+    return new Promise(async (resolve, reject) => {
+      let count = {
+        sorting: 0,
+        merge: 0,
+      };
+      count.sorting = await masters.count({
         issued_user_name: username,
         type_taxanomy: "BOT",
         sort_id: "Issued to sorting agent",
       });
-      count.merge=await masters.count({
-        issued_user_name: username,
-        to_merge: { $ne: null },
-        sort_id: "Issued to Merging",
+      count.merge = await masters.count({
+        $or: [
+          {
+            issued_user_name: username,
+            to_merge: { $ne: null },
+            sort_id: "Issued to Merging",
+          },
+          {
+            issued_user_name: username,
+            to_merge: { $ne: null },
+            sort_id: "Audit Done Issued to Merging",
+          },
+        ],
       });
-      if(count){
-        resolve(count)
+      if (count) {
+        resolve(count);
       }
-
-    })
+    });
   },
   getDataForStartSorting: (username, trayId) => {
     return new Promise(async (resolve, reject) => {
@@ -121,6 +129,8 @@ module.exports = {
         stickerThree: itemData.stickerThree,
         stickerFour: itemData.stickerFour,
         body_damage: itemData.body_damage,
+        body_damage_des: itemData.body_damage_des,
+        model_brand: itemData.model_brand,
       },
     };
     return new Promise(async (resolve, reject) => {
@@ -142,8 +152,7 @@ module.exports = {
                 awbn_number: obj.tracking_id,
               },
             },
-          },
-         
+          }
         );
         let data = await masters.updateOne(
           {
@@ -267,9 +276,18 @@ module.exports = {
   getAssignedMmtTray: (username) => {
     return new Promise(async (resolve, reject) => {
       let data = await masters.find({
-        issued_user_name: username,
-        to_merge: { $ne: null },
-        sort_id: "Issued to Merging",
+        $or: [
+          {
+            issued_user_name: username,
+            to_merge: { $ne: null },
+            sort_id: "Audit Done Issued to Merging",
+          },
+          {
+            issued_user_name: username,
+            to_merge: { $ne: null },
+            sort_id: "Issued to Merging",
+          },
+        ],
       });
       console.log(data);
       if (data) {
@@ -319,35 +337,69 @@ module.exports = {
   },
   mergeDoneSendToWh: (trayData) => {
     return new Promise(async (resolve, reject) => {
-      let fromtray = await masters.updateOne(
-        { code: trayData.fromTray },
-        {
-          $set: {
-            sort_id: "Merging Done",
-            closed_time_sorting_agent: Date.now(),
-            items: [],
-            actual_items: [],
-          },
-        }
-      );
-      if (fromtray.modifiedCount !== 0) {
-        let updateToTray = await masters.updateOne(
-          { code: trayData.toTray },
+      let finedTray = await masters.findOne({ code: trayData.fromTray });
+      if (finedTray.sort_id == "Audit Done Issued to Merging") {
+        let fromtray = await masters.updateOne(
+          { code: trayData.fromTray },
           {
             $set: {
-              sort_id: "Merging Done",
+              sort_id: "Audit Done Return from Merging",
               closed_time_sorting_agent: Date.now(),
+              items: [],
               actual_items: [],
             },
           }
         );
-        if (updateToTray.modifiedCount !== 0) {
-          resolve({ status: 1 });
+        if (fromtray.modifiedCount !== 0) {
+          let updateToTray = await masters.updateOne(
+            { code: trayData.toTray },
+            {
+              $set: {
+                sort_id: "Audit Done Return from Merging",
+                closed_time_sorting_agent: Date.now(),
+                actual_items: [],
+              },
+            }
+          );
+          if (updateToTray.modifiedCount !== 0) {
+            resolve({ status: 1 });
+          } else {
+            resolve({ status: 0 });
+          }
         } else {
           resolve({ status: 0 });
         }
       } else {
-        resolve({ status: 0 });
+        let fromtray = await masters.updateOne(
+          { code: trayData.fromTray },
+          {
+            $set: {
+              sort_id: "Merging Done",
+              closed_time_sorting_agent: Date.now(),
+              items: [],
+              actual_items: [],
+            },
+          }
+        );
+        if (fromtray.modifiedCount !== 0) {
+          let updateToTray = await masters.updateOne(
+            { code: trayData.toTray },
+            {
+              $set: {
+                sort_id: "Merging Done",
+                closed_time_sorting_agent: Date.now(),
+                actual_items: [],
+              },
+            }
+          );
+          if (updateToTray.modifiedCount !== 0) {
+            resolve({ status: 1 });
+          } else {
+            resolve({ status: 0 });
+          }
+        } else {
+          resolve({ status: 0 });
+        }
       }
     });
   },

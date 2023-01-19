@@ -129,26 +129,26 @@ module.exports = {
   dashboardData: (location) => {
     return new Promise(async (resolve, reject) => {
       let count = {
-        orders:0,
-        badOrders:0,
-        delivered:0,
-        notDelivered:0,
-        delivery:0,
-        uicGented:0,
-        uicDownloaded:0,
-        uicNotGenrated:0,
-        badDelivery:0,
-        assigBot:0,
-        assigCharging:0,
-        bqc:0,
-        audit:0,
-        botToWht:0,
-        whtMerge:0,
-        mmtMerge:0,
-        trackItem:0,
+        orders: 0,
+        badOrders: 0,
+        delivered: 0,
+        notDelivered: 0,
+        delivery: 0,
+        uicGented: 0,
+        uicDownloaded: 0,
+        uicNotGenrated: 0,
+        badDelivery: 0,
+        assigBot: 0,
+        assigCharging: 0,
+        bqc: 0,
+        audit: 0,
+        botToWht: 0,
+        whtMerge: 0,
+        mmtMerge: 0,
+        trackItem: 0,
       };
       count.orders = await orders.count({ partner_shop: location });
-      
+
       count.badOrders = await badOrders.count({ partner_shop: location });
       count.delivered = await orders.count({
         partner_shop: location,
@@ -179,10 +179,20 @@ module.exports = {
         ],
       });
       count.assigCharging = await masters.count({
-        cpc: location,
-        sort_id: "Closed",
-        prefix: "tray-master",
-        type_taxanomy: "WHT",
+        $or: [
+          {
+            cpc: location,
+            sort_id: "Closed",
+            prefix: "tray-master",
+            type_taxanomy: "WHT",
+          },
+          {
+            cpc: location,
+            sort_id: "Recharging",
+            prefix: "tray-master",
+            type_taxanomy: "WHT",
+          },
+        ],
       });
       count.bqc = await masters.count({
         prefix: "tray-master",
@@ -196,31 +206,42 @@ module.exports = {
         sort_id: "Ready to Audit",
         cpc: location,
       });
-      count.botToWht=await masters.count({
+      count.botToWht = await masters.count({
         type_taxanomy: "BOT",
         prefix: "tray-master",
         sort_id: "Closed By Warehouse",
         cpc: location,
-      })
-      count.whtMerge=await masters.count({
-        prefix: "tray-master",
-        type_taxanomy: "WHT",
-        sort_id: "Inuse",
-        cpc: location,
-      })
-      count.mmtMerge=await masters.count({
+      });
+      count.whtMerge = await masters.count({
+        $or: [
+          {
+            prefix: "tray-master",
+            type_taxanomy: "WHT",
+            sort_id: "Inuse",
+            cpc: location,
+            items: { $ne: [] },
+          },
+          {
+            prefix: "tray-master",
+            type_taxanomy: "WHT",
+            sort_id: "Audit Done Closed By Warehouse",
+            cpc: location,
+          },
+        ],
+      });
+      count.mmtMerge = await masters.count({
         cpc: location,
         type_taxanomy: "MMT",
         prefix: "tray-master",
         sort_id: "Closed By Warehouse",
-      })
-      count.trackItem=await orders.count({
+      });
+      count.trackItem = await orders.count({
         partner_shop: location,
         delivery_status: "Delivered",
-      })
+      });
       console.log(count);
-      if(count){
-        resolve(count)
+      if (count) {
+        resolve(count);
       }
     });
   },
@@ -680,7 +701,7 @@ module.exports = {
           {
             $match: {
               partner_shop: location,
-              uic_status:uic_status,
+              uic_status: uic_status,
               order_id: { $regex: "^" + value + ".*", $options: "i" },
             },
           },
@@ -701,7 +722,7 @@ module.exports = {
           {
             $match: {
               partner_shop: location,
-              uic_status:uic_status,
+              uic_status: uic_status,
               tracking_id: { $regex: ".*" + value + ".*", $options: "i" },
             },
           },
@@ -722,7 +743,7 @@ module.exports = {
           {
             $match: {
               partner_shop: location,
-              uic_status:uic_status,
+              uic_status: uic_status,
               imei: { $regex: ".*" + value + ".*", $options: "i" },
             },
           },
@@ -743,7 +764,7 @@ module.exports = {
           {
             $match: {
               partner_shop: location,
-              uic_status:uic_status,
+              uic_status: uic_status,
               order_status: { $regex: "^" + value + ".*", $options: "i" },
             },
           },
@@ -767,7 +788,7 @@ module.exports = {
           {
             $match: {
               partner_shop: location,
-              uic_status:uic_status,
+              uic_status: uic_status,
               order_date: { $regex: ".*" + value + ".*", $options: "i" },
             },
           },
@@ -789,7 +810,7 @@ module.exports = {
           {
             $match: {
               partner_shop: location,
-              uic_status:uic_status,
+              uic_status: uic_status,
               order_timestamp: new Date(value),
             },
           },
@@ -810,7 +831,7 @@ module.exports = {
           {
             $match: {
               partner_shop: location,
-              uic_status:uic_status,
+              uic_status: uic_status,
               item_id: { $regex: "^" + value + ".*", $options: "i" },
             },
           },
@@ -831,7 +852,7 @@ module.exports = {
           {
             $match: {
               partner_shop: location,
-              uic_status:uic_status,
+              uic_status: uic_status,
               "uic_code.code": { $regex: "^" + value + ".*", $options: "i" },
             },
           },
@@ -852,7 +873,7 @@ module.exports = {
           {
             $match: {
               partner_shop: location,
-              uic_status:uic_status,
+              uic_status: uic_status,
               old_item_details: { $regex: ".*" + value + ".*", $options: "i" },
             },
           },
@@ -875,7 +896,7 @@ module.exports = {
       }
     });
   },
-  searchUicPageAllPage:(searchType, value, location) => {
+  searchUicPageAllPage: (searchType, value, location) => {
     return new Promise(async (resolve, reject) => {
       let allOrders;
       if (searchType == "order_id") {
@@ -2341,22 +2362,45 @@ module.exports = {
       }
     });
   },
-  toWhtTrayForMerging: (location, brand, model, fromTray, itemCount) => {
+  toWhtTrayForMerging: (
+    location,
+    brand,
+    model,
+    fromTray,
+    itemCount,
+    status
+  ) => {
     return new Promise(async (resolve, reject) => {
       let arr = [];
-      let whtTray = await masters
-        .find({
-          prefix: "tray-master",
-          type_taxanomy: "WHT",
-          brand: brand,
-          model,
-          model,
-          cpc: location,
-          items: { $ne: [] },
-          sort_id: "Inuse",
-          code: { $ne: fromTray },
-        })
-        .catch((err) => reject(err));
+      let whtTray;
+      if (status == "Audit Done Closed By Warehouse") {
+        whtTray = await masters
+          .find({
+            prefix: "tray-master",
+            type_taxanomy: "WHT",
+            brand: brand,
+            model,
+            model,
+            cpc: location,
+            sort_id: "Audit Done Closed By Warehouse",
+            code: { $ne: fromTray },
+          })
+          .catch((err) => reject(err));
+      } else {
+        whtTray = await masters
+          .find({
+            prefix: "tray-master",
+            type_taxanomy: "WHT",
+            brand: brand,
+            model,
+            model,
+            cpc: location,
+            items: { $ne: [] },
+            sort_id: "Inuse",
+            code: { $ne: fromTray },
+          })
+          .catch((err) => reject(err));
+      }
       if (whtTray.length !== 0) {
         for (let x of whtTray) {
           let count = x.limit - x.items.length;
@@ -2388,15 +2432,28 @@ module.exports = {
     return new Promise(async (resolve, reject) => {
       let data;
       for (let x of whtTrayData.tray) {
-        data = await masters.updateOne(
-          { code: x },
-          {
-            $set: {
-              sort_id: whtTrayData.sort_id,
-              issued_user_name: whtTrayData.user_name,
-            },
-          }
-        );
+        let checkTray = await masters.findOne({ code: x });
+        if (checkTray.sort_id == "Recharging") {
+          data = await masters.updateOne(
+            { code: x },
+            {
+              $set: {
+                sort_id: "Send for Recharging",
+                issued_user_name: whtTrayData.user_name,
+              },
+            }
+          );
+        } else {
+          data = await masters.updateOne(
+            { code: x },
+            {
+              $set: {
+                sort_id: whtTrayData.sort_id,
+                issued_user_name: whtTrayData.user_name,
+              },
+            }
+          );
+        }
       }
       if (data.matchedCount != 0) {
         resolve(data);
@@ -2542,37 +2599,73 @@ module.exports = {
   },
   mmtMergeRequestSendToWh: (sortingAgent, fromTray, toTray) => {
     return new Promise(async (resolve, reject) => {
-      let updateFromTray = await masters.updateOne(
-        { code: fromTray },
-        {
-          $set: {
-            sort_id: "Merge Request Sent To Wharehouse",
-            status_change_time: Date.now(),
-            issued_user_name: sortingAgent,
-            to_merge: toTray,
-            actual_items: [],
-          },
+      let whtTray = await masters.findOne({ code: fromTray });
+      if (whtTray.sort_id === "Audit Done Closed By Warehouse") {
+        let updateFromTray = await masters.updateOne(
+          { code: fromTray },
+          {
+            $set: {
+              sort_id: "Audit Done Merge Request Sent To Wharehouse",
+              status_change_time: Date.now(),
+              issued_user_name: sortingAgent,
+              to_merge: toTray,
+              actual_items: [],
+            },
+          }
+        );
+        if (updateFromTray.modifiedCount !== 0) {
+          let updateToTray = await masters.updateOne(
+            { code: toTray },
+            {
+              $set: {
+                sort_id: "Audit Done Merge Request Sent To Wharehouse",
+                status_change_time: Date.now(),
+                issued_user_name: sortingAgent,
+                from_merge: fromTray,
+                to_merge: null,
+                actual_items: [],
+              },
+            }
+          );
+          if (updateToTray.modifiedCount !== 0) {
+            resolve({ status: 1 });
+          }
+        } else {
+          resolve({ status: 0 });
         }
-      );
-      if (updateFromTray.modifiedCount !== 0) {
-        let updateToTray = await masters.updateOne(
-          { code: toTray },
+      } else {
+        let updateFromTray = await masters.updateOne(
+          { code: fromTray },
           {
             $set: {
               sort_id: "Merge Request Sent To Wharehouse",
               status_change_time: Date.now(),
               issued_user_name: sortingAgent,
-              from_merge: fromTray,
-              to_merge: null,
+              to_merge: toTray,
               actual_items: [],
             },
           }
         );
-        if (updateToTray.modifiedCount !== 0) {
-          resolve({ status: 1 });
+        if (updateFromTray.modifiedCount !== 0) {
+          let updateToTray = await masters.updateOne(
+            { code: toTray },
+            {
+              $set: {
+                sort_id: "Merge Request Sent To Wharehouse",
+                status_change_time: Date.now(),
+                issued_user_name: sortingAgent,
+                from_merge: fromTray,
+                to_merge: null,
+                actual_items: [],
+              },
+            }
+          );
+          if (updateToTray.modifiedCount !== 0) {
+            resolve({ status: 1 });
+          }
+        } else {
+          resolve({ status: 0 });
         }
-      } else {
-        resolve({ status: 0 });
       }
     });
   },

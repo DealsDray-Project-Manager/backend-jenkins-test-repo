@@ -16,6 +16,8 @@ module.exports = {
         $or: [
           { issued_user_name: username, sort_id: "Issued to Charging" },
           { issued_user_name: username, sort_id: "Charging Station IN" },
+          { issued_user_name: username, sort_id: "Issued to Recharging" },
+          { issued_user_name: username, sort_id: "Recharging Station IN" },
         ],
       });
       if (data) {
@@ -23,21 +25,23 @@ module.exports = {
       }
     });
   },
-  dashboardCount:(username)=>{
-     return new Promise(async(resolve,reject)=>{
-      let count={
-        charging:0
-      }
-      count.charging=await masters.count({
+  dashboardCount: (username) => {
+    return new Promise(async (resolve, reject) => {
+      let count = {
+        charging: 0,
+      };
+      count.charging = await masters.count({
         $or: [
           { issued_user_name: username, sort_id: "Issued to Charging" },
           { issued_user_name: username, sort_id: "Charging Station IN" },
+          { issued_user_name: username, sort_id: "Issued to Recharging" },
+          { issued_user_name: username, sort_id: "Recharging Station IN" },
         ],
       });
-      if(count){
-        resolve(count)
+      if (count) {
+        resolve(count);
       }
-     })
+    });
   },
   getTrayDetails: (trayId) => {
     return new Promise(async (resolve, reject) => {
@@ -51,17 +55,34 @@ module.exports = {
   },
   chargingStationIN: (trayData) => {
     return new Promise(async (resolve, reject) => {
-      let data = await masters.findOneAndUpdate(
-        { code: trayData.trayId },
-        {
-          $set: {
-            sort_id: "Charging Station IN",
-            closed_time_bot: Date.now(),
-            description: trayData.description,
-            actual_items: [],
-          },
-        }
-      );
+      let data;
+      let checkTray = await masters.findOne({ code: trayData.trayId });
+      console.log(checkTray);
+      if (checkTray?.sort_id == "Issued to Recharging") {
+        data = await masters.findOneAndUpdate(
+          { code: trayData.trayId },
+          {
+            $set: {
+              sort_id: "Recharging Station IN",
+              closed_time_bot: Date.now(),
+              description: trayData.description,
+              actual_items: [],
+            },
+          }
+        );
+      } else {
+        data = await masters.findOneAndUpdate(
+          { code: trayData.trayId },
+          {
+            $set: {
+              sort_id: "Charging Station IN",
+              closed_time_bot: Date.now(),
+              description: trayData.description,
+              actual_items: [],
+            },
+          }
+        );
+      }
       if (data) {
         for (let x of data.items) {
           let deliveryUpdate = await delivery.updateOne(
@@ -85,17 +106,33 @@ module.exports = {
   },
   chargeDone: (trayData) => {
     return new Promise(async (resolve, reject) => {
-      let data = await masters.findOneAndUpdate(
-        { code: trayData.trayId },
-        {
-          $set: {
-            sort_id: "Charge Done",
-            closed_time_bot: Date.now(),
-            description: trayData.description,
-            items: [],
-          },
-        }
-      );
+      let data;
+      let checkTray = await masters.findOne({ code: trayData.trayId });
+      if (checkTray.sort_id == "Recharging Station IN") {
+        data = await masters.findOneAndUpdate(
+          { code: trayData.trayId },
+          {
+            $set: {
+              sort_id: "Recharge Done",
+              closed_time_bot: Date.now(),
+              description: trayData.description,
+              items: [],
+            },
+          }
+        );
+      } else {
+        data = await masters.findOneAndUpdate(
+          { code: trayData.trayId },
+          {
+            $set: {
+              sort_id: "Charge Done",
+              closed_time_bot: Date.now(),
+              description: trayData.description,
+              items: [],
+            },
+          }
+        );
+      }
       if (data) {
         for (let x of data.actual_items) {
           let deliveryUpdate = await delivery.updateOne(
@@ -107,7 +144,7 @@ module.exports = {
                 charging_done_date: Date.now(),
                 tray_status: "Charging Done",
                 tray_location: "Send to warehouse",
-                charging:x.charging
+                charging: x.charging,
               },
             }
           );

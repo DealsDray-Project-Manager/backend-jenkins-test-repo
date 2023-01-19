@@ -19,7 +19,7 @@ exports = module.exports = () => {
             if (err) console.log(err);
             // here we log the results of our xml string conversion
             dataOfXml.request["export-report"][0].search[0].$.value =
-            new Date().toISOString().split("T")[0] + "T00:00:00+0000";
+              new Date().toISOString().split("T")[0] + "T00:00:00+0000";
             var builder = new xmlParser.Builder();
             var xml = builder.buildObject(dataOfXml);
             fs.writeFile(
@@ -36,15 +36,21 @@ exports = module.exports = () => {
           });
         }
       );
+    });
+  } catch (error) {
+    console.log(error);
+  }
+  try {
+    corn.schedule("55 10 * * *", () => {
       /*----------------------------------------------CSV READ-----------------------------*/
       let result = [];
-      fs.createReadStream("blancco_qc_data/blancco_qc_data dummy 2.csv")
+      fs.createReadStream("blancco_qc_data/blancco_qc_data dummy 6.csv")
         .pipe(csvParser())
         .on("data", (data) => {
           result.push(toLowerKeys(data));
         })
         .on("end", async () => {
-          console.log(result[0]);
+          
           for (let x of result) {
             let updateBqcData = await delivery.updateOne(
               { "uic_code.code": x.uic },
@@ -57,10 +63,15 @@ exports = module.exports = () => {
           }
           console.log("BQC report updated");
         });
-        /*---------------------------------FOR OBJECT KEY CONVERT TO LOWER KEY ------------------*/
+      /*---------------------------------FOR OBJECT KEY CONVERT TO LOWER KEY ------------------*/
       function toLowerKeys(obj) {
         return Object.keys(obj).reduce((accumulator, key) => {
-          accumulator[key.toLowerCase()?.split(/[-" "./]/).join("_")] = obj[key];
+          accumulator[
+            key
+              .toLowerCase()
+              ?.split(/[-" "./]/)
+              .join("_")
+          ] = obj[key];
           return accumulator;
         }, {});
       }

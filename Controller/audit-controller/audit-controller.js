@@ -98,10 +98,18 @@ module.exports = {
       });
       if (checkIntray) {
         let checkAlreadyAdded = await masters.findOne({
-          type_taxanomy: { $ne: "BOT" },
-          code:{$ne:trayId},
-          prefix:"tray-master",
-          "items.uic": uic,
+          $or: [
+            {
+              type_taxanomy: "WHT",
+              prefix: "tray-master",
+              "actual_items.uic": uic,
+            },
+            {
+              type_taxanomy: "WHT",
+              prefix: "tray-master",
+              "temp_array.uic": uic,
+            },
+          ],
         });
         console.log(checkAlreadyAdded);
         if (checkAlreadyAdded) {
@@ -117,6 +125,7 @@ module.exports = {
               bqc_report: 1,
               bqc_done_close: 1,
               bqc_software_report: 1,
+              bot_report:1
             }
           );
           if (uicExists) {
@@ -142,15 +151,60 @@ module.exports = {
   },
   traySegrigation: (itemData) => {
     return new Promise(async (resolve, reject) => {
+      let obj = {
+        grade: itemData.grade,
+        stage: itemData.stage,
+        reason: itemData.reason,
+        description: itemData.description,
+      };
       let findTray = await masters.findOne({
         issued_user_name: itemData.username,
         type_taxanomy: itemData.type,
         sort_id: "Issued to Audit",
       });
-
       if (findTray) {
         if (findTray.sort_id !== "Issued to Audit") {
           resolve({ status: 6, trayId: findTray.code });
+        } else if (findTray.type_taxanomy == "WHT") {
+          let item = await masters.findOne(
+            {
+              code: itemData.trayId,
+              "items.uic": itemData.uic,
+            },
+            {
+              _id: 0,
+              items: {
+                $elemMatch: { uic: itemData.uic },
+              },
+            }
+          );
+          if (item) {
+            item.items[0].audit_report = obj;
+
+            let updateOther = await masters.updateOne(
+              { code: findTray.code },
+              {
+                $push: {
+                  temp_array: item.items[0],
+                },
+              }
+            );
+            if (updateOther) {
+              let update = await delivery.updateOne(
+                { "uic_code.code": itemData.uic },
+                {
+                  $set: {
+                    tray_id: findTray.code,
+                    tray_type: itemData.type,
+                    audit_report: obj,
+                  },
+                }
+              );
+              resolve({ status: 1 });
+            }
+          } else {
+            resolve({ status: 5 });
+          }
         } else if (findTray?.items?.length === findTray?.limit) {
           resolve({ status: 2, trayId: findTray.code });
         } else {
@@ -190,6 +244,7 @@ module.exports = {
                   $set: {
                     tray_id: findTray.code,
                     tray_type: itemData.type,
+                    audit_report: obj,
                   },
                 }
               );
@@ -206,16 +261,33 @@ module.exports = {
   },
   trayClose: (trayId) => {
     return new Promise(async (resolve, reject) => {
-      let data = await masters.findOneAndUpdate(
-        { code: trayId },
-        {
-          $set: {
-            sort_id: "Audit Done",
-            closed_time_bot: Date.now(),
-            actual_items: [],
-          },
-        }
-      );
+      let findTray = await masters.findOne({ code: trayId });
+      let data;
+      if (findTray.type_taxanomy == "WHT") {
+        data = await masters.findOneAndUpdate(
+          { code: trayId },
+          {
+            $set: {
+              sort_id: "Audit Done",
+              closed_time_bot: Date.now(),
+              temp_array: [],
+              items: findTray.temp_array,
+              actual_items: [],
+            },
+          }
+        );
+      } else {
+        data = await masters.findOneAndUpdate(
+          { code: trayId },
+          {
+            $set: {
+              sort_id: "Audit Done",
+              closed_time_bot: Date.now(),
+              actual_items: [],
+            },
+          }
+        );
+      }
       if (data.type_taxanomy == "WHT") {
         for (let x of data.items) {
           let updateDelivery = await delivery.updateOne(

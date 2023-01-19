@@ -731,37 +731,21 @@ router.post("/trayIdGenrate/:type", async (req, res, next) => {
             res.status(200).json({
               data: obj.WHT,
             });
-          } else if (type == "LUT") {
+          } else if (type == "CTA") {
             res.status(200).json({
-              data: obj.LUT,
+              data: obj.CTA,
             });
-          } else if (type == "DUT") {
+          } else if (type == "CTB") {
             res.status(200).json({
-              data: obj.DUT,
+              data: obj.CTB,
             });
-          } else if (type == "RBQ") {
+          } else if (type == "CTC") {
             res.status(200).json({
-              data: obj.RBQ,
+              data: obj.CTC,
             });
-          } else if (type == "CFT") {
+          } else if (type == "CTD") {
             res.status(200).json({
-              data: obj.CFT,
-            });
-          } else if (type == "STA") {
-            res.status(200).json({
-              data: obj.STA,
-            });
-          } else if (type == "STB") {
-            res.status(200).json({
-              data: obj.STB,
-            });
-          } else if (type == "STC") {
-            res.status(200).json({
-              data: obj.STC,
-            });
-          } else if (type == "STD") {
-            res.status(200).json({
-              data: obj.STD,
+              data: obj.CTD,
             });
           } else {
             res.status(200).json({
@@ -870,13 +854,10 @@ router.post("/createBulkTray", async (req, res, next) => {
             obj.MMT = req.body.allCount.MMT;
             obj.WHT = req.body.allCount.WHT;
             obj.PMT = req.body.allCount.PMT;
-            obj.DUT = req.body.allCount.DUT;
-            obj.RBQ = req.body.allCount.RBQ;
-            obj.CFT = req.body.allCount.CFT;
-            obj.STA = req.body.allCount.STA;
-            obj.STB = req.body.allCount.STB;
-            obj.STC = req.body.allCount.STC;
-            obj.STD = req.body.allCount.STD;
+            obj.CTA = req.body.allCount.CTA;
+            obj.CTB = req.body.allCount.CTB;
+            obj.CTC = req.body.allCount.CTC;
+            obj.CTD = req.body.allCount.CTD;
 
             json = JSON.stringify(obj);
             fs.writeFile(
@@ -1006,22 +987,14 @@ router.post("/createMasters", async (req, res, next) => {
                 obj.MMT = obj.MMT + 1;
               } else if (type_taxanomy == "WHT") {
                 obj.WHT = obj.WHT + 1;
-              } else if (type_taxanomy == "LUT") {
-                obj.LUT = obj.LUT + 1;
-              } else if (type_taxanomy == "DUT") {
-                obj.DUT = obj.DUT + 1;
-              } else if (type_taxanomy == "RBQ") {
-                obj.RBQ = obj.RBQ + 1;
-              } else if (type_taxanomy == "CFT") {
-                obj.CFT = obj.CFT + 1;
-              } else if (type_taxanomy == "STA") {
-                obj.STA = obj.STA + 1;
-              } else if (type_taxanomy == "STB") {
-                obj.STB = obj.STB + 1;
-              } else if (type_taxanomy == "STC") {
-                obj.STC = obj.STC + 1;
+              } else if (type_taxanomy == "CTA") {
+                obj.CTA = obj.CTA + 1;
+              } else if (type_taxanomy == "CTB") {
+                obj.CTB = obj.CTB + 1;
+              } else if (type_taxanomy == "CTC") {
+                obj.CTC = obj.CTC + 1;
               } else if (type_taxanomy == "STD") {
-                obj.STD = obj.STD + 1;
+                obj.CTD = obj.CTD + 1;
               }
               json = JSON.stringify(obj);
               fs.writeFile(
@@ -1195,8 +1168,8 @@ router.post("/getInuseWht", async (req, res, next) => {
 /*-----------------------------READY FOR CHARGING--------------------------------------*/
 router.post("/ready-for-charging", async (req, res, next) => {
   try {
-    const { ischeck } = req.body;
-    let data = await superAdminController.readyForCharging(ischeck);
+    const { ischeck, status } = req.body;
+    let data = await superAdminController.readyForCharging(ischeck, status);
     if (data.status === 1) {
       res.status(200).json({
         message: "Successfully Sent to MIS",
@@ -1272,6 +1245,22 @@ router.post("/bqcReport/:uic", async (req, res, next) => {
   }
 });
 
+/*-----------------------------------------CHARGE DONE 4 DIFF TRAY------------------------------------------------*/
+router.post("/chargeDoneFourDifferenceTray", async (req, res, next) => {
+  try {
+    let data = await superAdminController.chargeDoneTrayFourDayDiff();
+    if (data) {
+      res.status(200).json({
+        data: data,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
+/****************************************************************************************************** */
+
 /*-----------------------------EXTRA ONE--------------------------------------*/
 router.post("/update-cpc", async (req, res, next) => {
   try {
@@ -1290,26 +1279,22 @@ router.post("/update-cpc", async (req, res, next) => {
   }
 });
 
-
-
 /*---------------------------part of 2700 records------------------------------------------------*/
-router.post("/part-records-import",async(req,res,next)=>{
+router.post("/part-records-import", async (req, res, next) => {
   try {
-    let data=await superAdminController.getUpdateRecord()
-    if(data){
+    let data = await superAdminController.getUpdateRecord();
+    if (data) {
       res.status(200).json({
-        message:"done"
-      })
-    }
-    else{
+        message: "done",
+      });
+    } else {
       res.status(202).json({
-        message:"Failed"
-      })
+        message: "Failed",
+      });
     }
   } catch (error) {
-    next(error)
+    next(error);
   }
-})
-
+});
 
 module.exports = router;

@@ -108,7 +108,6 @@ const deliverySchema = mongoose.Schema({
   tray_closed_by_bot: {
     type: Date,
   },
-
   handover_sorting_date: {
     type: Date,
   },
@@ -160,6 +159,9 @@ const deliverySchema = mongoose.Schema({
   charging:{
     type:Object
   },
+  bot_report:{
+    type:Object
+  },
   bqc_report:{
     type:Object
   },
@@ -171,6 +173,9 @@ const deliverySchema = mongoose.Schema({
   },
   audit_user_name:{
     type:String
+  },
+  audit_report:{
+    type:Object
   },
   audit_done_date:{
     type:Date

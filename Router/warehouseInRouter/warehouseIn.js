@@ -758,7 +758,6 @@ router.post("/whtTray/:location/:type", async (req, res, next) => {
 /* IN USE WHT TRAY */
 router.post("/wht-tray/:status/:location", async (req, res, next) => {
   try {
-    console.log("working");
     console.log(req.params);
     let data = await warehouseInController.getInUseWhtTray(
       req.params.status,
@@ -791,6 +790,7 @@ router.post("/picklist-sort", async (req, res, next) => {
 router.post("/getWhtTrayItem/:trayId/:sortId", async (req, res, next) => {
   try {
     const { trayId, sortId } = req.params;
+    console.log(sortId);
     let data = await warehouseInController.getWhtTrayitem(trayId, sortId);
     if (data.status == 1) {
       res.status(200).json({
@@ -956,6 +956,7 @@ router.post("/check-uic", async (req, res, next) => {
   try {
     const { trayId, uic } = req.body;
     let data = await warehouseInController.checkUicCode(uic, trayId);
+
     console.log(data);
     if (data.status == 1) {
       res.status(202).json({
@@ -1209,7 +1210,7 @@ router.post("/return-from-bqc-wht/:location", async (req, res, next) => {
 });
 
 /*---------------------OTHER TRAY RETURN FROM AUDIT--------------------------------*/
-router.post("/otherTrayRetunrFromAudit/:location", async (req, res, next) => {
+router.post("/retunrFromAudit/:location", async (req, res, next) => {
   try {
     const { location } = req.params;
     const data = await warehouseInController.returnFromAuditOtherTray(location);
@@ -1550,13 +1551,14 @@ router.post("/returnFromMerging/:location", async (req, res, next) => {
 /* AFTER MERGE IS DONE CLOSE MMT TRAY */
 router.post("/mergeDoneMmttrayClose", async (req, res, next) => {
   try {
-    const { toTray, fromTray, type, length, limit } = req.body;
+    const { toTray, fromTray, type, length, limit,status } = req.body;
     let data = await warehouseInController.mergeDoneTrayClose(
       fromTray,
       toTray,
       type,
       length,
-      limit
+      limit,
+      status
     );
     if (data.status == 1) {
       res.status(200).json({
