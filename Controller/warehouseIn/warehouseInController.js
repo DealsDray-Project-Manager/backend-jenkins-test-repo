@@ -148,7 +148,7 @@ module.exports = {
       count.bqcRequest = await masters.count({
         prefix: "tray-master",
         type_taxanomy: "WHT",
-        sort_id: "Send for charging",
+        sort_id: "Send for BQC",
         cpc: location,
       });
       count.returnFromBqc = await masters.count({
