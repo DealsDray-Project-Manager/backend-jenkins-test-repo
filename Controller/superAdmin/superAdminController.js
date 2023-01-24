@@ -1542,8 +1542,7 @@ module.exports = {
 
   chargeDoneTrayFourDayDiff: () => {
     return new Promise(async (resolve, reject) => {
-      var today = new Date(Date.now());
-
+     
       let tray = await masters.find({
         prefix: "tray-master",
         sort_id: "Ready to BQC",
@@ -1551,6 +1550,8 @@ module.exports = {
       if (tray) {
         let arr = [];
         for (let x of tray) {
+          var today = new Date(Date.now());
+
           if (
             new Date(x.closed_time_bot) <=
             new Date(today.setDate(today.getDate() - 4))
