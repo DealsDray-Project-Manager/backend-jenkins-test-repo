@@ -1464,7 +1464,6 @@ module.exports = {
   chargeDoneTrayFourDayDiff: () => {
     return new Promise(async (resolve, reject) => {
       var today = new Date(Date.now());
-
       let tray = await masters.find({
         prefix: "tray-master",
         sort_id: "Ready to BQC",
