@@ -1,11 +1,22 @@
+/********************************************************************************************************* */
+
 /* Express */
-const { Router } = require("express");
 const express = require("express");
 const router = express.Router();
 // user controller
 const warehouseInController = require("../../Controller/warehouseIn/warehouseInController");
-/*******************************************************************************************************************/
-/**************************************************Dashboard**************************************************************************/
+/**********************************************************************************************************/
+
+/* 
+
+@ ROUTERS
+
+/*
+
+
+
+
+/*-----------------------------DASHBOARD--------------------------------------*/
 router.post("/dashboard/:location", async (req, res, next) => {
   try {
     const { location } = req.params;
@@ -21,8 +32,9 @@ router.post("/dashboard/:location", async (req, res, next) => {
     next(error);
   }
 });
-/******************************************************STOCK IN********************************************************************* */
-/* Check Bag ID */
+
+/*-----------------------------CHECK BAG ID--------------------------------------*/
+
 router.post("/checkBagId", async (req, res, next) => {
   try {
     const { bagId, location } = req.body;
@@ -48,7 +60,9 @@ router.post("/checkBagId", async (req, res, next) => {
     next(error);
   }
 });
-/* Get Bag Data */
+
+/*-----------------------------GET BAG ITEMS--------------------------------------*/
+
 router.post("/getBagItem/:bagId", async (req, res, next) => {
   try {
     let data = await warehouseInController.getBagOne(req.params.bagId);
@@ -67,7 +81,9 @@ router.post("/getBagItem/:bagId", async (req, res, next) => {
     next(error);
   }
 });
-/* Get Bag Data */
+
+/*-----------------------------GET BAG ITEMS Request--------------------------------------*/
+
 router.post("/getBagItemRequest/:bagId/:sortId", async (req, res, next) => {
   try {
     const { bagId, sortId } = req.params;
@@ -92,7 +108,9 @@ router.post("/getBagItemRequest/:bagId/:sortId", async (req, res, next) => {
     next(error);
   }
 });
-/* CHECK BOT USER */
+
+/*-----------------------------CHECK BOT USERS STATUS--------------------------------------*/
+
 router.post("/checkBotUserStatus/:username", async (req, res, next) => {
   try {
     const { username, bagId } = req.params;
@@ -116,7 +134,8 @@ router.post("/checkBotUserStatus/:username", async (req, res, next) => {
   }
 });
 
-/* Awbn Number Checking */
+/*-----------------------------CHECK AWBN--------------------------------------*/
+
 router.post("/checkAwbn", async (req, res, next) => {
   try {
     const { awbn, bagId, location } = req.body;
@@ -150,7 +169,9 @@ router.post("/checkAwbn", async (req, res, next) => {
     next(error);
   }
 });
-/* Stock In to Warehouse */
+
+/*-----------------------------STOCKING TO WAREHOUSE--------------------------------------*/
+
 router.post("/stockInToWarehouse", async (req, res, next) => {
   try {
     let data = await warehouseInController.stockInData(req.body);
@@ -167,7 +188,8 @@ router.post("/stockInToWarehouse", async (req, res, next) => {
     next(error);
   }
 });
-/* Bag Closing */
+
+/*-----------------------------BAG CLOSING BY WAREHOUSE PERSON--------------------------------------*/
 router.post("/bagClosing", async (req, res, next) => {
   try {
     let data = await warehouseInController.closeBag(req.body);
@@ -184,7 +206,9 @@ router.post("/bagClosing", async (req, res, next) => {
     next(error);
   }
 });
-/* Remove Stockin */
+
+/*----------------------------REMOVE DUPLICATE ITEMS FROM BAG--------------------------------------*/
+
 router.post("/stockin", async (req, res, next) => {
   try {
     let data = await warehouseInController.deleteStockin(req.body);
@@ -201,8 +225,8 @@ router.post("/stockin", async (req, res, next) => {
     next(error);
   }
 });
-/****************************************************BAG ISSUE REQUEST****************************************************************** */
-/* Get Requests */
+
+/*--------------------------BAG ISSUE REQUESTS----------------------------------------*/
 router.post("/getRequests/:location", async (req, res, next) => {
   let data = await warehouseInController.getRequests(req.params.location);
   if (data) {
@@ -212,7 +236,8 @@ router.post("/getRequests/:location", async (req, res, next) => {
     });
   }
 });
-/* Check AWBN NUMBER */
+/*--------------------------ACTUAL AND EXECTED PAGE IN WAREHOUSE AWBN NUMBER SCANING FOR BAG ISSUE----------------------------------------*/
+
 router.post("/actualCheckAwbn", async (req, res, next) => {
   try {
     const { awbn, id } = req.body;
@@ -243,7 +268,9 @@ router.post("/actualCheckAwbn", async (req, res, next) => {
     next(error);
   }
 });
-/* Add Actual Data */
+
+/*--------------------------ADD ACTUAL ITEM----------------------------------------*/
+
 router.post("/addActualitem", async (req, res, next) => {
   try {
     let data = await warehouseInController.addActualData(req.body);
@@ -260,6 +287,9 @@ router.post("/addActualitem", async (req, res, next) => {
     next(error);
   }
 });
+
+/*--------------------------ACTULA BAG ITEM----------------------------------------*/
+
 router.post("/actualBagItem", async (req, res, next) => {
   try {
     let data = await warehouseInController.removeActualItem(req.body);
@@ -276,7 +306,9 @@ router.post("/actualBagItem", async (req, res, next) => {
     next(error);
   }
 });
-/* Bag Issue to agent */
+
+/*--------------------------BAG ISSUE TO BOT AGENT----------------------------------------*/
+
 router.post("/issueToBot", async (req, res, next) => {
   try {
     let data = await warehouseInController.issueToBot(req.body);
@@ -297,8 +329,9 @@ router.post("/issueToBot", async (req, res, next) => {
     next(error);
   }
 });
-/*********************************************************TRAY ASSIGNMENT***************************************************************/
-/* CHECK MMT TRAY */
+
+/*--------------------------CHECK MMT TRAY----------------------------------------*/
+
 router.post("/checkMmtTray/:id/:location", async (req, res, next) => {
   try {
     let data = await warehouseInController.checkMmtTray(
@@ -329,7 +362,9 @@ router.post("/checkMmtTray/:id/:location", async (req, res, next) => {
     next(error);
   }
 });
-/* CHECK PMT TRAY */
+
+/*--------------------------CHECK PMT TRAY FOR ISSUE TO BOT AGENT----------------------------------------*/
+
 router.post("/checkPmtTray/:id/:location", async (req, res, next) => {
   try {
     let data = await warehouseInController.checkPmtTray(
@@ -360,7 +395,9 @@ router.post("/checkPmtTray/:id/:location", async (req, res, next) => {
     next(error);
   }
 });
-/* CHECK BOT TRAY */
+
+/*--------------------------CHECK BOT TRAY FOR ISSUE TO BOT AGENT---------------------------------------*/
+
 router.post("/checkBotTray/:id/:location", async (req, res, next) => {
   try {
     let data = await warehouseInController.checkBotTray(
@@ -390,7 +427,8 @@ router.post("/checkBotTray/:id/:location", async (req, res, next) => {
     next(error);
   }
 });
-/************************************TRAY CLOSE REQUEST********************************************************* */
+
+/*--------------------------TRAY RETURN FROM BOT---------------------------------------*/
 router.post("/trayCloseRequest/:location", async (req, res, next) => {
   try {
     let data = await warehouseInController.trayCloseRequest(
@@ -405,7 +443,9 @@ router.post("/trayCloseRequest/:location", async (req, res, next) => {
     next(error);
   }
 });
-/* GET INUSE PMT OR MMT TRAY */
+
+/*--------------------------INUSE MMT AND PMT---------------------------------------*/
+
 router.post("/inuse-mmt-pmt/:location/:type", async (req, res, next) => {
   try {
     const { location, type } = req.params;
@@ -419,7 +459,9 @@ router.post("/inuse-mmt-pmt/:location/:type", async (req, res, next) => {
     next(error);
   }
 });
-/* ACCEPTE TRAY */
+
+/*--------------------------RECEIVED TRAY FROM BOT---------------------------------------*/
+
 router.post("/receivedTray", async (req, res, next) => {
   try {
     let data = await warehouseInController.trayReceived(req.body);
@@ -440,8 +482,8 @@ router.post("/receivedTray", async (req, res, next) => {
     next(error);
   }
 });
-/************************************NEW TRAY ASSIGNEMENT**************************************** */
-/* Get bot */
+
+/*--------------------------BOT USERS FOR NEW TRAY ASSIGNMENT---------------------------------------*/
 router.post("/botUsers/:location", async (req, res, next) => {
   try {
     const { location } = req.params;
@@ -455,7 +497,9 @@ router.post("/botUsers/:location", async (req, res, next) => {
     next(error);
   }
 });
-/* check bot user tray */
+
+/*--------------------------CHECK BOT USER IS FREE OR NOT---------------------------------------*/
+
 router.post("/checkBotUserTray", async (req, res, next) => {
   try {
     const { username, trayType } = req.body;
@@ -473,7 +517,9 @@ router.post("/checkBotUserTray", async (req, res, next) => {
     next(error);
   }
 });
-/* ASSIGN NEW TRAY */
+
+/*--------------------------ASSIGN NEW TRAY TO BOT---------------------------------------*/
+
 router.post("/assignNewTray", async (req, res, next) => {
   try {
     let data = await warehouseInController.assignNewTrayIndv(req.body);
@@ -490,7 +536,9 @@ router.post("/assignNewTray", async (req, res, next) => {
     next(error);
   }
 });
-/* Tray Close */
+
+/*--------------------------BOT DONE TRAY CLOSE---------------------------------------*/
+
 router.post("/trayclose", async (req, res, next) => {
   try {
     let data = await warehouseInController.trayClose(req.body);
@@ -507,7 +555,9 @@ router.post("/trayclose", async (req, res, next) => {
     next(error);
   }
 });
-/* pmt / mmt / bot vs bag  count chcking after bot closed */
+
+/*--------------------------PMT AND MMT AND BOT EQUAL TO BAG--------------------------*/
+
 router.post("/bagValidation/:bagId", async (req, res, next) => {
   try {
     const { bagId } = req.params;
@@ -532,7 +582,8 @@ router.post("/bagValidation/:bagId", async (req, res, next) => {
     next(error);
   }
 });
-/* Tray Close Bot */
+/*--------------------------BOT TRAY CLOSE BY WAREHOUSE--------------------------*/
+
 router.post("/traycloseBot", async (req, res, next) => {
   try {
     let data = await warehouseInController.trayCloseBot(req.body);
@@ -549,7 +600,9 @@ router.post("/traycloseBot", async (req, res, next) => {
     next(error);
   }
 });
-/* GET BOT TRAY FOR RELEASE */
+
+/*--------------------------FIND THE  BOT TRAY FOR RELEASE --------------------------*/
+
 router.post(
   "/tray-for-release/:location/:type/:taxanomy",
   async (req, res, next) => {
@@ -570,7 +623,9 @@ router.post(
     }
   }
 );
-/* TRAY RELEASE CONFIRMATION */
+
+/*--------------------------TRAY REALEASE CONFIRMATION --------------------------*/
+
 router.post("/approve-release-bot-tray/:trayId", async (req, res, next) => {
   try {
     let data = await warehouseInController.releaseBotTray(req.params.trayId);
@@ -583,7 +638,8 @@ router.post("/approve-release-bot-tray/:trayId", async (req, res, next) => {
     next(error);
   }
 });
-/* AUTO FETCH TRAY ID ALREADY ASSIGNED ONE */
+
+/*--------------------------AUTO FETCH ALREADY  ASSIGNED TRAY FROM BOT--------------------------*/
 router.post(
   "/autoFetchAlreadyAssignedTray/:username",
   async (req, res, next) => {
@@ -602,8 +658,9 @@ router.post(
     }
   }
 );
-/*************************************BAG CLOSE************************************************************** */
-/* GET BOT TRAY CLOSE */
+
+/*--------------------------CLOSE BOT TRAY--------------------------*/
+
 router.post("/closeBotTray/:location", async (req, res, next) => {
   try {
     let data = await warehouseInController.closeBotTrayGet(req.params.location);
@@ -616,7 +673,9 @@ router.post("/closeBotTray/:location", async (req, res, next) => {
     next(error);
   }
 });
-/* SUMMERY OF BOT BAG AND TRAY */
+
+/*--------------------------SUMMERY OF BAG AFTER BOT DONE--------------------------*/
+
 router.post("/summeryBotTrayBag/:bagId", async (req, res, next) => {
   try {
     let data = await warehouseInController.getSummeryBotTray(req.params.bagId);
@@ -633,43 +692,9 @@ router.post("/summeryBotTrayBag/:bagId", async (req, res, next) => {
     next(error);
   }
 });
-/**********************************PICKLIST********************************************** */
-/* GET PICKLIST DATA */
-router.post("/picklist/:location", async (req, res, next) => {
-  try {
-    let date = new Date(); // Today!
-    date.setDate(date.getDate() - 1);
-    let data = await warehouseInController.picklistRequest(
-      date,
-      req.params.location
-    );
-    if (data) {
-      res.status(200).json({
-        data: data,
-      });
-    }
-  } catch (error) {
-    next(error);
-  }
-});
-/* PICKLIST PAGE VIEW */
-router.post("/viewModelClub", async (req, res, next) => {
-  try {
-    const { listId, vendor_sku_id } = req.body;
-    let data = await warehouseInController.viewModelClubItem(
-      listId,
-      vendor_sku_id
-    );
-    if (data) {
-      res.status(200).json({
-        data: data,
-      });
-    }
-  } catch (error) {
-    next(error);
-  }
-});
-/* ASSIGN NEW WHT TRAY GET TRAY */
+
+/*--------------------------GET WHT TRAY--------------------------*/
+
 router.post("/getWhtTray", async (req, res, next) => {
   try {
     const { type, brand_name, model_name, location } = req.body;
@@ -688,7 +713,9 @@ router.post("/getWhtTray", async (req, res, next) => {
     next(error);
   }
 });
-/* ITEMS ASSIGNED TO WHT TRAY */
+
+/*--------------------------ITEM ASSIGNED TO WHT TRAY--------------------------*/
+
 router.post("/itemAssignToWht", async (req, res, next) => {
   try {
     let data = await warehouseInController.assignToWht(req.body);
@@ -701,7 +728,9 @@ router.post("/itemAssignToWht", async (req, res, next) => {
     next(error);
   }
 });
-/* GET ASSIGNED TRAY */
+
+/*--------------------------FIND ASSIGNED TRAY--------------------------*/
+
 router.post("/getAssignedTray", async (req, res, next) => {
   try {
     let data = await warehouseInController.getAssignedTray(req.body);
@@ -714,7 +743,9 @@ router.post("/getAssignedTray", async (req, res, next) => {
     next(error);
   }
 });
-/* PULL ITEM FROM WHT TRAY */
+
+/*--------------------------REMOVE FROM ITEM WHT FROM BOT TO WHT PAGE SCREEEN--------------------------*/
+
 router.post("/removeItemWht", async (req, res, next) => {
   try {
     let data = await warehouseInController.removeWhtTrayItem(req.body);
@@ -727,21 +758,9 @@ router.post("/removeItemWht", async (req, res, next) => {
     next(error);
   }
 });
-/* CREATE PICKLIST */
-router.post("/createPickList", async (req, res, next) => {
-  try {
-    let data = await warehouseInController.createPickList(req.body);
-    if (data) {
-      res.status(200).json({
-        message: "Successfully Created",
-      });
-    }
-  } catch (error) {
-    next(error);
-  }
-});
-/**********************************WHT TRAY******************************* */
-/* ALL WHT TRAY */
+
+/*--------------------------ALL WHT TRAY--------------------------*/
+
 router.post("/whtTray/:location/:type", async (req, res, next) => {
   try {
     const { location, type } = req.params;
@@ -755,7 +774,9 @@ router.post("/whtTray/:location/:type", async (req, res, next) => {
     next(error);
   }
 });
-/* IN USE WHT TRAY */
+
+/*--------------------------IN USE WHT TRAY--------------------------*/
+
 router.post("/wht-tray/:status/:location", async (req, res, next) => {
   try {
     console.log(req.params);
@@ -772,21 +793,8 @@ router.post("/wht-tray/:status/:location", async (req, res, next) => {
     next(error);
   }
 });
-/***************************************PICKLIST DATE WISE SORTING*************************************** */
-router.post("/picklist-sort", async (req, res, next) => {
-  try {
-    const { date, location } = req.body;
-    let data = await warehouseInController.sortPicklist(date, location);
-    if (data) {
-      res.status(200).json({
-        data: data,
-      });
-    }
-  } catch (error) {
-    next(error);
-  }
-});
-/*************************************GET WHT TRAY ITEM******************************************** */
+
+/*--------------------------FIND WHT TRAY ITEM--------------------------*/
 router.post("/getWhtTrayItem/:trayId/:sortId", async (req, res, next) => {
   try {
     const { trayId, sortId } = req.params;
@@ -809,114 +817,9 @@ router.post("/getWhtTrayItem/:trayId/:sortId", async (req, res, next) => {
     next(error);
   }
 });
-/* Print picklist */
-router.post("/getPickList/:pick_list_id", async (req, res, next) => {
-  try {
-    let data = await warehouseInController.getPickList(req.params.pick_list_id);
-    if (data) {
-      res.status(200).json({
-        data: data,
-      });
-    }
-  } catch (error) {
-    next(error);
-  }
-});
-/* PICKLIST CONFIRMATION */
-router.post("/actualPickList", async (req, res, next) => {
-  try {
-    const { uic, pickListId } = req.body;
-    let data = await warehouseInController.actualPickListUicCheck(
-      uic,
-      pickListId
-    );
-    if (data.status == 1) {
-      res.status(200).json({
-        data: uic,
-      });
-    } else if (data.status == 2) {
-      res.status(202).json({
-        message: "Invalid UIC",
-      });
-    } else if (data.status == 3) {
-      res.status(202).json({
-        message: "Already Added",
-      });
-    } else {
-      res.status(202).json({
-        message: "Not Exists",
-      });
-    }
-  } catch (error) {
-    next(error);
-  }
-});
-/* Add Picklist actual items */
-router.post("/add-actual-picklist-item", async (req, res, next) => {
-  try {
-    let data = await warehouseInController.addActualPickListItem(req.body);
-    if (data) {
-      res.status(200).json({
-        message: "Successfully Added",
-      });
-    } else {
-      res.status(202).json({
-        message: "Failed",
-      });
-    }
-  } catch (error) {
-    next(error);
-  }
-});
-/* Remove Actual Item */
-router.post("/remove-actual-picklist", async (req, res, next) => {
-  try {
-    let data = await warehouseInController.picklistActualRemoveItem(req.body);
-    if (data) {
-      res.status(200).json({
-        message: "Successfully Removed",
-      });
-    } else {
-      res.status(202).json({
-        message: "Failed",
-      });
-    }
-  } catch (error) {
-    next(error);
-  }
-});
-/* CLOSE PICK LIST */
-router.post("/close-pick-list/:pickListId", async (req, res, next) => {
-  try {
-    let data = await warehouseInController.closePicklist(req.params.pickListId);
-    if (data) {
-      res.status(200).json({
-        message: "Successfully Closed",
-      });
-    } else {
-      res.status(202).json({
-        message: "Failed",
-      });
-    }
-  } catch (error) {
-    next(error);
-  }
-});
-/* GET ALL PICKLIST */
-router.post("/get-all-pick-list", async (req, res, next) => {
-  try {
-    let data = await warehouseInController.getAllPicklist();
-    if (data) {
-      res.status(200).json({
-        data: data,
-      });
-    }
-  } catch (error) {
-    next(error);
-  }
-});
-/********************************************WHT TRAY REQUEST TO CHARGING ASSIGN***************************************************** */
-/* SEND WHT TRAY TO MIS CHARGING APPROVE */
+
+/*--------------------------SEND WHT TRAY TO MIS CHARGING APPROVE--------------------------*/
+
 router.post("/send-wh-mis-whtTray", async (req, res, next) => {
   try {
     let data = await warehouseInController.sendToMisWhtApproveCharging(
@@ -935,7 +838,9 @@ router.post("/send-wh-mis-whtTray", async (req, res, next) => {
     next(error);
   }
 });
-/* CHARGING REQUEST RECIEVED*/
+
+/*--------------------------CHARGING REQUEST RECEIVED--------------------------*/
+
 router.post("/request-for-assign/:status/:location", async (req, res, next) => {
   try {
     let data = await warehouseInController.getChargingRequest(
@@ -951,7 +856,9 @@ router.post("/request-for-assign/:status/:location", async (req, res, next) => {
     next(error);
   }
 });
-/* CHECK UIC CODE */
+
+/*--------------------------CHECK UIC--------------------------*/
+
 router.post("/check-uic", async (req, res, next) => {
   try {
     const { trayId, uic } = req.body;
@@ -980,7 +887,9 @@ router.post("/check-uic", async (req, res, next) => {
     next(error);
   }
 });
-/* ADD ATUCAL ITEM TO WHT TRAY */
+
+/*--------------------------WHT ADD ACTUAL ITEM--------------------------*/
+
 router.post("/wht-add-actual-item", async (req, res, next) => {
   try {
     let data = await warehouseInController.addWhtActual(req.body);
@@ -1001,7 +910,9 @@ router.post("/wht-add-actual-item", async (req, res, next) => {
     next(error);
   }
 });
-/* WHT TRAY ASSIGN TO CHARGING FROM WAREHOUSE */
+
+/*--------------------------WHT TRAY ASSIGN TO CHARGING FROM WAREHOUSE--------------------------*/
+
 router.post("/issue-to-agent-wht", async (req, res, next) => {
   try {
     let data = await warehouseInController.issueToagentWht(req.body);
@@ -1018,7 +929,9 @@ router.post("/issue-to-agent-wht", async (req, res, next) => {
     next(error);
   }
 });
-/* TRAY RETURN FROM CHARGING*/
+
+/*--------------------------TRAY RETURN FROM CHARGING--------------------------*/
+
 router.post("/wht-return-from-charging/:location", async (req, res, next) => {
   try {
     let data = await warehouseInController.returnFromChargingWht(
@@ -1033,7 +946,9 @@ router.post("/wht-return-from-charging/:location", async (req, res, next) => {
     next(error);
   }
 });
-/* GET TRAY AFTER RECIEVED BY WAREHOUSE CHARGING DONE */
+
+/*--------------------------GET TRAY AFTER RECIEVED BY WAREHOUSE CHARGING DONE--------------------------*/
+
 router.post(
   "/charging-done-recieved/:trayId/:sortId",
   async (req, res, next) => {
@@ -1061,8 +976,8 @@ router.post(
     }
   }
 );
-/* UIC CHECKING */
-/* CHECK UIC CODE */
+
+/*--------------------------CHECK UIC CODE CHARGING DONE--------------------------*/
 router.post("/check-uic-charging-done", async (req, res, next) => {
   try {
     const { trayId, uic } = req.body;
@@ -1090,7 +1005,7 @@ router.post("/check-uic-charging-done", async (req, res, next) => {
   }
 });
 
-/* CHECK UIC CODE */
+/*--------------------------CHECK UIC CODE SORTING DONE--------------------------*/
 router.post("/check-uic-sorting-done", async (req, res, next) => {
   try {
     const { trayId, uic } = req.body;
@@ -1117,8 +1032,9 @@ router.post("/check-uic-sorting-done", async (req, res, next) => {
     next(error);
   }
 });
-/* CHARGING DONE WAREHOUSE RECEIVED THE TRAY THEN EXTUAL AND EXPECTED */
-/* Check AWBN NUMBER */
+
+/*--------------------------CHARGING DONE WAREHOUSE RECEIVED THE TRAY THEN EXTUAL AND EXPECTED--------------------------*/
+
 router.post("/charging-done-put-item", async (req, res, next) => {
   try {
     let data = await warehouseInController.chargingDoneActualItemPut(req.body);
@@ -1135,7 +1051,9 @@ router.post("/charging-done-put-item", async (req, res, next) => {
     next(error);
   }
 });
-/* Check AWBN NUMBER */
+
+/*--------------------------Check UIC NUMBER --------------------------*/
+
 router.post("/sorting-done-put-item", async (req, res, next) => {
   try {
     let data = await warehouseInController.sortingDoneActualItemPut(req.body);
@@ -1156,7 +1074,9 @@ router.post("/sorting-done-put-item", async (req, res, next) => {
     next(error);
   }
 });
-/* WHT TRAY CLOSE BY WAREHOSUE WHEN CHARGE IS DONE THEN RECEIVE AND CLOSE */
+
+/*--------------------------WHT TRAY CLOSE BY WAREHOSUE  SEND TO NEXT SECTION--------------------------*/
+
 router.post("/close-wht-tray-ready-to-next", async (req, res, next) => {
   try {
     let data = await warehouseInController.readyToBqc(req.body);
@@ -1174,12 +1094,15 @@ router.post("/close-wht-tray-ready-to-next", async (req, res, next) => {
   }
 });
 
-/*-------------------------------AUDIT DONE CLOSE BY WAREHOUSE-------------------------------------------- */
-/* WHT TRAY CLOSE BY WAREHOSUE WHEN CHARGE IS DONE THEN RECEIVE AND CLOSE */
+/*--------------------------AUDIT DONE CLOSE --------------------------*/
 router.post("/auditDoneClose", async (req, res, next) => {
   try {
     let data = await warehouseInController.auditDoneClose(req.body);
-    if (data) {
+    if (data.status == 1) {
+      res.status(200).json({
+        message: "Successfully Closed Ready to RDL",
+      });
+    } else if (data.status == 2) {
       res.status(200).json({
         message: "Successfully Closed",
       });
@@ -1193,7 +1116,8 @@ router.post("/auditDoneClose", async (req, res, next) => {
   }
 });
 
-/* TRAY RETURN FROM CHARGING*/
+/*--------------------------RETURN FROM AGENT --------------------------*/
+
 router.post("/return-from-bqc-wht/:location", async (req, res, next) => {
   try {
     let data = await warehouseInController.returnFromBqcWht(
@@ -1223,7 +1147,9 @@ router.post("/retunrFromAudit/:location", async (req, res, next) => {
     next(error);
   }
 });
-/* TRAY RETURN FROM CHARGING*/
+
+/*---------------------RETURN FROM SORTING--------------------------------*/
+
 router.post("/return-from-sorting-wht/:location", async (req, res, next) => {
   try {
     let data = await warehouseInController.returnFromBSorting(
@@ -1238,7 +1164,9 @@ router.post("/return-from-sorting-wht/:location", async (req, res, next) => {
     next(error);
   }
 });
-/* ACCEPTE AFTER BQC DONE */
+
+/*---------------------REDCIEVED FROM BQCK--------------------------------*/
+
 router.post("/recieved-from-bqc", async (req, res, next) => {
   try {
     let data = await warehouseInController.bqcDoneRecieved(req.body);
@@ -1274,7 +1202,8 @@ router.post("/recievedFromOtherTray", async (req, res, next) => {
   }
 });
 
-/* ACCEPTE AFTER BQC DONE */
+/*---------------------REDCIEVED FROM SORTING--------------------------------*/
+
 router.post("/recieved-from-sorting", async (req, res, next) => {
   try {
     let data = await warehouseInController.sortingDoneRecieved(req.body);
@@ -1291,8 +1220,9 @@ router.post("/recieved-from-sorting", async (req, res, next) => {
     next(error);
   }
 });
-/*********************************************TRAY ISSUE TO SORTING AGENT*********************************************** */
-/* GET WHT AND BOT TRAY SORTING REQUESTS */
+
+/*---------------------GET WHT AND BOT TRAY SORTING REQUESTS --------------------------------*/
+
 router.post("/get-tray-sorting-requests/:username", async (req, res, next) => {
   try {
     const { username } = req.params;
@@ -1312,7 +1242,8 @@ router.post("/get-tray-sorting-requests/:username", async (req, res, next) => {
     next(error);
   }
 });
-/* GET TRAY */
+
+/*---------------------GET TRAY--------------------------------*/
 router.post("/get-tray-sorting/:trayId", async (req, res, next) => {
   try {
     const { trayId } = req.params;
@@ -1334,7 +1265,9 @@ router.post("/get-tray-sorting/:trayId", async (req, res, next) => {
     next(error);
   }
 });
-/*BOT TRAY AND WHT TRAY ASSIGN TO AGENT */
+
+/*---------------------BOT TRAY AND WHT TRAY ASSIGN TO AGENT--------------------------------*/
+
 router.post("/assign-to-sorting-confirm", async (req, res, next) => {
   try {
     let data = await warehouseInController.assignToSortingConfirm(req.body);
@@ -1357,7 +1290,9 @@ router.post("/assign-to-sorting-confirm", async (req, res, next) => {
     next(error);
   }
 });
-/* WHT TRAY RETURN FROM SORTING AGENT IF TRAY IS FULL READY TO CHARGING */
+
+/*--------------------- WHT TRAY RETURN FROM SORTING AGENT IF TRAY IS FULL READY TO CHARGING --------------------------------*/
+
 router.post("/wht-tray-close-from-sorting", async (req, res, next) => {
   try {
     let data = await warehouseInController.whtTrayCloseAfterSorting(req.body);
@@ -1374,7 +1309,9 @@ router.post("/wht-tray-close-from-sorting", async (req, res, next) => {
     next(error);
   }
 });
-/***************************************MMT AND PMT DAILY WAISE REPORT************************************************************ */
+
+/*--------------------- MMT AND PMT DAILY WAISE REPORT --------------------------------*/
+
 router.post("/mmt-pmt-report", async (req, res, next) => {
   try {
     let data = await warehouseInController.getReportMmtPmt(req.body);
@@ -1387,7 +1324,8 @@ router.post("/mmt-pmt-report", async (req, res, next) => {
     next(error);
   }
 });
-/* SORT REPORT */
+
+/*--------------------- SORT REPORT--------------------------------*/
 router.post("/sort-mmt-pmt-report", async (req, res, next) => {
   try {
     let data = await warehouseInController.getReportMmtPmtSort(req.body);
@@ -1400,7 +1338,8 @@ router.post("/sort-mmt-pmt-report", async (req, res, next) => {
     next(error);
   }
 });
-/* GET BOT TRAY READY / ASSIGNED MERGE WITH WHT*/
+
+/*--------------------- GET BOT TRAY READY / ASSIGNED MERGE WITH WHT--------------------------------*/
 router.post("/getBotTrayReportScreen/:location", async (req, res, next) => {
   try {
     const { location } = req.params;
@@ -1414,7 +1353,9 @@ router.post("/getBotTrayReportScreen/:location", async (req, res, next) => {
     next(error);
   }
 });
-/* BOT TRAY REPORT */
+
+/*--------------------- BOT TRAY REPORT--------------------------------*/
+
 router.post("/bot-tray-report", async (req, res, next) => {
   try {
     const { location, botTray } = req.body;
@@ -1441,7 +1382,8 @@ router.post("/bot-tray-report", async (req, res, next) => {
     next(error);
   }
 });
-/* GET TRAY ITEM DETAILS BASED ON THE BRAND AND MODEL */
+
+/*---------------------GET TRAY ITEM DETAILS BASED ON THE BRAND AND MODEL--------------------------------*/
 router.post(
   "/bot-tray-report-item-details/:location/:trayId/:muic",
   async (req, res, next) => {
@@ -1467,7 +1409,9 @@ router.post(
     }
   }
 );
-/* MMT MERGE */
+
+/*---------------------MMT MERGE--------------------------------*/
+
 router.post("/mmtMergeRequest/:location", async (req, res, next) => {
   try {
     const { location } = req.params;
@@ -1481,7 +1425,8 @@ router.post("/mmtMergeRequest/:location", async (req, res, next) => {
     next(error);
   }
 });
-/* VIEW FROM AND TO TRAY FOR MERGE */
+
+/*---------------------VIEW FROM AND TO TRAY FOR MERGE--------------------------------*/
 router.post(
   "/viewTrayFromAndTo/:location/:fromTray",
   async (req, res, next) => {
@@ -1506,7 +1451,8 @@ router.post(
     }
   }
 );
-/* MMT TRAY SEND TO SORTING AGENT CONFIRM */
+
+/*---------------------MMT TRAY SEND TO SORTING AGENT CONFIRM--------------------------------*/
 router.post("/mmtTraySendToSorting", async (req, res, next) => {
   try {
     console.log(req.body);
@@ -1534,7 +1480,8 @@ router.post("/mmtTraySendToSorting", async (req, res, next) => {
     next(error);
   }
 });
-/* RETURN FROM MERGING */
+
+/*---------------------RETURN FROM MERGING--------------------------------*/
 router.post("/returnFromMerging/:location", async (req, res, next) => {
   try {
     const { location } = req.params;
@@ -1548,10 +1495,11 @@ router.post("/returnFromMerging/:location", async (req, res, next) => {
     next(error);
   }
 });
-/* AFTER MERGE IS DONE CLOSE MMT TRAY */
+
+/*--------------------- AFTER MERGE IS DONE CLOSE MMT TRAY--------------------------------*/
 router.post("/mergeDoneMmttrayClose", async (req, res, next) => {
   try {
-    const { toTray, fromTray, type, length, limit,status } = req.body;
+    const { toTray, fromTray, type, length, limit, status } = req.body;
     let data = await warehouseInController.mergeDoneTrayClose(
       fromTray,
       toTray,
@@ -1573,55 +1521,12 @@ router.post("/mergeDoneMmttrayClose", async (req, res, next) => {
     next(error);
   }
 });
-/* ASSIGNMENT OF MMT AND WHT AND BOT FOR SORTING USER_CHECKING */
+
+/*--------------------- ASSIGNMENT OF MMT AND WHT AND BOT FOR SORTING USER_CHECKING--------------------------------*/
 router.post("/sortingAgnetStatus/:username", async (req, res, next) => {
   try {
     const { username } = req.params;
     let data = await warehouseInController.getSortingAgentStatus(username);
-    if (data.status === 1) {
-      res.status(200).json({
-        data: "User is free",
-      });
-    } else if (data.status === 2) {
-      res.status(200).json({
-        data: "Agent already have a lot",
-      });
-    } else if (data.status === 3) {
-      res.status(200).json({
-        data: "User not active",
-      });
-    }
-  } catch (error) {
-    next(error);
-  }
-});
-/* CHECK CHARGING USER STATUS */
-router.post("/chargingAgentStatus/:username", async (req, res, next) => {
-  try {
-    const { username } = req.params;
-    let data = await warehouseInController.checkChargingAgentStatus(username);
-    if (data.status === 1) {
-      res.status(200).json({
-        data: "User is free",
-      });
-    } else if (data.status === 2) {
-      res.status(200).json({
-        data: "Agent already have a lot",
-      });
-    } else if (data.status === 3) {
-      res.status(200).json({
-        data: "User not active",
-      });
-    }
-  } catch (error) {
-    next(error);
-  }
-});
-/* CHECK CHARGING USER STATUS */
-router.post("/bqcAgentStatus/:username", async (req, res, next) => {
-  try {
-    const { username } = req.params;
-    let data = await warehouseInController.checkBqcAgentStatus(username);
     if (data.status === 1) {
       res.status(200).json({
         data: "User is free",
@@ -1754,13 +1659,18 @@ router.post("/wht-relase/:trayId", async (req, res, next) => {
   }
 });
 
-/*----------------------------------------------------------------------------------------------------*/
+/*----------------------------------------------------AUDIT USER TRAY FOR ASSIGN------------------------------------------------*/
 
 router.post("/auditUserTrayForAssign", async (req, res, next) => {
   try {
-    const { username, tray_type,tray_id,location } = req.body;
+    const { username, tray_type, tray_id, location } = req.body;
     console.log(req.body);
-    let data = await warehouseInController.auditUserTray(username, tray_type,tray_id,location);
+    let data = await warehouseInController.auditUserTray(
+      username,
+      tray_type,
+      tray_id,
+      location
+    );
     console.log(data);
     if (data.status === 1) {
       res.status(200).json({
@@ -1777,14 +1687,12 @@ router.post("/auditUserTrayForAssign", async (req, res, next) => {
         message: `Not a  ${tray_type} tray`,
         trayStatus: data.tray_status,
       });
-    }
-    else if (data.status == 4) {
+    } else if (data.status == 4) {
       res.status(202).json({
         message: `Tray id does not exists`,
         trayStatus: "",
       });
-    }
-    else if (data.status == 5) {
+    } else if (data.status == 5) {
       res.status(202).json({
         message: `Tray is in process`,
         trayStatus: data.tray_status,
@@ -1796,22 +1704,20 @@ router.post("/auditUserTrayForAssign", async (req, res, next) => {
 });
 
 /* -------------------------TRAY ASSIGN TO AUDIT------------------------------*/
-router.post("/oneTrayAssigToAudit",async(req,res,next)=>{
+router.post("/oneTrayAssigToAudit", async (req, res, next) => {
   try {
-    let data=await warehouseInController.oneTrayAssignToAudit(req.body)
-    if(data){
+    let data = await warehouseInController.oneTrayAssignToAudit(req.body);
+    if (data) {
       res.status(200).json({
-        message:"Successfully Assigned"
-      })
-    }
-    else{
+        message: "Successfully Assigned",
+      });
+    } else {
       res.status(200).json({
-        message:"Failed tray again"
-      })
+        message: "Failed tray again",
+      });
     }
-
   } catch (error) {
-    next(error)
+    next(error);
   }
-})
+});
 module.exports = router;

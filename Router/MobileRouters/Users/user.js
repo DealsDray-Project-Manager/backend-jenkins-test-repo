@@ -5,7 +5,7 @@ const router = express.Router();
 // Mobile user controller
 const userController = require("../../../Controller/MobileRouter/userRouter");
 // SendGrid for email sending
-const sendGrid = require("../../../utils/sendGrid");
+const sendGrid = require("../../../Utils/sendGrid");
 
 // User Login using email
 router.get("/otp/send", async (req, res, next) => {

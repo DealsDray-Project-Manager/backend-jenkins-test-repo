@@ -12,7 +12,7 @@ const connectDb = require("./config/db");
 const cors = require("cors");
 connectDb();
 /* NODE CRON */
-const corn = require("./utils/node-corn")();
+const corn = require("./Utils/node-cron")();
 // Routers
 const superAdmin = require("./Router/superAdmin/superAdminRouter");
 const mobileUserRouter = require("./Router/MobileRouters/Users/user");

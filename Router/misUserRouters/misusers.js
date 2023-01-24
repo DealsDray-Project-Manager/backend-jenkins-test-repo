@@ -4,7 +4,7 @@ const router = express.Router();
 // user controller
 const misUserController = require("../../Controller/misUser/misUserController");
 // Multer
-const upload = require("../../utils/multer");
+const upload = require("../../Utils/multer");
 /*******************************************************************************************************************/
 /********************************************ORDERS*****************************************************************/
 /* Bulk Orders Validation */

@@ -50,7 +50,6 @@ exports = module.exports = () => {
           result.push(toLowerKeys(data));
         })
         .on("end", async () => {
-          
           for (let x of result) {
             let updateBqcData = await delivery.updateOne(
               { "uic_code.code": x.uic },
