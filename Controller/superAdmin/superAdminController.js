@@ -12,8 +12,7 @@ const {
 } = require("../../Model/masterHistoryModel/mastersHistory");
 const moment = require("moment");
 const IISDOMAIN = "http://prexo-v6-dev-api.dealsdray.com/user/profile/";
-const IISDOMAINPRDT =
-  "http://prexo-v6-dev-api.dealsdray.com/product/image/";
+const IISDOMAINPRDT = "http://prexo-v6-dev-api.dealsdray.com/product/image/";
 
 /************************************************************************************************** */
 module.exports = {
@@ -1379,7 +1378,7 @@ module.exports = {
       }
     });
   },
-  readyForCharging: (trayId,status) => {
+  readyForCharging: (trayId, status) => {
     return new Promise(async (resolve, reject) => {
       let flag = false;
       for (let x of trayId) {
@@ -1463,7 +1462,6 @@ module.exports = {
   },
   chargeDoneTrayFourDayDiff: () => {
     return new Promise(async (resolve, reject) => {
-      var today = new Date(Date.now());
       let tray = await masters.find({
         prefix: "tray-master",
         sort_id: "Ready to BQC",
@@ -1471,6 +1469,7 @@ module.exports = {
       if (tray) {
         let arr = [];
         for (let x of tray) {
+          var today = new Date(Date.now());
           if (
             new Date(x.closed_time_bot) <=
             new Date(today.setDate(today.getDate() - 4))

@@ -8,8 +8,9 @@ const upload = require("../../utils/multer");
 // jwt token
 const jwt = require("../../utils/jwt_token");
 /* FS */
-var fs = require("fs");
-
+const fs = require("fs");
+/* ELASTIC SEARCH */
+const elasticsearch = require("../../Elastic-search/elastic")
 /**************************************************************************************************/
 
 /*--------------------------------CREATE USERS-----------------------------------*/
@@ -1136,11 +1137,12 @@ router.post("/itemTracking/:page/:size", async (req, res, next) => {
 router.post("/search-admin-track-item", async (req, res, next) => {
   try {
     const { type, searchData, location } = req.body;
-    let data = await superAdminController.searchAdminTrackItem(
-      type,
-      searchData,
-      location
-    );
+    let data=await elasticsearch.searchData(searchData)
+    // let data = await superAdminController.searchAdminTrackItem(
+    //   type,
+    //   searchData,
+    //   location
+    // );
     if (data) {
       res.status(200).json({
         data: data,
