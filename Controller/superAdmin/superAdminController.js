@@ -1646,25 +1646,25 @@ module.exports = {
                 body_damage_des: y?.body_damage_des,
                 model_brand: y?.model_brand,
               };
+              let updateDelivery = await delivery.updateOne(
+                { tracking_id: y.tracking_id },
+                {
+                  $set: {
+                    bot_report: obj,
+                  },
+                }
+              );
             } else {
-              obj = {
-                stickerOne: y?.stickerOne,
-                stickerTwo: y?.stickerTwo,
-                stickerThree: y?.stickerThree,
-                stickerFour: y?.stickerFour,
-                body_damage: y?.body_damage,
-                body_damage_des: y?.body_damage_des,
-                model_brand: y?.model_brand,
-              };
+              let updateDelivery = await delivery.updateOne(
+                { tracking_id: y.tracking_id },
+                {
+                  $set: {
+                    bot_report: y?.bot_eval_result,
+                  },
+                }
+              );
             }
-            let updateDelivery = await delivery.updateOne(
-              { tracking_id: y.tracking_id },
-              {
-                $set: {
-                  bot_report: obj,
-                },
-              }
-            );
+           
           }
         }
       }

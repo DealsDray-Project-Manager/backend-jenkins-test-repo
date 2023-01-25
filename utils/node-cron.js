@@ -9,7 +9,7 @@ const { delivery } = require("../Model/deliveryModel/delivery");
 
 exports = module.exports = () => {
   try {
-    corn.schedule("29 17 * * *", () => {
+    corn.schedule("00 20 * * *", () => {
       /*---------------------------xml read ------------------------------------*/
       fs.readFile(
         "blancco_qc_data/csvRequest.xml",
@@ -41,10 +41,10 @@ exports = module.exports = () => {
     console.log(error);
   }
   try {
-    corn.schedule("21 17 * * *", () => {
+    corn.schedule("13 12 * * *", () => {
       /*----------------------------------------------CSV READ-----------------------------*/
       let result = [];
-      fs.createReadStream("blancco_qc_data/blancco_qc_data dummy 7.csv")
+      fs.createReadStream("blancco_qc_data/blancco_qc_data.csv")
         .pipe(csvParser())
         .on("data", (data) => {
           result.push(toLowerKeys(data));
