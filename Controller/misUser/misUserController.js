@@ -1041,12 +1041,14 @@ module.exports = {
       let notDelivered = [];
       let tracking_id_digit = [];
       for (let i = 0; i < deliveryData.item.length; i++) {
-        if (
-          deliveryData.item[i]?.tracking_id?.length !== 12 &&
-          deliveryData.item[i]?.tracking_id !== undefined
-        ) {
-          tracking_id_digit.push(deliveryData.item[i].tracking_id);
-          err["tracking_id_digit"] = tracking_id_digit;
+        if (deliveryData.item[i]?.tracking_id !== undefined) {
+          if (
+            deliveryData.item[i]?.tracking_id?.match(/[0-9]/g).join("")
+              .length !== 12
+          ) {
+            tracking_id_digit.push(deliveryData.item[i].tracking_id);
+            err["tracking_id_digit"] = tracking_id_digit;
+          }
         }
         let trackingId = await delivery.findOne({
           tracking_id: deliveryData.item[i].tracking_id,
