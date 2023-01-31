@@ -935,94 +935,102 @@ module.exports = {
       if (trayData.type === "charging") {
         let data;
         let tray = await masters.findOne({ code: trayData.trayId });
-        if (tray.sort_id == "Recharge Done") {
-          data = await masters.findOneAndUpdate(
-            { code: trayData.trayId },
-            {
-              $set: {
-                sort_id: "Received From Recharging",
-              },
-            }
-          );
-        } else {
-          data = await masters.findOneAndUpdate(
-            { code: trayData.trayId },
-            {
-              $set: {
-                sort_id: "Received From Charging",
-              },
-            }
-          );
-        }
-        if (data) {
-          for (let i = 0; i < data.actual_items.length; i++) {
-            let deliveryTrack = await delivery.updateMany(
-              { tracking_id: data.actual_items[i].tracking_id },
+        if (tray.actual_items?.length == trayData.counts) {
+          if (tray.sort_id == "Recharge Done") {
+            data = await masters.findOneAndUpdate(
+              { code: trayData.trayId },
               {
                 $set: {
-                  tray_status: "Received From Charging",
-                  tray_location: "Warehouse",
-                  charging_done_received: Date.now(),
+                  sort_id: "Received From Recharging",
+                },
+              }
+            );
+          } else {
+            data = await masters.findOneAndUpdate(
+              { code: trayData.trayId },
+              {
+                $set: {
+                  sort_id: "Received From Charging",
                 },
               }
             );
           }
-          resolve({ status: 1 });
+          if (data) {
+            for (let i = 0; i < data.actual_items.length; i++) {
+              let deliveryTrack = await delivery.updateMany(
+                { tracking_id: data.actual_items[i].tracking_id },
+                {
+                  $set: {
+                    tray_status: "Received From Charging",
+                    tray_location: "Warehouse",
+                    charging_done_received: Date.now(),
+                  },
+                }
+              );
+            }
+            resolve({ status: 1 });
+          } else {
+            resolve({ status: 2 });
+          }
         } else {
-          resolve({ status: 2 });
+          resolve({ status: 3 });
         }
       } else if (trayData.type == "Merging Done") {
         let checktray = await masters.findOne({ code: trayData.trayId });
-        if (checktray.sort_id == "Audit Done Return from Merging") {
-          let data = await masters.findOneAndUpdate(
-            { code: trayData.trayId },
-            {
-              $set: {
-                sort_id: "Audit Done Received From Merging",
-              },
+        if (checktray?.items?.length == trayData.counts) {
+          if (checktray.sort_id == "Audit Done Return from Merging") {
+            let data = await masters.findOneAndUpdate(
+              { code: trayData.trayId },
+              {
+                $set: {
+                  sort_id: "Audit Done Received From Merging",
+                },
+              }
+            );
+            if (data) {
+              for (let i = 0; i < data.actual_items.length; i++) {
+                let deliveryTrack = await delivery.updateMany(
+                  { tracking_id: data.items[i].awbn_number },
+                  {
+                    $set: {
+                      tray_status: "Audit Done  Received From Merging",
+                      tray_location: "Warehouse",
+                    },
+                  }
+                );
+              }
+              resolve({ status: 1 });
+            } else {
+              resolve({ status: 2 });
             }
-          );
-          if (data) {
-            for (let i = 0; i < data.actual_items.length; i++) {
-              let deliveryTrack = await delivery.updateMany(
-                { tracking_id: data.items[i].awbn_number },
-                {
-                  $set: {
-                    tray_status: "Audit Done  Received From Merging",
-                    tray_location: "Warehouse",
-                  },
-                }
-              );
-            }
-            resolve({ status: 1 });
           } else {
-            resolve({ status: 2 });
+            let data = await masters.findOneAndUpdate(
+              { code: trayData.trayId },
+              {
+                $set: {
+                  sort_id: "Received From Merging",
+                },
+              }
+            );
+            if (data) {
+              for (let i = 0; i < data.actual_items.length; i++) {
+                let deliveryTrack = await delivery.updateMany(
+                  { tracking_id: data.items[i].awbn_number },
+                  {
+                    $set: {
+                      tray_status: "Received From Merging",
+                      tray_location: "Warehouse",
+                    },
+                  }
+                );
+              }
+              resolve({ status: 1 });
+            } else {
+              resolve({ status: 2 });
+            }
           }
         } else {
-          let data = await masters.findOneAndUpdate(
-            { code: trayData.trayId },
-            {
-              $set: {
-                sort_id: "Received From Merging",
-              },
-            }
-          );
-          if (data) {
-            for (let i = 0; i < data.actual_items.length; i++) {
-              let deliveryTrack = await delivery.updateMany(
-                { tracking_id: data.items[i].awbn_number },
-                {
-                  $set: {
-                    tray_status: "Received From Merging",
-                    tray_location: "Warehouse",
-                  },
-                }
-              );
-            }
-            resolve({ status: 1 });
-          } else {
-            resolve({ status: 2 });
-          }
+          resolve({ status: 3 });
         }
       } else {
         let checkCount = await masters.findOne({ code: trayData.trayId });
@@ -2333,9 +2341,9 @@ module.exports = {
   auditDoneClose: (trayData) => {
     return new Promise(async (resolve, reject) => {
       let data;
-      let falg=false
+      let falg = false;
       if (trayData?.length == trayData?.limit) {
-        falg=true
+        falg = true;
         data = await masters.findOneAndUpdate(
           { code: trayData.trayId },
           {
@@ -2376,14 +2384,11 @@ module.exports = {
             }
           );
         }
-        if(falg == true){
-          resolve({status:1})
+        if (falg == true) {
+          resolve({ status: 1 });
+        } else {
+          resolve({ status: 2 });
         }
-        else{
-          resolve({status:2})
-
-        }
-       
       }
     });
   },
@@ -2469,30 +2474,35 @@ module.exports = {
 
   bqcDoneRecieved: (trayData) => {
     return new Promise(async (resolve, reject) => {
-      let data = await masters.findOneAndUpdate(
-        { code: trayData.trayId },
-        {
-          $set: {
-            sort_id: "Received From BQC",
-          },
+      let tray = await masters.findOne({ code: trayData.trayId });
+      if (tray?.actual_items?.length == trayData.counts) {
+        let data = await masters.findOneAndUpdate(
+          { code: trayData.trayId },
+          {
+            $set: {
+              sort_id: "Received From BQC",
+            },
+          }
+        );
+        if (data) {
+          for (let i = 0; i < data.actual_items.length; i++) {
+            let deliveryTrack = await delivery.updateMany(
+              { tracking_id: data.actual_items[i].tracking_id },
+              {
+                $set: {
+                  tray_status: "Received From BQC",
+                  tray_location: "Warehouse",
+                  bqc_done_received: Date.now(),
+                },
+              }
+            );
+          }
+          resolve({ status: 1 });
+        } else {
+          resolve({ status: 2 });
         }
-      );
-      if (data) {
-        for (let i = 0; i < data.actual_items.length; i++) {
-          let deliveryTrack = await delivery.updateMany(
-            { tracking_id: data.actual_items[i].tracking_id },
-            {
-              $set: {
-                tray_status: "Received From BQC",
-                tray_location: "Warehouse",
-                bqc_done_received: Date.now(),
-              },
-            }
-          );
-        }
-        resolve(data);
       } else {
-        resolve(data);
+        resolve({ status: 3 });
       }
     });
   },
@@ -2501,30 +2511,35 @@ module.exports = {
 
   recievedFromAudit: (trayData) => {
     return new Promise(async (resolve, reject) => {
-      let data = await masters.findOneAndUpdate(
-        { code: trayData.trayId },
-        {
-          $set: {
-            sort_id: "Received From Audit",
-          },
+      let tray = await masters.findOne({ code: trayData.trayId });
+      if (tray.items?.length == trayData.counts) {
+        let data = await masters.findOneAndUpdate(
+          { code: trayData.trayId },
+          {
+            $set: {
+              sort_id: "Received From Audit",
+            },
+          }
+        );
+        if (data) {
+          for (let x of data?.items) {
+            let deliveryTrack = await delivery.updateMany(
+              { tracking_id: x.tracking_id },
+              {
+                $set: {
+                  tray_status: "Received From Audit",
+                  tray_location: "Warehouse",
+                  audit_done_recieved: Date.now(),
+                },
+              }
+            );
+          }
+          resolve({ status: 1 });
+        } else {
+          resolve({ status: 3 });
         }
-      );
-      if (data) {
-        for (let x of data?.items) {
-          let deliveryTrack = await delivery.updateMany(
-            { tracking_id: x.tracking_id },
-            {
-              $set: {
-                tray_status: "Received From Audit",
-                tray_location: "Warehouse",
-                audit_done_recieved: Date.now(),
-              },
-            }
-          );
-        }
-        resolve(data);
       } else {
-        resolve(data);
+        resolve({ status: 2 });
       }
     });
   },
@@ -2533,29 +2548,34 @@ module.exports = {
 
   sortingDoneRecieved: (trayData) => {
     return new Promise(async (resolve, reject) => {
-      let data = await masters.findOneAndUpdate(
-        { code: trayData.trayId },
-        {
-          $set: {
-            sort_id: "Received From Sorting",
-          },
-        }
-      );
-      if (data) {
-        for (let x of data.items) {
-          let updateDelivery = await delivery.updateOne(
-            {
-              tracking_id: x.tracking_id,
+      let tray = await masters.findOne({ code: trayData.trayId });
+      if (tray?.items?.length == trayData.counts) {
+        let data = await masters.findOneAndUpdate(
+          { code: trayData.trayId },
+          {
+            $set: {
+              sort_id: "Received From Sorting",
             },
-            {
-              $set: {
-                tray_location: "Warehouse",
-                received_from_sorting: Date.now(),
+          }
+        );
+        if (data) {
+          for (let x of data.items) {
+            let updateDelivery = await delivery.updateOne(
+              {
+                tracking_id: x.tracking_id,
               },
-            }
-          );
+              {
+                $set: {
+                  tray_location: "Warehouse",
+                  received_from_sorting: Date.now(),
+                },
+              }
+            );
+          }
+          resolve({ status: 1 });
         }
-        resolve(data);
+      } else {
+        resolve({ status: 2 });
       }
     });
   },
@@ -3303,7 +3323,13 @@ module.exports = {
     });
   },
 
-  checkTrayStatusAuditApprovePage: (trayId, trayType, location) => {
+  checkTrayStatusAuditApprovePage: (
+    trayId,
+    trayType,
+    location,
+    brand,
+    model
+  ) => {
     return new Promise(async (resolve, reject) => {
       let checkId = await masters.findOne({
         code: trayId,
@@ -3312,6 +3338,8 @@ module.exports = {
       });
       if (checkId == null) {
         resolve({ status: 4 });
+      } else if (checkId?.brand !== brand && checkId?.model !== model) {
+        resolve({ status: 5 });
       } else if (checkId.type_taxanomy == trayType) {
         if (checkId.sort_id == "Open") {
           resolve({ status: 1 });
@@ -3350,6 +3378,7 @@ module.exports = {
                   issued_to_audit: Date.now(),
                   audit_user_name: issue.issued_user_name,
                   tray_status: "Issued to Audit",
+                  "bqc_report.bqc_status": y?.bqc_status,
                 },
               }
             );

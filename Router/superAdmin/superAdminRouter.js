@@ -1301,6 +1301,7 @@ router.post("/sendToRdl", async (req, res, next) => {
 /*-----------------------------EXTRA ONE--------------------------------------*/
 router.post("/update-cpc", async (req, res, next) => {
   try {
+    console.log("d");
     let data = await superAdminController.updateCPCExtra();
     if (data) {
       res.status(200).json({

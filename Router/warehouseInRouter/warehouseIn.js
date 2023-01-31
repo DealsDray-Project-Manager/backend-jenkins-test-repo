@@ -1170,9 +1170,14 @@ router.post("/return-from-sorting-wht/:location", async (req, res, next) => {
 router.post("/recieved-from-bqc", async (req, res, next) => {
   try {
     let data = await warehouseInController.bqcDoneRecieved(req.body);
-    if (data) {
+    if (data.status == 1) {
       res.status(200).json({
         message: "Successfully Received",
+      });
+    }
+    if (data.status == 2) {
+      res.status(202).json({
+        message: "Please Enter Valid Count",
       });
     } else {
       res.status(202).json({
@@ -1188,9 +1193,13 @@ router.post("/recieved-from-bqc", async (req, res, next) => {
 router.post("/recievedFromOtherTray", async (req, res, next) => {
   try {
     let data = await warehouseInController.recievedFromAudit(req.body);
-    if (data) {
+    if (data.status == 1) {
       res.status(200).json({
         message: "Successfully Received",
+      });
+    } else if (data.status == 2) {
+      res.status(202).json({
+        message: "Please Enter Valid Count",
       });
     } else {
       res.status(202).json({
@@ -1207,9 +1216,13 @@ router.post("/recievedFromOtherTray", async (req, res, next) => {
 router.post("/recieved-from-sorting", async (req, res, next) => {
   try {
     let data = await warehouseInController.sortingDoneRecieved(req.body);
-    if (data) {
+    if (data.status == 1) {
       res.status(200).json({
         message: "Successfully Received",
+      });
+    } else if (data.status == 2) {
+      res.status(200).json({
+        message: "Please Enter Valid Count",
       });
     } else {
       res.status(202).json({
@@ -1571,14 +1584,17 @@ router.post("/auditUserStatusChecking/:username", async (req, res, next) => {
 /*----------------------------AUDIT TRAY ASSIGN WITH OTHER TRAY CHECKING------------------------------------------------------*/
 
 router.post(
-  "/trayIdCheckAuditApprovePage/:trayId/:trayType/:location",
+  "/trayIdCheckAuditApprovePage/:trayId/:trayType/:location/:brand/:model",
   async (req, res, next) => {
     try {
-      const { trayId, trayType, location } = req.params;
+      const { trayId, trayType, location, brand, model } = req.params;
+
       let data = await warehouseInController.checkTrayStatusAuditApprovePage(
         trayId,
         trayType,
-        location
+        location,
+        brand,
+        model
       );
       console.log(data);
       if (data.status == 1) {
@@ -1593,6 +1609,10 @@ router.post(
       } else if (data.status == 4) {
         res.status(202).json({
           message: "Tray id does not exists",
+        });
+      } else if (data.status == 5) {
+        res.status(202).json({
+          message: "Mismatch Brand and Model",
         });
       } else {
         res.status(202).json({

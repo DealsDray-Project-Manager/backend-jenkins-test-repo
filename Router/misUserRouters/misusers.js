@@ -816,7 +816,7 @@ router.post("/ready-for-charging-wht", async (req, res, next) => {
 router.post("/toWhtTrayForMerge", async (req, res, next) => {
   try {
     console.log(req.body);
-    const { location, brand, model, fromTray, itemCount,status } = req.body;
+    const { location, brand, model, fromTray, itemCount, status } = req.body;
     let data = await misUserController.toWhtTrayForMerging(
       location,
       brand,
@@ -865,8 +865,7 @@ router.post("/wht-sendTo-wharehouse", async (req, res, next) => {
       res.status(200).json({
         message: "Successfully Requested to Warehouse",
       });
-    }
-    else{
+    } else {
       res.status(202).json({
         message: "Failed Tray Again..",
       });

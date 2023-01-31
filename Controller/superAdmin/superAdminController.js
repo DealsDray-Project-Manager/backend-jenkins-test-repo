@@ -12,9 +12,9 @@ const {
   mastersEditHistory,
 } = require("../../Model/masterHistoryModel/mastersHistory");
 const moment = require("moment");
-const IISDOMAIN = "http://prexo-v7-uat-adminapi.dealsdray.com/user/profile/";
+const IISDOMAIN = "http://prexo-v7-dev-api.dealsdray.com/user/profile/";
 const IISDOMAINPRDT =
-  "http://prexo-v7-uat-adminapi.dealsdray.com/product/image/";
+  "http://prexo-v7-dev-api.dealsdray.com/product/image/";
 
 /************************************************************************************************** */
 
@@ -237,6 +237,7 @@ module.exports = {
             contact: userData.contact,
             email: userData.email,
             last_update_date: Date.now(),
+            profile: profile,
           },
         },
         { returnOriginal: false }
@@ -258,6 +259,7 @@ module.exports = {
           creation_date: userDetails.creation_date,
           last_update_date: userDetails.last_update_date,
           last_otp: userDetails.last_otp,
+          profile: userDetails.profile,
         };
         let historyTab = await usersHistory.create(obj);
         resolve(userDetails);
@@ -1542,7 +1544,6 @@ module.exports = {
 
   chargeDoneTrayFourDayDiff: () => {
     return new Promise(async (resolve, reject) => {
-     
       let tray = await masters.find({
         prefix: "tray-master",
         sort_id: "Ready to BQC",
@@ -1606,22 +1607,18 @@ module.exports = {
 
   updateCPCExtra: () => {
     return new Promise(async (resolve, reject) => {
-      let findData = await masters.findOne({ code: "WHT1290" });
-
-      let arr = findData.temp_array.concat(findData.actual_items);
-      findData.actual_items = arr.concat(findData.items);
-
-      let update = await masters.updateOne(
-        { code: "WHT1290" },
-        {
-          $set: {
-            items: findData.actual_items,
-          },
+      let ordersData=await orders.find()
+      for(let x of ordersData ){
+        let checkDelivery=await delivery.findOne({order_id:x.order_id})
+        if(checkDelivery){
+          let updateStatus=await orders.updateOne({order_id:x.order_id},{
+            $set:{
+              delivery_status: "Delivered",
+            }
+          })
         }
-      );
-      if (update) {
-        resolve(update);
       }
+      resolve(ordersData)
     });
   },
   getUpdateRecord: () => {
@@ -1664,7 +1661,6 @@ module.exports = {
                 }
               );
             }
-           
           }
         }
       }
