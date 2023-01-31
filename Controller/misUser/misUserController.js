@@ -13,6 +13,7 @@ const { pickList } = require("../../Model/picklist_model/model");
 
 module.exports = {
   bulkOrdersValidation: (ordersData) => {
+    console.log("d");
     return new Promise(async (resolve, reject) => {
       let err = {};
       let order_id = [];
@@ -27,9 +28,11 @@ module.exports = {
       let i = 0;
       for (let x of ordersData.item) {
         if (x.order_status == "NEW") {
-          if (x?.tracking_id?.length !== 12 && x.tracking_id !== undefined) {
-            tracking_id.push(x.tracking_id);
-            err["tracking_id"] = tracking_id;
+          if (x.tracking_id !== undefined) {
+            if (x?.tracking_id.match(/[0-9]/g).join("").length !== 12) {
+              tracking_id.push(x.tracking_id);
+              err["tracking_id"] = tracking_id;
+            }
           }
           let orderExists = await orders.findOne({
             order_id: x.order_id,
