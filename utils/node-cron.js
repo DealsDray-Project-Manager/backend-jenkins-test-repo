@@ -41,10 +41,10 @@ exports = module.exports = () => {
     console.log(error);
   }
   try {
-    corn.schedule("13 12 * * *", () => {
+    corn.schedule("29 18 * * *", () => {
       /*----------------------------------------------CSV READ-----------------------------*/
       let result = [];
-      fs.createReadStream("blancco_qc_data/blancco_qc_data.csv")
+      fs.createReadStream("blancco_qc_data/blancco_qc_data-dummy-11.csv")
         .pipe(csvParser())
         .on("data", (data) => {
           result.push(toLowerKeys(data));

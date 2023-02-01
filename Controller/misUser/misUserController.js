@@ -291,7 +291,7 @@ module.exports = {
       let data = await badOrders.find(
         { partner_shop: location },
         { _id: 0, __v: 0 }
-      );
+      ).sort({_id:-1});
       console.log(data);
 
       if (data) {
@@ -1431,7 +1431,7 @@ module.exports = {
       let data = await badDelivery.find(
         { partner_shop: location },
         { _id: 0, __v: 0 }
-      );
+      ).sort({_id:-1});
       if (data) {
         resolve(data);
       }
