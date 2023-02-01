@@ -273,6 +273,7 @@ module.exports = {
             as: "products",
           },
         },
+        { $sort : { _id : -1 } },
         {
           $skip: skip,
         },
@@ -280,7 +281,6 @@ module.exports = {
           $limit: limit,
         },
       ]);
-      console.log(allOrders.length);
       if (allOrders) {
         resolve(allOrders);
       }
@@ -652,6 +652,7 @@ module.exports = {
         {
           $unwind: "$delivery",
         },
+      
         {
           $skip: skip,
         },
@@ -1411,6 +1412,10 @@ module.exports = {
             as: "result",
           },
         },
+        {
+          $sort:{_id:-1}
+        },
+
         {
           $skip: skip,
         },
