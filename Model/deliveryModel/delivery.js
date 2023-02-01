@@ -8,7 +8,7 @@ const deliverySchema = mongoose.Schema({
     index: true,
   },
   order_date: {
-    type: Date,
+    type: String,
   },
   item_id: {
     type: String,
@@ -20,19 +20,19 @@ const deliverySchema = mongoose.Schema({
     type: String,
   },
   partner_purchase_price: {
-    type: Number,
+    type: String,
   },
   partner_shop: {
     type: String,
   },
-  base_disscount: {
-    type: Number,
+  base_discount: {
+    type: String,
   },
   diagnostics_discount: {
-    type: Number,
+    type: String,
   },
   storage_discount: {
-    type: Number,
+    type: String,
   },
   buyback_category: {
     type: String,

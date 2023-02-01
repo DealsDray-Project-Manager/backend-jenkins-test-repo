@@ -8,7 +8,7 @@ const badDeliverySchema = mongoose.Schema({
         type: String
     },
     order_date: {
-        type: Date
+        type: String
     },
     item_id: {
         type: String
@@ -25,14 +25,14 @@ const badDeliverySchema = mongoose.Schema({
     partner_shop: {
         type: String
     },
-    base_disscount: {
-        type: Number
+    base_discount: {
+        type: String
     },
     diagnostics_discount: {
-        type: Number
+        type: String
     },
     storage_discount: {
-        type: Number
+        type: String
     },
     buyback_category: {
         type: String
