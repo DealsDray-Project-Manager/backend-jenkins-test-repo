@@ -28,23 +28,23 @@ app.use(express.json({ limit: "25mb" }));
 app.use(cors());
 app.use(express.urlencoded({ limit: "25mb", extended: false }));
 // API for web
-app.use("/api/v1/superAdmin", superAdmin);
+app.use("/api/v7/superAdmin", superAdmin);
 //API for Mobile
-app.use("/api/mobile/v1/user", mobileUserRouter);
+app.use("/api/mobile/v7/user", mobileUserRouter);
 /* Api for Mis Users */
-app.use("/api/v1/mis", misUser);
+app.use("/api/v7/mis", misUser);
 /* API for WarehouseIn */
-app.use("/api/v1/warehouseIn", warehouseIn);
+app.use("/api/v7/warehouseIn", warehouseIn);
 /* API for Bot Out */
-app.use("/api/v1/bot", bot);
+app.use("/api/v7/bot", bot);
 /* API for Charging panel */
-app.use("/api/v1/charging", chargingPanel);
+app.use("/api/v7/charging", chargingPanel);
 /* API for BQC panel */
-app.use("/api/v1/bqc", bqc);
+app.use("/api/v7/bqc", bqc);
 /* API for SORTING AGNET panel */
-app.use("/api/v1/sorting-agnet", sortingAgent);
+app.use("/api/v7/sorting-agnet", sortingAgent);
 /* API for AUDIT AGNET panel */
-app.use("/api/v1/audit-agent", auditPanel);
+app.use("/api/v7/audit-agent", auditPanel);
 /* User-profile */
 app.use("/user/profile", express.static(__dirname + "/public/user-profile"));
 /* Product Image */
