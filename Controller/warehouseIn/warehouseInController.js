@@ -2450,57 +2450,104 @@ module.exports = {
       }
     });
   },
-  mmtMergerequest: (location) => {
-    return new Promise(async (resolve, reject) => {
-      let getMmttray = await masters
-        .find({
-          sort_id: "Merge Request Sent To Wharehouse",
-          cpc: location,
-          to_merge: { $ne: null },
-        })
-        .catch((err) => reject(err));
-      if (getMmttray) {
-        resolve(getMmttray);
-      }
-    });
-  },
-  getFromAndToTrayMerge: (location, fromTray) => {
-    return new Promise(async (resolve, reject) => {
-      let arr = [];
-      let data = await masters.findOne({ cpc: location, code: fromTray });
-      if (data) {
-        let toTray = await masters.findOne({
-          cpc: location,
-          code: data.to_merge,
-        });
-        arr.push(data);
-        arr.push(toTray);
-        resolve(arr);
-      } else {
-        resolve();
-      }
-    });
-  },
-  assignToSortingAgent: (user_name, fromTray, toTray) => {
-    return new Promise(async (resolve, reject) => {
-      let checkMmtTray = await masters.findOne({
+ 
+mmtMergerequest: (location) => {
+  return new Promise(async (resolve, reject) => {
+    let getMmttray = await masters
+      .find({
         $or: [
           {
-            type_taxanomy: "MMT",
-            prefix: "tray-master",
-            issued_user_name: user_name,
-            sort_id: "Issued to Merging",
+            sort_id: "Merge Request Sent To Wharehouse",
+            cpc: location,
+            to_merge: { $ne: null },
           },
           {
-            type_taxanomy: "MMT",
-            prefix: "tray-master",
-            issued_user_name: user_name,
-            sort_id: "Closed By Sorting",
+            sort_id: "Audit Done Merge Request Sent To Wharehouse",
+            cpc: location,
+            to_merge: { $ne: null },
           },
         ],
+      })
+      .catch((err) => reject(err));
+    if (getMmttray) {
+      resolve(getMmttray);
+    }
+  });
+},
+
+getFromAndToTrayMerge: (location, fromTray) => {
+  return new Promise(async (resolve, reject) => {
+    let arr = [];
+    let data = await masters.findOne({ cpc: location, code: fromTray });
+    if (data) {
+      let toTray = await masters.findOne({
+        cpc: location,
+        code: data.to_merge,
       });
-      if (checkMmtTray) {
-        resolve({ status: 2 });
+      arr.push(data);
+      arr.push(toTray);
+      resolve(arr);
+    } else {
+      resolve();
+    }
+  });
+},
+assignToSortingAgent: (user_name, fromTray, toTray) => {
+  return new Promise(async (resolve, reject) => {
+    let checkFromTray = await masters.findOne({ code: fromTray });
+
+    let checkTray = await masters.findOne({
+      $or: [
+        {
+          prefix: "tray-master",
+          issued_user_name: user_name,
+          sort_id: "Issued to Merging",
+        },
+        {
+          prefix: "tray-master",
+          issued_user_name: user_name,
+          sort_id: "Closed By Sorting",
+        },
+        {
+          prefix: "tray-master",
+          issued_user_name: user_name,
+          sort_id: "Audit Done Issued to Merging",
+        },
+      ],
+    });
+    if (checkTray) {
+      resolve({ status: 2 });
+    } else {
+      if (
+        checkFromTray.sort_id == "Audit Done Merge Request Sent To Wharehouse"
+      ) {
+        let updaFromTray = await masters.updateOne(
+          { code: fromTray },
+          {
+            $set: {
+              assigned_date: Date.now(),
+              sort_id: "Audit Done Issued to Merging",
+            },
+          }
+        );
+        if (updaFromTray.modifiedCount !== 0) {
+          let updaToTray = await masters.updateOne(
+            { code: toTray },
+            {
+              $set: {
+                assigned_date: Date.now(),
+                sort_id: "Audit Done Issued to Merging",
+              },
+            }
+          );
+          if (updaToTray.matchedCount != 0) {
+            resolve({ status: 1 });
+          } else {
+            resolve({ status: 0 });
+          }
+        } else {
+          resolve({ status: 0 });
+        }
       } else {
         let updaFromTray = await masters.updateOne(
           { code: fromTray },
@@ -2530,8 +2577,9 @@ module.exports = {
           resolve({ status: 0 });
         }
       }
-    });
-  },
+    }
+  });
+},
   returnFromMerging: (location) => {
     return new Promise(async (resolve, reject) => {
       let getMmtTray = await masters.find({

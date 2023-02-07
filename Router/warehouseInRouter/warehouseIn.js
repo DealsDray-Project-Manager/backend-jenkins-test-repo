@@ -1421,7 +1421,7 @@ router.post("/mmtMergeRequest/:location", async (req, res, next) => {
     next(error);
   }
 });
-/* VIEW FROM AND TO TRAY FOR MERGE */
+/*---------------------VIEW FROM AND TO TRAY FOR MERGE--------------------------------*/
 router.post(
   "/viewTrayFromAndTo/:location/:fromTray",
   async (req, res, next) => {
@@ -1446,7 +1446,8 @@ router.post(
     }
   }
 );
-/* MMT TRAY SEND TO SORTING AGENT CONFIRM */
+
+/*---------------------MMT TRAY SEND TO SORTING AGENT CONFIRM--------------------------------*/
 router.post("/mmtTraySendToSorting", async (req, res, next) => {
   try {
     console.log(req.body);
