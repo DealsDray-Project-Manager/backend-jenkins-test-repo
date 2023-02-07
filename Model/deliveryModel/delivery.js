@@ -166,10 +166,19 @@ const deliverySchema = mongoose.Schema({
   bqc_report:{
     type:Object
   },
-  final_stage_date:{
+  sales_bin_date:{
     type:Date
   },
-  final_stage:{
+  sales_bin_status:{
+    type:String
+  },
+  sales_bin_grade:{
+    type:String
+  },
+  sales_bin_wh_agent_name:{
+    type:String
+  },
+   sales_bin_desctiption:{
     type:String
   }
 });

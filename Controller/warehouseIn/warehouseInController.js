@@ -299,7 +299,10 @@ module.exports = {
         code: masterId,
       });
       if (data.length !== 0) {
-        if (data[0].sort_id == status) {
+        if (
+          data[0].sort_id == status ||
+          data[0].sort_id == "Audit Done Received From Merging"
+        ) {
           resolve({ data: data, status: 1 });
         } else if (
           status == "Requested to Warehouse" &&
@@ -2450,89 +2453,79 @@ module.exports = {
       }
     });
   },
- 
-mmtMergerequest: (location) => {
-  return new Promise(async (resolve, reject) => {
-    let getMmttray = await masters
-      .find({
+
+  mmtMergerequest: (location) => {
+    return new Promise(async (resolve, reject) => {
+      let getMmttray = await masters
+        .find({
+          $or: [
+            {
+              sort_id: "Merge Request Sent To Wharehouse",
+              cpc: location,
+              to_merge: { $ne: null },
+            },
+            {
+              sort_id: "Audit Done Merge Request Sent To Wharehouse",
+              cpc: location,
+              to_merge: { $ne: null },
+            },
+          ],
+        })
+        .catch((err) => reject(err));
+      if (getMmttray) {
+        resolve(getMmttray);
+      }
+    });
+  },
+
+  getFromAndToTrayMerge: (location, fromTray) => {
+    return new Promise(async (resolve, reject) => {
+      let arr = [];
+      let data = await masters.findOne({ cpc: location, code: fromTray });
+      if (data) {
+        let toTray = await masters.findOne({
+          cpc: location,
+          code: data.to_merge,
+        });
+        arr.push(data);
+        arr.push(toTray);
+        resolve(arr);
+      } else {
+        resolve();
+      }
+    });
+  },
+  assignToSortingAgent: (user_name, fromTray, toTray) => {
+    return new Promise(async (resolve, reject) => {
+      let checkFromTray = await masters.findOne({ code: fromTray });
+
+      let checkTray = await masters.findOne({
         $or: [
           {
-            sort_id: "Merge Request Sent To Wharehouse",
-            cpc: location,
-            to_merge: { $ne: null },
+            prefix: "tray-master",
+            issued_user_name: user_name,
+            sort_id: "Issued to Merging",
           },
           {
-            sort_id: "Audit Done Merge Request Sent To Wharehouse",
-            cpc: location,
-            to_merge: { $ne: null },
+            prefix: "tray-master",
+            issued_user_name: user_name,
+            sort_id: "Closed By Sorting",
+          },
+          {
+            prefix: "tray-master",
+            issued_user_name: user_name,
+            sort_id: "Audit Done Issued to Merging",
           },
         ],
-      })
-      .catch((err) => reject(err));
-    if (getMmttray) {
-      resolve(getMmttray);
-    }
-  });
-},
-
-getFromAndToTrayMerge: (location, fromTray) => {
-  return new Promise(async (resolve, reject) => {
-    let arr = [];
-    let data = await masters.findOne({ cpc: location, code: fromTray });
-    if (data) {
-      let toTray = await masters.findOne({
-        cpc: location,
-        code: data.to_merge,
       });
-      arr.push(data);
-      arr.push(toTray);
-      resolve(arr);
-    } else {
-      resolve();
-    }
-  });
-},
-assignToSortingAgent: (user_name, fromTray, toTray) => {
-  return new Promise(async (resolve, reject) => {
-    let checkFromTray = await masters.findOne({ code: fromTray });
-
-    let checkTray = await masters.findOne({
-      $or: [
-        {
-          prefix: "tray-master",
-          issued_user_name: user_name,
-          sort_id: "Issued to Merging",
-        },
-        {
-          prefix: "tray-master",
-          issued_user_name: user_name,
-          sort_id: "Closed By Sorting",
-        },
-        {
-          prefix: "tray-master",
-          issued_user_name: user_name,
-          sort_id: "Audit Done Issued to Merging",
-        },
-      ],
-    });
-    if (checkTray) {
-      resolve({ status: 2 });
-    } else {
-      if (
-        checkFromTray.sort_id == "Audit Done Merge Request Sent To Wharehouse"
-      ) {
-        let updaFromTray = await masters.updateOne(
-          { code: fromTray },
-          {
-            $set: {
-              assigned_date: Date.now(),
-              sort_id: "Audit Done Issued to Merging",
-            },
-          }
-        );
-        if (updaFromTray.modifiedCount !== 0) {
-          let updaToTray = await masters.updateOne(
-            { code: toTray },
+      if (checkTray) {
+        resolve({ status: 2 });
+      } else {
+        if (
+          checkFromTray.sort_id == "Audit Done Merge Request Sent To Wharehouse"
+        ) {
+          let updaFromTray = await masters.updateOne(
+            { code: fromTray },
             {
               $set: {
                 assigned_date: Date.now(),
@@ -2540,27 +2533,27 @@ assignToSortingAgent: (user_name, fromTray, toTray) => {
               },
             }
           );
-          if (updaToTray.matchedCount != 0) {
-            resolve({ status: 1 });
+          if (updaFromTray.modifiedCount !== 0) {
+            let updaToTray = await masters.updateOne(
+              { code: toTray },
+              {
+                $set: {
+                  assigned_date: Date.now(),
+                  sort_id: "Audit Done Issued to Merging",
+                },
+              }
+            );
+            if (updaToTray.matchedCount != 0) {
+              resolve({ status: 1 });
+            } else {
+              resolve({ status: 0 });
+            }
           } else {
             resolve({ status: 0 });
           }
         } else {
-          resolve({ status: 0 });
-        }
-      } else {
-        let updaFromTray = await masters.updateOne(
-          { code: fromTray },
-          {
-            $set: {
-              assigned_date: Date.now(),
-              sort_id: "Issued to Merging",
-            },
-          }
-        );
-        if (updaFromTray.modifiedCount !== 0) {
-          let updaToTray = await masters.updateOne(
-            { code: toTray },
+          let updaFromTray = await masters.updateOne(
+            { code: fromTray },
             {
               $set: {
                 assigned_date: Date.now(),
@@ -2568,18 +2561,28 @@ assignToSortingAgent: (user_name, fromTray, toTray) => {
               },
             }
           );
-          if (updaToTray.matchedCount != 0) {
-            resolve({ status: 1 });
+          if (updaFromTray.modifiedCount !== 0) {
+            let updaToTray = await masters.updateOne(
+              { code: toTray },
+              {
+                $set: {
+                  assigned_date: Date.now(),
+                  sort_id: "Issued to Merging",
+                },
+              }
+            );
+            if (updaToTray.matchedCount != 0) {
+              resolve({ status: 1 });
+            } else {
+              resolve({ status: 0 });
+            }
           } else {
             resolve({ status: 0 });
           }
-        } else {
-          resolve({ status: 0 });
         }
       }
-    }
-  });
-},
+    });
+  },
   returnFromMerging: (location) => {
     return new Promise(async (resolve, reject) => {
       let getMmtTray = await masters.find({
@@ -2591,28 +2594,41 @@ assignToSortingAgent: (user_name, fromTray, toTray) => {
             items: { $ne: [] },
           },
           {
+            cpc: location,
             refix: "tray-master",
             sort_id: "Received From Merging",
             items: { $ne: [] },
           },
+          {
+            cpc: location,
+            refix: "tray-master",
+            items: { $ne: [] },
+            sort_id: "Audit Done Return from Merging",
+          },
+          {
+            cpc: location,
+            refix: "tray-master",
+            items: { $ne: [] },
+            sort_id: "Audit Done Received From Merging",
+          },
         ],
       });
-      console.log(getMmtTray);
+
       if (getMmtTray) {
         resolve(getMmtTray);
       }
     });
   },
-  mergeDoneTrayClose: (fromTray, toTray, type, length, limit) => {
+  mergeDoneTrayClose: (fromTray, toTray, type, length, limit, status) => {
     let data;
     return new Promise(async (resolve, reject) => {
-      if (type == "WHT") {
-        if (length == limit) {
+      if (status == "Audit Done Received From Merging") {
+        if (limit == length) {
           data = await masters.findOneAndUpdate(
             { code: toTray },
             {
               $set: {
-                sort_id: "Closed",
+                sort_id: "Ready to RDL",
                 actual_items: [],
                 issued_user_name: null,
                 from_merge: null,
@@ -2626,7 +2642,7 @@ assignToSortingAgent: (user_name, fromTray, toTray) => {
             { code: toTray },
             {
               $set: {
-                sort_id: "Inuse",
+                sort_id: "Audit Done Closed By Warehouse",
                 actual_items: [],
                 issued_user_name: null,
                 from_merge: null,
@@ -2637,17 +2653,49 @@ assignToSortingAgent: (user_name, fromTray, toTray) => {
           );
         }
       } else {
-        data = await masters.findOneAndUpdate(
-          { code: toTray },
-          {
-            $set: {
-              sort_id: "Closed By Warehouse",
-              from_merge: null,
-              to_merge: null,
-              closed_time_wharehouse: Date.now(),
-            },
+        if (type == "WHT") {
+          if (length == limit) {
+            data = await masters.findOneAndUpdate(
+              { code: toTray },
+              {
+                $set: {
+                  sort_id: "Closed",
+                  actual_items: [],
+                  issued_user_name: null,
+                  from_merge: null,
+                  to_merge: null,
+                  closed_time_wharehouse: Date.now(),
+                },
+              }
+            );
+          } else {
+            data = await masters.findOneAndUpdate(
+              { code: toTray },
+              {
+                $set: {
+                  sort_id: "Inuse",
+                  actual_items: [],
+                  issued_user_name: null,
+                  from_merge: null,
+                  to_merge: null,
+                  closed_time_wharehouse: Date.now(),
+                },
+              }
+            );
           }
-        );
+        } else {
+          data = await masters.findOneAndUpdate(
+            { code: toTray },
+            {
+              $set: {
+                sort_id: "Closed By Warehouse",
+                from_merge: null,
+                to_merge: null,
+                closed_time_wharehouse: Date.now(),
+              },
+            }
+          );
+        }
       }
       if (data) {
         for (let x of data.items) {
@@ -2659,7 +2707,10 @@ assignToSortingAgent: (user_name, fromTray, toTray) => {
               ],
             },
             {
-              tray_close_wh_date: Date.now(),
+              $set: {
+                tray_close_wh_date: Date.now(),
+                tray_location: "Warehouse",
+              },
             }
           );
         }
@@ -2669,6 +2720,7 @@ assignToSortingAgent: (user_name, fromTray, toTray) => {
             $set: {
               sort_id: "Open",
               actual_items: [],
+              temp_array: [],
               items: [],
               issued_user_name: null,
               from_merge: null,
@@ -2781,8 +2833,11 @@ assignToSortingAgent: (user_name, fromTray, toTray) => {
           {
             $set: {
               tray_location: "Warehouse",
-              final_stage: "Sales Bin",
-              final_stage_date: Date.now(),
+              sales_bin_status: "Sales Bin",
+              sales_bin_date: Date.now(),
+              sales_bin_grade: itemData.grade,
+              sales_bin_wh_agent_name: itemData.username,
+              sales_bin_desctiption: itemData.description,
             },
           }
         );
@@ -2889,6 +2944,17 @@ assignToSortingAgent: (user_name, fromTray, toTray) => {
             reslove({ status: 2 });
           }
         }
+      }
+    });
+  },
+  getSalesBinItem: (location) => {
+    return new Promise(async (reslove, reject) => {
+      let data = await delivery.find({
+        partner_shop: location,
+        sales_bin_status: "Sales Bin",
+      });
+      if (data) {
+        reslove(data);
       }
     });
   },

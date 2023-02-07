@@ -1489,16 +1489,18 @@ router.post("/returnFromMerging/:location", async (req, res, next) => {
     next(error);
   }
 });
-/* AFTER MERGE IS DONE CLOSE MMT TRAY */
+
+/*--------------------- AFTER MERGE IS DONE CLOSE MMT TRAY--------------------------------*/
 router.post("/mergeDoneMmttrayClose", async (req, res, next) => {
   try {
-    const { toTray, fromTray, type, length, limit } = req.body;
+    const { toTray, fromTray, type, length, limit, status } = req.body;
     let data = await warehouseInController.mergeDoneTrayClose(
       fromTray,
       toTray,
       type,
       length,
-      limit
+      limit,
+      status
     );
     if (data.status == 1) {
       res.status(200).json({
@@ -1667,6 +1669,20 @@ router.post("/readyForAudit/closeTray", async (req, res, next) => {
     } else {
       res.status(202).json({
         message: "Failed please tray again",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+/* GET SALES BIN ITEM */
+router.post("/salesBinItem/:location", async (req, res, next) => {
+  try {
+    const { location } = req.params;
+    let data = await warehouseInController.getSalesBinItem(location);
+    if (data) {
+      res.status(200).json({
+        data: data,
       });
     }
   } catch (error) {
