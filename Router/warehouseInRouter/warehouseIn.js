@@ -8,7 +8,7 @@ const warehouseInController = require("../../Controller/warehouseIn/warehouseInC
 /**************************************************Dashboard**************************************************************************/
 router.post("/dashboard/:location", async (req, res, next) => {
   try {
-    const {location}=req.params
+    const { location } = req.params;
     let data = await warehouseInController.dashboard(location);
     if (data) {
       console.log(data);
@@ -1535,10 +1535,10 @@ router.post("/sortingAgnetStatus/:username", async (req, res, next) => {
   }
 });
 /* CHECK CHARGING USER STATUS */
-router.post("/chargingAgentStatus/:username",async(req,res,next)=>{
+router.post("/chargingAgentStatus/:username", async (req, res, next) => {
   try {
-    const {username}=req.params
-    let data=await warehouseInController.checkChargingAgentStatus(username)
+    const { username } = req.params;
+    let data = await warehouseInController.checkChargingAgentStatus(username);
     if (data.status === 1) {
       res.status(200).json({
         data: "User is free",
@@ -1553,14 +1553,14 @@ router.post("/chargingAgentStatus/:username",async(req,res,next)=>{
       });
     }
   } catch (error) {
-    next(error)
+    next(error);
   }
-})
+});
 /* CHECK CHARGING USER STATUS */
-router.post("/bqcAgentStatus/:username",async(req,res,next)=>{
+router.post("/bqcAgentStatus/:username", async (req, res, next) => {
   try {
-    const {username}=req.params
-    let data=await warehouseInController.checkBqcAgentStatus(username)
+    const { username } = req.params;
+    let data = await warehouseInController.checkBqcAgentStatus(username);
     if (data.status === 1) {
       res.status(200).json({
         data: "User is free",
@@ -1575,7 +1575,97 @@ router.post("/bqcAgentStatus/:username",async(req,res,next)=>{
       });
     }
   } catch (error) {
-    next(error)
+    next(error);
   }
-})
+});
+
+/*--------------------------------------READY FOR AUDIT --------------------------*/
+// view the tray item
+router.post("/readyForAuditView/:trayId/:status", async (req, res, next) => {
+  try {
+    const { trayId, status } = req.params;
+    let data = await warehouseInController.getReadyForAuditView(trayId, status);
+    if (data.status == 1) {
+      res.status(200).json({
+        message: "",
+        data: data.tray,
+      });
+    } else if (data.status == 2) {
+      res.status(202).json({
+        message: `Tray present at ${data.tray.sort_id}`,
+      });
+    } else {
+      res.status(202).json({
+        message: `Tray not present`,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+/* ---------------------ITEM SEGRIDATION -------------------------*/
+// item add
+router.post("/readyForAudit/itemSegrigation", async (req, res, next) => {
+  try {
+    let data = await warehouseInController.readyForRdlItemSegrigation(req.body);
+    if (data.status == 1) {
+      res.status(200).json({
+        message: "Successfully Added",
+      });
+    } else {
+      res.status(202).json({
+        message: "Failed",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+/* CHECK UIC CODE for READY FOR AUDIT */
+router.post("/check-uic-ready-for-audit", async (req, res, next) => {
+  try {
+    const { trayId, uic } = req.body;
+    let data = await warehouseInController.checkUicCodeReadyForAudit(
+      uic,
+      trayId
+    );
+    if (data.status == 1) {
+      res.status(202).json({
+        message: "UIC Does Not Exists",
+      });
+    } else if (data.status == 2) {
+      res.status(202).json({
+        message: "UIC Not Exists In This Tray",
+      });
+    } else if (data.status == 3) {
+      res.status(202).json({
+        message: "Already Added",
+      });
+    } else if (data.status == 4) {
+      res.status(200).json({
+        message: "Valid UIC",
+        data: data.data,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+/* ---------------------CLOSE WHT TRAY -------------------*/
+router.post("/readyForAudit/closeTray", async (req, res, next) => {
+  try {
+    let data = await warehouseInController.getReadyForAuditClose(req.body);
+    if (data.status == 1) {
+      res.status(200).json({
+        message: "Successfully Closed",
+      });
+    } else {
+      res.status(202).json({
+        message: "Failed please tray again",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
 module.exports = router;

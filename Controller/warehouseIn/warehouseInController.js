@@ -2685,4 +2685,130 @@ module.exports = {
       }
     });
   },
+  getReadyForAuditView: (trayId, status) => {
+    return new Promise(async (resolve, reject) => {
+      let data = await masters.findOne({ code: trayId });
+      if (data) {
+        if (data.sort_id == status) {
+          resolve({ status: 1, tray: data });
+        } else {
+          resolve({ status: 2, tray: data });
+        }
+      } else {
+        resolve({ status: 3 });
+      }
+    });
+  },
+  readyForRdlItemSegrigation: (itemData) => {
+    return new Promise(async (resolve, reject) => {
+      itemData.item.stage = itemData.stage;
+      if (itemData.stage == "Shift to Sales Bin") {
+        let udpateTray = await masters.updateOne(
+          { code: itemData.trayId },
+          {
+            $push: {
+              temp_array: itemData.item,
+            },
+          }
+        );
+        let update = await delivery.findOneAndUpdate(
+          { "uic_code.code": itemData.uic },
+          {
+            $set: {
+              tray_location: "Warehouse",
+              final_stage: "Sales Bin",
+              final_stage_date: Date.now(),
+            },
+          }
+        );
+        if (udpateTray.modifiedCount != 0) {
+          resolve({ status: 1 });
+        }
+      } else {
+        let udpateTray = await masters.updateOne(
+          { code: itemData.trayId },
+          {
+            $push: {
+              actual_items: itemData.item,
+            },
+          }
+        );
+        if (udpateTray.modifiedCount != 0) {
+          resolve({ status: 1 });
+        }
+      }
+    });
+  },
+  checkUicCodeReadyForAudit: (uic, trayId) => {
+    return new Promise(async (resolve, reject) => {
+      let data = await delivery.findOne({ "uic_code.code": uic });
+      if (data) {
+        let checkExitThisTray = await masters.findOne({
+          code: trayId,
+          items: { $elemMatch: { uic: uic } },
+        });
+        if (checkExitThisTray) {
+          let alreadyAdded = await masters.findOne({
+            $or: [
+              {
+                code: trayId,
+                "actual_items.uic": uic,
+              },
+              {
+                code: trayId,
+                "temp_array.uic": uic,
+              },
+            ],
+          });
+          if (alreadyAdded) {
+            resolve({ status: 3 });
+          } else {
+            let obj;
+            for (let x of checkExitThisTray.items) {
+              if (x.uic == uic) {
+                obj = x;
+              }
+            }
+            resolve({ status: 4, data: obj });
+          }
+        } else {
+          resolve({ status: 2 });
+        }
+      } else {
+        resolve({ status: 1 });
+      }
+    });
+  },
+  getReadyForAuditClose:(trayData)=>{
+    return new Promise(async(reslove,reject)=>{
+      if(trayData.temp_array == 0){
+        let updateTray=await masters.updateOne({code:trayData.trayId},{
+          $set:{
+            actual_items:[],
+            temp_array:[],
+            items:[],
+            from_merge:null,
+            to_merge:null,
+            issued_user_name:null,
+            sort_id:"Open"
+          }
+        })
+        if(updateTray.modifiedCount !=0){
+          reslove({status:1})
+        }
+        else{
+          reslove({status:3})
+        }
+
+      }
+      else{
+
+        let updateTray=await masters.updateOne({code:trayData.trayId},{
+          $set:{
+            
+          }
+        })
+      }
+    })
+  }
 };

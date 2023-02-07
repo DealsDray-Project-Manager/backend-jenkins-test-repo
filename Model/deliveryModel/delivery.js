@@ -165,6 +165,12 @@ const deliverySchema = mongoose.Schema({
   },
   bqc_report:{
     type:Object
+  },
+  final_stage_date:{
+    type:Date
+  },
+  final_stage:{
+    type:String
   }
 });
 
