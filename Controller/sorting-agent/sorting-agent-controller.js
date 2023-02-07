@@ -319,35 +319,69 @@ module.exports = {
   },
   mergeDoneSendToWh: (trayData) => {
     return new Promise(async (resolve, reject) => {
-      let fromtray = await masters.updateOne(
-        { code: trayData.fromTray },
-        {
-          $set: {
-            sort_id: "Merging Done",
-            closed_time_sorting_agent: Date.now(),
-            items: [],
-            actual_items: [],
-          },
-        }
-      );
-      if (fromtray.modifiedCount !== 0) {
-        let updateToTray = await masters.updateOne(
-          { code: trayData.toTray },
+      let finedTray = await masters.findOne({ code: trayData.fromTray });
+      if (finedTray.sort_id == "Audit Done Issued to Merging") {
+        let fromtray = await masters.updateOne(
+          { code: trayData.fromTray },
           {
             $set: {
-              sort_id: "Merging Done",
+              sort_id: "Audit Done Return from Merging",
               closed_time_sorting_agent: Date.now(),
+              items: [],
               actual_items: [],
             },
           }
         );
-        if (updateToTray.modifiedCount !== 0) {
-          resolve({ status: 1 });
+        if (fromtray.modifiedCount !== 0) {
+          let updateToTray = await masters.updateOne(
+            { code: trayData.toTray },
+            {
+              $set: {
+                sort_id: "Audit Done Return from Merging",
+                closed_time_sorting_agent: Date.now(),
+                actual_items: [],
+              },
+            }
+          );
+          if (updateToTray.modifiedCount !== 0) {
+            resolve({ status: 1 });
+          } else {
+            resolve({ status: 0 });
+          }
         } else {
           resolve({ status: 0 });
         }
       } else {
-        resolve({ status: 0 });
+        let fromtray = await masters.updateOne(
+          { code: trayData.fromTray },
+          {
+            $set: {
+              sort_id: "Merging Done",
+              closed_time_sorting_agent: Date.now(),
+              items: [],
+              actual_items: [],
+            },
+          }
+        );
+        if (fromtray.modifiedCount !== 0) {
+          let updateToTray = await masters.updateOne(
+            { code: trayData.toTray },
+            {
+              $set: {
+                sort_id: "Merging Done",
+                closed_time_sorting_agent: Date.now(),
+                actual_items: [],
+              },
+            }
+          );
+          if (updateToTray.modifiedCount !== 0) {
+            resolve({ status: 1 });
+          } else {
+            resolve({ status: 0 });
+          }
+        } else {
+          resolve({ status: 0 });
+        }
       }
     });
   },
