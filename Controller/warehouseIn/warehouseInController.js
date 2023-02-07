@@ -1499,11 +1499,21 @@ module.exports = {
         });
       } else if (status == "wht-merge") {
         data = await masters.find({
-          cpc: location,
-          prefix: "tray-master",
-          type_taxanomy: "WHT",
-          sort_id: "Inuse",
-          items: { $ne: [] },
+          $or: [
+            {
+              cpc: location,
+              prefix: "tray-master",
+              type_taxanomy: "WHT",
+              sort_id: "Inuse",
+              items: { $ne: [] },
+            },
+            {
+              cpc: location,
+              prefix: "tray-master",
+              type_taxanomy: "WHT",
+              sort_id: "Audit Done Closed By Warehouse",
+            },
+          ],
         });
       } else {
         data = await masters.find({

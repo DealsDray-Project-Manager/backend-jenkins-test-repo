@@ -133,26 +133,26 @@ module.exports = {
   dashboardData: (location) => {
     return new Promise(async (resolve, reject) => {
       let count = {
-        orders:0,
-        badOrders:0,
-        delivered:0,
-        notDelivered:0,
-        delivery:0,
-        uicGented:0,
-        uicDownloaded:0,
-        uicNotGenrated:0,
-        badDelivery:0,
-        assigBot:0,
-        assigCharging:0,
-        bqc:0,
-        audit:0,
-        botToWht:0,
-        whtMerge:0,
-        mmtMerge:0,
-        trackItem:0,
+        orders: 0,
+        badOrders: 0,
+        delivered: 0,
+        notDelivered: 0,
+        delivery: 0,
+        uicGented: 0,
+        uicDownloaded: 0,
+        uicNotGenrated: 0,
+        badDelivery: 0,
+        assigBot: 0,
+        assigCharging: 0,
+        bqc: 0,
+        audit: 0,
+        botToWht: 0,
+        whtMerge: 0,
+        mmtMerge: 0,
+        trackItem: 0,
       };
       count.orders = await orders.count({ partner_shop: location });
-      
+
       count.badOrders = await badOrders.count({ partner_shop: location });
       count.delivered = await orders.count({
         partner_shop: location,
@@ -200,31 +200,41 @@ module.exports = {
         sort_id: "Ready to Audit",
         cpc: location,
       });
-      count.botToWht=await masters.count({
+      count.botToWht = await masters.count({
         type_taxanomy: "BOT",
         prefix: "tray-master",
         sort_id: "Closed By Warehouse",
         cpc: location,
-      })
-      count.whtMerge=await masters.count({
-        prefix: "tray-master",
-        type_taxanomy: "WHT",
-        sort_id: "Inuse",
-        cpc: location,
-      })
-      count.mmtMerge=await masters.count({
+      });
+      count.whtMerge = await masters.count({
+        $or: [
+          {
+            prefix: "tray-master",
+            type_taxanomy: "WHT",
+            sort_id: "Inuse",
+            cpc: location,
+          },
+          {
+            prefix: "tray-master",
+            type_taxanomy: "WHT",
+            sort_id: "Audit Done Closed By Warehouse",
+            cpc: location,
+          },
+        ],
+      });
+      count.mmtMerge = await masters.count({
         cpc: location,
         type_taxanomy: "MMT",
         prefix: "tray-master",
         sort_id: "Closed By Warehouse",
-      })
-      count.trackItem=await orders.count({
+      });
+      count.trackItem = await orders.count({
         partner_shop: location,
         delivery_status: "Delivered",
-      })
+      });
       console.log(count);
-      if(count){
-        resolve(count)
+      if (count) {
+        resolve(count);
       }
     });
   },
@@ -254,7 +264,7 @@ module.exports = {
           },
         },
         {
-          $sort:{_id:-1}
+          $sort: { _id: -1 },
         },
         {
           $skip: skip,
@@ -271,10 +281,9 @@ module.exports = {
   },
   getBadOrders: (location) => {
     return new Promise(async (resolve, reject) => {
-      let data = await badOrders.find(
-        { partner_shop: location },
-        { _id: 0, __v: 0 }
-      ).sort({_id:-1});
+      let data = await badOrders
+        .find({ partner_shop: location }, { _id: 0, __v: 0 })
+        .sort({ _id: -1 });
       console.log(data);
 
       if (data) {
@@ -1192,7 +1201,7 @@ module.exports = {
           },
         },
         {
-          $sort:{_id:-1}
+          $sort: { _id: -1 },
         },
         {
           $skip: skip,
@@ -1206,10 +1215,9 @@ module.exports = {
   },
   getBadDelivery: (location) => {
     return new Promise(async (resolve, reject) => {
-      let data = await badDelivery.find(
-        { partner_shop: location },
-        { _id: 0, __v: 0 }
-      ).sort({_id:-1});
+      let data = await badDelivery
+        .find({ partner_shop: location }, { _id: 0, __v: 0 })
+        .sort({ _id: -1 });
       if (data) {
         resolve(data);
       }
