@@ -2117,7 +2117,8 @@ module.exports = {
       if (data) {
         if (
           data.sort_id === "Merge Request Sent To Wharehouse" ||
-          data.sort_id === "Sorting Request Sent To Warehouse"
+          data.sort_id === "Sorting Request Sent To Warehouse" ||
+          data.sort_id === "Audit Done Merge Request Sent To Wharehouse"
         ) {
           resolve({ data: data, status: 1 });
         } else {
