@@ -797,13 +797,14 @@ router.post("/ready-for-charging-wht", async (req, res, next) => {
 router.post("/toWhtTrayForMerge", async (req, res, next) => {
   try {
     console.log(req.body);
-    const { location, brand, model, fromTray, itemCount } = req.body;
+    const { location, brand, model, fromTray, itemCount, status } = req.body;
     let data = await misUserController.toWhtTrayForMerging(
       location,
       brand,
       model,
       fromTray,
-      itemCount
+      itemCount,
+      status
     );
     if (data.status === 1) {
       res.status(200).json({
@@ -818,6 +819,7 @@ router.post("/toWhtTrayForMerge", async (req, res, next) => {
     next(error);
   }
 });
+
 /* GET CHARGING USERS FOR ASSIGN WHT TRAY */
 router.post(
   "/get-charging-users/:user_type/:location",

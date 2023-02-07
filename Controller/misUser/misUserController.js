@@ -2158,22 +2158,45 @@ module.exports = {
       }
     });
   },
-  toWhtTrayForMerging: (location, brand, model, fromTray, itemCount) => {
+  toWhtTrayForMerging: (
+    location,
+    brand,
+    model,
+    fromTray,
+    itemCount,
+    status
+  ) => {
     return new Promise(async (resolve, reject) => {
       let arr = [];
-      let whtTray = await masters
-        .find({
-          prefix: "tray-master",
-          type_taxanomy: "WHT",
-          brand: brand,
-          model,
-          model,
-          cpc: location,
-          items: { $ne: [] },
-          sort_id: "Inuse",
-          code: { $ne: fromTray },
-        })
-        .catch((err) => reject(err));
+      let whtTray;
+      if (status == "Audit Done Closed By Warehouse") {
+        whtTray = await masters
+          .find({
+            prefix: "tray-master",
+            type_taxanomy: "WHT",
+            brand: brand,
+            model,
+            model,
+            cpc: location,
+            sort_id: "Audit Done Closed By Warehouse",
+            code: { $ne: fromTray },
+          })
+          .catch((err) => reject(err));
+      } else {
+        whtTray = await masters
+          .find({
+            prefix: "tray-master",
+            type_taxanomy: "WHT",
+            brand: brand,
+            model,
+            model,
+            cpc: location,
+            items: { $ne: [] },
+            sort_id: "Inuse",
+            code: { $ne: fromTray },
+          })
+          .catch((err) => reject(err));
+      }
       if (whtTray.length !== 0) {
         for (let x of whtTray) {
           let count = x.limit - x.items.length;
@@ -2359,37 +2382,73 @@ module.exports = {
   },
   mmtMergeRequestSendToWh: (sortingAgent, fromTray, toTray) => {
     return new Promise(async (resolve, reject) => {
-      let updateFromTray = await masters.updateOne(
-        { code: fromTray },
-        {
-          $set: {
-            sort_id: "Merge Request Sent To Wharehouse",
-            status_change_time: Date.now(),
-            issued_user_name: sortingAgent,
-            to_merge: toTray,
-            actual_items: [],
-          },
+      let whtTray = await masters.findOne({ code: fromTray });
+      if (whtTray.sort_id === "Audit Done Closed By Warehouse") {
+        let updateFromTray = await masters.updateOne(
+          { code: fromTray },
+          {
+            $set: {
+              sort_id: "Audit Done Merge Request Sent To Wharehouse",
+              status_change_time: Date.now(),
+              issued_user_name: sortingAgent,
+              to_merge: toTray,
+              actual_items: [],
+            },
+          }
+        );
+        if (updateFromTray.modifiedCount !== 0) {
+          let updateToTray = await masters.updateOne(
+            { code: toTray },
+            {
+              $set: {
+                sort_id: "Audit Done Merge Request Sent To Wharehouse",
+                status_change_time: Date.now(),
+                issued_user_name: sortingAgent,
+                from_merge: fromTray,
+                to_merge: null,
+                actual_items: [],
+              },
+            }
+          );
+          if (updateToTray.modifiedCount !== 0) {
+            resolve({ status: 1 });
+          }
+        } else {
+          resolve({ status: 0 });
         }
-      );
-      if (updateFromTray.modifiedCount !== 0) {
-        let updateToTray = await masters.updateOne(
-          { code: toTray },
+      } else {
+        let updateFromTray = await masters.updateOne(
+          { code: fromTray },
           {
             $set: {
               sort_id: "Merge Request Sent To Wharehouse",
               status_change_time: Date.now(),
               issued_user_name: sortingAgent,
-              from_merge: fromTray,
-              to_merge: null,
+              to_merge: toTray,
               actual_items: [],
             },
           }
         );
-        if (updateToTray.modifiedCount !== 0) {
-          resolve({ status: 1 });
+        if (updateFromTray.modifiedCount !== 0) {
+          let updateToTray = await masters.updateOne(
+            { code: toTray },
+            {
+              $set: {
+                sort_id: "Merge Request Sent To Wharehouse",
+                status_change_time: Date.now(),
+                issued_user_name: sortingAgent,
+                from_merge: fromTray,
+                to_merge: null,
+                actual_items: [],
+              },
+            }
+          );
+          if (updateToTray.modifiedCount !== 0) {
+            resolve({ status: 1 });
+          }
+        } else {
+          resolve({ status: 0 });
         }
-      } else {
-        resolve({ status: 0 });
       }
     });
   },
