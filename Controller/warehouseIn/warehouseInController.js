@@ -3294,26 +3294,32 @@ module.exports = {
   },
   /*-----------------CHECK AUDIT USER IS FREE OR NOT-------------------------*/
 
-  checkAuditUserFreeOrNot: (username) => {
+  checkAuditUserFreeOrNot: (username, brand, model) => {
     return new Promise(async (resolve, reject) => {
       let userActive = await user.findOne({ user_name: username });
       if (userActive.status == "Active") {
-        let data = await masters.findOne({
+        let data = await masters.find({
           $or: [
             {
               issued_user_name: username,
               sort_id: "Issued to Audit",
-              type_taxanomy: "WHT",
             },
             {
               issued_user_name: username,
               sort_id: "Audit Done",
-              type_taxanomy: "WHT",
             },
           ],
         });
-        if (data) {
-          resolve({ status: 2 });
+        console.log(data);
+        if (data.length != 0) {
+          for (let x of data) {
+            if (x.type_taxanomy == "WHT") {
+              resolve({ status: 2 });
+            } else if (x.brand !== brand && x.model !== model) {
+              resolve({ status: 2 });
+            }
+          }
+          resolve({ status: 1 });
         } else {
           resolve({ status: 1 });
         }
@@ -3392,7 +3398,7 @@ module.exports = {
       }
     });
   },
-  getAssignedTrayForAudit: (username) => {
+  getAssignedTrayForAudit: (username, brand, model) => {
     return new Promise(async (resolve, reject) => {
       let obj = {
         CTA: "",
@@ -3408,7 +3414,9 @@ module.exports = {
 
       if (data.length != 0) {
         for (let x of data) {
-          obj[x.type_taxanomy] = x.code;
+          if (x.brand == brand && x.model == model) {
+            obj[x.type_taxanomy] = x.code;
+          }
         }
         resolve(obj);
       } else {
@@ -3443,36 +3451,50 @@ module.exports = {
   auditUserTray: (username, trayType, trayId, location) => {
     return new Promise(async (resolve, reject) => {
       let data = await masters.findOne({ code: trayId, cpc: location });
-      if (data) {
-        if (data.type_taxanomy == trayType) {
-          if (data.sort_id === "Open") {
-            let checkUserStatus = await masters.findOne({
-              $or: [
-                {
-                  type_taxanomy: trayType,
-                  issued_user_name: username,
-                  sort_id: "Issued to Audit",
-                },
-                {
-                  type_taxanomy: trayType,
-                  issued_user_name: username,
-                  sort_id: "Audit Done",
-                },
-              ],
-            });
-            if (checkUserStatus) {
-              resolve({ status: 2, tray_status: data.sort_id });
+      let whtTray = await masters.findOne({
+        prefix: "tray-master",
+        type_taxanomy: "WHT",
+        issued_user_name: username,
+        sort_id: "Issued to Audit",
+      });
+      if (whtTray) {
+        if (whtTray?.model == data.model && whtTray.brand == data.brand) {
+          if (data) {
+            if (data.type_taxanomy == trayType) {
+              if (data.sort_id === "Open") {
+                let checkUserStatus = await masters.findOne({
+                  $or: [
+                    {
+                      type_taxanomy: trayType,
+                      issued_user_name: username,
+                      sort_id: "Issued to Audit",
+                    },
+                    {
+                      type_taxanomy: trayType,
+                      issued_user_name: username,
+                      sort_id: "Audit Done",
+                    },
+                  ],
+                });
+                if (checkUserStatus) {
+                  resolve({ status: 2, tray_status: data.sort_id });
+                } else {
+                  resolve({ status: 1, tray_status: data.sort_id });
+                }
+              } else {
+                resolve({ status: 5, tray_status: data.sort_id });
+              }
             } else {
-              resolve({ status: 1, tray_status: data.sort_id });
+              resolve({ status: 3, tray_status: data.sort_id });
             }
           } else {
-            resolve({ status: 5, tray_status: data.sort_id });
+            resolve({ status: 4, tray_status: data.sort_id });
           }
         } else {
-          resolve({ status: 3, tray_status: data.sort_id });
+          resolve({ status: 7 });
         }
       } else {
-        resolve({ status: 4 });
+        resolve({ status: 6 });
       }
     });
   },

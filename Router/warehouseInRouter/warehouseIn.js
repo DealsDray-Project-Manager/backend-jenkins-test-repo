@@ -1175,7 +1175,7 @@ router.post("/recieved-from-bqc", async (req, res, next) => {
         message: "Successfully Received",
       });
     }
-    if (data.status == 2) {
+    if (data.status == 3) {
       res.status(202).json({
         message: "Please Enter Valid Count",
       });
@@ -1559,10 +1559,11 @@ router.post("/sortingAgnetStatus/:username", async (req, res, next) => {
 });
 
 /*-------------------------------------AUDIT USER STATUS CHECKING------------------------------------------------------------*/
-router.post("/auditUserStatusChecking/:username", async (req, res, next) => {
+router.post("/auditUserStatusChecking/:username/:brand/:model", async (req, res, next) => {
   try {
-    const { username } = req.params;
-    let data = await warehouseInController.checkAuditUserFreeOrNot(username);
+    const { username,brand,model } = req.params;
+    let data = await warehouseInController.checkAuditUserFreeOrNot(username,brand,model);
+    console.log(data);
     if (data.status === 1) {
       res.status(200).json({
         data: "User is free",
@@ -1645,10 +1646,10 @@ router.post("/auditTrayIssueToAgent", async (req, res, next) => {
 
 /*-------------------------------------FETCH ASSIGNED OTHER TRAY--------------------------------------------*/
 
-router.post("/fetchAssignedTrayForAudit/:username", async (req, res, next) => {
+router.post("/fetchAssignedTrayForAudit/:username/:brand/:model", async (req, res, next) => {
   try {
-    const { username } = req.params;
-    let data = await warehouseInController.getAssignedTrayForAudit(username);
+    const { username,brand,model } = req.params;
+    let data = await warehouseInController.getAssignedTrayForAudit(username,brand,model);
     console.log(data);
     if (data) {
       res.status(200).json({
@@ -1716,6 +1717,16 @@ router.post("/auditUserTrayForAssign", async (req, res, next) => {
       res.status(202).json({
         message: `Tray is in process`,
         trayStatus: data.tray_status,
+      });
+    } else if (data.status == 6) {
+      res.status(202).json({
+        message: `User have no issued WHT`,
+        trayStatus: "",
+      });
+    } else if (data.status == 7) {
+      res.status(202).json({
+        message: `Mismatch Model or Brand`,
+        trayStatus: "",
       });
     }
   } catch (error) {

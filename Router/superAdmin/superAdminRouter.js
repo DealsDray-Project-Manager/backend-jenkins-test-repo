@@ -997,7 +997,7 @@ router.post("/createMasters", async (req, res, next) => {
                 obj.CTB = obj.CTB + 1;
               } else if (type_taxanomy == "CTC") {
                 obj.CTC = obj.CTC + 1;
-              } else if (type_taxanomy == "STD") {
+              } else if (type_taxanomy == "CTD") {
                 obj.CTD = obj.CTD + 1;
               }
               json = JSON.stringify(obj);
