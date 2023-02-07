@@ -27,6 +27,7 @@ module.exports = {
         returnFromSorting: 0,
         mergeRequest: 0,
         returnFromMerge: 0,
+        readyForAudit: 0,
       };
       count.bagIssueRequest = await masters.count({
         $or: [
@@ -89,6 +90,12 @@ module.exports = {
             cpc: location,
           },
         ],
+      });
+      count.readyForAudit = await masters.count({
+        prefix: "tray-master",
+        type_taxanomy: "WHT",
+        sort_id: "Ready to Audit",
+        cpc: location,
       });
       count.botToRelease = await masters.count({
         type_taxanomy: "BOT",
@@ -2779,36 +2786,52 @@ module.exports = {
       }
     });
   },
-  getReadyForAuditClose:(trayData)=>{
-    return new Promise(async(reslove,reject)=>{
-      if(trayData.temp_array == 0){
-        let updateTray=await masters.updateOne({code:trayData.trayId},{
-          $set:{
-            actual_items:[],
-            temp_array:[],
-            items:[],
-            from_merge:null,
-            to_merge:null,
-            issued_user_name:null,
-            sort_id:"Open"
+  getReadyForAuditClose: (trayData) => {
+    return new Promise(async (reslove, reject) => {
+      if (trayData.temp_array == 0) {
+        let updateTray = await masters.updateOne(
+          { code: trayData.trayId },
+          {
+            $set: {
+              actual_items: [],
+              temp_array: [],
+              items: [],
+              from_merge: null,
+              to_merge: null,
+              issued_user_name: null,
+              sort_id: "Open",
+            },
           }
-        })
-        if(updateTray.modifiedCount !=0){
-          reslove({status:1})
+        );
+        if (updateTray.modifiedCount != 0) {
+          reslove({ status: 1 });
+        } else {
+          reslove({ status: 3 });
         }
-        else{
-          reslove({status:3})
-        }
-
-      }
-      else{
-
-        let updateTray=await masters.updateOne({code:trayData.trayId},{
-          $set:{
-            
+      } else {
+        let findTray = await masters.findOne({ code: trayData.trayId });
+        if (findTray) {
+          let updateTray = await masters.updateOne(
+            { code: trayData.trayId },
+            {
+              $set: {
+                sort_id: "Audit Done Closed By Warehouse",
+                actual_items: [],
+                temp_array: [],
+                items: findTray.temp_array,
+                issued_user_name: null,
+                from_merge: null,
+                to_merge: null,
+                closed_time_wharehouse: Date.now(),
+                description: trayData.description,
+              },
+            }
+          );
+          if (updateTray.modifiedCount != 0) {
+            reslove({ status: 2 });
           }
-        })
+        }
       }
-    })
-  }
+    });
+  },
 };

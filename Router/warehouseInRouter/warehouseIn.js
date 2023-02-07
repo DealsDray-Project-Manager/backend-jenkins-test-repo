@@ -1659,6 +1659,10 @@ router.post("/readyForAudit/closeTray", async (req, res, next) => {
       res.status(200).json({
         message: "Successfully Closed",
       });
+    } else if (data.status == 2) {
+      res.status(200).json({
+        message: "Successfully Sent to merging",
+      });
     } else {
       res.status(202).json({
         message: "Failed please tray again",
