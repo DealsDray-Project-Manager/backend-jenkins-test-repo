@@ -874,30 +874,59 @@ module.exports = {
           resolve({ status: 2 });
         }
       } else if (trayData.type == "Merging Done") {
-        let data = await masters.findOneAndUpdate(
-          { code: trayData.trayId },
-          {
-            $set: {
-              sort_id: "Received From Merging",
-            },
-          }
-        );
-        if (data) {
-          for (let i = 0; i < data.actual_items.length; i++) {
-            let deliveryTrack = await delivery.updateMany(
-              { tracking_id: data.items[i].awbn_number },
+        let checktray = await masters.findOne({ code: trayData.trayId });
+          if (checktray.sort_id == "Audit Done Return from Merging") {
+            let data = await masters.findOneAndUpdate(
+              { code: trayData.trayId },
               {
                 $set: {
-                  tray_status: "Received From Merging",
-                  tray_location: "Warehouse",
+                  sort_id: "Audit Done Received From Merging",
                 },
               }
             );
+            if (data) {
+              for (let i = 0; i < data.actual_items.length; i++) {
+                let deliveryTrack = await delivery.updateMany(
+                  { tracking_id: data.items[i].awbn_number },
+                  {
+                    $set: {
+                      tray_status: "Audit Done  Received From Merging",
+                      tray_location: "Warehouse",
+                    },
+                  }
+                );
+              }
+              resolve({ status: 1 });
+            } else {
+              resolve({ status: 2 });
+            }
+          } else {
+            let data = await masters.findOneAndUpdate(
+              { code: trayData.trayId },
+              {
+                $set: {
+                  sort_id: "Received From Merging",
+                },
+              }
+            );
+            if (data) {
+              for (let i = 0; i < data.actual_items.length; i++) {
+                let deliveryTrack = await delivery.updateMany(
+                  { tracking_id: data.items[i].awbn_number },
+                  {
+                    $set: {
+                      tray_status: "Received From Merging",
+                      tray_location: "Warehouse",
+                    },
+                  }
+                );
+              }
+              resolve({ status: 1 });
+            } else {
+              resolve({ status: 2 });
+            }
           }
-          resolve({ status: 1 });
-        } else {
-          resolve({ status: 2 });
-        }
+       
       } else {
         let checkCount = await masters.findOne({ code: trayData.trayId });
         if (checkCount.items.length == trayData.count) {
