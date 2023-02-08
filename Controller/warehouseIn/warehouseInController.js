@@ -2932,7 +2932,7 @@ module.exports = {
                 sort_id: "Audit Done Closed By Warehouse",
                 actual_items: [],
                 temp_array: [],
-                items: findTray.temp_array,
+                items: findTray.actual_items,
                 issued_user_name: null,
                 from_merge: null,
                 to_merge: null,
@@ -2951,7 +2951,6 @@ module.exports = {
   getSalesBinItem: (location) => {
     return new Promise(async (reslove, reject) => {
       let data = await delivery.find({
-        partner_shop: location,
         sales_bin_status: "Sales Bin",
       });
       if (data) {

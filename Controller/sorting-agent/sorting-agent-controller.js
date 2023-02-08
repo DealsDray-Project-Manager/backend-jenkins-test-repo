@@ -14,27 +14,35 @@ module.exports = {
       }
     });
   },
-  dashboard:(username)=>{
-    return new Promise(async(resolve,reject)=>{
-      let count={
-        sorting:0,
-        merge:0
-      }
-      count.sorting=await  masters.count({
+  dashboard: (username) => {
+    return new Promise(async (resolve, reject) => {
+      let count = {
+        sorting: 0,
+        merge: 0,
+      };
+      count.sorting = await masters.count({
         issued_user_name: username,
         type_taxanomy: "BOT",
         sort_id: "Issued to sorting agent",
       });
-      count.merge=await masters.count({
-        issued_user_name: username,
-        to_merge: { $ne: null },
-        sort_id: "Issued to Merging",
+      count.merge = await masters.count({
+        $or: [
+          {
+            issued_user_name: username,
+            to_merge: { $ne: null },
+            sort_id: "Audit Done Issued to Merging",
+          },
+          {
+            issued_user_name: username,
+            to_merge: { $ne: null },
+            sort_id: "Issued to Merging",
+          },
+        ],
       });
-      if(count){
-        resolve(count)
+      if (count) {
+        resolve(count);
       }
-
-    })
+    });
   },
   getDataForStartSorting: (username, trayId) => {
     return new Promise(async (resolve, reject) => {
@@ -142,8 +150,7 @@ module.exports = {
                 awbn_number: obj.tracking_id,
               },
             },
-          },
-         
+          }
         );
         let data = await masters.updateOne(
           {
@@ -267,9 +274,18 @@ module.exports = {
   getAssignedMmtTray: (username) => {
     return new Promise(async (resolve, reject) => {
       let data = await masters.find({
-        issued_user_name: username,
-        to_merge: { $ne: null },
-        sort_id: "Issued to Merging",
+        $or: [
+          {
+            issued_user_name: username,
+            to_merge: { $ne: null },
+            sort_id: "Audit Done Issued to Merging",
+          },
+          {
+            issued_user_name: username,
+            to_merge: { $ne: null },
+            sort_id: "Issued to Merging",
+          },
+        ],
       });
       console.log(data);
       if (data) {
