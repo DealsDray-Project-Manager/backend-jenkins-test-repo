@@ -30,16 +30,24 @@ module.exports = {
       index: 'prexo-delivery',
       // type: '_doc', // uncomment for Elasticsearch ≤ 6
       body: {
+        "size": 10,
         query: {
-          match: { tracking_id: searchInput }
+          "multi_match" : {
+            "query":    searchInput,
+           
+            "fields": [ "*"] 
+          }
         }
       }
     })
+    console.log(data);
     let arr=[]
     for(let result of data.hits.hits){
       result["delivery"]=result["_source"]
+    
       arr.push(result)
     }
+    console.log(arr);
     // console.log(arr);
     return arr
   }
