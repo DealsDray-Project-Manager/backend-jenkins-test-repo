@@ -12,6 +12,7 @@ const moment = require("moment");
 
 module.exports = {
   bulkOrdersValidation: (ordersData) => {
+    console.log("d");
     return new Promise(async (resolve, reject) => {
       let err = {};
       let order_id = [];
@@ -26,9 +27,11 @@ module.exports = {
       let i = 0;
       for (let x of ordersData.item) {
         if (x.order_status == "NEW") {
-          if (x?.tracking_id?.length !== 12 && x.tracking_id !== undefined) {
-            tracking_id.push(x.tracking_id);
-            err["tracking_id"] = tracking_id;
+          if (x.tracking_id !== undefined) {
+            if (x?.tracking_id.match(/[0-9]/g).join("").length !== 12) {
+              tracking_id.push(x.tracking_id);
+              err["tracking_id"] = tracking_id;
+            }
           }
           let orderExists = await orders.findOne({
             order_id: x.order_id,
@@ -277,6 +280,7 @@ module.exports = {
             as: "products",
           },
         },
+        { $sort : { _id : -1 } },
         {
           $skip: skip,
         },
@@ -284,7 +288,6 @@ module.exports = {
           $limit: limit,
         },
       ]);
-      console.log(allOrders.length);
       if (allOrders) {
         resolve(allOrders);
       }
@@ -295,7 +298,7 @@ module.exports = {
       let data = await badOrders.find(
         { partner_shop: location },
         { _id: 0, __v: 0 }
-      );
+      ).sort({_id:-1});
       console.log(data);
 
       if (data) {
@@ -656,6 +659,7 @@ module.exports = {
         {
           $unwind: "$delivery",
         },
+      
         {
           $skip: skip,
         },
@@ -1271,12 +1275,14 @@ module.exports = {
       let notDelivered = [];
       let tracking_id_digit = [];
       for (let i = 0; i < deliveryData.item.length; i++) {
-        if (
-          deliveryData.item[i]?.tracking_id?.length !== 12 &&
-          deliveryData.item[i]?.tracking_id !== undefined
-        ) {
-          tracking_id_digit.push(deliveryData.item[i].tracking_id);
-          err["tracking_id_digit"] = tracking_id_digit;
+        if (deliveryData.item[i]?.tracking_id !== undefined) {
+          if (
+            deliveryData.item[i]?.tracking_id?.match(/[0-9]/g).join("")
+              .length !== 12
+          ) {
+            tracking_id_digit.push(deliveryData.item[i].tracking_id);
+            err["tracking_id_digit"] = tracking_id_digit;
+          }
         }
         let trackingId = await delivery.findOne({
           tracking_id: deliveryData.item[i].tracking_id,
@@ -1414,6 +1420,10 @@ module.exports = {
           },
         },
         {
+          $sort:{_id:-1}
+        },
+
+        {
           $skip: skip,
         },
         {
@@ -1428,7 +1438,7 @@ module.exports = {
       let data = await badDelivery.find(
         { partner_shop: location },
         { _id: 0, __v: 0 }
-      );
+      ).sort({_id:-1});
       if (data) {
         resolve(data);
       }

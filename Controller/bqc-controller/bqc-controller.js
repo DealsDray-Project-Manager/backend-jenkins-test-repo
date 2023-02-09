@@ -231,11 +231,18 @@ module.exports = {
               items: [],
             },
           },
-          {new: true}
+          { new: true }
         );
-        console.log(data);
         if (data) {
           for (let x of data.actual_items) {
+            if (x.bqc_report == undefined) {
+              let obj = {
+                bqc_status: x.bqc_status,
+              };
+              x["bqc_report"] = obj;
+            } else {
+              x.bqc_report.bqc_status = x.bqc_status;
+            }
             let deliveryUpdate = await delivery.updateOne(
               {
                 tracking_id: x.tracking_id,

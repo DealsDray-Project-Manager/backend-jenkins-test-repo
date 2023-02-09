@@ -1,3 +1,4 @@
+/********************************************************************/
 const { orders } = require("../../Model/ordersModel/ordersModel");
 const { masters } = require("../../Model/mastersModel");
 const { delivery } = require("../../Model/deliveryModel/delivery");
@@ -6,7 +7,16 @@ var mongoose = require("mongoose");
 const { products } = require("../../Model/productModel/product");
 const moment = require("moment");
 /********************************************************************/
+/* 
+
+
+@ DATA FETCH AND EDIT EVERTHING WILL HAPPEN HERE 
+
+
+*/
+
 module.exports = {
+  /*------------------------DASHBOARD FOR WAREHOUSE----------------------------*/
   dashboard: (location) => {
     return new Promise(async (resolve, reject) => {
       let count = {
@@ -275,6 +285,8 @@ module.exports = {
       }
     });
   },
+  /*------------------------CHECK BAG ID----------------------------*/
+
   checkBagId: (bagId, location) => {
     return new Promise(async (resolve, reject) => {
       let bagExist = await masters.findOne({
@@ -297,6 +309,9 @@ module.exports = {
       }
     });
   },
+
+  /*------------------------FIND ONE BAGE----------------------------*/
+
   getBagOne: (bagId) => {
     return new Promise(async (resolve, reject) => {
       let data = await masters.find({
@@ -312,36 +327,8 @@ module.exports = {
       }
     });
   },
-  // checkBotUserStatus: (username, bagId) => {
-  //   return new Promise(async (resolve, reject) => {
-  //     let data = await user.findOne({ user_name: username, status: "Active" });
-  //     if (data) {
-  //       let bag = await masters.findOne({
-  //         $or: [
-  //           {
-  //             prefix: "bag-master",
-  //             sort_id: "Issued",
+  /*------------------------FIND ONE BAG or TRAY----------------------------*/
 
-  //             issued_user_name: username,
-  //           },
-  //           {
-  //             prefix: "bag-master",
-  //             sort_id: "Closed By Bot",
-
-  //             issued_user_name: username,
-  //           },
-  //         ],
-  //       });
-  //       if (bag) {
-  //         resolve({ status: 3 });
-  //       } else {
-  //         resolve({ status: 1 });
-  //       }
-  //     } else {
-  //       resolve({ status: 2 });
-  //     }
-  //   });
-  // },
   getBagOneRequest: (masterId, status) => {
     return new Promise(async (resolve, reject) => {
       let data = await masters.find({
@@ -366,6 +353,9 @@ module.exports = {
       }
     });
   },
+
+  /*------------------------CHECK BOT USERS STATUS---------------------------*/
+
   checkBotUserStatus: (username, bagId) => {
     return new Promise(async (resolve, reject) => {
       let data = await user.findOne({ user_name: username, status: "Active" });
@@ -393,6 +383,9 @@ module.exports = {
       }
     });
   },
+
+  /*------------------------CHECK AWBN NUMBER---------------------------*/
+
   checkAwbin: (awbn, bagId, location) => {
     return new Promise(async (resolve, reject) => {
       let data = await delivery.findOne({
@@ -448,6 +441,9 @@ module.exports = {
       }
     });
   },
+
+  /*------------------------STOCK IN DATA---------------------------*/
+
   stockInData: (data) => {
     data._id = mongoose.Types.ObjectId();
     return new Promise(async (resolve, reject) => {
@@ -483,6 +479,9 @@ module.exports = {
       }
     });
   },
+
+  /*------------------------ADD ACTUAL DATA---------------------------*/
+
   addActualData: (actualBagItem) => {
     actualBagItem._id = mongoose.Types.ObjectId();
     return new Promise(async (resolve, reject) => {
@@ -503,6 +502,9 @@ module.exports = {
       }
     });
   },
+
+  /*------------------------CLOSE BAG---------------------------*/
+
   closeBag: (bagData) => {
     return new Promise(async (resolve, reject) => {
       let data = await masters.findOneAndUpdate(
@@ -533,6 +535,9 @@ module.exports = {
       }
     });
   },
+
+  /*------------------------DELETE STOCK IN---------------------------*/
+
   deleteStockin: (bgData) => {
     bgData.id = mongoose.Types.ObjectId(bgData.id);
     return new Promise(async (resolve, reject) => {
@@ -564,6 +569,9 @@ module.exports = {
       }
     });
   },
+
+  /*------------------------REMOVE ACTUAL ITEM---------------------------*/
+
   removeActualItem: (bgData) => {
     bgData.id = mongoose.Types.ObjectId(bgData.id);
     return new Promise(async (resolve, reject) => {
@@ -584,6 +592,8 @@ module.exports = {
       }
     });
   },
+  /*------------------------ISSUE TO BOT---------------------------*/
+
   issueToBot: (issueData) => {
     return new Promise(async (resolve, reject) => {
       if (issueData.status == "Issued") {
@@ -669,6 +679,9 @@ module.exports = {
       }
     });
   },
+
+  /*------------------------FIND THE ISSUE REQUEST---------------------------*/
+
   getRequests: (location) => {
     return new Promise(async (resolve, reject) => {
       let data = await masters.find({
@@ -686,6 +699,9 @@ module.exports = {
       resolve(data);
     });
   },
+
+  /*------------------------CHECK ACTUAL AWBN---------------------------*/
+
   checkActualAwbn: (awbn, id) => {
     return new Promise(async (resolve, reject) => {
       let data = await delivery.findOne({
@@ -729,6 +745,9 @@ module.exports = {
       }
     });
   },
+
+  /*------------------------CHECK MMT TRAY---------------------------*/
+
   checkMmtTray: (trayId, location) => {
     return new Promise(async (resolve, reject) => {
       let data = await masters.findOne({
@@ -761,6 +780,8 @@ module.exports = {
       }
     });
   },
+  /*------------------------CHECK PMT TRAY---------------------------*/
+
   checkPmtTray: (trayId, location) => {
     return new Promise(async (resolve, reject) => {
       let data = await masters.findOne({
@@ -793,6 +814,9 @@ module.exports = {
       }
     });
   },
+
+  /*------------------------CHECK BOT TRAY---------------------------*/
+
   checkBotTray: (trayId, location) => {
     return new Promise(async (resolve, reject) => {
       let data = await masters.findOne({
@@ -825,6 +849,9 @@ module.exports = {
       }
     });
   },
+
+  /*------------------------TRAY CLOSE REQUEST---------------------------*/
+
   trayCloseRequest: (location) => {
     return new Promise(async (resolve, reject) => {
       let data = await masters.find({
@@ -850,6 +877,9 @@ module.exports = {
       }
     });
   },
+
+  /*------------------------FIND INUSE PMT AND MMT TRAY---------------------------*/
+
   getInuseMmtPmt: (location, type) => {
     return new Promise(async (resolve, reject) => {
       let data = await masters.find({
@@ -871,6 +901,9 @@ module.exports = {
       resolve(data);
     });
   },
+
+  /*------------------------CLOSED AND RECIEVED TRAY FROM BOT---------------------------*/
+
   closeBotTrayGet: (location) => {
     return new Promise(async (resolve, reject) => {
       let data = await masters.find({
@@ -894,99 +927,110 @@ module.exports = {
       }
     });
   },
+
+  /*------------------------CLOSED AND RECIEVED TRAY FROM BOT---------------------------*/
+
   trayReceived: (trayData) => {
     return new Promise(async (resolve, reject) => {
       if (trayData.type === "charging") {
         let data;
         let tray = await masters.findOne({ code: trayData.trayId });
-        if (tray.sort_id == "Recharge Done") {
-          data = await masters.findOneAndUpdate(
-            { code: trayData.trayId },
-            {
-              $set: {
-                sort_id: "Received From Recharging",
-              },
-            }
-          );
-        } else {
-          data = await masters.findOneAndUpdate(
-            { code: trayData.trayId },
-            {
-              $set: {
-                sort_id: "Received From Charging",
-              },
-            }
-          );
-        }
-        if (data) {
-          for (let i = 0; i < data.actual_items.length; i++) {
-            let deliveryTrack = await delivery.updateMany(
-              { tracking_id: data.actual_items[i].tracking_id },
+        if (tray.actual_items?.length == trayData.counts) {
+          if (tray.sort_id == "Recharge Done") {
+            data = await masters.findOneAndUpdate(
+              { code: trayData.trayId },
               {
                 $set: {
-                  tray_status: "Received From Charging",
-                  tray_location: "Warehouse",
-                  charging_done_received: Date.now(),
+                  sort_id: "Received From Recharging",
+                },
+              }
+            );
+          } else {
+            data = await masters.findOneAndUpdate(
+              { code: trayData.trayId },
+              {
+                $set: {
+                  sort_id: "Received From Charging",
                 },
               }
             );
           }
-          resolve({ status: 1 });
+          if (data) {
+            for (let i = 0; i < data.actual_items.length; i++) {
+              let deliveryTrack = await delivery.updateMany(
+                { tracking_id: data.actual_items[i].tracking_id },
+                {
+                  $set: {
+                    tray_status: "Received From Charging",
+                    tray_location: "Warehouse",
+                    charging_done_received: Date.now(),
+                  },
+                }
+              );
+            }
+            resolve({ status: 1 });
+          } else {
+            resolve({ status: 2 });
+          }
         } else {
-          resolve({ status: 2 });
+          resolve({ status: 3 });
         }
       } else if (trayData.type == "Merging Done") {
         let checktray = await masters.findOne({ code: trayData.trayId });
-        if (checktray.sort_id == "Audit Done Return from Merging") {
-          let data = await masters.findOneAndUpdate(
-            { code: trayData.trayId },
-            {
-              $set: {
-                sort_id: "Audit Done Received From Merging",
-              },
+        if (checktray?.items?.length == trayData.counts) {
+          if (checktray.sort_id == "Audit Done Return from Merging") {
+            let data = await masters.findOneAndUpdate(
+              { code: trayData.trayId },
+              {
+                $set: {
+                  sort_id: "Audit Done Received From Merging",
+                },
+              }
+            );
+            if (data) {
+              for (let i = 0; i < data.actual_items.length; i++) {
+                let deliveryTrack = await delivery.updateMany(
+                  { tracking_id: data.items[i].awbn_number },
+                  {
+                    $set: {
+                      tray_status: "Audit Done  Received From Merging",
+                      tray_location: "Warehouse",
+                    },
+                  }
+                );
+              }
+              resolve({ status: 1 });
+            } else {
+              resolve({ status: 2 });
             }
-          );
-          if (data) {
-            for (let i = 0; i < data.actual_items.length; i++) {
-              let deliveryTrack = await delivery.updateMany(
-                { tracking_id: data.items[i].awbn_number },
-                {
-                  $set: {
-                    tray_status: "Audit Done  Received From Merging",
-                    tray_location: "Warehouse",
-                  },
-                }
-              );
-            }
-            resolve({ status: 1 });
           } else {
-            resolve({ status: 2 });
+            let data = await masters.findOneAndUpdate(
+              { code: trayData.trayId },
+              {
+                $set: {
+                  sort_id: "Received From Merging",
+                },
+              }
+            );
+            if (data) {
+              for (let i = 0; i < data.actual_items.length; i++) {
+                let deliveryTrack = await delivery.updateMany(
+                  { tracking_id: data.items[i].awbn_number },
+                  {
+                    $set: {
+                      tray_status: "Received From Merging",
+                      tray_location: "Warehouse",
+                    },
+                  }
+                );
+              }
+              resolve({ status: 1 });
+            } else {
+              resolve({ status: 2 });
+            }
           }
         } else {
-          let data = await masters.findOneAndUpdate(
-            { code: trayData.trayId },
-            {
-              $set: {
-                sort_id: "Received From Merging",
-              },
-            }
-          );
-          if (data) {
-            for (let i = 0; i < data.actual_items.length; i++) {
-              let deliveryTrack = await delivery.updateMany(
-                { tracking_id: data.items[i].awbn_number },
-                {
-                  $set: {
-                    tray_status: "Received From Merging",
-                    tray_location: "Warehouse",
-                  },
-                }
-              );
-            }
-            resolve({ status: 1 });
-          } else {
-            resolve({ status: 2 });
-          }
+          resolve({ status: 3 });
         }
       } else {
         let checkCount = await masters.findOne({ code: trayData.trayId });
@@ -1022,6 +1066,9 @@ module.exports = {
       }
     });
   },
+
+  /*------------------------FIND BOT USERS FOR NEW TRAY ASSIGN---------------------------*/
+
   getBotUsersNewTrayAssing: (location) => {
     return new Promise(async (resolve, reject) => {
       let data = await user
@@ -1036,6 +1083,9 @@ module.exports = {
       }
     });
   },
+
+  /*------------------------CHECK USER IS FREE OR NOT---------------------------*/
+
   checkBotUserTray: (username, trayType) => {
     return new Promise(async (resolve, reject) => {
       let data = await masters.findOne({
@@ -1059,6 +1109,9 @@ module.exports = {
       }
     });
   },
+
+  /*------------------------ASSIGN NEW TRAY TO BOT AGENT---------------------------*/
+
   assignNewTrayIndv: (trayData) => {
     return new Promise(async (resolve, reject) => {
       let data = await masters.updateOne(
@@ -1077,6 +1130,9 @@ module.exports = {
       }
     });
   },
+
+  /*-----------------------BOT AND PMT AND MMT TRAY CLOSE AFTER BOT WORK DONE---------------------------*/
+
   trayClose: (trayData) => {
     return new Promise(async (resolve, reject) => {
       let getTray = await masters.findOne({ code: trayData.trayId });
@@ -1122,6 +1178,9 @@ module.exports = {
       }
     });
   },
+
+  /*------------------------CLOSE BOT TRAY AFTER BOT AGENT WORK IS DONE---------------------------*/
+
   trayCloseBot: (trayData) => {
     return new Promise(async (resolve, reject) => {
       let data = await masters.findOneAndUpdate(
@@ -1231,6 +1290,9 @@ module.exports = {
       }
     });
   },
+
+  /*------------------------CHECK BAG ITEMS ARE SHIFTED TO TRAYS CONFIRMATION---------------------------*/
+
   bagValidationPmtMmtBot: (bagId) => {
     return new Promise(async (resolve, reject) => {
       let data = await masters.aggregate([
@@ -1257,6 +1319,9 @@ module.exports = {
       }
     });
   },
+
+  /*------------------------FIND WAREHOUSE CLOSED TRAY'S---------------------------*/
+
   getBotWarehouseClosed: (location, type, taxanomy) => {
     return new Promise(async (resolve, reject) => {
       let data = await masters.find({
@@ -1270,6 +1335,9 @@ module.exports = {
       }
     });
   },
+
+  /*------------------------RELEASE BOT TRAY---------------------------*/
+
   releaseBotTray: (trayId) => {
     return new Promise(async (resolve, reject) => {
       let data = await masters.updateOne(
@@ -1292,6 +1360,9 @@ module.exports = {
       }
     });
   },
+
+  /*------------------------USER INHAND TRAY AUTO FETCH---------------------------*/
+
   autoFetchTray: (userName) => {
     return new Promise(async (resolve, reject) => {
       let mmtTrayCode = null;
@@ -1361,6 +1432,9 @@ module.exports = {
       });
     });
   },
+
+  /*------------------------FETCH BAG SUMMERY---------------------------*/
+
   getSummeryBotTray: (bagId) => {
     return new Promise(async (resolve, reject) => {
       let data = await masters.aggregate([
@@ -1381,7 +1455,7 @@ module.exports = {
           prefix: "tray-master",
           type_taxanomy: "BOT",
         });
-        console.log(bot);
+
         if (bot) {
           resolve();
         } else {
@@ -1392,6 +1466,9 @@ module.exports = {
       }
     });
   },
+
+  /*------------------------INUSE  AND FREE WHT TRAY'S---------------------------*/
+
   getWhtTray: (trayType, brand, model, location) => {
     return new Promise(async (resolve, reject) => {
       let data;
@@ -1417,6 +1494,9 @@ module.exports = {
       resolve(data);
     });
   },
+
+  /*------------------------BOT TO WHT ASSIGNMENT---------------------------*/
+
   assignToWht: (dataOfItem) => {
     return new Promise(async (resolve, reject) => {
       let data;
@@ -1471,6 +1551,9 @@ module.exports = {
       resolve(data);
     });
   },
+
+  /*------------------------BOT TO WHT GET ASSIGNED TRAY---------------------------*/
+
   getAssignedTray: (details) => {
     return new Promise(async (resolve, reject) => {
       let arr = [];
@@ -1497,6 +1580,9 @@ module.exports = {
       }
     });
   },
+
+  /*------------------------REMOVE WHT TRAY ITEM---------------------------*/
+
   removeWhtTrayItem: (whtTrayDetails) => {
     return new Promise(async (resolve, reject) => {
       let data;
@@ -1553,6 +1639,9 @@ module.exports = {
       }
     });
   },
+
+  /*------------------------WHT TRAY---------------------------*/
+
   getWhtTrayWareHouse: (location, type) => {
     return new Promise(async (resolve, reject) => {
       if (type == "all-wht-tray") {
@@ -1573,6 +1662,9 @@ module.exports = {
       }
     });
   },
+
+  /*--------------------FIND WHT TRAY BASED ON THE STATUS----------------------------*/
+
   getInUseWhtTray: (status, location) => {
     return new Promise(async (resolve, reject) => {
       let data;
@@ -1607,7 +1699,6 @@ module.exports = {
             },
           ],
         });
-        console.log(data);
       } else if (status == "wht-merge") {
         data = await masters.find({
           $or: [
@@ -1659,6 +1750,9 @@ module.exports = {
       resolve(data);
     });
   },
+
+  /*-------------------- FETCH WHT ITEM BASED ON THE STATUS---------------------------*/
+
   getWhtTrayitem: (trayId, sortId) => {
     return new Promise(async (resolve, reject) => {
       if (sortId == "all-wht-tray") {
@@ -1729,6 +1823,9 @@ module.exports = {
       }
     });
   },
+
+  /*------------------GET REQUESTS---------------------------*/
+
   sendToMisWhtApproveCharging: (allTrayId) => {
     return new Promise(async (resolve, reject) => {
       let data;
@@ -1749,8 +1846,10 @@ module.exports = {
       }
     });
   },
+
+  /*------------------GET CHARGING REQUESTS---------------------------*/
+
   getChargingRequest: (status, location) => {
-    console.log(status);
     if (status == "Send_for_charging") {
       return new Promise(async (resolve, reject) => {
         let data = await masters.find({
@@ -1773,6 +1872,19 @@ module.exports = {
           resolve(data);
         }
       });
+    } else if (status == "Send_for_audit") {
+      return new Promise(async (resolve, reject) => {
+        let data = await masters.find({
+          prefix: "tray-master",
+          type_taxanomy: "WHT",
+          sort_id: "Send for Audit",
+          cpc: location,
+        });
+
+        if (data) {
+          resolve(data);
+        }
+      });
     } else {
       return new Promise(async (resolve, reject) => {
         let data = await masters.find({
@@ -1786,6 +1898,9 @@ module.exports = {
       });
     }
   },
+
+  /*------------------CHECK UIC CODE---------------------------*/
+
   checkUicCode: (uic, trayId) => {
     return new Promise(async (resolve, reject) => {
       let data = await delivery.findOne({ "uic_code.code": uic });
@@ -1818,6 +1933,9 @@ module.exports = {
       }
     });
   },
+
+  /*------------------ADD ACTUAL ITEM CONFIRMATION---------------------------*/
+
   addWhtActual: (trayItemData) => {
     return new Promise(async (resolve, reject) => {
       if (trayItemData?.page == "bqc") {
@@ -1870,6 +1988,9 @@ module.exports = {
       }
     });
   },
+
+  /*------------------WHT TRAY ISSUE TO AGENT---------------------------*/
+
   issueToagentWht: (trayData) => {
     return new Promise(async (resolve, reject) => {
       let data;
@@ -1959,6 +2080,9 @@ module.exports = {
       }
     });
   },
+
+  /*-----------------WHT TRAY RETURN FROM CHARGING--------------------------*/
+
   returnFromChargingWht: (location) => {
     return new Promise(async (resolve, reject) => {
       let data = await masters.find({
@@ -1994,6 +2118,9 @@ module.exports = {
       }
     });
   },
+
+  /*-----------------WHT TRAY  CHARGING DONE RECEIVED --------------------------*/
+
   chargingDoneRecieved: (trayId, sortId) => {
     return new Promise(async (resolve, reject) => {
       if (sortId == "Received From Charging") {
@@ -2024,6 +2151,9 @@ module.exports = {
       }
     });
   },
+
+  /*-----------------RETURN FROM CHARGING WAREHOUSE WILL CHECK UIC CODE --------------------------*/
+
   checkUicCodeChargeDone: (uic, trayId) => {
     return new Promise(async (resolve, reject) => {
       let data = await delivery.findOne({ "uic_code.code": uic });
@@ -2056,6 +2186,9 @@ module.exports = {
       }
     });
   },
+
+  /*-----------------RETURN FROM SORTING WAREHOUSE WILL CHECK UIC CODE --------------------------*/
+
   checkUicCodeSortingDone: (uic, trayId) => {
     return new Promise(async (resolve, reject) => {
       let data = await delivery.findOne({ "uic_code.code": uic });
@@ -2088,6 +2221,9 @@ module.exports = {
       }
     });
   },
+
+  /*-----------------CHARGE DONE VERIFY ACTUAL ITEM--------------------------*/
+
   chargingDoneActualItemPut: (trayItemData) => {
     return new Promise(async (resolve, reject) => {
       let data = await masters.updateOne(
@@ -2105,6 +2241,9 @@ module.exports = {
       }
     });
   },
+
+  /*-----------------SORTING DONE VERIFY ACTUAL ITEM--------------------------*/
+
   sortingDoneActualItemPut: (trayItemData) => {
     return new Promise(async (resolve, reject) => {
       let checkItemPutedOrNot = await masters.findOne({
@@ -2130,6 +2269,9 @@ module.exports = {
       }
     });
   },
+
+  /*-----------------WHT TRAY READY TO BQC--------------------------*/
+
   readyToBqc: (trayData) => {
     return new Promise(async (resolve, reject) => {
       let data;
@@ -2198,18 +2340,40 @@ module.exports = {
       }
     });
   },
+
+  /*-----------------AUDIT WORK IS DONE CLOSE THE TRAY--------------------------*/
+
   auditDoneClose: (trayData) => {
     return new Promise(async (resolve, reject) => {
-      let data = await masters.findOneAndUpdate(
-        { code: trayData.trayId },
-        {
-          $set: {
-            description: trayData.description,
-            sort_id: trayData.type,
-            actual_items: [],
-          },
-        }
-      );
+      let data;
+      let falg = false;
+      if (trayData?.length == trayData?.limit) {
+        falg = true;
+        data = await masters.findOneAndUpdate(
+          { code: trayData.trayId },
+          {
+            $set: {
+              sort_id: "Ready to RDL",
+              actual_items: [],
+              issued_user_name: null,
+              from_merge: null,
+              to_merge: null,
+            },
+          }
+        );
+      } else {
+        data = await masters.findOneAndUpdate(
+          { code: trayData.trayId },
+          {
+            $set: {
+              description: trayData.description,
+              sort_id: trayData.type,
+              actual_items: [],
+              issued_user_name: null,
+            },
+          }
+        );
+      }
       if (data) {
         for (let x of data.items) {
           let deliveryUpdate = await delivery.updateOne(
@@ -2225,10 +2389,17 @@ module.exports = {
             }
           );
         }
-        resolve(data);
+        if (falg == true) {
+          resolve({ status: 1 });
+        } else {
+          resolve({ status: 2 });
+        }
       }
     });
   },
+
+  /*-----------------WHT TRAY RETURN FROM BQC--------------------------*/
+
   returnFromBqcWht: (location) => {
     return new Promise(async (resolve, reject) => {
       let data = await masters.find({
@@ -2252,6 +2423,9 @@ module.exports = {
       }
     });
   },
+
+  /*-----------------AUDIT DONE OTHER TRAY--------------------------*/
+
   returnFromAuditOtherTray: (location) => {
     return new Promise(async (resolve, reject) => {
       let data = await masters.find({
@@ -2275,6 +2449,8 @@ module.exports = {
       }
     });
   },
+  /*-----------------RETURN FROM SORTING--------------------------*/
+
   returnFromBSorting: (location) => {
     return new Promise(async (resolve, reject) => {
       let data = await masters.find({
@@ -2298,93 +2474,119 @@ module.exports = {
       }
     });
   },
+
+  /*-----------------BQC DONE RECIEVED--------------------------*/
+
   bqcDoneRecieved: (trayData) => {
     return new Promise(async (resolve, reject) => {
-      let data = await masters.findOneAndUpdate(
-        { code: trayData.trayId },
-        {
-          $set: {
-            sort_id: "Received From BQC",
-          },
+      let tray = await masters.findOne({ code: trayData.trayId });
+      if (tray?.actual_items?.length == trayData.counts) {
+        let data = await masters.findOneAndUpdate(
+          { code: trayData.trayId },
+          {
+            $set: {
+              sort_id: "Received From BQC",
+            },
+          }
+        );
+        if (data) {
+          for (let i = 0; i < data.actual_items.length; i++) {
+            let deliveryTrack = await delivery.updateMany(
+              { tracking_id: data.actual_items[i].tracking_id },
+              {
+                $set: {
+                  tray_status: "Received From BQC",
+                  tray_location: "Warehouse",
+                  bqc_done_received: Date.now(),
+                },
+              }
+            );
+          }
+          resolve({ status: 1 });
+        } else {
+          resolve({ status: 2 });
         }
-      );
-      if (data) {
-        for (let i = 0; i < data.actual_items.length; i++) {
-          let deliveryTrack = await delivery.updateMany(
-            { tracking_id: data.actual_items[i].tracking_id },
-            {
-              $set: {
-                tray_status: "Received From BQC",
-                tray_location: "Warehouse",
-                bqc_done_received: Date.now(),
-              },
-            }
-          );
-        }
-        resolve(data);
       } else {
-        resolve(data);
+        resolve({ status: 3 });
       }
     });
   },
+
+  /*-------------------RECEIVED FROM AUDIT------------------------*/
+
   recievedFromAudit: (trayData) => {
-    console.log(trayData);
     return new Promise(async (resolve, reject) => {
-      let data = await masters.findOneAndUpdate(
-        { code: trayData.trayId },
-        {
-          $set: {
-            sort_id: "Received From Audit",
-          },
+      let tray = await masters.findOne({ code: trayData.trayId });
+      if (tray.items?.length == trayData.counts) {
+        let data = await masters.findOneAndUpdate(
+          { code: trayData.trayId },
+          {
+            $set: {
+              sort_id: "Received From Audit",
+            },
+          }
+        );
+        if (data) {
+          for (let x of data?.items) {
+            let deliveryTrack = await delivery.updateMany(
+              { tracking_id: x.tracking_id },
+              {
+                $set: {
+                  tray_status: "Received From Audit",
+                  tray_location: "Warehouse",
+                  audit_done_recieved: Date.now(),
+                },
+              }
+            );
+          }
+          resolve({ status: 1 });
+        } else {
+          resolve({ status: 3 });
         }
-      );
-      if (data) {
-        for (let x of data?.items) {
-          let deliveryTrack = await delivery.updateMany(
-            { tracking_id: x.tracking_id },
-            {
-              $set: {
-                tray_status: "Received From Audit",
-                tray_location: "Warehouse",
-                audit_done_recieved: Date.now(),
-              },
-            }
-          );
-        }
-        resolve(data);
       } else {
-        resolve(data);
+        resolve({ status: 2 });
       }
     });
   },
+
+  /*-------------------RECEIVED FROM SORTING------------------------*/
+
   sortingDoneRecieved: (trayData) => {
     return new Promise(async (resolve, reject) => {
-      let data = await masters.findOneAndUpdate(
-        { code: trayData.trayId },
-        {
-          $set: {
-            sort_id: "Received From Sorting",
-          },
-        }
-      );
-      if (data) {
-        for (let x of data.items) {
-          let updateDelivery = await delivery.updateOne(
-            {
-              tracking_id: x.tracking_id,
+      let tray = await masters.findOne({ code: trayData.trayId });
+      if (tray?.items?.length == trayData.counts) {
+        let data = await masters.findOneAndUpdate(
+          { code: trayData.trayId },
+          {
+            $set: {
+              sort_id: "Received From Sorting",
             },
-            {
-              $set: {
-                tray_location: "Warehouse",
-                received_from_sorting: Date.now(),
+          }
+        );
+        if (data) {
+          for (let x of data.items) {
+            let updateDelivery = await delivery.updateOne(
+              {
+                tracking_id: x.tracking_id,
               },
-            }
-          );
+              {
+                $set: {
+                  tray_location: "Warehouse",
+                  received_from_sorting: Date.now(),
+                },
+              }
+            );
+          }
+          resolve({ status: 1 });
         }
-        resolve(data);
+      } else {
+        resolve({ status: 2 });
       }
     });
   },
+
+  /*-------------------SORTING REQUESTS------------------------*/
+
   getBotAndWhtSortingRequestTray: (username) => {
     return new Promise(async (resolve, reject) => {
       let data = [];
@@ -2400,18 +2602,15 @@ module.exports = {
           },
         ],
       });
-      // for (let y of botTray) {
-      //   data.push(y);
-      //   for (let x of y.wht_tray) {
-      //     let tray = await masters.findOne({ code: x });
-      //     data.push(tray);
-      //   }
-      // }
+
       if (botTray) {
         resolve(botTray);
       }
     });
   },
+
+  /*-------------------ACTUAL VS EXPECTED SCREEN------------------------*/
+
   getTrayForSortingExVsAt: (trayId) => {
     return new Promise(async (resolve, reject) => {
       let data = await masters.findOne({
@@ -2432,6 +2631,9 @@ module.exports = {
       }
     });
   },
+
+  /*---------------------SORTING CONFIRMATION----------------------*/
+
   assignToSortingConfirm: (trayData) => {
     return new Promise(async (resolve, reject) => {
       let data;
@@ -2471,6 +2673,9 @@ module.exports = {
       }
     });
   },
+
+  /*--------------------SORTING DONE CLOSE WHT TRAY----------------------*/
+
   whtTrayCloseAfterSorting: (trayData) => {
     return new Promise(async (resolve, reject) => {
       let data;
@@ -2529,6 +2734,9 @@ module.exports = {
       }
     });
   },
+
+  /*--------------------FETCH MMT AND PMT REPORT----------------------*/
+
   getReportMmtPmt: (reportBasis) => {
     let date2 = moment
       .utc(new Date(new Date().toISOString().split("T")[0]), "DD-MM-YYYY")
@@ -2569,6 +2777,9 @@ module.exports = {
       resolve(data);
     });
   },
+
+  /*----------------------BOT TRAY REPORT--------------------*/
+
   getBotTrayForReportScreen: (location) => {
     return new Promise(async (resolve, reject) => {
       let data = await masters.find({
@@ -2655,6 +2866,9 @@ module.exports = {
       }
     });
   },
+
+  /*-----------------MMT AND PMT REPORT DATE WAISE-------------------------*/
+
   getReportMmtPmtSort: (reportBasis) => {
     let date2 = moment.utc(new Date(reportBasis.date), "DD-MM-YYYY").toDate();
     let date1 = moment
@@ -2694,6 +2908,9 @@ module.exports = {
       resolve(data);
     });
   },
+
+  /*-----------------BOT TRAY REPORT RELATED DATA-------------------------*/
+
   getBotTrayReport: (location, trayId) => {
     return new Promise(async (resolve, reject) => {
       let data = await masters.findOne({
@@ -2705,7 +2922,7 @@ module.exports = {
           },
         ],
       });
-      console.log(data);
+
       if (data) {
         if (data.cpc == location) {
           for (let x of data.items) {
@@ -2731,7 +2948,7 @@ module.exports = {
               }
             }
           }
-          console.log(data);
+
           resolve({ status: 1, data: data });
         } else if (data.cpc == location) {
           resolve({ status: 2 });
@@ -2741,6 +2958,8 @@ module.exports = {
       }
     });
   },
+  /*-----------------BOT TRAY REPORT ITEM DETAILS-------------------------*/
+
   getItemDetailsOfBotTrayReport: (location, trayId, muic) => {
     return new Promise(async (resolve, reject) => {
       let trayItem = await masters.findOne(
@@ -2757,6 +2976,8 @@ module.exports = {
       }
     });
   },
+  /*-----------------MMT MERGE REQUEST-------------------------*/
+
   mmtMergerequest: (location) => {
     return new Promise(async (resolve, reject) => {
       let getMmttray = await masters
@@ -2780,6 +3001,9 @@ module.exports = {
       }
     });
   },
+
+  /*-----------------FIND FROM AND TO TRAY-------------------------*/
+
   getFromAndToTrayMerge: (location, fromTray) => {
     return new Promise(async (resolve, reject) => {
       let arr = [];
@@ -2797,6 +3021,9 @@ module.exports = {
       }
     });
   },
+
+  /*-----------------ASSIGN TO SORTING AGENT-------------------------*/
+
   assignToSortingAgent: (user_name, fromTray, toTray) => {
     return new Promise(async (resolve, reject) => {
       let checkFromTray = await masters.findOne({ code: fromTray });
@@ -2885,6 +3112,8 @@ module.exports = {
       }
     });
   },
+  /*-----------------RETURN FROM MERGING-------------------------*/
+
   returnFromMerging: (location) => {
     return new Promise(async (resolve, reject) => {
       let getMmtTray = await masters.find({
@@ -2915,29 +3144,48 @@ module.exports = {
           },
         ],
       });
-      console.log(getMmtTray);
+
       if (getMmtTray) {
         resolve(getMmtTray);
       }
     });
   },
+
+  /*-----------------MERGING DONE CLOSE WHT TRAY-------------------------*/
+
   mergeDoneTrayClose: (fromTray, toTray, type, length, limit, status) => {
     let data;
     return new Promise(async (resolve, reject) => {
       if (status == "Audit Done Received From Merging") {
-        data = await masters.findOneAndUpdate(
-          { code: toTray },
-          {
-            $set: {
-              sort_id: "Ready for RDL",
-              actual_items: [],
-              issued_user_name: null,
-              from_merge: null,
-              to_merge: null,
-              closed_time_wharehouse: Date.now(),
-            },
-          }
-        );
+        if (limit == length) {
+          data = await masters.findOneAndUpdate(
+            { code: toTray },
+            {
+              $set: {
+                sort_id: "Ready to RDL",
+                actual_items: [],
+                issued_user_name: null,
+                from_merge: null,
+                to_merge: null,
+                closed_time_wharehouse: Date.now(),
+              },
+            }
+          );
+        } else {
+          data = await masters.findOneAndUpdate(
+            { code: toTray },
+            {
+              $set: {
+                sort_id: "Audit Done Closed By Warehouse",
+                actual_items: [],
+                issued_user_name: null,
+                from_merge: null,
+                to_merge: null,
+                closed_time_wharehouse: Date.now(),
+              },
+            }
+          );
+        }
       } else {
         if (type == "WHT") {
           if (length == limit) {
@@ -3024,6 +3272,9 @@ module.exports = {
       }
     });
   },
+
+  /*-----------------CHECK SORTING AGENT IS FREE OR NOT-------------------------*/
+
   getSortingAgentStatus: (username) => {
     return new Promise(async (resolve, reject) => {
       let userActive = await user.findOne({ user_name: username });
@@ -3046,68 +3297,34 @@ module.exports = {
       }
     });
   },
-  checkChargingAgentStatus: (username) => {
+  /*-----------------CHECK AUDIT USER IS FREE OR NOT-------------------------*/
+
+  checkAuditUserFreeOrNot: (username, brand, model) => {
     return new Promise(async (resolve, reject) => {
       let userActive = await user.findOne({ user_name: username });
       if (userActive.status == "Active") {
-        let data = await masters.findOne({
-          $or: [
-            { issued_user_name: username, sort_id: "Issued to Charging" },
-            { issued_user_name: username, sort_id: "Charging Station IN" },
-            { issued_user_name: username, sort_id: "Charge Done" },
-          ],
-        });
-        if (data) {
-          resolve({ status: 2 });
-        } else {
-          resolve({ status: 1 });
-        }
-      } else {
-        resolve({ status: 3 });
-      }
-    });
-  },
-  checkBqcAgentStatus: (username) => {
-    return new Promise(async (resolve, reject) => {
-      let userActive = await user.findOne({ user_name: username });
-      if (userActive.status == "Active") {
-        let data = await masters.findOne({
-          $or: [
-            { issued_user_name: username, sort_id: "Issued to BQC" },
-            { issued_user_name: username, sort_id: "BQC work inprogress" },
-            { issued_user_name: username, sort_id: "BQC Done" },
-          ],
-        });
-        if (data) {
-          resolve({ status: 2 });
-        } else {
-          resolve({ status: 1 });
-        }
-      } else {
-        resolve({ status: 3 });
-      }
-    });
-  },
-  checkAuditUserFreeOrNot: (username) => {
-    return new Promise(async (resolve, reject) => {
-      let userActive = await user.findOne({ user_name: username });
-      if (userActive.status == "Active") {
-        let data = await masters.findOne({
+        let data = await masters.find({
           $or: [
             {
               issued_user_name: username,
               sort_id: "Issued to Audit",
-              type_taxanomy: "WHT",
             },
             {
               issued_user_name: username,
               sort_id: "Audit Done",
-              type_taxanomy: "WHT",
             },
           ],
         });
-        if (data) {
-          resolve({ status: 2 });
+        console.log(data);
+        if (data.length != 0) {
+          for (let x of data) {
+            if (x.type_taxanomy == "WHT") {
+              resolve({ status: 2 });
+            } else if (x.brand !== brand && x.model !== model) {
+              resolve({ status: 2 });
+            }
+          }
+          resolve({ status: 1 });
         } else {
           resolve({ status: 1 });
         }
@@ -3117,7 +3334,13 @@ module.exports = {
     });
   },
 
-  checkTrayStatusAuditApprovePage: (trayId, trayType, location) => {
+  checkTrayStatusAuditApprovePage: (
+    trayId,
+    trayType,
+    location,
+    brand,
+    model
+  ) => {
     return new Promise(async (resolve, reject) => {
       let checkId = await masters.findOne({
         code: trayId,
@@ -3126,6 +3349,8 @@ module.exports = {
       });
       if (checkId == null) {
         resolve({ status: 4 });
+      } else if (checkId?.brand !== brand && checkId?.model !== model) {
+        resolve({ status: 5 });
       } else if (checkId.type_taxanomy == trayType) {
         if (checkId.sort_id == "Open") {
           resolve({ status: 1 });
@@ -3164,6 +3389,7 @@ module.exports = {
                   issued_to_audit: Date.now(),
                   audit_user_name: issue.issued_user_name,
                   tray_status: "Issued to Audit",
+                  "bqc_report.bqc_status": y?.bqc_status,
                 },
               }
             );
@@ -3177,8 +3403,7 @@ module.exports = {
       }
     });
   },
-  getAssignedTrayForAudit: (username) => {
-    console.log(username);
+  getAssignedTrayForAudit: (username, brand, model) => {
     return new Promise(async (resolve, reject) => {
       let obj = {
         CTA: "",
@@ -3191,10 +3416,12 @@ module.exports = {
         issued_user_name: username,
         sort_id: "Issued to Audit",
       });
-      console.log(data);
+
       if (data.length != 0) {
         for (let x of data) {
-          obj[x.type_taxanomy] = x.code;
+          if (x.brand == brand && x.model == model) {
+            obj[x.type_taxanomy] = x.code;
+          }
         }
         resolve(obj);
       } else {
@@ -3227,39 +3454,52 @@ module.exports = {
     });
   },
   auditUserTray: (username, trayType, trayId, location) => {
-    console.log(location);
     return new Promise(async (resolve, reject) => {
       let data = await masters.findOne({ code: trayId, cpc: location });
-      if (data) {
-        if (data.type_taxanomy == trayType) {
-          if (data.sort_id === "Open") {
-            let checkUserStatus = await masters.findOne({
-              $or: [
-                {
-                  type_taxanomy: trayType,
-                  issued_user_name: username,
-                  sort_id: "Issued to Audit",
-                },
-                {
-                  type_taxanomy: trayType,
-                  issued_user_name: username,
-                  sort_id: "Audit Done",
-                },
-              ],
-            });
-            if (checkUserStatus) {
-              resolve({ status: 2, tray_status: data.sort_id });
+      let whtTray = await masters.findOne({
+        prefix: "tray-master",
+        type_taxanomy: "WHT",
+        issued_user_name: username,
+        sort_id: "Issued to Audit",
+      });
+      if (whtTray) {
+        if (whtTray?.model == data.model && whtTray.brand == data.brand) {
+          if (data) {
+            if (data.type_taxanomy == trayType) {
+              if (data.sort_id === "Open") {
+                let checkUserStatus = await masters.findOne({
+                  $or: [
+                    {
+                      type_taxanomy: trayType,
+                      issued_user_name: username,
+                      sort_id: "Issued to Audit",
+                    },
+                    {
+                      type_taxanomy: trayType,
+                      issued_user_name: username,
+                      sort_id: "Audit Done",
+                    },
+                  ],
+                });
+                if (checkUserStatus) {
+                  resolve({ status: 2, tray_status: data.sort_id });
+                } else {
+                  resolve({ status: 1, tray_status: data.sort_id });
+                }
+              } else {
+                resolve({ status: 5, tray_status: data.sort_id });
+              }
             } else {
-              resolve({ status: 1, tray_status: data.sort_id });
+              resolve({ status: 3, tray_status: data.sort_id });
             }
           } else {
-            resolve({ status: 5, tray_status: data.sort_id });
+            resolve({ status: 4, tray_status: data.sort_id });
           }
         } else {
-          resolve({ status: 3, tray_status: data.sort_id });
+          resolve({ status: 7 });
         }
       } else {
-        resolve({ status: 4 });
+        resolve({ status: 6 });
       }
     });
   },

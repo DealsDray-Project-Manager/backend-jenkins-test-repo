@@ -1,17 +1,24 @@
+/************************************************************************************************** */
 /* Express */
 const express = require("express");
 const router = express.Router();
 // user controller
 const superAdminController = require("../../Controller/superAdmin/superAdminController");
 // Multer
-const upload = require("../../utils/multer");
+const upload = require("../../Utils/multer");
 // jwt token
-const jwt = require("../../utils/jwt_token");
+const jwt = require("../../Utils/jwt_token");
 /* FS */
 const fs = require("fs");
 /* ELASTIC SEARCH */
 const elasticsearch = require("../../Elastic-search/elastic")
 /**************************************************************************************************/
+
+/*
+
+@ EXPRESS ROUTERS 
+
+*/
 
 /*--------------------------------CREATE USERS-----------------------------------*/
 router.post(
@@ -147,7 +154,6 @@ router.post("/getWarehouseByLocation", async (req, res) => {
   try {
     const { name } = req.body;
     let warehouse = await superAdminController.getWarehouse(name);
-    console.log(warehouse);
     if (warehouse) {
       res.status(200).json({ data: { warehouse } });
     }
@@ -941,8 +947,6 @@ router.post("/getAudit/:bagId", async (req, res, next) => {
 router.post("/createMasters", async (req, res, next) => {
   try {
     const { type_taxanomy, cpc } = req.body;
-    console.log(req.body);
-    console.log(type_taxanomy);
     let data = await superAdminController.createMasters(req.body);
     if (data) {
       if (req.body.prefix == "bag-master") {
@@ -979,7 +983,7 @@ router.post("/createMasters", async (req, res, next) => {
             if (err) {
             } else {
               obj = JSON.parse(datafile);
-              console.log(obj);
+
               if (type_taxanomy == "BOT") {
                 obj.BOT = obj.BOT + 1;
               } else if (type_taxanomy == "PMT") {
@@ -994,7 +998,7 @@ router.post("/createMasters", async (req, res, next) => {
                 obj.CTB = obj.CTB + 1;
               } else if (type_taxanomy == "CTC") {
                 obj.CTC = obj.CTC + 1;
-              } else if (type_taxanomy == "STD") {
+              } else if (type_taxanomy == "CTD") {
                 obj.CTD = obj.CTD + 1;
               }
               json = JSON.stringify(obj);
@@ -1205,7 +1209,7 @@ router.post("/getBagItemInvalid/:bagId", async (req, res, next) => {
   try {
     const { bagId } = req.params;
     let data = await superAdminController.getInvalidItemForBag(bagId);
-    console.log(data);
+
     if (data.status == 1) {
       res.status(200).json({
         data: data.data,
@@ -1261,11 +1265,45 @@ router.post("/chargeDoneFourDifferenceTray", async (req, res, next) => {
   }
 });
 
+/*-----------------------------------------GET AUDIT DONE WHT TRAY------------------------------------------------*/
+router.post("/auditDoneWht", async (req, res, next) => {
+  try {
+    let data = await superAdminController.getAuditDone();
+    if (data) {
+      res.status(200).json({
+        data: data,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
+// SEND TO RDL
+router.post("/sendToRdl", async (req, res, next) => {
+  try {
+    const { ischeck } = req.body;
+    let data = await superAdminController.sendToRdl(ischeck);
+    if (data.status == 1) {
+      res.status(200).json({
+        message: "Successfully sent MIS",
+      });
+    } else {
+      res.status(202).json({
+        message: "Request failed please tray again...",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
 /****************************************************************************************************** */
 
 /*-----------------------------EXTRA ONE--------------------------------------*/
 router.post("/update-cpc", async (req, res, next) => {
   try {
+    console.log("d");
     let data = await superAdminController.updateCPCExtra();
     if (data) {
       res.status(200).json({

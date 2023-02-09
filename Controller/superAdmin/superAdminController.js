@@ -1,3 +1,4 @@
+/************************************************************************************************** */
 const { user } = require("../../Model/userModel");
 const { infra } = require("../../Model/infraModel");
 const { masters } = require("../../Model/mastersModel");
@@ -11,11 +12,24 @@ const {
   mastersEditHistory,
 } = require("../../Model/masterHistoryModel/mastersHistory");
 const moment = require("moment");
-const IISDOMAIN = "http://prexo-v6-dev-api.dealsdray.com/user/profile/";
-const IISDOMAINPRDT = "http://prexo-v6-dev-api.dealsdray.com/product/image/";
+const IISDOMAIN = "http://prexo-v7-dev-api.dealsdray.com/user/profile/";
+const IISDOMAINPRDT =
+  "http://prexo-v7-dev-api.dealsdray.com/product/image/";
 
 /************************************************************************************************** */
+
+/* 
+
+
+@ SUPER ADMIN CONTROLLER FETCH DATA FROM MONGODB DATA BASE PREXO AND MAKE CHANGES ON DB 
+
+
+
+*/
+
 module.exports = {
+  /*--------------------------------LOGIN-----------------------------------*/
+
   doLogin: (loginData) => {
     return new Promise(async (resolve, reject) => {
       let data = await admin.findOne({
@@ -45,6 +59,7 @@ module.exports = {
       }
     });
   },
+  /*--------------------------------DASHBOARD-----------------------------------*/
   getDashboardData: () => {
     return new Promise(async (resolve, reject) => {
       let count = {};
@@ -73,6 +88,8 @@ module.exports = {
       }
     });
   },
+
+  /*--------------------------------CHECK USER ACTIVE OR NOT-----------------------------------*/
   checkUserStatus: (userName) => {
     return new Promise(async (resolve, reject) => {
       let data = await user.findOne({ user_name: userName, status: "Active" });
@@ -83,6 +100,9 @@ module.exports = {
       }
     });
   },
+
+  /*--------------------------------CHANGE PASSWORD-----------------------------------*/
+
   changePassword: (userData) => {
     return new Promise(async (resolve, reject) => {
       let data = await user.updateOne(
@@ -100,6 +120,9 @@ module.exports = {
       }
     });
   },
+
+  /*--------------------------------CREATE USER-----------------------------------*/
+
   createUser: (userData, profile) => {
     if (profile != undefined) {
       userData.profile = IISDOMAIN + profile;
@@ -120,6 +143,9 @@ module.exports = {
       }
     });
   },
+
+  /*--------------------------------USERS HISTORY--------------------------------*/
+
   getUsersHistory: (username) => {
     return new Promise(async (resolve, reject) => {
       let data = await usersHistory.find({ user_name: username });
@@ -128,12 +154,16 @@ module.exports = {
       }
     });
   },
+  /*--------------------------------FIND CPC-----------------------------------*/
+
   getCpc: () => {
     return new Promise(async (resolve, rejects) => {
       let cpc = await infra.find({ type_taxanomy: "CPC" });
       resolve(cpc);
     });
   },
+  /*--------------------------------FIND WAREHOUSE-----------------------------------*/
+
   getWarehouse: (code) => {
     return new Promise(async (resolve, reject) => {
       let warehouse = await infra.find({
@@ -143,19 +173,17 @@ module.exports = {
       resolve(warehouse);
     });
   },
-  getDesignation: () => {
-    return new Promise(async (resolve, reject) => {
-      let designation = await masters.find({
-        type_taxanomy: "designation-type",
-      });
-    });
-  },
+  /*--------------------------------FIND USERS-----------------------------------*/
+
   getUsers: () => {
     return new Promise(async (resolve, reject) => {
       let usersData = await user.find({});
       resolve(usersData);
     });
   },
+
+  /*--------------------------------DEACTIVATE USER-----------------------------------*/
+
   userDeactivate: (username) => {
     return new Promise(async (resolve, reject) => {
       let res = await user.findOneAndUpdate(
@@ -167,9 +195,11 @@ module.exports = {
         }
       );
       resolve(res);
-      resolve(res);
     });
   },
+
+  /*--------------------------------ACTIVATE USER-----------------------------------*/
+
   userActivate: (username) => {
     return new Promise(async (resolve, reject) => {
       let res = await user.findOneAndUpdate(
@@ -183,12 +213,17 @@ module.exports = {
       resolve(res);
     });
   },
+  /*--------------------------------DATA FETCH FOR EDIT USER-----------------------------------*/
+
   getEditData: (username) => {
     return new Promise(async (resolve, reject) => {
       let userData = await user.findOne({ user_name: username });
       resolve(userData);
     });
   },
+
+  /*--------------------------------EDIT USER DATA-----------------------------------*/
+
   editUserdata: (userData, profile) => {
     if (profile != undefined) {
       profile = IISDOMAIN + profile;
@@ -202,11 +237,12 @@ module.exports = {
             contact: userData.contact,
             email: userData.email,
             last_update_date: Date.now(),
+            profile: profile,
           },
         },
         { returnOriginal: false }
       );
-      console.log(userDetails);
+
       if (userDetails) {
         let obj = {
           name: userDetails.name,
@@ -223,6 +259,7 @@ module.exports = {
           creation_date: userDetails.creation_date,
           last_update_date: userDetails.last_update_date,
           last_otp: userDetails.last_otp,
+          profile: userDetails.profile,
         };
         let historyTab = await usersHistory.create(obj);
         resolve(userDetails);
@@ -231,18 +268,27 @@ module.exports = {
       }
     });
   },
+
+  /*--------------------------------FIND MASTERS-----------------------------------*/
+
   getMasters: () => {
     return new Promise(async (resolve, reject) => {
       let mastersData = await masters.find({});
       resolve(mastersData);
     });
   },
+
+  /*--------------------------------FIND INFRA-----------------------------------*/
+
   getInfra: () => {
     return new Promise(async (resolve, reject) => {
       let infraData = await infra.find({});
       resolve(infraData);
     });
   },
+
+  /*--------------------------------BULK VALIDATION FOR BRANDS-----------------------------------*/
+
   bulkValidationBrands: (bandData) => {
     return new Promise(async (resolve, reject) => {
       let err = {};
@@ -274,6 +320,9 @@ module.exports = {
       }
     });
   },
+
+  /*--------------------------------CREATE BRANDS-----------------------------------*/
+
   createBrands: (brandsData) => {
     return new Promise(async (resolve, reject) => {
       let brandExists = await brands
@@ -289,20 +338,8 @@ module.exports = {
       }
     });
   },
-  getHighestBrandId: () => {
-    // return new Promise(async (resolve, reject) => {
-    //     let highestBrandId = await brands.find({}).sort({ brand_id: -1 }).collation({ locale: "en_US", numericOrdering: true }).limit(1)
-    //     if (highestBrandId.length != 0) {
-    //         let count = highestBrandId[0].brand_id.split("-")[1]
-    //         let nextID = Number(count) + 1
-    //         console.log(nextID);
-    //         resolve(nextID)
-    //     }
-    //     else {
-    //         resolve(1)
-    //     }
-    // })
-  },
+  /*--------------------------------MASTER HIGHTST ID FETCH-----------------------------------*/
+
   getHighestId: (prefix) => {
     return new Promise(async (resolve, reject) => {
       let id = await masters
@@ -329,6 +366,9 @@ module.exports = {
       }
     });
   },
+
+  /*--------------------------------FIND BRANDS-----------------------------------*/
+
   getBrands: () => {
     return new Promise(async (resolve, reject) => {
       let allBrands = await brands
@@ -341,6 +381,9 @@ module.exports = {
       }
     });
   },
+
+  /*--------------------------------CREATE USER-----------------------------------*/
+
   getBrandsAlpha: () => {
     return new Promise(async (resolve, reject) => {
       let allBrands = await brands
@@ -352,6 +395,8 @@ module.exports = {
       }
     });
   },
+
+  /*--------------------------------FIND BRAND-----------------------------------*/
 
   getOneBrand: (brandId) => {
     return new Promise(async (resolve, reject) => {
@@ -373,6 +418,8 @@ module.exports = {
     });
   },
 
+  /*--------------------------------EDIT BRANDS-----------------------------------*/
+
   editBrands: (editData) => {
     return new Promise(async (resolve, reject) => {
       let data = await brands
@@ -392,6 +439,9 @@ module.exports = {
       }
     });
   },
+
+  /*--------------------------------DELETE BRANDS-----------------------------------*/
+
   deleteBrands: (brandId) => {
     return new Promise(async (resolve, reject) => {
       let data = await brands
@@ -404,6 +454,9 @@ module.exports = {
       }
     });
   },
+
+  /*--------------------------------BULK VALIDATION PRODUCT-----------------------------------*/
+
   validationBulkProduct: (productsData) => {
     return new Promise(async (resolve, reject) => {
       let err = {};
@@ -462,6 +515,9 @@ module.exports = {
       }
     });
   },
+
+  /*--------------------------------CREATE PRODUCT-----------------------------------*/
+
   createProduct: (productData, image) => {
     return new Promise(async (resolve, reject) => {
       if (image != undefined) {
@@ -487,18 +543,26 @@ module.exports = {
       }
     });
   },
+  /*--------------------------------GET ALL PRODUCTS-----------------------------------*/
+
   getAllProducts: () => {
     return new Promise(async (resolve, reject) => {
       let allProducts = await products.find({});
       resolve(allProducts);
     });
   },
+
+  /*--------------------------------FIND BRAND BASED PRODUCT-----------------------------------*/
+
   getBrandBasedPrdouct: (brandName) => {
     return new Promise(async (resolve, reject) => {
       let allProducts = await products.find({ brand_name: brandName });
       resolve(allProducts);
     });
   },
+
+  /*--------------------------------FIND IMAGE FOR EDITING-----------------------------------*/
+
   getImageEditData: (id) => {
     return new Promise(async (resolve, reject) => {
       let data = await products.findOne({ muic: id });
@@ -509,8 +573,10 @@ module.exports = {
       }
     });
   },
+
+  /*--------------------------------EDIT PRODUCT IMEAGE-----------------------------------*/
+
   editproductImage: (id, image) => {
-    console.log(id);
     image = IISDOMAINPRDT + image;
     return new Promise(async (resolve, reject) => {
       let data = await products.updateOne(
@@ -521,7 +587,6 @@ module.exports = {
           },
         }
       );
-      console.log(data);
       if (data.modifiedCount != 0) {
         resolve(data);
       } else {
@@ -529,6 +594,9 @@ module.exports = {
       }
     });
   },
+
+  /*--------------------------------PRODCUT-----------------------------------*/
+
   getEditProduct: (productId) => {
     return new Promise(async (resolve, reject) => {
       let data = await products
@@ -553,6 +621,9 @@ module.exports = {
       }
     });
   },
+
+  /*--------------------------------EDIT PRODUCT-----------------------------------*/
+
   editproduct: (productData) => {
     return new Promise(async (resolve, reject) => {
       let data = await products.updateOne(
@@ -573,6 +644,9 @@ module.exports = {
       }
     });
   },
+
+  /*--------------------------------DELETE PRODUCT-----------------------------------*/
+
   deleteProduct: (productId) => {
     return new Promise(async (resolve, reject) => {
       let data = await products.deleteOne({ muic: productId });
@@ -583,6 +657,9 @@ module.exports = {
       }
     });
   },
+
+  /*--------------------------------ADD LOCATION-----------------------------------*/
+
   addLocation: (locationData) => {
     return new Promise(async (resolve, reject) => {
       let checkNameExists = await infra.findOne({
@@ -607,6 +684,9 @@ module.exports = {
       }
     });
   },
+
+  /*--------------------------------GET INFRA-----------------------------------*/
+
   getInfra: (infraId) => {
     return new Promise(async (resolve, reject) => {
       let data = await infra.findOne({ code: infraId });
@@ -617,8 +697,10 @@ module.exports = {
       }
     });
   },
+
+  /*--------------------------------EDIT INFRA-----------------------------------*/
+
   editInfra: (infraId) => {
-    console.log(infraId);
     return new Promise(async (resolve, reject) => {
       let data = await infra.updateOne(
         { _id: infraId._id },
@@ -643,6 +725,9 @@ module.exports = {
       }
     });
   },
+
+  /*--------------------------------DELETE INFRA-----------------------------------*/
+
   deleteInfra: (infraId) => {
     return new Promise(async (resolve, reject) => {
       let data = await infra.deleteOne({ code: infraId });
@@ -653,18 +738,26 @@ module.exports = {
       }
     });
   },
+
+  /*--------------------------------FIND LOCATION-----------------------------------*/
+
   getLocation: () => {
     return new Promise(async (resolve, reject) => {
       let allLocation = await infra.find({ type_taxanomy: "CPC" });
       resolve(allLocation);
     });
   },
+  /*--------------------------------FIND ALL WAREHOUSE-----------------------------------*/
+
   getAllWarehouse: () => {
     return new Promise(async (resolve, reject) => {
       let data = await infra.find({ type_taxanomy: "Warehouse" });
       resolve(data);
     });
   },
+
+  /*--------------------------------BULK BAG VALIDATION-----------------------------------*/
+
   bulkBagValidation: (bagData) => {
     return new Promise(async (resolve, reject) => {
       let err = {};
@@ -744,6 +837,9 @@ module.exports = {
       }
     });
   },
+
+  /*--------------------------------BULK TRAY VALIDATION-----------------------------------*/
+
   bulkValidationTray: (trayData) => {
     return new Promise(async (resolve, reject) => {
       let err = {};
@@ -861,6 +957,9 @@ module.exports = {
       }
     });
   },
+
+  /*--------------------------------ADD BULK TRAY-----------------------------------*/
+
   addbulkTray: (bulkDataTray) => {
     const newArrayOfObj = bulkDataTray.map(
       ({
@@ -891,6 +990,9 @@ module.exports = {
       }
     });
   },
+
+  /*--------------------------------ADD BULK BAG-----------------------------------*/
+
   addBulkBag: (bulkData) => {
     const newArrayOfObj = bulkData.map(
       ({
@@ -916,12 +1018,17 @@ module.exports = {
       }
     });
   },
+  /*--------------------------------FIND AUDIT FOR MASTERS-----------------------------------*/
+
   getAudit: (bagId) => {
     return new Promise(async (resolve, reject) => {
       let data = await masters.find({ code: bagId });
       resolve(data);
     });
   },
+
+  /*--------------------------------CREATE MASTERS-----------------------------------*/
+
   createMasters: (mastersData) => {
     return new Promise(async (resolve, reject) => {
       let exist = await masters.findOne({
@@ -942,6 +1049,9 @@ module.exports = {
       }
     });
   },
+
+  /*--------------------------------FIND MASTERS-----------------------------------*/
+
   getMasters: (type) => {
     return new Promise(async (resolve, reject) => {
       let data = await masters
@@ -951,6 +1061,9 @@ module.exports = {
       resolve(data);
     });
   },
+
+  /*--------------------------------GET ONE MASTER FOR EDIT-----------------------------------*/
+
   getOneMaster: (masterId) => {
     return new Promise(async (resolve, reject) => {
       let data = await masters.findOne({
@@ -966,6 +1079,9 @@ module.exports = {
       }
     });
   },
+
+  /*--------------------------------EDIT MASTER-----------------------------------*/
+
   editMaster: (editData) => {
     return new Promise(async (resolve, reject) => {
       let data = await masters.findOneAndUpdate(
@@ -1011,6 +1127,8 @@ module.exports = {
       }
     });
   },
+  /*--------------------------------MASTERS EDIT HISTORY-----------------------------------*/
+
   getMasterEditHistory: (trayId) => {
     return new Promise(async (resolve, reject) => {
       let data = await mastersEditHistory
@@ -1021,6 +1139,9 @@ module.exports = {
       }
     });
   },
+
+  /*--------------------------------DELETE MASTER-----------------------------------*/
+
   delteMaster: (masterId) => {
     return new Promise(async (resolve, reject) => {
       let data = await masters.deleteOne({ code: masterId });
@@ -1031,6 +1152,9 @@ module.exports = {
       }
     });
   },
+
+  /*--------------------------------ITEM TRACKING-----------------------------------*/
+
   itemTracking: (limit, skip) => {
     return new Promise(async (resolve, reject) => {
       let data = await orders.aggregate([
@@ -1061,6 +1185,9 @@ module.exports = {
       resolve({ data: data, count: count });
     });
   },
+
+  /*--------------------------------SEARCH ITEM TRACKING-----------------------------------*/
+
   searchAdminTrackItem: (searchType, value, location) => {
     let allData;
     let date2 = moment.utc(value, "DD-MM-YYYY").toDate();
@@ -1303,68 +1430,14 @@ module.exports = {
           },
         ]);
       }
-      //   if (searchType == "tracking_id") {
-      //   allData = await orders.aggregate([
-      //     {
-      //       $match: {
-      //         delivery_status: "Delivered",
-      //       },
-      //     },
-      //     {
-      //       $lookup: {
-      //         from: "deliveries",
-      //         localField: "order_id",
-      //         foreignField: "order_id",
-      //         as: "delivery",
-      //       },
-      //     },
-      //     {
-      //       $unwind: "$delivery",
-      //     },
-      //     {
-      //       $match: {
-      //         delivery_status: "Delivered",
-      //         "delivery.tracking_id": {
-      //           $regex: ".*" + value + ".*",
-      //           $options: "i",
-      //         },
-      //       },
-      //     },
-      //   ]);
-      // } else if (searchType == "uic") {
-      //   allData = await orders.aggregate([
-      //     {
-      //       $match: {
-      //         delivery_status: "Delivered",
-      //       },
-      //     },
-      //     {
-      //       $lookup: {
-      //         from: "deliveries",
-      //         localField: "order_id",
-      //         foreignField: "order_id",
-      //         as: "delivery",
-      //       },
-      //     },
-      //     {
-      //       $unwind: "$delivery",
-      //     },
-      //     {
-      //       $match: {
-      //         delivery_status: "Delivered",
-      //         "delivery.uic_code.code": {
-      //           $regex: ".*" + value + ".*",
-      //           $options: "i",
-      //         },
-      //       },
-      //     },
-      //   ]);
-      // }
+
       if (allData) {
         resolve(allData);
       }
     });
   },
+  /*--------------------------------IN USE WHT TRAYS-----------------------------------*/
+
   getWhtTrayInuse: () => {
     return new Promise(async (resolve, reject) => {
       let data = await masters.find({
@@ -1378,7 +1451,7 @@ module.exports = {
       }
     });
   },
-  readyForCharging: (trayId, status) => {
+  readyForCharging: (trayId,status) => {
     return new Promise(async (resolve, reject) => {
       let flag = false;
       for (let x of trayId) {
@@ -1403,6 +1476,8 @@ module.exports = {
       }
     });
   },
+  /*--------------------------------GET INVALID BAG ITEM-----------------------------------*/
+
   getInvalidItemBag: () => {
     return new Promise(async (resolve, reject) => {
       let data = await masters.find({
@@ -1410,12 +1485,13 @@ module.exports = {
         sort_id: "In Progress",
         "items.status": "Invalid",
       });
-      console.log(data);
       if (data) {
         resolve(data);
       }
     });
   },
+  /*--------------------------------GET BAG IF ANY INVALID ITEM PRESENT-----------------------------------*/
+
   getInvalidItemForBag: (bagId) => {
     return new Promise(async (resolve, reject) => {
       let data = await masters.findOne({ code: bagId });
@@ -1430,6 +1506,8 @@ module.exports = {
       }
     });
   },
+  /*--------------------------------FETCH BQC REPORT-----------------------------------*/
+
   getBqcReport: (uic) => {
     return new Promise(async (resolve, reject) => {
       let obj = {};
@@ -1460,6 +1538,8 @@ module.exports = {
       }
     });
   },
+  /*--------------------------------CHARGE DONE DAY DIFFERENT 4 WHT TRAY-----------------------------------*/
+
   chargeDoneTrayFourDayDiff: () => {
     return new Promise(async (resolve, reject) => {
       let tray = await masters.find({
@@ -1470,6 +1550,7 @@ module.exports = {
         let arr = [];
         for (let x of tray) {
           var today = new Date(Date.now());
+
           if (
             new Date(x.closed_time_bot) <=
             new Date(today.setDate(today.getDate() - 4))
@@ -1477,29 +1558,111 @@ module.exports = {
             arr.push(x);
           }
         }
-        console.log(arr);
         resolve(arr);
       }
     });
   },
+  /*--------------------------------AUDIT DONE TRAY-----------------------------------*/
+
+  getAuditDone: () => {
+    return new Promise(async (resolve, reject) => {
+      let data = await masters.find({
+        sort_id: "Audit Done Closed By Warehouse",
+        type_taxanomy: "WHT",
+      });
+      if (data) {
+        resolve(data);
+      }
+    });
+  },
+  /*--------------------------------AUDIT DONE TRAY  FORCEFULL SEND TO RDL-----------------------------------*/
+
+  sendToRdl: (trayIds) => {
+    return new Promise(async (resolve, reject) => {
+      let sendtoRdlMis;
+      for (let x of trayIds) {
+        sendtoRdlMis = await masters.findOneAndUpdate(
+          { code: x },
+          {
+            $set: {
+              sort_id: "Ready to RDL",
+              actual_items: [],
+              issued_user_name: null,
+              from_merge: null,
+              to_merge: null,
+            },
+          }
+        );
+      }
+      if (sendtoRdlMis) {
+        resolve({ status: true });
+      } else {
+        resolve({ status: false });
+      }
+    });
+  },
+  /*--------------------------------EXTRA CHANGES-----------------------------------*/
+
   updateCPCExtra: () => {
     return new Promise(async (resolve, reject) => {
-      let findData = await masters.findOne({ code: "WHT1290" });
-
-      let arr = findData.temp_array.concat(findData.actual_items);
-      findData.actual_items = arr.concat(findData.items);
-
-      let update = await masters.updateOne(
-        { code: "WHT1290" },
-        {
-          $set: {
-            items: findData.actual_items,
-          },
+      let ordersData=await orders.find()
+      for(let x of ordersData ){
+        let checkDelivery=await delivery.findOne({order_id:x.order_id})
+        if(checkDelivery){
+          let updateStatus=await orders.updateOne({order_id:x.order_id},{
+            $set:{
+              delivery_status: "Delivered",
+            }
+          })
         }
-      );
-      if (update) {
-        resolve(update);
       }
+      resolve(ordersData)
+    });
+  },
+  getUpdateRecord: () => {
+    return new Promise(async (resolve, reject) => {
+      let tray = await masters.find({
+        prefix: "tray-master",
+        closed_time_bot: { $exists: true },
+        sort_id: { $ne: "Open" },
+      });
+      for (let x of tray) {
+        if (x.items.length !== 0) {
+          for (let y of x.items) {
+            console.log(y);
+            let obj;
+            if (x.type_taxanomy == "BOT") {
+              obj = {
+                stickerOne: y?.stickerOne,
+                stickerTwo: y?.stickerTwo,
+                stickerThree: y?.stickerThree,
+                stickerFour: y?.stickerFour,
+                body_damage: y?.body_damage,
+                body_damage_des: y?.body_damage_des,
+                model_brand: y?.model_brand,
+              };
+              let updateDelivery = await delivery.updateOne(
+                { tracking_id: y.tracking_id },
+                {
+                  $set: {
+                    bot_report: obj,
+                  },
+                }
+              );
+            } else {
+              let updateDelivery = await delivery.updateOne(
+                { tracking_id: y.tracking_id },
+                {
+                  $set: {
+                    bot_report: y?.bot_eval_result,
+                  },
+                }
+              );
+            }
+          }
+        }
+      }
+      resolve({ status: "Done" });
     });
   },
 };

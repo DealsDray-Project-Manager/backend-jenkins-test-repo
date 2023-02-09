@@ -125,7 +125,8 @@ module.exports = {
               bqc_report: 1,
               bqc_done_close: 1,
               bqc_software_report: 1,
-              bot_report:1
+              bot_report:1,
+              charging_done_date:1,
             }
           );
           if (uicExists) {
@@ -156,6 +157,7 @@ module.exports = {
         stage: itemData.stage,
         reason: itemData.reason,
         description: itemData.description,
+        orgGrade:itemData.orgGrade
       };
       let findTray = await masters.findOne({
         issued_user_name: itemData.username,
@@ -208,6 +210,7 @@ module.exports = {
         } else if (findTray?.items?.length === findTray?.limit) {
           resolve({ status: 2, trayId: findTray.code });
         } else {
+          
           let item = await masters.findOne(
             {
               code: itemData.trayId,
@@ -221,6 +224,7 @@ module.exports = {
             }
           );
           if (item) {
+            item.items[0].audit_report = obj;
             let updateWht = await masters.updateOne(
               { code: itemData.trayId },
               {

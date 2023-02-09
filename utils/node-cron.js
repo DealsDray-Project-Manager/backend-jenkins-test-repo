@@ -9,7 +9,7 @@ const { delivery } = require("../Model/deliveryModel/delivery");
 
 exports = module.exports = () => {
   try {
-    corn.schedule("29 17 * * *", () => {
+    corn.schedule("57 09 * * *", () => {
       /*---------------------------xml read ------------------------------------*/
       fs.readFile(
         "blancco_qc_data/csvRequest.xml",
@@ -33,6 +33,7 @@ exports = module.exports = () => {
                 }
               }
             );
+            console.log("done");
           });
         }
       );
@@ -41,16 +42,17 @@ exports = module.exports = () => {
     console.log(error);
   }
   try {
-    corn.schedule("55 10 * * *", () => {
+    corn.schedule("37 14 * * *", () => {
       /*----------------------------------------------CSV READ-----------------------------*/
       let result = [];
-      fs.createReadStream("blancco_qc_data/blancco_qc_data dummy 6.csv")
+      fs.createReadStream("blancco_qc_data/blancco_qc_data-dummy-12 demo.csv")
         .pipe(csvParser())
         .on("data", (data) => {
+          data["device_color_one"] = data["Device_Color"];
           result.push(toLowerKeys(data));
         })
         .on("end", async () => {
-          
+          console.log(result[0]);
           for (let x of result) {
             let updateBqcData = await delivery.updateOne(
               { "uic_code.code": x.uic },
@@ -72,6 +74,7 @@ exports = module.exports = () => {
               ?.split(/[-" "./]/)
               .join("_")
           ] = obj[key];
+
           return accumulator;
         }, {});
       }
