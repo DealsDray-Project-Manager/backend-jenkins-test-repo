@@ -1227,4 +1227,22 @@ router.post("/update-cpc", async (req, res, next) => {
     next(error);
   }
 });
+
+/***********************************************EXTRA QUREY SECTION*********************************************************** */
+router.post("/fixBaggingIssue", async (req, res, next) => {
+  try {
+    let data = await superAdminController.fixBaggingIssueWithAwbn();
+    if (data) {
+      res.status(200).json({
+        message: "Successfully updated",
+      });
+    } else {
+      res.status(202).json({
+        message: "Failed",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
 module.exports = router;

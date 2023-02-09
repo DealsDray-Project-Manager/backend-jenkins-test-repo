@@ -12,7 +12,8 @@ const {
 } = require("../../Model/masterHistoryModel/mastersHistory");
 const moment = require("moment");
 const IISDOMAIN = "http://prexo-v6-2-uat-adminapi.dealsdray.com/user/profile/";
-const IISDOMAINPRDT = "http://prexo-v6-2-uat-adminapi.dealsdray.com/product/image/";
+const IISDOMAINPRDT =
+  "http://prexo-v6-2-uat-adminapi.dealsdray.com/product/image/";
 
 /************************************************************************************************** */
 module.exports = {
@@ -61,12 +62,12 @@ module.exports = {
         sort_id: "Inuse",
         items: { $ne: [] },
       });
-      count.removeInvalidItem=await  masters.count({
+      count.removeInvalidItem = await masters.count({
         prefix: "bag-master",
         sort_id: "In Progress",
         "items.status": "Invalid",
       });
-      count.trackItem=await orders.count({delivery_status: "Delivered"})
+      count.trackItem = await orders.count({ delivery_status: "Delivered" });
       console.log(count);
       if (count) {
         resolve(count);
@@ -1449,37 +1450,173 @@ module.exports = {
   },
   updateCPCExtra: () => {
     return new Promise(async (resolve, reject) => {
-      let wht = await masters.find({
-        $or: [
-          { "items.charging": { $exists: true } },
-          { "actual_items.charging": { $exists: true } },
-        ],
-      });
-      for (let y of wht) {
-        for (let x of y.items) {
-          console.log(x.charging);
-          let update = await delivery.updateOne(
-            { tracking_id: x.tracking_id },
+      let ordersData = await orders.find();
+      for (let x of ordersData) {
+        let checkDelivery = await delivery.findOne({ order_id: x.order_id });
+        if (checkDelivery) {
+          let updateStatus = await orders.updateOne(
+            { order_id: x.order_id },
             {
               $set: {
-                charging: x.charging,
-              },
-            }
-          );
-        }
-        for (let m of y.actual_items) {
-          console.log(m.charging);
-          let update = await delivery.updateOne(
-            { tracking_id: m.tracking_id },
-            {
-              $set: {
-                charging: m.charging,
+                delivery_status: "Delivered",
               },
             }
           );
         }
       }
-      resolve(wht);
+      resolve(ordersData);
+    });
+  },
+  fixBaggingIssueWithAwbn: () => {
+    return new Promise(async(resolve, reject) => {
+      let arr = [
+        "'513360900847",
+        "'513439510946",
+        "'513438644826",
+        "'513429658610",
+        "'513430422453",
+        "'513428023952",
+        "'513330807558",
+        "'513354966675",
+        "'513432298346",
+        "'513429536444",
+        "'513436021193",
+        "'513435175774",
+        "'513428619889",
+        "'513446998140",
+        "'513305033180",
+        "'513442204047",
+        "'513426463156",
+        "'513431213012",
+        "'513428834664",
+        "'513432085441",
+        "'513440528565",
+        "'513428868508",
+        "'513440762990",
+        "'513254588540",
+        "'513434546506",
+        "'513417242982",
+        "'513427887050",
+        "'513433676310",
+        "'513435186497",
+        "'513428924112",
+        "'513427472515",
+        "'513431767690",
+        "'513430054012",
+        "'513435299135",
+        "'513432391559",
+        "'513435517925",
+        "'513443205753",
+        "'513441211022",
+        "'513430410788",
+        "'513430947567",
+        "'513430282972",
+        "'513440877250",
+        "'513437729739",
+        "'513439035845",
+        "'513434845623",
+        "'513435522486",
+        "'513425670586",
+        "'513429016632",
+        "'513435602010",
+        "'513436362692",
+        "'513431294295",
+        "'513431551329",
+        "'513448683235",
+        "'513428822982",
+        "'513428721957",
+        "'513426017038",
+        "'513431411036",
+        "'513438557447",
+        "'513430532817",
+        "'513434138589",
+        "'513429041924",
+        "'513431462021",
+        "'513426641899",
+        "'513432782401",
+        "'513434142869",
+        "'513416922632",
+        "'513404011737",
+        "'513432949606",
+        "'513430533593",
+        "'513433780000",
+        "'513426241693",
+        "'513429058748",
+        "'513437542260",
+        "'513429735625",
+        "'513429324720",
+        "'513427411668",
+        "'513447646316",
+        "'513437656226",
+        "'513428176566",
+        "'513352325979",
+        "'513438480066",
+        "'513435007488",
+        "'513428344385",
+        "'513429013211",
+        "'513440212471",
+        "'513431791091",
+        "'513434884158",
+        "'513432517041",
+        "'513432895262",
+        "'513433009972",
+        "'513440691580",
+        "'513431475663",
+        "'513432713573",
+        "'513410922089",
+        "'513444670079",
+        "'513435639795",
+        "'513427851266",
+        "'513432019262",
+        "'513434250731",
+        "'513432746571",
+        "'513431348820",
+        "'513438156770",
+        "'513431723306",
+        "'513428868423",
+        "'513437179176",
+        "'513439588822",
+        "'513465502977",
+        "'513433740912",
+        "'513441368658",
+        "'513439919633",
+        "'513428857236",
+        "'513450579830",
+        "'513445502300",
+        "'513438413576",
+        "'513431444997",
+        "'513447314468",
+        "'513449892544",
+        "'513446770814",
+        "'513426913576",
+        "'513451252541",
+        "'513461589873",
+        "'513461579720",
+        "'513445094386",
+        "'513430754080",
+        "'513442513989",
+        "'513437741229",
+        "'513259977271",
+        "'513441634074",
+        "'513255370717",
+        "'513445502928",
+        "'513445581787",
+        "'513429070559",
+      ];
+        for (let x of arr) {
+          let findDeliveryExisted = await delivery.findOne({ tracking_id: x });
+          if (findDeliveryExisted) {
+             let ordercheck=await orders.findOne({order_id:findDeliveryExisted.order_id})
+             if(ordercheck){
+             
+             }
+             else{
+                console.log(x);
+             }
+          }
+        }
+        resolve(arr);
+    
     });
   },
 };
