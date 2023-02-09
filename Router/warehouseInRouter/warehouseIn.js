@@ -4,6 +4,7 @@ const express = require("express");
 const router = express.Router();
 // user controller
 const warehouseInController = require("../../Controller/warehouseIn/warehouseInController");
+const { masters } = require("../../Model/mastersModel");
 /*******************************************************************************************************************/
 /**************************************************Dashboard**************************************************************************/
 router.post("/dashboard/:location", async (req, res, next) => {
@@ -1680,9 +1681,30 @@ router.post("/salesBinItem/:location", async (req, res, next) => {
   try {
     const { location } = req.params;
     let data = await warehouseInController.getSalesBinItem(location);
+    console.log(data);
     if (data) {
       res.status(200).json({
         data: data,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
+// SEARCH FUNCATIONALITY IN SALES BIN
+router.post("/salesBinItem/search/:uic", async (req, res, next) => {
+  try {
+    const { uic } = req.params;
+    let data = await warehouseInController.getSalesBinSearchData(uic);
+    console.log(data);
+    if (data.status == 1) {
+      res.status(200).json({
+        data: data.item,
+      });
+    } else {
+      res.status(202).json({
+        message: "Sorry no records found",
       });
     }
   } catch (error) {

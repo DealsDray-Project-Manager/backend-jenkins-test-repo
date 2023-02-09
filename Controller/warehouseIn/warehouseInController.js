@@ -875,58 +875,57 @@ module.exports = {
         }
       } else if (trayData.type == "Merging Done") {
         let checktray = await masters.findOne({ code: trayData.trayId });
-          if (checktray.sort_id == "Audit Done Return from Merging") {
-            let data = await masters.findOneAndUpdate(
-              { code: trayData.trayId },
-              {
-                $set: {
-                  sort_id: "Audit Done Received From Merging",
-                },
-              }
-            );
-            if (data) {
-              for (let i = 0; i < data.actual_items.length; i++) {
-                let deliveryTrack = await delivery.updateMany(
-                  { tracking_id: data.items[i].awbn_number },
-                  {
-                    $set: {
-                      tray_status: "Audit Done  Received From Merging",
-                      tray_location: "Warehouse",
-                    },
-                  }
-                );
-              }
-              resolve({ status: 1 });
-            } else {
-              resolve({ status: 2 });
+        if (checktray.sort_id == "Audit Done Return from Merging") {
+          let data = await masters.findOneAndUpdate(
+            { code: trayData.trayId },
+            {
+              $set: {
+                sort_id: "Audit Done Received From Merging",
+              },
             }
+          );
+          if (data) {
+            for (let i = 0; i < data.actual_items.length; i++) {
+              let deliveryTrack = await delivery.updateMany(
+                { tracking_id: data.items[i].awbn_number },
+                {
+                  $set: {
+                    tray_status: "Audit Done  Received From Merging",
+                    tray_location: "Warehouse",
+                  },
+                }
+              );
+            }
+            resolve({ status: 1 });
           } else {
-            let data = await masters.findOneAndUpdate(
-              { code: trayData.trayId },
-              {
-                $set: {
-                  sort_id: "Received From Merging",
-                },
-              }
-            );
-            if (data) {
-              for (let i = 0; i < data.actual_items.length; i++) {
-                let deliveryTrack = await delivery.updateMany(
-                  { tracking_id: data.items[i].awbn_number },
-                  {
-                    $set: {
-                      tray_status: "Received From Merging",
-                      tray_location: "Warehouse",
-                    },
-                  }
-                );
-              }
-              resolve({ status: 1 });
-            } else {
-              resolve({ status: 2 });
-            }
+            resolve({ status: 2 });
           }
-       
+        } else {
+          let data = await masters.findOneAndUpdate(
+            { code: trayData.trayId },
+            {
+              $set: {
+                sort_id: "Received From Merging",
+              },
+            }
+          );
+          if (data) {
+            for (let i = 0; i < data.actual_items.length; i++) {
+              let deliveryTrack = await delivery.updateMany(
+                { tracking_id: data.items[i].awbn_number },
+                {
+                  $set: {
+                    tray_status: "Received From Merging",
+                    tray_location: "Warehouse",
+                  },
+                }
+              );
+            }
+            resolve({ status: 1 });
+          } else {
+            resolve({ status: 2 });
+          }
+        }
       } else {
         let checkCount = await masters.findOne({ code: trayData.trayId });
         if (checkCount.items.length == trayData.count) {
@@ -2979,11 +2978,70 @@ module.exports = {
   },
   getSalesBinItem: (location) => {
     return new Promise(async (reslove, reject) => {
-      let data = await delivery.find({
-        sales_bin_status: "Sales Bin",
-      });
+      let data = await delivery.find(
+        {
+          sales_bin_status: "Sales Bin",
+        },
+        {
+          "uic_code.code":1,
+          sales_bin_date: 1,
+          sales_bin_status: 1,
+          sales_bin_grade: 1,
+          sales_bin_wh_agent_name: 1,
+          sales_bin_desctiption: 1,
+          wht_tray:1,
+          _id:0,
+          
+        }
+      );
+      let arr=[]
+      if(data.length !=0){
+        for(let x of data){
+          let obj={
+            sales_bin_date:x.sales_bin_date,
+            uic_code:x.uic_code.code,
+            sales_bin_grade:x.sales_bin_grade,
+            sales_bin_wh_agent_name:x.sales_bin_wh_agent_name,
+            sales_bin_desctiption:x.sales_bin_desctiption,
+            wht_tray:x.wht_tray
+          }
+        
+         arr.push(obj)
+        }
+      }
       if (data) {
-        reslove(data);
+        reslove(arr);
+      }
+    });
+  },
+  getSalesBinSearchData: (uic) => {
+    return new Promise(async (reslove, reject) => {
+      let data = await delivery
+        .find({
+          "uic_code.code": {
+            $regex: ".*" + uic + ".*",
+            $options: "i",
+          },
+        })
+        .limit(10);
+        let arr=[]
+
+      if (data.length !== 0) {
+        for(let x of data){
+          let obj={
+            sales_bin_date:x.sales_bin_date,
+            uic_code:x.uic_code.code,
+            sales_bin_grade:x.sales_bin_grade,
+            sales_bin_wh_agent_name:x.sales_bin_wh_agent_name,
+            sales_bin_desctiption:x.sales_bin_desctiption,
+            wht_tray:x.wht_tray
+          }
+        
+         arr.push(obj)
+        }
+        reslove({ status: 1, item: arr });
+      } else {
+        reslove({ status: 2 });
       }
     });
   },
