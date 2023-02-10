@@ -8,13 +8,13 @@ const { products } = require("../../Model/productModel/product");
 const { admin } = require("../../Model/adminModel/admins");
 const { usersHistory } = require("../../Model/users-history-model/model");
 const { delivery } = require("../../Model/deliveryModel/delivery");
+const { category } = require("../../Model/CategoryMaster/category");
 const {
   mastersEditHistory,
 } = require("../../Model/masterHistoryModel/mastersHistory");
 const moment = require("moment");
 const IISDOMAIN = "http://prexo-v7-dev-api.dealsdray.com/user/profile/";
-const IISDOMAINPRDT =
-  "http://prexo-v7-dev-api.dealsdray.com/product/image/";
+const IISDOMAINPRDT = "http://prexo-v7-dev-api.dealsdray.com/product/image/";
 
 /************************************************************************************************** */
 
@@ -1451,7 +1451,7 @@ module.exports = {
       }
     });
   },
-  readyForCharging: (trayId,status) => {
+  readyForCharging: (trayId, status) => {
     return new Promise(async (resolve, reject) => {
       let flag = false;
       for (let x of trayId) {
@@ -1601,22 +1601,48 @@ module.exports = {
       }
     });
   },
+  createCategoryMaster: (categoryData) => {
+    return new Promise(async (resolve, reject) => {
+      let checkExistedOrNot = await category.findOne({
+        category_code: categoryData.category_code,
+      });
+      if (checkExistedOrNot) {
+        resolve({ status: 2 });
+      } else {
+        let createCategory = await category.create(categoryData);
+        if (createCategory) {
+          resolve({ status: 1 });
+        }
+      }
+    });
+  },
+  findAllCategory: () => {
+    return new Promise(async (reslove, reject) => {
+      let categoryData = await category.find();
+      if (categoryData) {
+        reslove(categoryData);
+      }
+    });
+  },
   /*--------------------------------EXTRA CHANGES-----------------------------------*/
 
   updateCPCExtra: () => {
     return new Promise(async (resolve, reject) => {
-      let ordersData=await orders.find()
-      for(let x of ordersData ){
-        let checkDelivery=await delivery.findOne({order_id:x.order_id})
-        if(checkDelivery){
-          let updateStatus=await orders.updateOne({order_id:x.order_id},{
-            $set:{
-              delivery_status: "Delivered",
+      let ordersData = await orders.find();
+      for (let x of ordersData) {
+        let checkDelivery = await delivery.findOne({ order_id: x.order_id });
+        if (checkDelivery) {
+          let updateStatus = await orders.updateOne(
+            { order_id: x.order_id },
+            {
+              $set: {
+                delivery_status: "Delivered",
+              },
             }
-          })
+          );
         }
       }
-      resolve(ordersData)
+      resolve(ordersData);
     });
   },
   getUpdateRecord: () => {

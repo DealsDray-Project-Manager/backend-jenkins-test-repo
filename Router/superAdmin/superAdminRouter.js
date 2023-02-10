@@ -1298,6 +1298,38 @@ router.post("/sendToRdl", async (req, res, next) => {
   }
 });
 
+/*--------------------------------------------------------------------------------------------------------------*/
+// CREATE CATEGORY 
+router.post("/createCategory",async(req,res,next)=>{
+  try {
+     const createCategoryRes=await superAdminController.createCategoryMaster(req.body)
+     if(createCategoryRes.status == 1){
+      res.status(200).json({
+        message:"Successfully Created"
+      })
+     }else{
+      res.status(202).json({
+        message:"Category already existed"
+      })
+     }
+  } catch (error) {
+    next(error)
+  }
+})
+// VIEW ALL THE CATEGORY
+router.post("/viewCategory",async(req,res,next)=>{
+  try {
+    let categoryData=await superAdminController.findAllCategory()
+    if(categoryData){
+      res.status(200).json({
+        data:categoryData
+      })
+    }
+  } catch (error) {
+    next(error)
+  }
+})
+
 /****************************************************************************************************** */
 
 /*-----------------------------EXTRA ONE--------------------------------------*/
