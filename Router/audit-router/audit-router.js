@@ -120,12 +120,30 @@ router.post("/bqcReport/:uic/:trayId", async (req, res, next) => {
 /*---------------------------TRAY SEGRIGATION-------------------------------------*/
 router.post("/traySegrigation", async (req, res, next) => {
   try {
-    const { type } = req.body;
+    const { type, stage } = req.body;
     let data = await auditController.traySegrigation(req.body);
     if (data.status == 1) {
-      res.status(200).json({
-        message: "Successfully Added",
-      });
+      if (stage == "BQC Not Done") {
+        res.status(200).json({
+          message: `BQC was not done for this UIC, leave it in the WHT Tray`,
+        });
+      } else if (stage == "Accept") {
+        res.status(200).json({
+          message: `UIC is accepted with no Grade Change. Please put it in Tray ${data.trayId}`,
+        });
+      } else if (stage == "Upgrade") {
+        res.status(200).json({
+          message: `UIC Planned for an Upgrade, leave it in the WHT Tray`,
+        });
+      } else if (stage == "Downgrade") {
+        res.status(200).json({
+          message: `UIC Flagged for a Downgrade, leave it in the WHT Tray`,
+        });
+      } else if (stage == "Repair") {
+        res.status(200).json({
+          message: `UIC Flagged for Repairs, leave it in the WHT Tray`,
+        });
+      }
     } else if (data.status == 2) {
       res.status(202).json({
         message: "Tray is full",

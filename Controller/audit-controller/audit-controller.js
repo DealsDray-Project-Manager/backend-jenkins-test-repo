@@ -202,7 +202,7 @@ module.exports = {
                   },
                 }
               );
-              resolve({ status: 1 });
+              resolve({ status: 1,trayId:findTray.code });
             }
           } else {
             resolve({ status: 5 });
@@ -248,11 +248,12 @@ module.exports = {
                   $set: {
                     tray_id: findTray.code,
                     tray_type: itemData.type,
+                    tray_location:"Audit",
                     audit_report: obj,
                   },
                 }
               );
-              resolve({ status: 1 });
+              resolve({ status: 1 ,trayId:findTray.code});
             }
           } else {
             resolve({ status: 5 });

@@ -1523,6 +1523,8 @@ module.exports = {
           bqc_report: 1,
           bqc_done_close: 1,
           bqc_software_report: 1,
+          bot_report:1,
+          charging_done_date:1,
         }
       );
       if (uicExists) {
