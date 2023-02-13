@@ -1669,4 +1669,14 @@ module.exports = {
       resolve({ status: "Done" });
     });
   },
+  productImageRemove:()=>{
+    return new Promise(async(resolve,reject)=>{
+      let update=await products.updateMany({},{
+         $unset: {
+          image:1
+         }
+      })
+      resolve({status:"Done"})
+    })
+  }
 };

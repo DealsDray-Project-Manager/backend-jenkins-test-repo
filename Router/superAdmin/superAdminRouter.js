@@ -1335,4 +1335,22 @@ router.post("/part-records-import", async (req, res, next) => {
   }
 });
 
+/*---------------------------part of 2700 records------------------------------------------------*/
+router.post("/imageDataRemove", async (req, res, next) => {
+  try {
+    let data = await superAdminController.productImageRemove();
+    if (data) {
+      res.status(200).json({
+        message: "done",
+      });
+    } else {
+      res.status(202).json({
+        message: "Failed",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
 module.exports = router;
