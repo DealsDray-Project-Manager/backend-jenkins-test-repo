@@ -20,13 +20,13 @@ const badDeliverySchema = mongoose.Schema({
         type: String
     },
     partner_purchase_price: {
-        type: Number
+        type: String
     },
     partner_shop: {
         type: String
     },
-    base_discount: {
-        type: String
+    base_disscount: {
+        type: Number
     },
     diagnostics_discount: {
         type: String

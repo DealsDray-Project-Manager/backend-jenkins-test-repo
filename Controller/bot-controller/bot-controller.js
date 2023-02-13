@@ -75,6 +75,8 @@ module.exports = {
               $set: {
                 tray_closed_by_bot: Date.now(),
                 tray_status: "Closed By Bot",
+                bot_report:x.bot_e
+
               },
             }
           );
@@ -160,6 +162,16 @@ module.exports = {
   traySegrigation: (trayData) => {
     trayData.added_time = Date.now();
     trayData._id = mongoose.Types.ObjectId();
+    let obj={
+      stickerOne: trayData.stickerOne,
+      stickerTwo: trayData.stickerTwo,
+      stickerThree: trayData.stickerThree,
+      stickerFour: trayData.stickerFour,
+      body_damage: trayData.body_damage,
+      body_damage_des:trayData.body_damage_des,
+      model_brand:trayData.model_brand,
+    }
+    trayData.bot_eval_result=obj
     return new Promise(async (resolve, reject) => {
       let checkItemAddedOrNot = await masters.findOne({
         code: trayData.tray_id,
@@ -188,6 +200,7 @@ module.exports = {
                 tray_status: res.sort_id,
                 tray_type: res.type_taxanomy,
                 tray_location: "Bag Opening",
+                bot_report:obj,
               },
             }
           );

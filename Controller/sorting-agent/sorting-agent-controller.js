@@ -25,19 +25,10 @@ module.exports = {
         type_taxanomy: "BOT",
         sort_id: "Issued to sorting agent",
       });
-      count.merge = await masters.count({
-        $or: [
-          {
-            issued_user_name: username,
-            to_merge: { $ne: null },
-            sort_id: "Audit Done Issued to Merging",
-          },
-          {
-            issued_user_name: username,
-            to_merge: { $ne: null },
-            sort_id: "Issued to Merging",
-          },
-        ],
+      count.merge=await masters.count({
+        issued_user_name: username,
+        to_merge: { $ne: null },
+        sort_id: "Issued to Merging",
       });
       if (count) {
         resolve(count);
@@ -129,6 +120,8 @@ module.exports = {
         stickerThree: itemData.stickerThree,
         stickerFour: itemData.stickerFour,
         body_damage: itemData.body_damage,
+        body_damage_des: itemData.body_damage_des,
+        model_brand: itemData.model_brand,
       },
     };
     return new Promise(async (resolve, reject) => {

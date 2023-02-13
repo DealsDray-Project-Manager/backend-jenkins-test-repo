@@ -8,7 +8,6 @@ const { masters } = require("../../Model/mastersModel");
 const { badOrders } = require("../../Model/ordersModel/bad-orders-model");
 const { badDelivery } = require("../../Model/deliveryModel/bad-delivery");
 const moment = require("moment");
-const { pickList } = require("../../Model/picklist_model/model");
 /******************************************************************* */
 
 module.exports = {
@@ -183,10 +182,20 @@ module.exports = {
         ],
       });
       count.assigCharging = await masters.count({
-        cpc: location,
-        sort_id: "Closed",
-        prefix: "tray-master",
-        type_taxanomy: "WHT",
+        $or: [
+          {
+            cpc: location,
+            sort_id: "Closed",
+            prefix: "tray-master",
+            type_taxanomy: "WHT",
+          },
+          {
+            cpc: location,
+            sort_id: "Recharging",
+            prefix: "tray-master",
+            type_taxanomy: "WHT",
+          },
+        ],
       });
       count.bqc = await masters.count({
         prefix: "tray-master",
@@ -205,24 +214,14 @@ module.exports = {
         prefix: "tray-master",
         sort_id: "Closed By Warehouse",
         cpc: location,
-      });
-      count.whtMerge = await masters.count({
-        $or: [
-          {
-            prefix: "tray-master",
-            type_taxanomy: "WHT",
-            sort_id: "Inuse",
-            cpc: location,
-          },
-          {
-            prefix: "tray-master",
-            type_taxanomy: "WHT",
-            sort_id: "Audit Done Closed By Warehouse",
-            cpc: location,
-          },
-        ],
-      });
-      count.mmtMerge = await masters.count({
+      })
+      count.whtMerge=await masters.count({
+        prefix: "tray-master",
+        type_taxanomy: "WHT",
+        sort_id: "Inuse",
+        cpc: location,
+      })
+      count.mmtMerge=await masters.count({
         cpc: location,
         type_taxanomy: "MMT",
         prefix: "tray-master",
@@ -264,16 +263,12 @@ module.exports = {
           },
         },
         {
-          $sort: { _id: -1 },
-        },
-        {
           $skip: skip,
         },
         {
           $limit: limit,
         },
       ]);
-      console.log(allOrders.length);
       if (allOrders) {
         resolve(allOrders);
       }
@@ -281,9 +276,10 @@ module.exports = {
   },
   getBadOrders: (location) => {
     return new Promise(async (resolve, reject) => {
-      let data = await badOrders
-        .find({ partner_shop: location }, { _id: 0, __v: 0 })
-        .sort({ _id: -1 });
+      let data = await badOrders.find(
+        { partner_shop: location },
+        { _id: 0, __v: 0 }
+      );
       console.log(data);
 
       if (data) {
@@ -644,6 +640,7 @@ module.exports = {
         {
           $unwind: "$delivery",
         },
+      
         {
           $skip: skip,
         },
@@ -689,6 +686,209 @@ module.exports = {
     });
   },
   searchUicPageAll: (searchType, value, location, uic_status) => {
+    return new Promise(async (resolve, reject) => {
+      let allOrders;
+      if (searchType == "order_id") {
+        allOrders = await delivery.aggregate([
+          {
+            $match: {
+              partner_shop: location,
+              uic_status: uic_status,
+              order_id: { $regex: "^" + value + ".*", $options: "i" },
+            },
+          },
+          {
+            $lookup: {
+              from: "orders",
+              localField: "order_id",
+              foreignField: "order_id",
+              as: "order",
+            },
+          },
+          {
+            $unwind: "$order",
+          },
+        ]);
+      } else if (searchType == "tracking_id") {
+        allOrders = await delivery.aggregate([
+          {
+            $match: {
+              partner_shop: location,
+              uic_status: uic_status,
+              tracking_id: { $regex: ".*" + value + ".*", $options: "i" },
+            },
+          },
+          {
+            $lookup: {
+              from: "orders",
+              localField: "order_id",
+              foreignField: "order_id",
+              as: "order",
+            },
+          },
+          {
+            $unwind: "$order",
+          },
+        ]);
+      } else if (searchType == "imei") {
+        allOrders = await delivery.aggregate([
+          {
+            $match: {
+              partner_shop: location,
+              uic_status: uic_status,
+              imei: { $regex: ".*" + value + ".*", $options: "i" },
+            },
+          },
+          {
+            $lookup: {
+              from: "orders",
+              localField: "order_id",
+              foreignField: "order_id",
+              as: "order",
+            },
+          },
+          {
+            $unwind: "$order",
+          },
+        ]);
+      } else if (searchType == "order_status") {
+        allOrders = await delivery.aggregate([
+          {
+            $match: {
+              partner_shop: location,
+              uic_status: uic_status,
+              order_status: { $regex: "^" + value + ".*", $options: "i" },
+            },
+          },
+          {
+            $lookup: {
+              from: "orders",
+              localField: "order_id",
+              foreignField: "order_id",
+              as: "order",
+            },
+          },
+          {
+            $unwind: "$order",
+          },
+        ]);
+      } else if (searchType == "order_date") {
+        value = value.split("/");
+        value = value.reverse();
+        value = value.join("-");
+        allOrders = await delivery.aggregate([
+          {
+            $match: {
+              partner_shop: location,
+              uic_status: uic_status,
+              order_date: { $regex: ".*" + value + ".*", $options: "i" },
+            },
+          },
+          {
+            $lookup: {
+              from: "orders",
+              localField: "order_id",
+              foreignField: "order_id",
+              as: "order",
+            },
+          },
+          {
+            $unwind: "$order",
+          },
+        ]);
+      } else if (searchType == "order_timestamp") {
+        value = moment(value, "DD-MM-YYYY HH:mm").toDate();
+        allOrders = await delivery.aggregate([
+          {
+            $match: {
+              partner_shop: location,
+              uic_status: uic_status,
+              order_timestamp: new Date(value),
+            },
+          },
+          {
+            $lookup: {
+              from: "orders",
+              localField: "order_id",
+              foreignField: "order_id",
+              as: "order",
+            },
+          },
+          {
+            $unwind: "$order",
+          },
+        ]);
+      } else if (searchType == "item_id") {
+        allOrders = await delivery.aggregate([
+          {
+            $match: {
+              partner_shop: location,
+              uic_status: uic_status,
+              item_id: { $regex: "^" + value + ".*", $options: "i" },
+            },
+          },
+          {
+            $lookup: {
+              from: "orders",
+              localField: "order_id",
+              foreignField: "order_id",
+              as: "order",
+            },
+          },
+          {
+            $unwind: "$order",
+          },
+        ]);
+      } else if (searchType == "uic") {
+        allOrders = await delivery.aggregate([
+          {
+            $match: {
+              partner_shop: location,
+              uic_status: uic_status,
+              "uic_code.code": { $regex: "^" + value + ".*", $options: "i" },
+            },
+          },
+          {
+            $lookup: {
+              from: "orders",
+              localField: "order_id",
+              foreignField: "order_id",
+              as: "order",
+            },
+          },
+          {
+            $unwind: "$order",
+          },
+        ]);
+      } else if (searchType == "old_item_details") {
+        allOrders = await badOrders.aggregate([
+          {
+            $match: {
+              partner_shop: location,
+              uic_status: uic_status,
+              old_item_details: { $regex: ".*" + value + ".*", $options: "i" },
+            },
+          },
+          {
+            $lookup: {
+              from: "orders",
+              localField: "order_id",
+              foreignField: "order_id",
+              as: "order",
+            },
+          },
+          {
+            $unwind: "$order",
+          },
+        ]);
+      }
+
+      if (allOrders) {
+        resolve(allOrders);
+      }
+    });
+  },
+  searchUicPageAllPage: (searchType, value, location) => {
     return new Promise(async (resolve, reject) => {
       let allOrders;
       if (searchType == "order_id") {
@@ -1201,9 +1401,6 @@ module.exports = {
           },
         },
         {
-          $sort: { _id: -1 },
-        },
-        {
           $skip: skip,
         },
         {
@@ -1215,9 +1412,10 @@ module.exports = {
   },
   getBadDelivery: (location) => {
     return new Promise(async (resolve, reject) => {
-      let data = await badDelivery
-        .find({ partner_shop: location }, { _id: 0, __v: 0 })
-        .sort({ _id: -1 });
+      let data = await badDelivery.find(
+        { partner_shop: location },
+        { _id: 0, __v: 0 }
+      );
       if (data) {
         resolve(data);
       }
@@ -2228,15 +2426,28 @@ module.exports = {
     return new Promise(async (resolve, reject) => {
       let data;
       for (let x of whtTrayData.tray) {
-        data = await masters.updateOne(
-          { code: x },
-          {
-            $set: {
-              sort_id: whtTrayData.sort_id,
-              issued_user_name: whtTrayData.user_name,
-            },
-          }
-        );
+        let checkTray = await masters.findOne({ code: x });
+        if (checkTray.sort_id == "Recharging") {
+          data = await masters.updateOne(
+            { code: x },
+            {
+              $set: {
+                sort_id: "Send for Recharging",
+                issued_user_name: whtTrayData.user_name,
+              },
+            }
+          );
+        } else {
+          data = await masters.updateOne(
+            { code: x },
+            {
+              $set: {
+                sort_id: whtTrayData.sort_id,
+                issued_user_name: whtTrayData.user_name,
+              },
+            }
+          );
+        }
       }
       if (data.matchedCount != 0) {
         resolve(data);

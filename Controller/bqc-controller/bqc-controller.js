@@ -230,10 +230,19 @@ module.exports = {
               temp_array: [],
               items: [],
             },
-          }
+          },
+          { new: true }
         );
         if (data) {
-          for (let x of data.items) {
+          for (let x of data.actual_items) {
+            if (x.bqc_report == undefined) {
+              let obj = {
+                bqc_status: x.bqc_status,
+              };
+              x["bqc_report"] = obj;
+            } else {
+              x.bqc_report.bqc_status = x.bqc_status;
+            }
             let deliveryUpdate = await delivery.updateOne(
               {
                 tracking_id: x.tracking_id,

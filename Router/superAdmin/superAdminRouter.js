@@ -1,15 +1,25 @@
+/************************************************************************************************** */
 /* Express */
 const express = require("express");
 const router = express.Router();
 // user controller
 const superAdminController = require("../../Controller/superAdmin/superAdminController");
 // Multer
-const upload = require("../../utils/multer");
+const upload = require("../../Utils/multer");
 // jwt token
-const jwt = require("../../utils/jwt_token");
+const jwt = require("../../Utils/jwt_token");
 /* FS */
 var fs = require("fs");
-/*******************************************************************************************************************/
+
+/**************************************************************************************************/
+
+/*
+
+@ EXPRESS ROUTERS 
+
+*/
+
+/*--------------------------------CREATE USERS-----------------------------------*/
 router.post(
   "/create",
   upload.userProfile.single("profile"),
@@ -38,21 +48,21 @@ router.post(
   }
 );
 
-/* SUPER ADMIN DASHBOARD */
-router.post("/superAdminDashboard",async(req,res,next)=>{
+/*-----------------------------SUP-ADMIN DASHBOARD--------------------------------------*/
+router.post("/superAdminDashboard", async (req, res, next) => {
   try {
-    let data=await superAdminController.getDashboardData()
-    if(data){
+    let data = await superAdminController.getDashboardData();
+    if (data) {
       res.status(200).json({
-        data:data
-      })
+        data: data,
+      });
     }
   } catch (error) {
-    next(error)
+    next(error);
   }
-})
+});
 
-/* Login api */
+/*--------------------------------LOGIN-----------------------------------*/
 router.post("/login", async (req, res, next) => {
   try {
     let loginData = await superAdminController.doLogin(req.body);
@@ -76,7 +86,8 @@ router.post("/login", async (req, res, next) => {
     next(error);
   }
 });
-/*CHECK ADMIN DEACTIVATED OR NOT */
+
+/*----------------------------------USER STATUS CHECKING---------------------------------*/
 router.post("/check-user-status/:username", async (req, res, next) => {
   try {
     const { username } = req.params;
@@ -94,7 +105,8 @@ router.post("/check-user-status/:username", async (req, res, next) => {
     next(error);
   }
 });
-/* Get users history */
+
+/*-----------------------------------USERS HISTORY--------------------------------*/
 router.post("/getUsersHistoy/:username", async (req, res, next) => {
   try {
     let data = await superAdminController.getUsersHistory(req.params.username);
@@ -107,7 +119,8 @@ router.post("/getUsersHistoy/:username", async (req, res, next) => {
     next(error);
   }
 });
-/* Change password */
+
+/*----------------------------------CHANGE PASSWORD---------------------------------*/
 router.post("/changePassword", async (req, res, next) => {
   try {
     let data = await superAdminController.changePassword(req.body);
@@ -124,7 +137,8 @@ router.post("/changePassword", async (req, res, next) => {
     next(error);
   }
 });
-/* Get all cpc */
+
+/*----------------------------CPC---------------------------------------*/
 router.get("/getCpc/", async (req, res) => {
   let data = await superAdminController.getCpc();
   if (data) {
@@ -133,18 +147,19 @@ router.get("/getCpc/", async (req, res) => {
     response.status(501).json({ status: 0, data: { message: "worng" } });
   }
 });
-/* Get CPC Data */
+
+/*-------------------------------------WAREHOUSE DATA------------------------------*/
 router.post("/getWarehouseByLocation", async (req, res) => {
   try {
     const { name } = req.body;
     let warehouse = await superAdminController.getWarehouse(name);
-    console.log(warehouse);
     if (warehouse) {
       res.status(200).json({ data: { warehouse } });
     }
   } catch (error) {}
 });
-/* get designation */
+
+/*------------------------------DESTINATION-------------------------------------*/
 router.get("/designation", async (req, res) => {
   try {
     let designation = await superAdminController.getDesignation();
@@ -153,7 +168,8 @@ router.get("/designation", async (req, res) => {
     }
   } catch (error) {}
 });
-/* Get all users */
+
+/*-------------------------USERS------------------------------------------*/
 router.post("/getUsers", async (req, res) => {
   try {
     let user = await superAdminController.getUsers();
@@ -162,23 +178,32 @@ router.post("/getUsers", async (req, res) => {
     }
   } catch (error) {}
 });
-/* Delete User */
+
+/*-----------------------------DEACTIVATE USER--------------------------------------*/
 router.post("/userDeactivate/:username", async (req, res) => {
   try {
-    let response = await superAdminController.userDeactivate(req.params.username);
+    let response = await superAdminController.userDeactivate(
+      req.params.username
+    );
     if (response) {
       res.status(200).json({ data: { message: "Deactivate" } });
     }
   } catch (error) {}
 });
-router.post("/userActivate/:username", async (req, res) => {
+
+/*------------------------------------USER ACTIVATE-------------------------------*/
+router.post("/userActivate/:username", async (req, res, next) => {
   try {
     let response = await superAdminController.userActivate(req.params.username);
     if (response) {
       res.status(200).json({ data: { message: "Activate" } });
     }
-  } catch (error) {}
+  } catch (error) {
+    next(error);
+  }
 });
+
+/*------------------------------EDITED USER DATA-------------------------------------*/
 router.get("/getEditData/:username", async (req, res) => {
   try {
     let user = await superAdminController.getEditData(req.params.username);
@@ -187,6 +212,8 @@ router.get("/getEditData/:username", async (req, res) => {
     }
   } catch (error) {}
 });
+
+/*-----------------------------EDIT USER--------------------------------------*/
 router.post(
   "/edituserDetails",
   upload.userProfile.single("profile"),
@@ -204,59 +231,8 @@ router.post(
     }
   }
 );
-/*********************************************DASHBOARD***********************************************************************************/
-/* Get Dashboard count */
-router.get("/dashboard", async (req, res, next) => {
-  try {
-    let data = await superAdminController.dashboard();
-    if (data) {
-      res.status(200).json({
-        data: data,
-        message: "Success",
-      });
-    }
-  } catch (error) {
-    next(error);
-  }
-});
-/********************************************ORDERS***************************************************************************************/
-/*Import Order*/
-router.post("/ordersImport", async (req, res, next) => {
-  try {
-    let data = await superAdminController.importOrders(req.body);
-    if (data) {
-      res.status(200).json({
-        message: "Successfully Added",
-      });
-    } else {
-      res.status(404).json({
-        message: "Orders Import Failed",
-      });
-    }
-  } catch (error) {
-    next(error);
-  }
-});
-/*Get Orders*/
-router.post("/getOrders", async (req, res, next) => {
-  try {
-    let data = await superAdminController.getOrders();
-    if (data) {
-      res.status(200).json({
-        data: data,
-        message: "Success",
-      });
-    } else {
-      res.status(404).json({
-        message: "Orders Get Failed",
-      });
-    }
-  } catch (error) {
-    next(error);
-  }
-});
-/*************************************************************************************************************************************************** */
-/* Create Brands */
+
+/*-----------------------------CREATE BRANDS--------------------------------------*/
 router.post("/createBrands", async (req, res, next) => {
   try {
     let length = 0;
@@ -273,9 +249,9 @@ router.post("/createBrands", async (req, res, next) => {
         function readFileCallback(err, datafile) {
           if (err) {
           } else {
-            obj = JSON.parse(datafile); //now it an object
-            obj.brandcount = obj.brandcount + length; //add some data
-            json = JSON.stringify(obj); //convert it back to json
+            obj = JSON.parse(datafile);
+            obj.brandcount = obj.brandcount + length;
+            json = JSON.stringify(obj);
             fs.writeFile(
               "myjsonfile.json",
               json,
@@ -284,7 +260,7 @@ router.post("/createBrands", async (req, res, next) => {
                 if (err) {
                 }
               }
-            ); // write it back
+            );
           }
         }
       );
@@ -300,7 +276,8 @@ router.post("/createBrands", async (req, res, next) => {
     next(error);
   }
 });
-/* Bulk Brands Validation */
+
+/*-----------------------------BULK BRANDS--------------------------------------*/
 router.post("/bulkValidationBrands", async (req, res, next) => {
   try {
     let data = await superAdminController.bulkValidationBrands(req.body);
@@ -318,7 +295,8 @@ router.post("/bulkValidationBrands", async (req, res, next) => {
     next(error);
   }
 });
-/* Get Highest brand Id */
+
+/*-----------------------------GET HIGHEST BRAND ID--------------------------------------*/
 router.post("/getBrandIdHighest", async (req, res, next) => {
   try {
     let obj;
@@ -328,7 +306,7 @@ router.post("/getBrandIdHighest", async (req, res, next) => {
       function readFileCallback(err, data) {
         if (err) {
         } else {
-          obj = JSON.parse(data); //now it an object
+          obj = JSON.parse(data);
           res.status(200).json({
             data: obj.brandcount,
           });
@@ -339,7 +317,8 @@ router.post("/getBrandIdHighest", async (req, res, next) => {
     next(error);
   }
 });
-/* Get All Brands */
+
+/*-----------------------------BRANDS--------------------------------------*/
 router.post("/getBrands", async (req, res, next) => {
   try {
     let data = await superAdminController.getBrands();
@@ -354,8 +333,7 @@ router.post("/getBrands", async (req, res, next) => {
   }
 });
 
-
-/* GET BRAND ALPHABETICAL ORDER */
+/*-----------------------------BRANDS ALPHABATICALLY--------------------------------------*/
 router.post("/getBrandsAlpha", async (req, res, next) => {
   try {
     let data = await superAdminController.getBrandsAlpha();
@@ -370,8 +348,7 @@ router.post("/getBrandsAlpha", async (req, res, next) => {
   }
 });
 
-
-/* get One data */
+/*-----------------------------GET BRAND ONE FOR EDITNG--------------------------------------*/
 router.get("/getBrandOne/:brandId", async (req, res, next) => {
   try {
     let data = await superAdminController.getOneBrand(req.params.brandId);
@@ -394,8 +371,7 @@ router.get("/getBrandOne/:brandId", async (req, res, next) => {
   }
 });
 
-
-/* Edit Brands */
+/*-----------------------------EDIT BRAND--------------------------------------*/
 router.post("/editBrand", async (req, res, next) => {
   try {
     let data = await superAdminController.editBrands(req.body);
@@ -413,8 +389,7 @@ router.post("/editBrand", async (req, res, next) => {
   }
 });
 
-
-/* Delete brands */
+/*-----------------------------DELETE BRAND--------------------------------------*/
 router.post("/deleteBrand/:brandId", async (req, res, next) => {
   try {
     let data = await superAdminController.deleteBrands(req.params.brandId);
@@ -431,8 +406,8 @@ router.post("/deleteBrand/:brandId", async (req, res, next) => {
     next(error);
   }
 });
-/***********************************************************************************************************************/
-/* Product Bulk Validation */
+
+/*-----------------------------BULK VALIDATION PRODUCT--------------------------------------*/
 router.post("/bulkValidationProduct", async (req, res, next) => {
   try {
     let data = await superAdminController.validationBulkProduct(req.body);
@@ -451,8 +426,7 @@ router.post("/bulkValidationProduct", async (req, res, next) => {
   }
 });
 
-
-/* Create Products */
+/*-----------------------------CREATE PRODUCTS--------------------------------------*/
 router.post(
   "/createproducts",
   upload.productImage.single("image"),
@@ -477,10 +451,7 @@ router.post(
   }
 );
 
-
-
-
-/* Get Products */
+/*-----------------------------GET PRODUCTS--------------------------------------*/
 router.post("/getAllProducts", async (req, res, next) => {
   try {
     let data = await superAdminController.getAllProducts();
@@ -495,7 +466,7 @@ router.post("/getAllProducts", async (req, res, next) => {
   }
 });
 
-/* Get Image Edit */
+/*-----------------------------GET IMAGE EDIT DATA--------------------------------------*/
 router.post("/getImageEditProdt/:id", async (req, res, next) => {
   try {
     let data = await superAdminController.getImageEditData(req.params.id);
@@ -514,8 +485,7 @@ router.post("/getImageEditProdt/:id", async (req, res, next) => {
   }
 });
 
-
-/* Update Product Image */
+/*-----------------------------PRODUCT IMAGE--------------------------------------*/
 router.post(
   "/editProductImage",
   upload.productImage.single("image"),
@@ -539,7 +509,8 @@ router.post(
     }
   }
 );
-/* Get Edit Products */
+
+/*-----------------------------EDIT PRODUCT--------------------------------------*/
 router.get("/getEditProduct/:productId", async (req, res, next) => {
   try {
     let data = await superAdminController.getEditProduct(req.params.productId);
@@ -561,7 +532,8 @@ router.get("/getEditProduct/:productId", async (req, res, next) => {
     next(error);
   }
 });
-/* Edit Product */
+
+/*-----------------------------EDIT PRODUCT--------------------------------------*/
 router.post("/editProduct", async (req, res, next) => {
   try {
     let data = await superAdminController.editproduct(req.body);
@@ -578,7 +550,8 @@ router.post("/editProduct", async (req, res, next) => {
     next(error);
   }
 });
-/* Delete Product */
+
+/*-----------------------------DELETE PRODUCT--------------------------------------*/
 router.post("/deleteProduct/:productId", async (req, res, next) => {
   try {
     let data = await superAdminController.deleteProduct(req.params.productId);
@@ -595,7 +568,8 @@ router.post("/deleteProduct/:productId", async (req, res, next) => {
     next(error);
   }
 });
-/* GET PRODUCT BASED ON THE BRAND */
+
+/*-----------------------------GET PRODUCT MODEL--------------------------------------*/
 router.post("/get-product-model/:brandName", async (req, res, next) => {
   try {
     let data = await superAdminController.getBrandBasedPrdouct(
@@ -611,8 +585,8 @@ router.post("/get-product-model/:brandName", async (req, res, next) => {
     next(error);
   }
 });
-/****************************************************INFRA CRED***************************************************************************/
-/* Add Location */
+
+/*-----------------------------ADD LOCATION--------------------------------------*/
 router.post("/addLocation", async (req, res, next) => {
   try {
     let data = await superAdminController.addLocation(req.body);
@@ -629,7 +603,8 @@ router.post("/addLocation", async (req, res, next) => {
     next(error);
   }
 });
-/* Get one Infra based on the Id */
+
+/*-----------------------------INFRA--------------------------------------*/
 router.get("/getInfra/:infraId", async (req, res, next) => {
   try {
     let data = await superAdminController.getInfra(req.params.infraId);
@@ -647,7 +622,9 @@ router.get("/getInfra/:infraId", async (req, res, next) => {
     next(error);
   }
 });
-/* Get Location */
+
+/*-----------------------------GET LOATION--------------------------------------*/
+
 router.post("/getLocation", async (req, res, next) => {
   try {
     let location = await superAdminController.getLocation();
@@ -662,7 +639,7 @@ router.post("/getLocation", async (req, res, next) => {
   }
 });
 
-/* Edit infra */
+/*-----------------------------EDIT INFRA--------------------------------------*/
 router.post("/editInfra", async (req, res, next) => {
   try {
     let data = await superAdminController.editInfra(req.body);
@@ -679,7 +656,8 @@ router.post("/editInfra", async (req, res, next) => {
     next(error);
   }
 });
-/* Delete Infra */
+
+/*-----------------------------DELETE INFRA--------------------------------------*/
 router.post("/deleteInfra/:infraId", async (req, res, next) => {
   try {
     let data = await superAdminController.deleteInfra(req.params.infraId);
@@ -696,7 +674,8 @@ router.post("/deleteInfra/:infraId", async (req, res, next) => {
     next(error);
   }
 });
-/************************************************************************************************************************************/
+
+/*-----------------------------GET WAREHOUSE--------------------------------------*/
 router.post("/getWarehouse", async (req, res, next) => {
   try {
     let data = await superAdminController.getAllWarehouse();
@@ -710,8 +689,8 @@ router.post("/getWarehouse", async (req, res, next) => {
     next(error);
   }
 });
-/*****************************************************MASTERs************************************************************************ */
-/* Bulk Bag Validation */
+
+/*-----------------------------BULK VALIDATION BAG--------------------------------------*/
 router.post("/bulkValidationBag", async (req, res, next) => {
   try {
     let data = await superAdminController.bulkBagValidation(req.body);
@@ -729,7 +708,8 @@ router.post("/bulkValidationBag", async (req, res, next) => {
     next(error);
   }
 });
-/* GET TRAY ID BASED ON THE TYPE */
+
+/*-----------------------------TRAY ID GENERATION--------------------------------------*/
 router.post("/trayIdGenrate/:type", async (req, res, next) => {
   try {
     const { type } = req.params;
@@ -740,7 +720,7 @@ router.post("/trayIdGenrate/:type", async (req, res, next) => {
       function readFileCallback(err, data) {
         if (err) {
         } else {
-          obj = JSON.parse(data); //now it an object
+          obj = JSON.parse(data);
           if (type == "PMT") {
             res.status(200).json({
               data: obj.PMT,
@@ -757,6 +737,22 @@ router.post("/trayIdGenrate/:type", async (req, res, next) => {
             res.status(200).json({
               data: obj.WHT,
             });
+          } else if (type == "CTA") {
+            res.status(200).json({
+              data: obj.CTA,
+            });
+          } else if (type == "CTB") {
+            res.status(200).json({
+              data: obj.CTB,
+            });
+          } else if (type == "CTC") {
+            res.status(200).json({
+              data: obj.CTC,
+            });
+          } else if (type == "CTD") {
+            res.status(200).json({
+              data: obj.CTD,
+            });
           } else {
             res.status(200).json({
               data: obj,
@@ -769,7 +765,8 @@ router.post("/trayIdGenrate/:type", async (req, res, next) => {
     next(error);
   }
 });
-/* Get Highest Master Id */
+
+/*-----------------------------GET HIGHEST MASTER ID FOR BAG--------------------------------------*/
 router.post("/getMasterHighest/:prefix", async (req, res, next) => {
   try {
     if (req.params.prefix == "Gurgaon_122016") {
@@ -781,7 +778,6 @@ router.post("/getMasterHighest/:prefix", async (req, res, next) => {
           if (err) {
           } else {
             obj = JSON.parse(data); //now it an object
-
             res.status(200).json({
               data: obj.bagGurgaon,
             });
@@ -828,7 +824,8 @@ router.post("/getMasterHighest/:prefix", async (req, res, next) => {
     next(error);
   }
 });
-/* Bulk Validation for Tray */
+
+/*-----------------------------BULK VALIDATION TRAY--------------------------------------*/
 router.post("/bulkValidationTray", async (req, res, next) => {
   try {
     let data = await superAdminController.bulkValidationTray(req.body);
@@ -846,7 +843,8 @@ router.post("/bulkValidationTray", async (req, res, next) => {
     next(error);
   }
 });
-/* Bulk tray create */
+
+/*-----------------------------CREATE BULK TRAY--------------------------------------*/
 router.post("/createBulkTray", async (req, res, next) => {
   try {
     let data = await superAdminController.addbulkTray(req.body.item);
@@ -857,12 +855,17 @@ router.post("/createBulkTray", async (req, res, next) => {
         function readFileCallback(err, datafile) {
           if (err) {
           } else {
-            obj = JSON.parse(datafile); //now it an object
+            obj = JSON.parse(datafile);
             obj.BOT = req.body.allCount.BOT;
             obj.MMT = req.body.allCount.MMT;
             obj.WHT = req.body.allCount.WHT;
-            obj.PMT = req.body.allCount.PMT; //add some data
-            json = JSON.stringify(obj); //convert it back to json
+            obj.PMT = req.body.allCount.PMT;
+            obj.CTA = req.body.allCount.CTA;
+            obj.CTB = req.body.allCount.CTB;
+            obj.CTC = req.body.allCount.CTC;
+            obj.CTD = req.body.allCount.CTD;
+
+            json = JSON.stringify(obj);
             fs.writeFile(
               "myjsonfile.json",
               json,
@@ -883,7 +886,8 @@ router.post("/createBulkTray", async (req, res, next) => {
     next(error);
   }
 });
-/* Bulk Create */
+
+/*-----------------------------CREATE BULK BAG--------------------------------------*/
 router.post("/createBulkBag", async (req, res, next) => {
   try {
     let data = await superAdminController.addBulkBag(req.body);
@@ -894,16 +898,16 @@ router.post("/createBulkBag", async (req, res, next) => {
         function readFileCallback(err, datafile) {
           if (err) {
           } else {
-            obj = JSON.parse(datafile); //now it an object
+            obj = JSON.parse(datafile);
             let blr = req.body.filter(
               (data) => data.cpc == "Bangalore_560067"
             ).length;
-            obj.bagBanglore = obj.bagBanglore + blr; //add some data
+            obj.bagBanglore = obj.bagBanglore + blr;
             let ggrn = req.body.filter(
               (data) => data.cpc == "Gurgaon_122016"
             ).length;
-            obj.bagGurgaon = obj.bagGurgaon + ggrn; //add some data
-            json = JSON.stringify(obj); //convert it back to json
+            obj.bagGurgaon = obj.bagGurgaon + ggrn;
+            json = JSON.stringify(obj);
             fs.writeFile(
               "myjsonfile.json",
               json,
@@ -937,11 +941,11 @@ router.post("/getAudit/:bagId", async (req, res, next) => {
     next(error);
   }
 });
-/* Create Bag */
+
+/*--------------------------------CREATE BAG-----------------------------------*/
 router.post("/createMasters", async (req, res, next) => {
   try {
     const { type_taxanomy, cpc } = req.body;
-
     let data = await superAdminController.createMasters(req.body);
     if (data) {
       if (req.body.prefix == "bag-master") {
@@ -951,13 +955,13 @@ router.post("/createMasters", async (req, res, next) => {
           function readFileCallback(err, datafile) {
             if (err) {
             } else {
-              obj = JSON.parse(datafile); //now it an object
+              obj = JSON.parse(datafile);
               if (cpc == "Gurgaon_122016") {
-                obj.bagGurgaon = obj.bagGurgaon + 1; //add some data
+                obj.bagGurgaon = obj.bagGurgaon + 1;
               } else if (cpc == "Bangalore_560067") {
-                obj.bagBanglore = obj.bagBanglore + 1; //add some data
+                obj.bagBanglore = obj.bagBanglore + 1;
               }
-              json = JSON.stringify(obj); //convert it back to json
+              json = JSON.stringify(obj);
               fs.writeFile(
                 "myjsonfile.json",
                 json,
@@ -966,7 +970,7 @@ router.post("/createMasters", async (req, res, next) => {
                   if (err) {
                   }
                 }
-              ); // write it back
+              );
             }
           }
         );
@@ -977,17 +981,26 @@ router.post("/createMasters", async (req, res, next) => {
           function readFileCallback(err, datafile) {
             if (err) {
             } else {
-              obj = JSON.parse(datafile); //now it an object
+              obj = JSON.parse(datafile);
+
               if (type_taxanomy == "BOT") {
-                obj.BOT = obj.BOT + 1; //add some data
+                obj.BOT = obj.BOT + 1;
               } else if (type_taxanomy == "PMT") {
-                obj.PMT = obj.PMT + 1; //add some data
+                obj.PMT = obj.PMT + 1;
               } else if (type_taxanomy == "MMT") {
-                obj.MMT = obj.MMT + 1; //add some data
+                obj.MMT = obj.MMT + 1;
               } else if (type_taxanomy == "WHT") {
-                obj.WHT = obj.WHT + 1; //add some data
+                obj.WHT = obj.WHT + 1;
+              } else if (type_taxanomy == "CTA") {
+                obj.CTA = obj.CTA + 1;
+              } else if (type_taxanomy == "CTB") {
+                obj.CTB = obj.CTB + 1;
+              } else if (type_taxanomy == "CTC") {
+                obj.CTC = obj.CTC + 1;
+              } else if (type_taxanomy == "CTD") {
+                obj.CTD = obj.CTD + 1;
               }
-              json = JSON.stringify(obj); //convert it back to json
+              json = JSON.stringify(obj);
               fs.writeFile(
                 "myjsonfile.json",
                 json,
@@ -996,7 +1009,7 @@ router.post("/createMasters", async (req, res, next) => {
                   if (err) {
                   }
                 }
-              ); // write it back
+              );
             }
           }
         );
@@ -1013,7 +1026,8 @@ router.post("/createMasters", async (req, res, next) => {
     next(error);
   }
 });
-/* Get Master */
+
+/*-----------------------------GET MASTERS--------------------------------------*/
 router.post("/getMasters", async (req, res, next) => {
   try {
     let data = await superAdminController.getMasters(req.body);
@@ -1028,8 +1042,7 @@ router.post("/getMasters", async (req, res, next) => {
   }
 });
 
-
-/* Get One Master */
+/*-----------------------------GET ONE MASTER--------------------------------------*/
 router.get("/getOneMaster/:masterId", async (req, res, ne) => {
   try {
     let data = await superAdminController.getOneMaster(req.params.masterId);
@@ -1047,8 +1060,7 @@ router.get("/getOneMaster/:masterId", async (req, res, ne) => {
   }
 });
 
-
-/* Edit Master */
+/*-----------------------------EDIT MASTER--------------------------------------*/
 router.post("/editMaster", async (req, res, next) => {
   try {
     let data = await superAdminController.editMaster(req.body);
@@ -1065,7 +1077,8 @@ router.post("/editMaster", async (req, res, next) => {
     next(error);
   }
 });
-/* MASTERS EDIT HISTORY GET */
+
+/*----------------------------EDIT MASTER--------------------------------------*/
 router.post("/mastersEditHistory/:trayId", async (req, res, next) => {
   try {
     const { trayId } = req.params;
@@ -1080,8 +1093,7 @@ router.post("/mastersEditHistory/:trayId", async (req, res, next) => {
   }
 });
 
-
-/* Delete Master */
+/*-----------------------------DELETE MASTER--------------------------------------*/
 router.post("/deleteMaster/:masterId", async (req, res, next) => {
   try {
     let data = await superAdminController.delteMaster(req.params.masterId);
@@ -1098,8 +1110,8 @@ router.post("/deleteMaster/:masterId", async (req, res, next) => {
     next(error);
   }
 });
-/**************************************ITEM TRACKING************************************************ */
-/* Item tracking */
+
+/*-----------------------------ITEM TRACKING--------------------------------------*/
 router.post("/itemTracking/:page/:size", async (req, res, next) => {
   try {
     let { page, size } = req.params;
@@ -1123,7 +1135,8 @@ router.post("/itemTracking/:page/:size", async (req, res, next) => {
     next(error);
   }
 });
-/* SEARCH TRACK ITEM DATA */
+
+/*-----------------------------SEARCH TRACK ITEM--------------------------------------*/
 router.post("/search-admin-track-item", async (req, res, next) => {
   try {
     const { type, searchData, location } = req.body;
@@ -1141,8 +1154,8 @@ router.post("/search-admin-track-item", async (req, res, next) => {
     next(error);
   }
 });
-/*************************************************************READY FOR CHARGING************************************************* */
-/* GET INUSE WHT TRAY */
+
+/*-----------------------------GET INUSE WHT--------------------------------------*/
 router.post("/getInuseWht", async (req, res, next) => {
   try {
     let whtTray = await superAdminController.getWhtTrayInuse();
@@ -1155,11 +1168,12 @@ router.post("/getInuseWht", async (req, res, next) => {
     next(error);
   }
 });
-/* SEND TO WHT TO MIS READY FOR CHARGING */
+
+/*-----------------------------READY FOR CHARGING--------------------------------------*/
 router.post("/ready-for-charging", async (req, res, next) => {
   try {
-    const { ischeck } = req.body;
-    let data = await superAdminController.readyForCharging(ischeck);
+    const { ischeck, status } = req.body;
+    let data = await superAdminController.readyForCharging(ischeck, status);
     if (data.status === 1) {
       res.status(200).json({
         message: "Successfully Sent to MIS",
@@ -1173,8 +1187,8 @@ router.post("/ready-for-charging", async (req, res, next) => {
     next(error);
   }
 });
-/******************************REMOVE INVALID ITEM*************************************** */
-/* GET BAG WITH INVALID ITEM */
+
+/*----------------------------GET INVALID ITEM PRESENT BAG--------------------------------------*/
 router.post("/getInvalidItemPresentBag", async (req, res, next) => {
   try {
     let data = await superAdminController.getInvalidItemBag();
@@ -1187,12 +1201,13 @@ router.post("/getInvalidItemPresentBag", async (req, res, next) => {
     next(error);
   }
 });
-/* GET BAG ITEM */
+
+/*-----------------------------GET BAG ITEM INVALID--------------------------------------*/
 router.post("/getBagItemInvalid/:bagId", async (req, res, next) => {
   try {
     const { bagId } = req.params;
     let data = await superAdminController.getInvalidItemForBag(bagId);
-    console.log(data);
+
     if (data.status == 1) {
       res.status(200).json({
         data: data.data,
@@ -1210,17 +1225,23 @@ router.post("/getBagItemInvalid/:bagId", async (req, res, next) => {
     next(error);
   }
 });
-/***********************************************EXTRA QUREY SECTION*********************************************************** */
-router.post("/update-cpc", async (req, res, next) => {
+
+/*-----------------------------BQC REPORT--------------------------------------*/
+router.post("/bqcReport/:uic", async (req, res, next) => {
   try {
-    let data = await superAdminController.updateCPCExtra();
-    if (data) {
+    const { uic } = req.params;
+    let data = await superAdminController.getBqcReport(uic);
+    if (data.status === 1) {
       res.status(200).json({
-        message: "Successfully updated",
+        data: data.data,
       });
-    } else {
+    } else if (data.status === 2) {
       res.status(202).json({
-        message: "Failed",
+        message: "UIC does not exists",
+      });
+    } else if (data.status === 3) {
+      res.status(202).json({
+        message: "BQC report not created yet",
       });
     }
   } catch (error) {
@@ -1228,10 +1249,60 @@ router.post("/update-cpc", async (req, res, next) => {
   }
 });
 
-/***********************************************EXTRA QUREY SECTION*********************************************************** */
-router.post("/fixBaggingIssue", async (req, res, next) => {
+/*-----------------------------------------CHARGE DONE 4 DIFF TRAY------------------------------------------------*/
+router.post("/chargeDoneFourDifferenceTray", async (req, res, next) => {
   try {
-    let data = await superAdminController.fixBaggingIssueWithAwbn();
+    let data = await superAdminController.chargeDoneTrayFourDayDiff();
+    if (data) {
+      res.status(200).json({
+        data: data,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
+/*-----------------------------------------GET AUDIT DONE WHT TRAY------------------------------------------------*/
+router.post("/auditDoneWht", async (req, res, next) => {
+  try {
+    let data = await superAdminController.getAuditDone();
+    if (data) {
+      res.status(200).json({
+        data: data,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
+// SEND TO RDL
+router.post("/sendToRdl", async (req, res, next) => {
+  try {
+    const { ischeck } = req.body;
+    let data = await superAdminController.sendToRdl(ischeck);
+    if (data.status == 1) {
+      res.status(200).json({
+        message: "Successfully sent MIS",
+      });
+    } else {
+      res.status(202).json({
+        message: "Request failed please tray again...",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
+/****************************************************************************************************** */
+
+/*-----------------------------EXTRA ONE--------------------------------------*/
+router.post("/update-cpc", async (req, res, next) => {
+  try {
+    console.log("d");
+    let data = await superAdminController.updateCPCExtra();
     if (data) {
       res.status(200).json({
         message: "Successfully updated",

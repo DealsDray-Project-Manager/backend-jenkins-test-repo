@@ -3,7 +3,7 @@ const router = express.Router();
 // user controller
 const botController = require("../../Controller/bot-controller/bot-controller");
 // Multer
-const upload = require("../../utils/multer");
+const upload = require("../../Utils/multer");
 
 
 
