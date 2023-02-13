@@ -3114,7 +3114,7 @@ module.exports = {
       }
     });
   },
-  mergeDoneTrayClose: (fromTray, toTray, type, length, limit) => {
+  mergeDoneTrayClose: (fromTray, toTray, type, length, limit,status) => {
     let data;
     return new Promise(async (resolve, reject) => {
       if (status == "Audit Done Received From Merging") {
