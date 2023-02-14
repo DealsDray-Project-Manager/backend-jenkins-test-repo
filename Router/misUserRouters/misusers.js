@@ -1046,4 +1046,29 @@ router.post("/TrayMergeRequestSend", async (req, res, next) => {
     next(error);
   }
 });
+
+router.post('/imeiDeliverySearch',async(req,res,next)=>{
+  try{
+    const { value } = req.body;
+    let resultdata=await misUserController.imeiSearchDelivery(value)
+  res.json({resultdata})
+  }catch(error){
+    next(error);
+  }
+});
+
+router.post('/imeiOrderSearch',async(req,res,next)=>{
+  try{
+    const { value } = req.body;
+    let resultdata=await misUserController.imeiSearchOrder(value)
+    if(resultdata?.status){
+        res.json({error:'invaid IMEI'})
+    }
+    res.json({resultdata})
+  }catch(error){
+    next(error);
+  }
+})
+
+
 module.exports = router;
