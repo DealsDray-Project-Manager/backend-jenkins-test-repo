@@ -1554,5 +1554,69 @@ module.exports = {
       })
       resolve({status:"Done"})
     })
-  }
+  },
+   /*--------------------------------CHARGE DONE DAY DIFFERENT 4 WHT TRAY-----------------------------------*/
+
+   chargeDoneTrayFourDayDiff: () => {
+    return new Promise(async (resolve, reject) => {
+      let tray = await masters.find({
+        prefix: "tray-master",
+        sort_id: "Ready to BQC",
+      });
+      if (tray) {
+        let arr = [];
+        for (let x of tray) {
+          var today = new Date(Date.now());
+
+          if (
+            new Date(x.closed_time_bot) <=
+            new Date(today.setDate(today.getDate() - 4))
+          ) {
+            arr.push(x);
+          }
+        }
+        resolve(arr);
+      }
+    });
+  },
+  /*--------------------------------AUDIT DONE TRAY-----------------------------------*/
+
+  getAuditDone: () => {
+    return new Promise(async (resolve, reject) => {
+      let data = await masters.find({
+        sort_id: "Audit Done Closed By Warehouse",
+        type_taxanomy: "WHT",
+      });
+      if (data) {
+        resolve(data);
+      }
+    });
+  },
+  /*--------------------------------AUDIT DONE TRAY  FORCEFULL SEND TO RDL-----------------------------------*/
+
+  sendToRdl: (trayIds) => {
+    return new Promise(async (resolve, reject) => {
+      let sendtoRdlMis;
+      for (let x of trayIds) {
+        sendtoRdlMis = await masters.findOneAndUpdate(
+          { code: x },
+          {
+            $set: {
+              sort_id: "Ready to RDL",
+              actual_items: [],
+              issued_user_name: null,
+              from_merge: null,
+              to_merge: null,
+            },
+          }
+        );
+      }
+      if (sendtoRdlMis) {
+        resolve({ status: true });
+      } else {
+        resolve({ status: false });
+      }
+    });
+  },
+  
 };
