@@ -1519,7 +1519,6 @@ module.exports = {
       });
       for (let y of wht) {
         for (let x of y.items) {
-          console.log(x.charging);
           let update = await delivery.updateOne(
             { tracking_id: x.tracking_id },
             {
