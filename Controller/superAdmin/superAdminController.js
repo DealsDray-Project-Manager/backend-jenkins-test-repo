@@ -13,8 +13,7 @@ const {
 } = require("../../Model/masterHistoryModel/mastersHistory");
 const moment = require("moment");
 const IISDOMAIN = "http://prexo-v7-dev-api.dealsdray.com/user/profile/";
-const IISDOMAINPRDT =
-  "http://prexo-v7-dev-api.dealsdray.com/product/image/";
+const IISDOMAINPRDT = "http://prexo-v7-dev-api.dealsdray.com/product/image/";
 
 /************************************************************************************************** */
 
@@ -1545,19 +1544,22 @@ module.exports = {
       resolve(wht);
     });
   },
-  productImageRemove:()=>{
-    return new Promise(async(resolve,reject)=>{
-      let update=await products.updateMany({},{
-         $unset: {
-          image:1
-         }
-      })
-      resolve({status:"Done"})
-    })
+  productImageRemove: () => {
+    return new Promise(async (resolve, reject) => {
+      let update = await products.updateMany(
+        {},
+        {
+          $unset: {
+            image: 1,
+          },
+        }
+      );
+      resolve({ status: "Done" });
+    });
   },
-   /*--------------------------------CHARGE DONE DAY DIFFERENT 4 WHT TRAY-----------------------------------*/
+  /*--------------------------------CHARGE DONE DAY DIFFERENT 4 WHT TRAY-----------------------------------*/
 
-   chargeDoneTrayFourDayDiff: () => {
+  chargeDoneTrayFourDayDiff: () => {
     return new Promise(async (resolve, reject) => {
       let tray = await masters.find({
         prefix: "tray-master",
@@ -1618,72 +1620,72 @@ module.exports = {
       }
     });
   },
-  
 
- /*--------------------------------EXTRA CHANGES-----------------------------------*/
+  /*--------------------------------EXTRA CHANGES-----------------------------------*/
 
- updateCPCExtra: () => {
-  return new Promise(async (resolve, reject) => {
-    let ordersData=await orders.find()
-    for(let x of ordersData ){
-      let checkDelivery=await delivery.findOne({order_id:x.order_id})
-      if(checkDelivery){
-        let updateStatus=await orders.updateOne({order_id:x.order_id},{
-          $set:{
-            delivery_status: "Delivered",
-          }
-        })
+  updateCPCExtra: () => {
+    return new Promise(async (resolve, reject) => {
+      let ordersData = await orders.find();
+      for (let x of ordersData) {
+        let checkDelivery = await delivery.findOne({ order_id: x.order_id });
+        if (checkDelivery) {
+          let updateStatus = await orders.updateOne(
+            { order_id: x.order_id },
+            {
+              $set: {
+                delivery_status: "Delivered",
+              },
+            }
+          );
+        }
       }
-    }
-    resolve(ordersData)
-  });
-},
-getUpdateRecord: () => {
-  return new Promise(async (resolve, reject) => {
-    let tray = await masters.find({
-      prefix: "tray-master",
-      closed_time_bot: { $exists: true },
-      sort_id: { $ne: "Open" },
+      resolve(ordersData);
     });
-    for (let x of tray) {
-      if (x.items.length !== 0) {
-        for (let y of x.items) {
-          console.log(y);
-          let obj;
-          if (x.type_taxanomy == "BOT") {
-            obj = {
-              stickerOne: y?.stickerOne,
-              stickerTwo: y?.stickerTwo,
-              stickerThree: y?.stickerThree,
-              stickerFour: y?.stickerFour,
-              body_damage: y?.body_damage,
-              body_damage_des: y?.body_damage_des,
-              model_brand: y?.model_brand,
-            };
-            let updateDelivery = await delivery.updateOne(
-              { tracking_id: y.tracking_id },
-              {
-                $set: {
-                  bot_report: obj,
-                },
-              }
-            );
-          } else {
-            let updateDelivery = await delivery.updateOne(
-              { tracking_id: y.tracking_id },
-              {
-                $set: {
-                  bot_report: y?.bot_eval_result,
-                },
-              }
-            );
+  },
+  getUpdateRecord: () => {
+    return new Promise(async (resolve, reject) => {
+      let tray = await masters.find({
+        prefix: "tray-master",
+        closed_time_bot: { $exists: true },
+        sort_id: { $ne: "Open" },
+      });
+      for (let x of tray) {
+        if (x.items.length !== 0) {
+          for (let y of x.items) {
+            console.log(y);
+            let obj;
+            if (x.type_taxanomy == "BOT") {
+              obj = {
+                stickerOne: y?.stickerOne,
+                stickerTwo: y?.stickerTwo,
+                stickerThree: y?.stickerThree,
+                stickerFour: y?.stickerFour,
+                body_damage: y?.body_damage,
+                body_damage_des: y?.body_damage_des,
+                model_brand: y?.model_brand,
+              };
+              let updateDelivery = await delivery.updateOne(
+                { tracking_id: y.tracking_id },
+                {
+                  $set: {
+                    bot_report: obj,
+                  },
+                }
+              );
+            } else {
+              let updateDelivery = await delivery.updateOne(
+                { tracking_id: y.tracking_id },
+                {
+                  $set: {
+                    bot_report: y?.bot_eval_result,
+                  },
+                }
+              );
+            }
           }
         }
       }
-    }
-    resolve({ status: "Done" });
-  });
-},
-
-  
+      resolve({ status: "Done" });
+    });
+  },
 };
