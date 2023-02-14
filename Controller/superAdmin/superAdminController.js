@@ -12,8 +12,8 @@ const {
   mastersEditHistory,
 } = require("../../Model/masterHistoryModel/mastersHistory");
 const moment = require("moment");
-const IISDOMAIN = "http://prexo-v6-uat-adminapi.dealsdray.com/user/profile/";
-const IISDOMAINPRDT = "http://prexo-v6-uat-adminapi.dealsdray.com/product/image/";
+const IISDOMAIN = "http://prexo-v7-dev-api.dealsdray.com/user/profile/";
+const IISDOMAINPRDT = "http://prexo-v7-dev-api.dealsdray.com/product/image/";
 
 /************************************************************************************************** */
 
@@ -1542,6 +1542,150 @@ module.exports = {
         }
       }
       resolve(wht);
+    });
+  },
+  productImageRemove: () => {
+    return new Promise(async (resolve, reject) => {
+      let update = await products.updateMany(
+        {},
+        {
+          $unset: {
+            image: 1,
+          },
+        }
+      );
+      resolve({ status: "Done" });
+    });
+  },
+  /*--------------------------------CHARGE DONE DAY DIFFERENT 4 WHT TRAY-----------------------------------*/
+
+  chargeDoneTrayFourDayDiff: () => {
+    return new Promise(async (resolve, reject) => {
+      let tray = await masters.find({
+        prefix: "tray-master",
+        sort_id: "Ready to BQC",
+      });
+      if (tray) {
+        let arr = [];
+        for (let x of tray) {
+          var today = new Date(Date.now());
+
+          if (
+            new Date(x.closed_time_bot) <=
+            new Date(today.setDate(today.getDate() - 4))
+          ) {
+            arr.push(x);
+          }
+        }
+        resolve(arr);
+      }
+    });
+  },
+  /*--------------------------------AUDIT DONE TRAY-----------------------------------*/
+
+  getAuditDone: () => {
+    return new Promise(async (resolve, reject) => {
+      let data = await masters.find({
+        sort_id: "Audit Done Closed By Warehouse",
+        type_taxanomy: "WHT",
+      });
+      if (data) {
+        resolve(data);
+      }
+    });
+  },
+  /*--------------------------------AUDIT DONE TRAY  FORCEFULL SEND TO RDL-----------------------------------*/
+
+  sendToRdl: (trayIds) => {
+    return new Promise(async (resolve, reject) => {
+      let sendtoRdlMis;
+      for (let x of trayIds) {
+        sendtoRdlMis = await masters.findOneAndUpdate(
+          { code: x },
+          {
+            $set: {
+              sort_id: "Ready to RDL",
+              actual_items: [],
+              issued_user_name: null,
+              from_merge: null,
+              to_merge: null,
+            },
+          }
+        );
+      }
+      if (sendtoRdlMis) {
+        resolve({ status: true });
+      } else {
+        resolve({ status: false });
+      }
+    });
+  },
+
+  /*--------------------------------EXTRA CHANGES-----------------------------------*/
+
+  updateCPCExtra: () => {
+    return new Promise(async (resolve, reject) => {
+      let ordersData = await orders.find();
+      for (let x of ordersData) {
+        let checkDelivery = await delivery.findOne({ order_id: x.order_id });
+        if (checkDelivery) {
+          let updateStatus = await orders.updateOne(
+            { order_id: x.order_id },
+            {
+              $set: {
+                charging: m.charging,
+              },
+            }
+          );
+        }
+      }
+      resolve(wht);
+    });
+  },
+  getUpdateRecord: () => {
+    return new Promise(async (resolve, reject) => {
+      let tray = await masters.find({
+        prefix: "tray-master",
+        closed_time_bot: { $exists: true },
+        sort_id: { $ne: "Open" },
+      });
+      for (let x of tray) {
+        if (x.items.length !== 0) {
+          for (let y of x.items) {
+            console.log(y);
+            let obj;
+            if (x.type_taxanomy == "BOT") {
+              obj = {
+                stickerOne: y?.stickerOne,
+                stickerTwo: y?.stickerTwo,
+                stickerThree: y?.stickerThree,
+                stickerFour: y?.stickerFour,
+                body_damage: y?.body_damage,
+                body_damage_des: y?.body_damage_des,
+                model_brand: y?.model_brand,
+              };
+              let updateDelivery = await delivery.updateOne(
+                { tracking_id: y.tracking_id },
+                {
+                  $set: {
+                    bot_report: obj,
+                  },
+                }
+              );
+            } else {
+              let updateDelivery = await delivery.updateOne(
+                { tracking_id: y.tracking_id },
+                {
+                  $set: {
+                    bot_report: y?.bot_eval_result,
+                  },
+                }
+              );
+            }
+          }
+        }
+      }
+      resolve({ status: "Done" });
     });
   },
 };

@@ -25,10 +25,19 @@ module.exports = {
         type_taxanomy: "BOT",
         sort_id: "Issued to sorting agent",
       });
-      count.merge=await masters.count({
-        issued_user_name: username,
-        to_merge: { $ne: null },
-        sort_id: "Issued to Merging",
+      count.merge = await masters.count({
+        $or: [
+          {
+            issued_user_name: username,
+            to_merge: { $ne: null },
+            sort_id: "Issued to Merging",
+          },
+          {
+            issued_user_name: username,
+            to_merge: { $ne: null },
+            sort_id: "Audit Done Issued to Merging",
+          },
+        ],
       });
       if (count) {
         resolve(count);

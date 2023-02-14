@@ -6,6 +6,7 @@ const { user } = require("../../Model/userModel");
 var mongoose = require("mongoose");
 const { products } = require("../../Model/productModel/product");
 const moment = require("moment");
+
 /********************************************************************/
 /* 
 
@@ -37,6 +38,8 @@ module.exports = {
         returnFromSorting: 0,
         mergeRequest: 0,
         returnFromMerge: 0,
+        auditRequest: 0,
+        otherTrayAuditDone: 0,
       };
       count.bagIssueRequest = await masters.count({
         $or: [
@@ -980,29 +983,61 @@ module.exports = {
           resolve({ status: 3 });
         }
       } else if (trayData.type == "Merging Done") {
-        let data = await masters.findOneAndUpdate(
-          { code: trayData.trayId },
-          {
-            $set: {
-              sort_id: "Received From Merging",
-            },
-          }
-        );
-        if (data) {
-          for (let i = 0; i < data.actual_items.length; i++) {
-            let deliveryTrack = await delivery.updateMany(
-              { tracking_id: data.items[i].awbn_number },
+        let checktray = await masters.findOne({ code: trayData.trayId });
+        if (checktray?.items?.length == trayData.counts) {
+          if (checktray.sort_id == "Audit Done Return from Merging") {
+            let data = await masters.findOneAndUpdate(
+              { code: trayData.trayId },
               {
                 $set: {
-                  tray_status: "Received From Merging",
-                  tray_location: "Warehouse",
+                  sort_id: "Audit Done Received From Merging",
                 },
               }
             );
+            if (data) {
+              for (let i = 0; i < data.actual_items.length; i++) {
+                let deliveryTrack = await delivery.updateMany(
+                  { tracking_id: data.items[i].awbn_number },
+                  {
+                    $set: {
+                      tray_status: "Audit Done  Received From Merging",
+                      tray_location: "Warehouse",
+                    },
+                  }
+                );
+              }
+              resolve({ status: 1 });
+            } else {
+              resolve({ status: 2 });
+            }
+          } else {
+            let data = await masters.findOneAndUpdate(
+              { code: trayData.trayId },
+              {
+                $set: {
+                  sort_id: "Received From Merging",
+                },
+              }
+            );
+            if (data) {
+              for (let i = 0; i < data.actual_items.length; i++) {
+                let deliveryTrack = await delivery.updateMany(
+                  { tracking_id: data.items[i].awbn_number },
+                  {
+                    $set: {
+                      tray_status: "Received From Merging",
+                      tray_location: "Warehouse",
+                    },
+                  }
+                );
+              }
+              resolve({ status: 1 });
+            } else {
+              resolve({ status: 2 });
+            }
           }
-          resolve({ status: 1 });
         } else {
-          resolve({ status: 2 });
+          resolve({ status: 3 });
         }
       } else {
         let checkCount = await masters.findOne({ code: trayData.trayId });
@@ -3112,7 +3147,7 @@ module.exports = {
       }
     });
   },
-  mergeDoneTrayClose: (fromTray, toTray, type, length, limit) => {
+  mergeDoneTrayClose: (fromTray, toTray, type, length, limit,status) => {
     let data;
     return new Promise(async (resolve, reject) => {
       if (status == "Audit Done Received From Merging") {

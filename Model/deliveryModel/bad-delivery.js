@@ -26,7 +26,7 @@ const badDeliverySchema = mongoose.Schema({
         type: String
     },
     base_disscount: {
-        type: Number
+        type: String
     },
     diagnostics_discount: {
         type: String

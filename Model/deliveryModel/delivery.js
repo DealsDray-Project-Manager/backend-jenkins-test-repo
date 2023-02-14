@@ -164,6 +164,42 @@ const deliverySchema = mongoose.Schema({
   },
   bqc_report:{
     type:Object
+  },
+  bqc_software_report:{
+    type:Object
+  },
+  issued_to_audit:{
+    type:Date
+  },
+  audit_user_name:{
+    type:String
+  },
+  audit_report:{
+    type:Object
+  },
+  audit_done_date:{
+    type:Date
+  },
+  audit_done_recieved:{
+    type:Date
+  },
+  audit_done_close:{
+    type:Date
+  },
+  sales_bin_date:{
+    type:Date
+  },
+  sales_bin_status:{
+    type:String
+  },
+  sales_bin_grade:{
+    type:String
+  },
+  sales_bin_wh_agent_name:{
+    type:String
+  },
+   sales_bin_desctiption:{
+    type:String
   }
 
 });
