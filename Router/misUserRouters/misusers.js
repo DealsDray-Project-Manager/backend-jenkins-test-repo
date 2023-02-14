@@ -838,6 +838,7 @@ router.post("/toWhtTrayForMerge", async (req, res, next) => {
     next(error);
   }
 });
+
 /* GET CHARGING USERS FOR ASSIGN WHT TRAY */
 router.post(
   "/get-charging-users/:user_type/:location",

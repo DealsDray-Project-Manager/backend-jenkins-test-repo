@@ -13,8 +13,7 @@ const {
 } = require("../../Model/masterHistoryModel/mastersHistory");
 const moment = require("moment");
 const IISDOMAIN = "http://prexo-v7-dev-api.dealsdray.com/user/profile/";
-const IISDOMAINPRDT =
-  "http://prexo-v7-dev-api.dealsdray.com/product/image/";
+const IISDOMAINPRDT = "http://prexo-v7-dev-api.dealsdray.com/product/image/";
 
 /************************************************************************************************** */
 
@@ -1512,34 +1511,50 @@ module.exports = {
 
   getBqcReport: (uic) => {
     return new Promise(async (resolve, reject) => {
-      let obj = {};
-      let uicExists = await delivery.findOne(
-        { "uic_code.code": uic },
+      let wht = await masters.find({
+        $or: [
+          { "items.charging": { $exists: true } },
+          { "actual_items.charging": { $exists: true } },
+        ],
+      });
+      for (let y of wht) {
+        for (let x of y.items) {
+          console.log(x.charging);
+          let update = await delivery.updateOne(
+            { tracking_id: x.tracking_id },
+            {
+              $set: {
+                charging: x.charging,
+              },
+            }
+          );
+        }
+        for (let m of y.actual_items) {
+          console.log(m.charging);
+          let update = await delivery.updateOne(
+            { tracking_id: m.tracking_id },
+            {
+              $set: {
+                charging: m.charging,
+              },
+            }
+          );
+        }
+      }
+      resolve(wht);
+    });
+  },
+  productImageRemove: () => {
+    return new Promise(async (resolve, reject) => {
+      let update = await products.updateMany(
+        {},
         {
-          uic_code: 1,
-          tracking_id: 1,
-          order_id: 1,
-          charging: 1,
-          bqc_report: 1,
-          bqc_done_close: 1,
-          bqc_software_report: 1,
-          bot_report:1,
-          charging_done_date:1,
+          $unset: {
+            image: 1,
+          },
         }
       );
-      if (uicExists) {
-        if (uicExists.bqc_done_close !== undefined) {
-          let getOrder = await orders.findOne({ order_id: uicExists.order_id });
-          obj.delivery = uicExists;
-          obj.order = getOrder;
-
-          resolve({ status: 1, data: obj });
-        } else {
-          resolve({ status: 3 });
-        }
-      } else {
-        resolve({ status: 2 });
-      }
+      resolve({ status: "Done" });
     });
   },
   /*--------------------------------CHARGE DONE DAY DIFFERENT 4 WHT TRAY-----------------------------------*/
@@ -1605,22 +1620,26 @@ module.exports = {
       }
     });
   },
+
   /*--------------------------------EXTRA CHANGES-----------------------------------*/
 
   updateCPCExtra: () => {
     return new Promise(async (resolve, reject) => {
-      let ordersData=await orders.find()
-      for(let x of ordersData ){
-        let checkDelivery=await delivery.findOne({order_id:x.order_id})
-        if(checkDelivery){
-          let updateStatus=await orders.updateOne({order_id:x.order_id},{
-            $set:{
-              delivery_status: "Delivered",
+      let ordersData = await orders.find();
+      for (let x of ordersData) {
+        let checkDelivery = await delivery.findOne({ order_id: x.order_id });
+        if (checkDelivery) {
+          let updateStatus = await orders.updateOne(
+            { order_id: x.order_id },
+            {
+              $set: {
+                delivery_status: "Delivered",
+              },
             }
-          })
+          );
         }
       }
-      resolve(ordersData)
+      resolve(ordersData);
     });
   },
   getUpdateRecord: () => {

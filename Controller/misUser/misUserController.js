@@ -216,21 +216,10 @@ module.exports = {
         cpc: location,
       });
       count.whtMerge = await masters.count({
-        $or: [
-          {
-            prefix: "tray-master",
-            type_taxanomy: "WHT",
-            sort_id: "Inuse",
-            cpc: location,
-            items: { $ne: [] },
-          },
-          {
-            prefix: "tray-master",
-            type_taxanomy: "WHT",
-            sort_id: "Audit Done Closed By Warehouse",
-            cpc: location,
-          },
-        ],
+        prefix: "tray-master",
+        type_taxanomy: "WHT",
+        sort_id: "Inuse",
+        cpc: location,
       });
       count.mmtMerge = await masters.count({
         cpc: location,
@@ -273,7 +262,9 @@ module.exports = {
             as: "products",
           },
         },
-        { $sort : { _id : -1 } },
+        {
+          $sort: { _id: -1 },
+        },
         {
           $skip: skip,
         },
@@ -288,10 +279,9 @@ module.exports = {
   },
   getBadOrders: (location) => {
     return new Promise(async (resolve, reject) => {
-      let data = await badOrders.find(
-        { partner_shop: location },
-        { _id: 0, __v: 0 }
-      ).sort({_id:-1});
+      let data = await badOrders
+        .find({ partner_shop: location }, { _id: 0, __v: 0 })
+        .sort({ _id: -1 });
       console.log(data);
 
       if (data) {
@@ -652,7 +642,7 @@ module.exports = {
         {
           $unwind: "$delivery",
         },
-      
+
         {
           $skip: skip,
         },
@@ -1277,6 +1267,15 @@ module.exports = {
             err["tracking_id_digit"] = tracking_id_digit;
           }
         }
+        if (deliveryData.item[i]?.tracking_id !== undefined) {
+          if (
+            deliveryData.item[i]?.tracking_id?.match(/[0-9]/g).join("")
+              .length !== 12
+          ) {
+            tracking_id_digit.push(deliveryData.item[i].tracking_id);
+            err["tracking_id_digit"] = tracking_id_digit;
+          }
+        }
         let trackingId = await delivery.findOne({
           tracking_id: deliveryData.item[i].tracking_id,
         });
@@ -1413,9 +1412,8 @@ module.exports = {
           },
         },
         {
-          $sort:{_id:-1}
+          $sort: { _id: -1 },
         },
-
         {
           $skip: skip,
         },
@@ -1428,10 +1426,9 @@ module.exports = {
   },
   getBadDelivery: (location) => {
     return new Promise(async (resolve, reject) => {
-      let data = await badDelivery.find(
-        { partner_shop: location },
-        { _id: 0, __v: 0 }
-      ).sort({_id:-1});
+      let data = await badDelivery
+        .find({ partner_shop: location }, { _id: 0, __v: 0 })
+        .sort({ _id: -1 });
       if (data) {
         resolve(data);
       }
