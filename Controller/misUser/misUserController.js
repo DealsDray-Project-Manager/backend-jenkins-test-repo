@@ -2676,4 +2676,28 @@ module.exports = {
       }
     });
   },
+  imeiSearchDelivery:(value)=>{
+    return new Promise(async (resolve, reject)=>{
+  
+      let deliveryItems = await delivery.find({ imei:`'${value}`});
+      if(deliveryItems){
+        resolve( deliveryItems)
+      }else{
+        resolve({ status: 2 })
+        console.log('dd');
+      }
+    })
+  },
+
+  imeiSearchOrder:(value)=>{
+    
+    return new Promise(async (resolve, reject)=>{
+      let orderItems = await orders.find({ imei:`'${value}`});
+      if(orderItems?.length!==0){
+        resolve( orderItems)
+      }else{
+        resolve({ status: 2 })
+      }
+    })
+  }
 };
