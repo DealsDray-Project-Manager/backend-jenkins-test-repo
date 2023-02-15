@@ -185,6 +185,21 @@ const deliverySchema = mongoose.Schema({
   },
   audit_done_close:{
     type:Date
+  },
+  sales_bin_date:{
+    type:Date
+  },
+  sales_bin_status:{
+    type:String
+  },
+  sales_bin_grade:{
+    type:String
+  },
+  sales_bin_wh_agent_name:{
+    type:String
+  },
+   sales_bin_desctiption:{
+    type:String
   }
 
 });

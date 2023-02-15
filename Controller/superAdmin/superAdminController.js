@@ -13,8 +13,7 @@ const {
 } = require("../../Model/masterHistoryModel/mastersHistory");
 const moment = require("moment");
 const IISDOMAIN = "http://prexo-v7-dev-api.dealsdray.com/user/profile/";
-const IISDOMAINPRDT =
-  "http://prexo-v7-dev-api.dealsdray.com/product/image/";
+const IISDOMAINPRDT = "http://prexo-v7-dev-api.dealsdray.com/product/image/";
 
 /************************************************************************************************** */
 
@@ -1542,6 +1541,19 @@ module.exports = {
       }
     });
   },
+  productImageRemove: () => {
+    return new Promise(async (resolve, reject) => {
+      let update = await products.updateMany(
+        {},
+        {
+          $unset: {
+            image: 1,
+          },
+        }
+      );
+      resolve({ status: "Done" });
+    });
+  },
   /*--------------------------------CHARGE DONE DAY DIFFERENT 4 WHT TRAY-----------------------------------*/
 
   chargeDoneTrayFourDayDiff: () => {
@@ -1605,22 +1617,26 @@ module.exports = {
       }
     });
   },
+
   /*--------------------------------EXTRA CHANGES-----------------------------------*/
 
   updateCPCExtra: () => {
     return new Promise(async (resolve, reject) => {
-      let ordersData=await orders.find()
-      for(let x of ordersData ){
-        let checkDelivery=await delivery.findOne({order_id:x.order_id})
-        if(checkDelivery){
-          let updateStatus=await orders.updateOne({order_id:x.order_id},{
-            $set:{
-              delivery_status: "Delivered",
+      let ordersData = await orders.find();
+      for (let x of ordersData) {
+        let checkDelivery = await delivery.findOne({ order_id: x.order_id });
+        if (checkDelivery) {
+          let updateStatus = await orders.updateOne(
+            { order_id: x.order_id },
+            {
+              $set: {
+                charging: m.charging,
+              },
             }
-          })
+          );
         }
       }
-      resolve(ordersData)
+      resolve(wht);
     });
   },
   getUpdateRecord: () => {
