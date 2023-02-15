@@ -158,6 +158,7 @@ module.exports = {
         reason: itemData.reason,
         description: itemData.description,
         orgGrade: itemData.orgGrade,
+        wht_tray:itemData.trayId
       };
       let findTray = await masters.findOne({
         issued_user_name: itemData.username,
