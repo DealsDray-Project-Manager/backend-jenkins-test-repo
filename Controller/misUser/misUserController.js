@@ -263,9 +263,6 @@ module.exports = {
           },
         },
         {
-          $sort: { _id: -1 },
-        },
-        {
           $skip: skip,
         },
         {
