@@ -2712,6 +2712,7 @@ module.exports = {
       firstChar = value.charAt(0);
       if (firstChar.match(/[^a-zA-Z0-9]/)) {
         let orderItems = await orders.find({ imei: value });
+        console.log('orderItems');
         if (orderItems?.length !== 0) {
           resolve(orderItems)
         } else {
