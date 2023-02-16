@@ -278,12 +278,6 @@ module.exports = {
   },
   getBadOrders: (location) => {
     return new Promise(async (resolve, reject) => {
-
-      let data = await badOrders.find(
-        { partner_shop: location },
-        { _id: 0, __v: 0 }
-      ).sort({ _id: -1 });
-
       let data = await badOrders
         .find({ partner_shop: location }, { _id: 0, __v: 0 })
         .sort({ _id: -1 });
@@ -1418,11 +1412,7 @@ module.exports = {
           },
         },
         {
-
-          $sort: { _id: -1 }
-
           $sort: { _id: -1 },
-
         },
         {
           $skip: skip,
@@ -1436,12 +1426,6 @@ module.exports = {
   },
   getBadDelivery: (location) => {
     return new Promise(async (resolve, reject) => {
-
-      let data = await badDelivery.find(
-        { partner_shop: location },
-        { _id: 0, __v: 0 }
-      ).sort({ _id: -1 });
-
       let data = await badDelivery
         .find({ partner_shop: location }, { _id: 0, __v: 0 })
         .sort({ _id: -1 });
@@ -2695,51 +2679,46 @@ module.exports = {
   },
   imeiSearchDelivery: (value) => {
     return new Promise(async (resolve, reject) => {
-
       firstChar = value.charAt(0);
       if (firstChar.match(/[^a-zA-Z0-9]/)) {
         let deliveryItems = await delivery.find({ imei: value });
         if (deliveryItems) {
-          resolve(deliveryItems)
+          resolve(deliveryItems);
         } else {
-          resolve({ status: 2 })
-          console.log('dd');
+          resolve({ status: 2 });
+          console.log("dd");
         }
-
       } else {
         let deliveryItems = await delivery.find({ imei: `'${value}` });
         if (deliveryItems) {
-          resolve(deliveryItems)
+          resolve(deliveryItems);
         } else {
-          resolve({ status: 2 })
-          console.log('dd');
+          resolve({ status: 2 });
+          console.log("dd");
         }
-
       }
-    })
+    });
   },
 
   imeiSearchOrder: (value) => {
-
-
     return new Promise(async (resolve, reject) => {
       firstChar = value.charAt(0);
       if (firstChar.match(/[^a-zA-Z0-9]/)) {
         let orderItems = await orders.find({ imei: value });
-        console.log('orderItems');
+        console.log("orderItems");
         if (orderItems?.length !== 0) {
-          resolve(orderItems)
+          resolve(orderItems);
         } else {
-          resolve({ status: 2 })
+          resolve({ status: 2 });
         }
       } else {
         let orderItems = await orders.find({ imei: `'${value}` });
         if (orderItems?.length !== 0) {
-          resolve(orderItems)
+          resolve(orderItems);
         } else {
-          resolve({ status: 2 })
+          resolve({ status: 2 });
         }
       }
-    })
-  }
+    });
+  },
 };
