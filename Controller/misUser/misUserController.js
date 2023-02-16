@@ -2411,8 +2411,8 @@ module.exports = {
       }
       if (whtTray.length !== 0) {
         for (let x of whtTray) {
-          let count = x.limit - x.items.length;
-          if (count >= itemCount) {
+          let count = itemCount + x.items.length;
+          if (count == x.limit) {
             arr.push(x);
           }
         }
@@ -2682,20 +2682,32 @@ module.exports = {
       firstChar = value.charAt(0);
       if (firstChar.match(/[^a-zA-Z0-9]/)) {
         let deliveryItems = await delivery.find({ imei: value });
-        if (deliveryItems) {
-          resolve(deliveryItems);
+        if (deliveryItems.length == 0) {
+          restOfStr = value.slice(1);
+          deliveryItems = await delivery.find({ imei: restOfStr });
+          if (deliveryItems) {
+            resolve(deliveryItems);
+          } else {
+            resolve({ status: 2 });
+          }
         } else {
-          resolve({ status: 2 });
-          console.log("dd");
+          resolve(deliveryItems);
+        }
+      } else if (firstChar.match(/[a-zA-Z0-9]/)) {
+        let deliveryItems = await delivery.find({ imei: value });
+        if (deliveryItems.length == 0) {
+          console.log("dataaa");
+          let deliveryItems = await delivery.find({ imei: `'${value}` });
+          if (deliveryItems) {
+            resolve(deliveryItems);
+          } else {
+            resolve({ status: 2 });
+          }
+        } else {
+          resolve(deliveryItems);
         }
       } else {
-        let deliveryItems = await delivery.find({ imei: `'${value}` });
-        if (deliveryItems) {
-          resolve(deliveryItems);
-        } else {
-          resolve({ status: 2 });
-          console.log("dd");
-        }
+        resolve({ status: 2 });
       }
     });
   },
@@ -2705,20 +2717,54 @@ module.exports = {
       firstChar = value.charAt(0);
       if (firstChar.match(/[^a-zA-Z0-9]/)) {
         let orderItems = await orders.find({ imei: value });
-        console.log("orderItems");
-        if (orderItems?.length !== 0) {
-          resolve(orderItems);
+        if (orderItems.length == 0) {
+          restOfStr = value.slice(1);
+          orderItems = await orders.find({ imei: restOfStr });
+          if (orderItems) {
+            resolve(orderItems);
+          } else {
+            resolve({ status: 2 });
+          }
         } else {
-          resolve({ status: 2 });
+          resolve(orderItems);
+        }
+      } else if (firstChar.match(/[a-zA-Z0-9]/)) {
+        let orderItems = await orders.find({ imei: value });
+        if (orderItems.length == 0) {
+          let orderItems = await orders.find({ imei: `'${value}` });
+          if (orderItems) {
+            resolve(orderItems);
+          } else {
+            resolve({ status: 2 });
+          }
+        } else {
+          resolve(orderItems);
         }
       } else {
-        let orderItems = await orders.find({ imei: `'${value}` });
-        if (orderItems?.length !== 0) {
-          resolve(orderItems);
-        } else {
-          resolve({ status: 2 });
-        }
+        resolve({ status: 2 });
       }
     });
   },
+
+  // imeiSearchOrder: (value) => {
+  //   return new Promise(async (resolve, reject) => {
+  //     firstChar = value.charAt(0);
+  //     if (firstChar.match(/[^a-zA-Z0-9]/)) {
+  //       let orderItems = await orders.find({ imei: value });
+  //       console.log('orderItems');
+  //       if (orderItems?.length !== 0) {
+  //         resolve(orderItems)
+  //       } else {
+  //         resolve({ status: 2 })
+  //       }
+  //     } else {
+  //       let orderItems = await orders.find({ imei: `'${value}` });
+  //       if (orderItems?.length !== 0) {
+  //         resolve(orderItems)
+  //       } else {
+  //         resolve({ status: 2 })
+  //       }
+  //     }
+  //   })
+  // }
 };

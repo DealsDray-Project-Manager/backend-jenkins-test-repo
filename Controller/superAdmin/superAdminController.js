@@ -12,17 +12,14 @@ const {
   mastersEditHistory,
 } = require("../../Model/masterHistoryModel/mastersHistory");
 const moment = require("moment");
-const IISDOMAIN = "http://prexo-v7-dev-api.dealsdray.com/user/profile/";
-const IISDOMAINPRDT = "http://prexo-v7-dev-api.dealsdray.com/product/image/";
+const IISDOMAIN = "http://prexo-v7-uat-adminapi.dealsdray.com/user/profile/";
+const IISDOMAINPRDT =
+  "http://prexo-v7-uat-adminapi.dealsdray.com/product/image/";
 
 /************************************************************************************************** */
 
 /* 
-
-
 @ SUPER ADMIN CONTROLLER FETCH DATA FROM MONGODB DATA BASE PREXO AND MAKE CHANGES ON DB 
-
-
 
 */
 
@@ -1522,8 +1519,8 @@ module.exports = {
           bqc_report: 1,
           bqc_done_close: 1,
           bqc_software_report: 1,
-          bot_report:1,
-          charging_done_date:1,
+          bot_report: 1,
+          charging_done_date: 1,
         }
       );
       if (uicExists) {
@@ -1630,13 +1627,13 @@ module.exports = {
             { order_id: x.order_id },
             {
               $set: {
-                charging: m.charging,
+                delivery_status: "Delivered",
               },
             }
           );
         }
       }
-      resolve(wht);
+      resolve(ordersData);
     });
   },
   getUpdateRecord: () => {
