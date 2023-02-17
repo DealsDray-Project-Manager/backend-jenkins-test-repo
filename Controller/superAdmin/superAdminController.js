@@ -896,6 +896,22 @@ module.exports = {
           tray_id.push(trayData[i].tray_id);
           err["tray_id"] = tray_id;
         }
+        if (trayID > 1999 && trayData[i].tray_category == "CTA") {
+          tray_id.push(trayData[i].tray_id);
+          err["tray_id"] = tray_id;
+        }
+        if (trayID > 2999 && trayData[i].tray_category == "CTB") {
+          tray_id.push(trayData[i].tray_id);
+          err["tray_id"] = tray_id;
+        }
+        if (trayID > 3999 && trayData[i].tray_category == "CTC") {
+          tray_id.push(trayData[i].tray_id);
+          err["tray_id"] = tray_id;
+        }
+        if (trayID > 4999 && trayData[i].tray_category == "CTD") {
+          tray_id.push(trayData[i].tray_id);
+          err["tray_id"] = tray_id;
+        }
         let trayName = await masters.findOne({
           prefix: "tray-master",
           name: trayData[i].tray_name,
