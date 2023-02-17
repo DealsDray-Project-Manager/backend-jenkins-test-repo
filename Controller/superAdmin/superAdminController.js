@@ -12,8 +12,8 @@ const {
   mastersEditHistory,
 } = require("../../Model/masterHistoryModel/mastersHistory");
 const moment = require("moment");
-const IISDOMAIN = "http://prexo-v7-dev-api.dealsdray.com/user/profile/";
-const IISDOMAINPRDT = "http://prexo-v7-dev-api.dealsdray.com/product/image/";
+const IISDOMAIN = "http://prexo-v7-uat-adminapi.dealsdray.com/user/profile/";
+const IISDOMAINPRDT = "http://prexo-v7-uat-adminapi.dealsdray.com/product/image/";
 
 /************************************************************************************************** */
 
@@ -932,7 +932,13 @@ module.exports = {
             err["tray_display_is_duplicate"] = tray_dispaly_name;
           }
         }
-        if (trayData[i].tray_category == "WHT" ||  trayData[i].tray_category == "CTA" || trayData[i].tray_category == "CTB" || trayData[i].tray_category == "CTC" || trayData[i].tray_category == "CTD") {
+        if (
+          trayData[i].tray_category == "WHT" ||
+          trayData[i].tray_category == "CTA" ||
+          trayData[i].tray_category == "CTB" ||
+          trayData[i].tray_category == "CTC" ||
+          trayData[i].tray_category == "CTD"
+        ) {
           let brandModel = await brands.findOne({
             brand_name: trayData[i].tray_brand,
           });
