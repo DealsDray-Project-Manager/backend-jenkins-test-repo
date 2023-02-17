@@ -2589,7 +2589,7 @@ module.exports = {
       console.log(whtTray);
       if (whtTray.length !== 0) {
         for (let x of whtTray) {
-          let count =  x.items.length + itemsCount ;
+          let count = x.items.length + itemsCount;
           if (count >= itemsCount) {
             arr.push(x);
           }
