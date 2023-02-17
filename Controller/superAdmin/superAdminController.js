@@ -1630,13 +1630,13 @@ module.exports = {
             { order_id: x.order_id },
             {
               $set: {
-                charging: m.charging,
+                delivery_status: "Delivered",
               },
             }
           );
         }
       }
-      resolve(wht);
+      resolve(ordersData);
     });
   },
   getUpdateRecord: () => {
