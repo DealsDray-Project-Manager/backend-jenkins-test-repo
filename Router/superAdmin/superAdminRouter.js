@@ -9,8 +9,9 @@ const upload = require("../../Utils/multer");
 // jwt token
 const jwt = require("../../Utils/jwt_token");
 /* FS */
-var fs = require("fs");
-
+const fs = require("fs");
+/* ELASTIC SEARCH */
+const elasticsearch = require("../../Elastic-search/elastic");
 /**************************************************************************************************/
 
 /*
@@ -1139,12 +1140,18 @@ router.post("/itemTracking/:page/:size", async (req, res, next) => {
 /*-----------------------------SEARCH TRACK ITEM--------------------------------------*/
 router.post("/search-admin-track-item", async (req, res, next) => {
   try {
-    const { type, searchData, location } = req.body;
-    let data = await superAdminController.searchAdminTrackItem(
-      type,
+    const { type, searchData, location, rowsPerPage, page } = req.body;
+    console.log(req.body);
+    let data = await elasticsearch.superAdminTrackItemSearchData(
       searchData,
-      location
+      page,
+      rowsPerPage
     );
+    // let data = await superAdminController.searchAdminTrackItem(
+    //   type,
+    //   searchData,
+    //   location
+    // );
     if (data) {
       res.status(200).json({
         data: data,
@@ -1289,6 +1296,40 @@ router.post("/sendToRdl", async (req, res, next) => {
     } else {
       res.status(202).json({
         message: "Request failed please tray again...",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
+/*--------------------------------------------------------------------------------------------------------------*/
+// CREATE CATEGORY
+router.post("/createCategory", async (req, res, next) => {
+  try {
+    const createCategoryRes = await superAdminController.createCategoryMaster(
+      req.body
+    );
+    if (createCategoryRes.status == 1) {
+      res.status(200).json({
+        message: "Successfully Created",
+      });
+    } else {
+      res.status(202).json({
+        message: "Category already existed",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+// VIEW ALL THE CATEGORY
+router.post("/viewCategory", async (req, res, next) => {
+  try {
+    let categoryData = await superAdminController.findAllCategory();
+    if (categoryData) {
+      res.status(200).json({
+        data: categoryData,
       });
     }
   } catch (error) {

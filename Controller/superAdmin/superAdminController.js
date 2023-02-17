@@ -8,6 +8,7 @@ const { products } = require("../../Model/productModel/product");
 const { admin } = require("../../Model/adminModel/admins");
 const { usersHistory } = require("../../Model/users-history-model/model");
 const { delivery } = require("../../Model/deliveryModel/delivery");
+const { category } = require("../../Model/CategoryMaster/category");
 const {
   mastersEditHistory,
 } = require("../../Model/masterHistoryModel/mastersHistory");
@@ -1447,8 +1448,6 @@ module.exports = {
       }
     });
   },
-  /*--------------------------------READY FOR CHARGING-----------------------------------*/
-
   readyForCharging: (trayId, status) => {
     return new Promise(async (resolve, reject) => {
       let flag = false;

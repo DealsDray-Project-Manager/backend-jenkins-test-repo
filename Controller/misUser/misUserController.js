@@ -145,6 +145,7 @@ module.exports = {
         assigCharging: 0,
         bqc: 0,
         audit: 0,
+        rdl: 0,
         botToWht: 0,
         whtMerge: 0,
         mmtMerge: 0,
@@ -207,6 +208,12 @@ module.exports = {
         prefix: "tray-master",
         type_taxanomy: "WHT",
         sort_id: "Ready to Audit",
+        cpc: location,
+      });
+      count.rdl = await masters.count({
+        prefix: "tray-master",
+        type_taxanomy: "WHT",
+        sort_id: "Ready to RDL",
         cpc: location,
       });
       count.botToWht = await masters.count({

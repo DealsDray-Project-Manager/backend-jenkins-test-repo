@@ -1680,7 +1680,8 @@ module.exports = {
         status == "Ready to Audit" ||
         status == "Inuse" ||
         status == "Issued to sorting agent" ||
-        status == "Inuse"
+        status == "Inuse" ||
+        status == "Ready to RDL"
       ) {
         data = await masters.find({
           prefix: "tray-master",
@@ -1777,7 +1778,11 @@ module.exports = {
             data.sort_id == "Send for Recharging"
           ) {
             resolve({ data: data, status: 1 });
-          } else {
+          }
+          else if( data.sort_id == sortId){
+            resolve({ data: data, status: 1 });
+          }
+           else {
             resolve({ data: data, status: 3 });
           }
         } else {
@@ -1892,7 +1897,7 @@ module.exports = {
         let data = await masters.find({
           prefix: "tray-master",
           type_taxanomy: "WHT",
-          sort_id: "Send for BQC",
+          sort_id: status,
         });
         if (data) {
           resolve(data);
