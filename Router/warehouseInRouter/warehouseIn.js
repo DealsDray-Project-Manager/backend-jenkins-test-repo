@@ -5,18 +5,9 @@ const express = require("express");
 const router = express.Router();
 // user controller
 const warehouseInController = require("../../Controller/warehouseIn/warehouseInController");
-/**********************************************************************************************************/
-
-/* 
-
-@ ROUTERS
-
-/*
-
-
-
-
-/*-----------------------------DASHBOARD--------------------------------------*/
+const { masters } = require("../../Model/mastersModel");
+/*******************************************************************************************************************/
+/**************************************************Dashboard**************************************************************************/
 router.post("/dashboard/:location", async (req, res, next) => {
   try {
     const { location } = req.params;
@@ -1438,8 +1429,7 @@ router.post("/mmtMergeRequest/:location", async (req, res, next) => {
     next(error);
   }
 });
-
-/*---------------------VIEW FROM AND TO TRAY FOR MERGE--------------------------------*/
+/* VIEW FROM AND TO TRAY FOR MERGE */
 router.post(
   "/viewTrayFromAndTo/:location/:fromTray",
   async (req, res, next) => {
@@ -1557,6 +1547,221 @@ router.post("/sortingAgnetStatus/:username", async (req, res, next) => {
     next(error);
   }
 });
+/* CHECK CHARGING USER STATUS */
+router.post("/chargingAgentStatus/:username",async(req,res,next)=>{
+  try {
+    const {username}=req.params
+    let data=await warehouseInController.checkChargingAgentStatus(username)
+    if (data.status === 1) {
+      res.status(200).json({
+        data: "User is free",
+      });
+    } else if (data.status === 2) {
+      res.status(200).json({
+        data: "Agent already have a lot",
+      });
+    } else if (data.status === 3) {
+      res.status(200).json({
+        data: "User not active",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+})
+/* CHECK CHARGING USER STATUS */
+router.post("/bqcAgentStatus/:username",async(req,res,next)=>{
+  try {
+    const {username}=req.params
+    let data=await warehouseInController.checkBqcAgentStatus(username)
+    if (data.status === 1) {
+      res.status(200).json({
+        message: "Valid",
+        trayStatus: data.tray_status,
+      });
+    } else if (data.status === 2) {
+      res.status(202).json({
+        message: `User have already ${tray_type} - tray`,
+        trayStatus: data.tray_status,
+      });
+    } else if (data.status == 3) {
+      res.status(202).json({
+        message: `Not a  ${tray_type} tray`,
+        trayStatus: data.tray_status,
+      });
+    } else if (data.status == 4) {
+      res.status(202).json({
+        message: `Tray id does not exists`,
+        trayStatus: "",
+      });
+    } else if (data.status == 5) {
+      res.status(202).json({
+        message: `Tray is in process`,
+        trayStatus: data.tray_status,
+      });
+    } else if (data.status == 6) {
+      res.status(202).json({
+        message: `User have no issued WHT`,
+        trayStatus: "",
+      });
+    } else if (data.status == 7) {
+      res.status(202).json({
+        message: `Mismatch Model or Brand`,
+        trayStatus: "",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
+/* -------------------------TRAY ASSIGN TO AUDIT------------------------------*/
+router.post("/oneTrayAssigToAudit", async (req, res, next) => {
+  try {
+    let data = await warehouseInController.oneTrayAssignToAudit(req.body);
+    if (data) {
+      res.status(200).json({
+        message: "Successfully Assigned",
+      });
+    } else {
+      res.status(200).json({
+        message: "Failed tray again",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
+/*--------------------------------------READY FOR AUDIT --------------------------*/
+// view the tray item
+router.post("/readyForAuditView/:trayId/:status", async (req, res, next) => {
+  try {
+    const { trayId, status } = req.params;
+    let data = await warehouseInController.getReadyForAuditView(trayId, status);
+    if (data.status == 1) {
+      res.status(200).json({
+        message: "",
+        data: data.tray,
+      });
+    } else if (data.status == 2) {
+      res.status(202).json({
+        message: `Tray present at ${data.tray.sort_id}`,
+      });
+    } else {
+      res.status(202).json({
+        message: `Tray not present`,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+/* ---------------------ITEM SEGRIDATION -------------------------*/
+// item add
+router.post("/readyForAudit/itemSegrigation", async (req, res, next) => {
+  try {
+    let data = await warehouseInController.readyForRdlItemSegrigation(req.body);
+    if (data.status == 1) {
+      res.status(200).json({
+        message: "Successfully Added",
+      });
+    } else {
+      res.status(202).json({
+        message: "Failed",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+/* CHECK UIC CODE for READY FOR AUDIT */
+router.post("/check-uic-ready-for-audit", async (req, res, next) => {
+  try {
+    const { trayId, uic } = req.body;
+    let data = await warehouseInController.checkUicCodeReadyForAudit(
+      uic,
+      trayId
+    );
+    if (data.status == 1) {
+      res.status(202).json({
+        message: "UIC Does Not Exists",
+      });
+    } else if (data.status == 2) {
+      res.status(202).json({
+        message: "UIC Not Exists In This Tray",
+      });
+    } else if (data.status == 3) {
+      res.status(202).json({
+        message: "Already Added",
+      });
+    } else if (data.status == 4) {
+      res.status(200).json({
+        message: "Valid UIC",
+        data: data.data,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+/* ---------------------CLOSE WHT TRAY -------------------*/
+router.post("/readyForAudit/closeTray", async (req, res, next) => {
+  try {
+    let data = await warehouseInController.getReadyForAuditClose(req.body);
+    if (data.status == 1) {
+      res.status(200).json({
+        message: "Successfully Closed",
+      });
+    } else if (data.status == 2) {
+      res.status(200).json({
+        message: "Successfully Sent to merging",
+      });
+    } else {
+      res.status(202).json({
+        message: "Failed please tray again",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+/* GET SALES BIN ITEM */
+router.post("/salesBinItem/:location", async (req, res, next) => {
+  try {
+    const { location } = req.params;
+    let data = await warehouseInController.getSalesBinItem(location);
+    console.log(data);
+    if (data) {
+      res.status(200).json({
+        data: data,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
+// SEARCH FUNCATIONALITY IN SALES BIN
+router.post("/salesBinItem/search/:uic", async (req, res, next) => {
+  try {
+    const { uic } = req.params;
+    let data = await warehouseInController.getSalesBinSearchData(uic);
+    console.log(data);
+    if (data.status == 1) {
+      res.status(200).json({
+        data: data.item,
+      });
+    } else {
+      res.status(202).json({
+        message: "Sorry no records found",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
 
 /*-------------------------------------AUDIT USER STATUS CHECKING------------------------------------------------------------*/
 router.post("/auditUserStatusChecking/:username/:brand/:model", async (req, res, next) => {
@@ -1751,4 +1956,5 @@ router.post("/oneTrayAssigToAudit", async (req, res, next) => {
     next(error);
   }
 });
+
 module.exports = router;

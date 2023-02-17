@@ -13,8 +13,7 @@ const {
 } = require("../../Model/masterHistoryModel/mastersHistory");
 const moment = require("moment");
 const IISDOMAIN = "http://prexo-v7-dev-api.dealsdray.com/user/profile/";
-const IISDOMAINPRDT =
-  "http://prexo-v7-dev-api.dealsdray.com/product/image/";
+const IISDOMAINPRDT = "http://prexo-v7-dev-api.dealsdray.com/product/image/";
 
 /************************************************************************************************** */
 
@@ -933,7 +932,7 @@ module.exports = {
             err["tray_display_is_duplicate"] = tray_dispaly_name;
           }
         }
-        if (trayData[i].tray_category == "WHT") {
+        if (trayData[i].tray_category == "WHT" ||  trayData[i].tray_category == "CTA" || trayData[i].tray_category == "CTB" || trayData[i].tray_category == "CTC" || trayData[i].tray_category == "CTD") {
           let brandModel = await brands.findOne({
             brand_name: trayData[i].tray_brand,
           });
@@ -1523,8 +1522,8 @@ module.exports = {
           bqc_report: 1,
           bqc_done_close: 1,
           bqc_software_report: 1,
-          bot_report:1,
-          charging_done_date:1,
+          bot_report: 1,
+          charging_done_date: 1,
         }
       );
       if (uicExists) {
@@ -1540,6 +1539,19 @@ module.exports = {
       } else {
         resolve({ status: 2 });
       }
+    });
+  },
+  productImageRemove: () => {
+    return new Promise(async (resolve, reject) => {
+      let update = await products.updateMany(
+        {},
+        {
+          $unset: {
+            image: 1,
+          },
+        }
+      );
+      resolve({ status: "Done" });
     });
   },
   /*--------------------------------CHARGE DONE DAY DIFFERENT 4 WHT TRAY-----------------------------------*/
@@ -1605,22 +1617,26 @@ module.exports = {
       }
     });
   },
+
   /*--------------------------------EXTRA CHANGES-----------------------------------*/
 
   updateCPCExtra: () => {
     return new Promise(async (resolve, reject) => {
-      let ordersData=await orders.find()
-      for(let x of ordersData ){
-        let checkDelivery=await delivery.findOne({order_id:x.order_id})
-        if(checkDelivery){
-          let updateStatus=await orders.updateOne({order_id:x.order_id},{
-            $set:{
-              delivery_status: "Delivered",
+      let ordersData = await orders.find();
+      for (let x of ordersData) {
+        let checkDelivery = await delivery.findOne({ order_id: x.order_id });
+        if (checkDelivery) {
+          let updateStatus = await orders.updateOne(
+            { order_id: x.order_id },
+            {
+              $set: {
+                delivery_status: "Delivered",
+              },
             }
-          })
+          );
         }
       }
-      resolve(ordersData)
+      resolve(ordersData);
     });
   },
   getUpdateRecord: () => {
