@@ -896,22 +896,6 @@ module.exports = {
           tray_id.push(trayData[i].tray_id);
           err["tray_id"] = tray_id;
         }
-        if (trayID > 1999 && trayData[i].tray_category == "CTA") {
-          tray_id.push(trayData[i].tray_id);
-          err["tray_id"] = tray_id;
-        }
-        if (trayID > 2999 && trayData[i].tray_category == "CTB") {
-          tray_id.push(trayData[i].tray_id);
-          err["tray_id"] = tray_id;
-        }
-        if (trayID > 3999 && trayData[i].tray_category == "CTC") {
-          tray_id.push(trayData[i].tray_id);
-          err["tray_id"] = tray_id;
-        }
-        if (trayID > 4999 && trayData[i].tray_category == "CTD") {
-          tray_id.push(trayData[i].tray_id);
-          err["tray_id"] = tray_id;
-        }
         let trayName = await masters.findOne({
           prefix: "tray-master",
           name: trayData[i].tray_name,
@@ -948,7 +932,7 @@ module.exports = {
             err["tray_display_is_duplicate"] = tray_dispaly_name;
           }
         }
-        if (trayData[i].tray_category == "WHT") {
+        if (trayData[i].tray_category == "WHT" ||  trayData[i].tray_category == "CTA" || trayData[i].tray_category == "CTB" || trayData[i].tray_category == "CTC" || trayData[i].tray_category == "CTD") {
           let brandModel = await brands.findOne({
             brand_name: trayData[i].tray_brand,
           });
