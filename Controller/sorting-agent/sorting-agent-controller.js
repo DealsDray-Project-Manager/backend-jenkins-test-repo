@@ -318,7 +318,7 @@ module.exports = {
         );
         if (mmtTrayData.trayType == "WHT") {
           let updateDelivery = await delivery.updateOne(
-            { tracking_id: mmtTrayData.item.awbn_number },
+            { tracking_id: mmtTrayData.item.tracking_id },
             {
               $set: {
                 tray_location: "Merging",
@@ -328,7 +328,7 @@ module.exports = {
           );
         } else {
           let updateDelivery = await delivery.updateOne(
-            { tracking_id: mmtTrayData.item.awbn_number },
+            { tracking_id: mmtTrayData.item.tracking_id },
             {
               $set: {
                 tray_location: "Merging",
