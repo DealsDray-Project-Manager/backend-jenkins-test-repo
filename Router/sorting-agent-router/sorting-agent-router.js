@@ -166,6 +166,7 @@ router.post("/getAssignedFromTray/:username", async (req, res, next) => {
 /* MMT MERGE ITEM SHIFTED FROM TO */
 router.post("/itemShifteToMmtTray", async (req, res, next) => {
   try {
+    console.log(req.body);
     let data = await sortingAgentController.itemShiftToMmt(req.body);
     if (data.status === 1) {
       res.status(200).json({
