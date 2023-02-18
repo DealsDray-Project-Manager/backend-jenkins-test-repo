@@ -316,15 +316,27 @@ module.exports = {
             },
           }
         );
-        let updateDelivery = await delivery.updateOne(
-          { tracking_id: mmtTrayData.item.awbn_number },
-          {
-            $set: {
-              tray_location: "Merging",
-              tray_id: mmtTrayData.toTray,
-            },
-          }
-        );
+        if (mmtTrayData.trayType == "WHT") {
+          let updateDelivery = await delivery.updateOne(
+            { tracking_id: mmtTrayData.item.awbn_number },
+            {
+              $set: {
+                tray_location: "Merging",
+                wht_tray: mmtTrayData.toTray,
+              },
+            }
+          );
+        } else {
+          let updateDelivery = await delivery.updateOne(
+            { tracking_id: mmtTrayData.item.awbn_number },
+            {
+              $set: {
+                tray_location: "Merging",
+                tray_id: mmtTrayData.toTray,
+              },
+            }
+          );
+        }
         if (fromTrayItemRemove.modifiedCount !== 0) {
           resolve({ status: 1 });
         } else {
