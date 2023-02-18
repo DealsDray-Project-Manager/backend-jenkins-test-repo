@@ -1317,6 +1317,24 @@ router.post("/update-cpc", async (req, res, next) => {
   }
 });
 
+router.post("/update-wht-trayId", async (req, res, next) => {
+  try {
+    console.log("d");
+    let data = await superAdminController.updateWhtTrayId();
+    if (data) {
+      res.status(200).json({
+        message: "Successfully updated",
+      });
+    } else {
+      res.status(202).json({
+        message: "Failed",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
 /*---------------------------part of 2700 records------------------------------------------------*/
 router.post("/part-records-import", async (req, res, next) => {
   try {
