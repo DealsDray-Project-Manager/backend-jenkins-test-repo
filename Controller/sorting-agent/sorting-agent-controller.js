@@ -328,7 +328,7 @@ module.exports = {
           );
         } else {
           let updateDelivery = await delivery.updateOne(
-            { tracking_id: mmtTrayData.item.tracking_id },
+            { tracking_id: mmtTrayData.item.awbn_number },
             {
               $set: {
                 tray_location: "Merging",
