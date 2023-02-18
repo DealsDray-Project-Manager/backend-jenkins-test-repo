@@ -17,6 +17,11 @@ module.exports = {
   },
   bulkImportToElastic: async () => {
     let findDeliveryData = await delivery.find({}, { _id: 0, __v: 0 });
+    // let docData=findDeliveryData.map((doc)=>{
+    //   doc.delivery_status ="Delivered"
+    //   return doc
+    // })
+    // console.log(docData[0]);
     for (let x of findDeliveryData) {
       const checkOrder = await orders.findOne({ order_id: x.order_id });
       if (checkOrder) {
@@ -25,13 +30,15 @@ module.exports = {
         x.delivery_status = "Pending";
       }
       
-      let bulk = await client.index({
-        index: "prexo-delivery",
-        //if you need to customise "_id" otherwise elastic will create this
-        body: x,
-      });
-      console.log(bulk);
+      
+      // let bulk = await client.index({
+      //   index: "prexo-delivery",
+      //   //if you need to customise "_id" otherwise elastic will create this
+      //   body: x,
+      // });
+      // console.log(bulk);
     }
+    console.log(findDeliveryData[0]);
   },
 
   superAdminTrackItemSearchData: async (searchInput, from, size) => {
