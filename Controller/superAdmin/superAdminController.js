@@ -1661,6 +1661,51 @@ module.exports = {
       resolve(ordersData);
     });
   },
+  updateWhtTrayId: () => {
+    return new Promise(async (resolve, reject) => {
+      let Allwht = await masters.find({
+        prefix: "tray-master",
+        type_taxanomy: "WHT",
+      });
+      for (let x of Allwht) {
+        if(x.items.length !=0){
+          for (let y of x.items) {
+        
+            let updateId = await delivery.updateOne(
+              { tracking_id: y.tracking_id },
+              {
+                $set: {
+                  wht_tray: x.code,
+                },
+              }
+            );
+            if(updateId.modifiedCount !=0){
+              console.log(updateId);
+            }
+        }
+        }
+        else if(x.actual_items.length !=0){
+          for(let item of x.actual_items){
+            let updateId = await delivery.updateOne(
+              { tracking_id: item.tracking_id },
+              {
+                $set: {
+                  wht_tray: x.code,
+                },
+              }
+            );
+            if(updateId.modifiedCount !=0){
+              console.log(updateId);
+            }
+            
+          }
+        }
+      }
+      if (Allwht) {
+        resolve(Allwht);
+      }
+    });
+  },
   getUpdateRecord: () => {
     return new Promise(async (resolve, reject) => {
       let tray = await masters.find({
