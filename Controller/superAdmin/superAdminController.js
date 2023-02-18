@@ -69,12 +69,29 @@ module.exports = {
       count.products = await products.count({});
       count.tray = await masters.count({ prefix: "tray-master" });
       count.bag = await masters.count({ prefix: "bag-master" });
-      count.readyForCharging = await masters.count({
+      count.readyForChargingInuse = await masters.count({
         type_taxanomy: "WHT",
         prefix: "tray-master",
         sort_id: "Inuse",
         items: { $ne: [] },
       });
+      let readyForBqcTray = await masters.find({
+        prefix: "tray-master",
+        sort_id: "Ready to BQC",
+      });
+      let countBqc = 0;
+      for (let x of readyForBqcTray) {
+        let today = new Date(Date.now());
+
+        if (
+          new Date(x.closed_time_bot) <=
+          new Date(today.setDate(today.getDate() - 4))
+        ) {
+          countBqc++;
+        }
+        count.readyForChargingBqc = countBqc;
+      }
+
       count.removeInvalidItem = await masters.count({
         prefix: "bag-master",
         sort_id: "In Progress",
@@ -1668,9 +1685,8 @@ module.exports = {
         type_taxanomy: "WHT",
       });
       for (let x of Allwht) {
-        if(x.items.length !=0){
+        if (x.items.length != 0) {
           for (let y of x.items) {
-        
             let updateId = await delivery.updateOne(
               { tracking_id: y.tracking_id },
               {
@@ -1679,13 +1695,12 @@ module.exports = {
                 },
               }
             );
-            if(updateId.modifiedCount !=0){
+            if (updateId.modifiedCount != 0) {
               console.log(updateId);
             }
-        }
-        }
-        else if(x.actual_items.length !=0){
-          for(let item of x.actual_items){
+          }
+        } else if (x.actual_items.length != 0) {
+          for (let item of x.actual_items) {
             let updateId = await delivery.updateOne(
               { tracking_id: item.tracking_id },
               {
@@ -1694,10 +1709,9 @@ module.exports = {
                 },
               }
             );
-            if(updateId.modifiedCount !=0){
+            if (updateId.modifiedCount != 0) {
               console.log(updateId);
             }
-            
           }
         }
       }
