@@ -2349,7 +2349,7 @@ module.exports = {
     return new Promise(async (resolve, reject) => {
       let data;
       let falg = false;
-      if (trayData?.length == trayData?.limit) {
+      if (trayData?.length == trayData?.limit && trayData.trayType == "WHT") {
         falg = true;
         data = await masters.findOneAndUpdate(
           { code: trayData.trayId },
@@ -2364,17 +2364,32 @@ module.exports = {
           }
         );
       } else {
-        data = await masters.findOneAndUpdate(
-          { code: trayData.trayId },
-          {
-            $set: {
-              description: trayData.description,
-              sort_id: trayData.type,
-              actual_items: [],
-              issued_user_name: null,
-            },
-          }
-        );
+        if (trayData.length == 0) {
+          data = await masters.findOneAndUpdate(
+            { code: trayData.trayId },
+            {
+              $set: {
+                sort_id: "Open",
+                actual_items: [],
+                items: [],
+                temp_array: [],
+                issued_user_name: null,
+              },
+            }
+          );
+        } else {
+          data = await masters.findOneAndUpdate(
+            { code: trayData.trayId },
+            {
+              $set: {
+                description: trayData.description,
+                sort_id: trayData.type,
+                actual_items: [],
+                issued_user_name: null,
+              },
+            }
+          );
+        }
       }
       if (data) {
         for (let x of data.items) {
@@ -3147,7 +3162,7 @@ module.exports = {
       }
     });
   },
-  mergeDoneTrayClose: (fromTray, toTray, type, length, limit,status) => {
+  mergeDoneTrayClose: (fromTray, toTray, type, length, limit, status) => {
     let data;
     return new Promise(async (resolve, reject) => {
       if (status == "Audit Done Received From Merging") {
@@ -3670,30 +3685,29 @@ module.exports = {
           sales_bin_status: "Sales Bin",
         },
         {
-          "uic_code.code":1,
+          "uic_code.code": 1,
           sales_bin_date: 1,
           sales_bin_status: 1,
           sales_bin_grade: 1,
           sales_bin_wh_agent_name: 1,
           sales_bin_desctiption: 1,
-          wht_tray:1,
-          _id:0,
-          
+          wht_tray: 1,
+          _id: 0,
         }
       );
-      let arr=[]
-      if(data.length !=0){
-        for(let x of data){
-          let obj={
-            sales_bin_date:x.sales_bin_date,
-            uic_code:x.uic_code.code,
-            sales_bin_grade:x.sales_bin_grade,
-            sales_bin_wh_agent_name:x.sales_bin_wh_agent_name,
-            sales_bin_desctiption:x.sales_bin_desctiption,
-            wht_tray:x.wht_tray
-          }
-        
-         arr.push(obj)
+      let arr = [];
+      if (data.length != 0) {
+        for (let x of data) {
+          let obj = {
+            sales_bin_date: x.sales_bin_date,
+            uic_code: x.uic_code.code,
+            sales_bin_grade: x.sales_bin_grade,
+            sales_bin_wh_agent_name: x.sales_bin_wh_agent_name,
+            sales_bin_desctiption: x.sales_bin_desctiption,
+            wht_tray: x.wht_tray,
+          };
+
+          arr.push(obj);
         }
       }
       if (data) {
@@ -3711,20 +3725,20 @@ module.exports = {
           },
         })
         .limit(10);
-        let arr=[]
+      let arr = [];
 
       if (data.length !== 0) {
-        for(let x of data){
-          let obj={
-            sales_bin_date:x.sales_bin_date,
-            uic_code:x.uic_code.code,
-            sales_bin_grade:x.sales_bin_grade,
-            sales_bin_wh_agent_name:x.sales_bin_wh_agent_name,
-            sales_bin_desctiption:x.sales_bin_desctiption,
-            wht_tray:x.wht_tray
-          }
-        
-         arr.push(obj)
+        for (let x of data) {
+          let obj = {
+            sales_bin_date: x.sales_bin_date,
+            uic_code: x.uic_code.code,
+            sales_bin_grade: x.sales_bin_grade,
+            sales_bin_wh_agent_name: x.sales_bin_wh_agent_name,
+            sales_bin_desctiption: x.sales_bin_desctiption,
+            wht_tray: x.wht_tray,
+          };
+
+          arr.push(obj);
         }
         reslove({ status: 1, item: arr });
       } else {
