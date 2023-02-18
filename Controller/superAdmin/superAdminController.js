@@ -930,7 +930,13 @@ module.exports = {
             err["tray_display_is_duplicate"] = tray_dispaly_name;
           }
         }
-        if (trayData[i].tray_category == "WHT" ||  trayData[i].tray_category == "CTA" || trayData[i].tray_category == "CTB" || trayData[i].tray_category == "CTC" || trayData[i].tray_category == "CTD") {
+        if (
+          trayData[i].tray_category == "WHT" ||
+          trayData[i].tray_category == "CTA" ||
+          trayData[i].tray_category == "CTB" ||
+          trayData[i].tray_category == "CTC" ||
+          trayData[i].tray_category == "CTD"
+        ) {
           let brandModel = await brands.findOne({
             brand_name: trayData[i].tray_brand,
           });
