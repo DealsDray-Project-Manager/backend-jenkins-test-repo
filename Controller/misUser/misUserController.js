@@ -8,12 +8,11 @@ const { masters } = require("../../Model/mastersModel");
 const { badOrders } = require("../../Model/ordersModel/bad-orders-model");
 const { badDelivery } = require("../../Model/deliveryModel/bad-delivery");
 const moment = require("moment");
-const elasticsearch =require("../../Elastic-search/elastic")
+const elasticsearch = require("../../Elastic-search/elastic");
 /******************************************************************* */
 
 module.exports = {
   bulkOrdersValidation: (ordersData) => {
-    
     return new Promise(async (resolve, reject) => {
       let err = {};
       let order_id = [];
@@ -316,6 +315,9 @@ module.exports = {
               as: "products",
             },
           },
+          {
+            $limit: 50,
+          },
         ]);
       } else if (searchType == "tracking_id") {
         allOrders = await orders.aggregate([
@@ -456,6 +458,9 @@ module.exports = {
               foreignField: "vendor_sku_id",
               as: "products",
             },
+          },
+          {
+            $limit: 50,
           },
           {
             $project: { _id: 0, __v: 0 },
@@ -1351,7 +1356,9 @@ module.exports = {
       let data = await delivery
         .create(deliveryData.validItem)
         .catch((err) => reject(err));
-        let addtoElasticSearch= elasticsearch.bulkImportToElastic(deliveryData.validItem)
+      let addtoElasticSearch = elasticsearch.bulkImportToElastic(
+        deliveryData.validItem
+      );
       deliveryData.validItem.forEach(async (doc) => {
         let updateData = await orders.updateOne(
           { order_status: "NEW", order_id: doc.order_id },

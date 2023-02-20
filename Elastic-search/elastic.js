@@ -21,21 +21,16 @@ module.exports = {
       const checkOrder = await orders.findOne({ order_id: x.order_id });
       if (checkOrder) {
         x.delivery_status = "Delivered";
+        let bulk = await client.index({
+          index: "prexo-delivery",
+          //if you need to customise "_id" otherwise elastic will create this
+          body: x,
+        });
+        console.log(bulk);
       } else {
         x.delivery_status = "Pending";
       }
-      console.log(x);
-      break
-      
-      
-      // let bulk = await client.index({
-      //   index: "prexo-delivery",
-      //   //if you need to customise "_id" otherwise elastic will create this
-      //   body: x,
-      // });
-      // console.log(bulk);
     }
-    console.log(findDeliveryData[0]);
   },
 
   superAdminTrackItemSearchData: async (searchInput, from, size) => {
@@ -54,9 +49,9 @@ module.exports = {
       },
     });
     let arr = [];
-   
     for (let result of data.hits.hits) {
       console.log(result["_source"].delivery_status);
+      result.delivery_status = "Delivered";
       result["delivery"] = result["_source"];
 
       arr.push(result);

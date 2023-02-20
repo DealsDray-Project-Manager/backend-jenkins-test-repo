@@ -1142,16 +1142,22 @@ router.post("/search-admin-track-item", async (req, res, next) => {
   try {
     const { type, searchData, location, rowsPerPage, page } = req.body;
     console.log(req.body);
-    let data = await elasticsearch.bulkImportToElastic(
-    
+    let data = await elasticsearch.superAdminTrackItemSearchData(
+      searchData,
+      page,
+      rowsPerPage
     );
     // let data = await superAdminController.searchAdminTrackItem(
     //   type,
     //   searchData,
     //   location
     // );
-    if (data) {
+    if (data.length != 0) {
       res.status(200).json({
+        data: data,
+      });
+    } else {
+      res.status(202).json({
         data: data,
       });
     }
