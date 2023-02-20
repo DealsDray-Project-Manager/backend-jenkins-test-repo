@@ -3324,12 +3324,12 @@ module.exports = {
             },
           ],
         });
-        console.log(data);
+      
         if (data.length != 0) {
           for (let x of data) {
             if (x.type_taxanomy == "WHT") {
               resolve({ status: 2 });
-            } else if (x.brand !== brand && x.model !== model) {
+            } else if (x.brand !== brand || x.model !== model) {
               resolve({ status: 2 });
             }
           }
