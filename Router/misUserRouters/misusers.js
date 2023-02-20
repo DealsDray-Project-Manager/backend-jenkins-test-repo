@@ -82,8 +82,12 @@ router.post("/ordersSearch", async (req, res, next) => {
   try {
     const { type, searchData, location } = req.body;
     let data = await misUserController.searchOrders(type, searchData, location);
-    if (data) {
+    if (data.length !== 0) {
       res.status(200).json({
+        data: data,
+      });
+    } else {
+      res.status(202).json({
         data: data,
       });
     }
@@ -100,10 +104,12 @@ router.post("/badOrdersSearch", async (req, res, next) => {
       searchData,
       location
     );
-    if (data) {
+    if (data.length !== 0) {
       res.status(200).json({
         data: data,
       });
+    } else {
+      res.status(202);
     }
   } catch (error) {
     next(error);
@@ -372,8 +378,12 @@ router.post("/search-mis-track-item", async (req, res, next) => {
       searchData,
       location
     );
-    if (data) {
+    if (data.length !== 0) {
       res.status(200).json({
+        data: data,
+      });
+    } else {
+      res.status(202).json({
         data: data,
       });
     }
@@ -390,8 +400,12 @@ router.post("/searchBadDelivery", async (req, res, next) => {
       searchData,
       location
     );
-    if (data) {
+    if (data.length !== 0) {
       res.status(200).json({
+        data: data,
+      });
+    } else {
+      res.status(202).json({
         data: data,
       });
     }
@@ -1048,28 +1062,27 @@ router.post("/TrayMergeRequestSend", async (req, res, next) => {
   }
 });
 
-router.post('/imeiDeliverySearch',async(req,res,next)=>{
-  try{
+router.post("/imeiDeliverySearch", async (req, res, next) => {
+  try {
     const { value } = req.body;
-    let resultdata=await misUserController.imeiSearchDelivery(value)
-  res.json({resultdata})
-  }catch(error){
+    let resultdata = await misUserController.imeiSearchDelivery(value);
+    res.json({ resultdata });
+  } catch (error) {
     next(error);
   }
 });
 
-router.post('/imeiOrderSearch',async(req,res,next)=>{
-  try{
+router.post("/imeiOrderSearch", async (req, res, next) => {
+  try {
     const { value } = req.body;
-    let resultdata=await misUserController.imeiSearchOrder(value)
-    if(resultdata?.status){
-        res.json({error:'invaid IMEI'})
+    let resultdata = await misUserController.imeiSearchOrder(value);
+    if (resultdata?.status) {
+      res.json({ error: "invaid IMEI" });
     }
-    res.json({resultdata})
-  }catch(error){
+    res.json({ resultdata });
+  } catch (error) {
     next(error);
   }
-})
-
+});
 
 module.exports = router;

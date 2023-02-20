@@ -335,6 +335,9 @@ module.exports = {
               as: "products",
             },
           },
+          {
+            $limit: 50,
+          },
         ]);
       } else if (searchType == "imei") {
         allOrders = await orders.aggregate([
@@ -352,6 +355,9 @@ module.exports = {
               as: "products",
             },
           },
+          {
+            $limit: 50,
+          },
         ]);
       } else if (searchType == "order_status") {
         allOrders = await orders.aggregate([
@@ -368,6 +374,9 @@ module.exports = {
               foreignField: "vendor_sku_id",
               as: "products",
             },
+          },
+          {
+            $limit: 50,
           },
         ]);
       } else if (searchType == "order_date") {
@@ -392,6 +401,9 @@ module.exports = {
               as: "products",
             },
           },
+          {
+            $limit: 50,
+          },
         ]);
       } else if (searchType == "item_id") {
         allOrders = await orders.aggregate([
@@ -409,6 +421,9 @@ module.exports = {
               as: "products",
             },
           },
+          {
+            $limit: 50,
+          },
         ]);
       } else if (searchType == "old_item_details") {
         allOrders = await orders.aggregate([
@@ -425,6 +440,9 @@ module.exports = {
               foreignField: "vendor_sku_id",
               as: "products",
             },
+          },
+          {
+            $limit: 50,
           },
         ]);
       }
@@ -486,6 +504,9 @@ module.exports = {
             },
           },
           {
+            $limit: 50,
+          },
+          {
             $project: { _id: 0, __v: 0 },
           },
         ]);
@@ -504,6 +525,9 @@ module.exports = {
               foreignField: "vendor_sku_id",
               as: "products",
             },
+          },
+          {
+            $limit: 50,
           },
           {
             $project: { _id: 0, __v: 0 },
@@ -527,6 +551,9 @@ module.exports = {
               foreignField: "vendor_sku_id",
               as: "products",
             },
+          },
+          {
+            $limit: 50,
           },
           {
             $project: { _id: 0, __v: 0 },
@@ -555,6 +582,9 @@ module.exports = {
             },
           },
           {
+            $limit: 50,
+          },
+          {
             $project: { _id: 0, __v: 0 },
           },
         ]);
@@ -574,6 +604,9 @@ module.exports = {
               foreignField: "vendor_sku_id",
               as: "products",
             },
+          },
+          {
+            $limit: 50,
           },
           {
             $project: { _id: 0, __v: 0 },
@@ -596,6 +629,9 @@ module.exports = {
             },
           },
           {
+            $limit: 50,
+          },
+          {
             $project: { _id: 0, __v: 0 },
           },
         ]);
@@ -614,6 +650,9 @@ module.exports = {
               foreignField: "vendor_sku_id",
               as: "products",
             },
+          },
+          {
+            $limit: 50,
           },
           {
             $project: { _id: 0, __v: 0 },
@@ -1462,6 +1501,7 @@ module.exports = {
               order_id: { $regex: "^" + value + ".*", $options: "i" },
             },
           },
+
           {
             $lookup: {
               from: "orders",
@@ -1486,6 +1526,9 @@ module.exports = {
               ],
               as: "result",
             },
+          },
+          {
+            $limit: 50,
           },
         ]);
       } else if (searchType == "tracking_id") {
@@ -1521,6 +1564,9 @@ module.exports = {
               as: "result",
             },
           },
+          {
+            $limit: 50,
+          },
         ]);
       } else if (searchType == "imei") {
         allOrders = await delivery.aggregate([
@@ -1554,6 +1600,9 @@ module.exports = {
               ],
               as: "result",
             },
+          },
+          {
+            $limit: 50,
           },
         ]);
       } else if (searchType == "uic_status") {
@@ -1589,6 +1638,9 @@ module.exports = {
               as: "result",
             },
           },
+          {
+            $limit: 50,
+          },
         ]);
       } else if (searchType == "item_id") {
         allOrders = await delivery.aggregate([
@@ -1623,6 +1675,9 @@ module.exports = {
               as: "result",
             },
           },
+          {
+            $limit: 50,
+          },
         ]);
       }
       if (allOrders) {
@@ -1651,6 +1706,9 @@ module.exports = {
             },
           },
           {
+            $limit: 50,
+          },
+          {
             $unwind: "$delivery",
           },
         ]);
@@ -1672,6 +1730,9 @@ module.exports = {
           },
           {
             $unwind: "$delivery",
+          },
+          {
+            $limit: 50,
           },
           {
             $match: {
@@ -1700,6 +1761,10 @@ module.exports = {
               as: "delivery",
             },
           },
+
+          {
+            $limit: 50,
+          },
           {
             $unwind: "$delivery",
           },
@@ -1724,56 +1789,74 @@ module.exports = {
     return new Promise(async (resolve, reject) => {
       let allOrders;
       if (searchType == "order_id") {
-        allOrders = await badDelivery.find(
-          {
-            partner_shop: location,
-            order_id: { $regex: "^" + value + ".*", $options: "i" },
-          },
-          { _id: 0, __v: 0 }
-        );
+        allOrders = await badDelivery
+          .find(
+            {
+              partner_shop: location,
+              order_id: { $regex: "^" + value + ".*", $options: "i" },
+            },
+
+            { _id: 0, __v: 0 }
+          )
+          .limit(50);
       } else if (searchType == "tracking_id") {
-        allOrders = await badDelivery.find(
-          {
-            partner_shop: location,
-            tracking_id: { $regex: ".*" + value + ".*", $options: "i" },
-          },
-          { _id: 0, __v: 0 }
-        );
+        allOrders = await badDelivery
+          .find(
+            {
+              partner_shop: location,
+              tracking_id: { $regex: ".*" + value + ".*", $options: "i" },
+            },
+
+            { _id: 0, __v: 0 }
+          )
+          .limit(50);
       } else if (searchType == "imei") {
-        allOrders = await badDelivery.find(
-          {
-            partner_shop: location,
-            imei: { $regex: ".*" + value + ".*", $options: "i" },
-          },
-          { _id: 0, __v: 0 }
-        );
+        allOrders = await badDelivery
+          .find(
+            {
+              partner_shop: location,
+              imei: { $regex: ".*" + value + ".*", $options: "i" },
+            },
+
+            { _id: 0, __v: 0 }
+          )
+          .limit(50);
       } else if (searchType == "uic_status") {
-        allOrders = await badDelivery.find(
-          {
-            partner_shop: location,
-            order_status: { $regex: "^" + value + ".*", $options: "i" },
-          },
-          { _id: 0, __v: 0 }
-        );
+        allOrders = await badDelivery
+          .find(
+            {
+              partner_shop: location,
+              order_status: { $regex: "^" + value + ".*", $options: "i" },
+            },
+
+            { _id: 0, __v: 0 }
+          )
+          .limit(50);
       } else if (searchType == "order_date") {
         value = value.split("/");
         value = value.reverse();
         value = value.join("-");
-        allOrders = await badDelivery.find(
-          {
-            partner_shop: location,
-            order_date: { $regex: ".*" + value + ".*", $options: "i" },
-          },
-          { _id: 0, __v: 0 }
-        );
+        allOrders = await badDelivery
+          .find(
+            {
+              partner_shop: location,
+              order_date: { $regex: ".*" + value + ".*", $options: "i" },
+            },
+
+            { _id: 0, __v: 0 }
+          )
+          .limit(50);
       } else if (searchType == "item_id") {
-        allOrders = await badDelivery.find(
-          {
-            partner_shop: location,
-            item_id: { $regex: "^" + value + ".*", $options: "i" },
-          },
-          { _id: 0, __v: 0 }
-        );
+        allOrders = await badDelivery
+          .find(
+            {
+              partner_shop: location,
+              item_id: { $regex: "^" + value + ".*", $options: "i" },
+            },
+
+            { _id: 0, __v: 0 }
+          )
+          .limit(50);
       }
       if (allOrders) {
         resolve(allOrders);
