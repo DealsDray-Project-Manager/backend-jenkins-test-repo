@@ -9,7 +9,7 @@ const { delivery } = require("../Model/deliveryModel/delivery");
 
 exports = module.exports = () => {
   try {
-    corn.schedule("57 09 * * *", () => {
+    corn.schedule("25 16 * * *", () => {
       /*---------------------------xml read ------------------------------------*/
       fs.readFile(
         "blancco_qc_data/csvRequest.xml",
@@ -17,17 +17,29 @@ exports = module.exports = () => {
         function (err, data) {
           xmlParser.parseString(data, function (err, dataOfXml) {
             if (err) console.log(err);
+
+
             // here we log the results of our xml string conversion
             dataOfXml.request["export-report"][0].search[0].$.value =
               new Date().toISOString().split("T")[0] + "T00:00:00+0000";
-            var builder = new xmlParser.Builder();
-            var xml = builder.buildObject(dataOfXml);
+            //currentdate
+
+
+            let currentDate = new Date();
+            dataOfXml.request["export-report"][0].search[1].$.value =
+              new Date(currentDate.setDate(currentDate.getDate() + 1))
+                .toISOString()
+                .split("T")[0] + "T00:00:00+0000";
+
+            //builder
+            const builder = new xmlParser.Builder();
+            const xml = builder.buildObject(dataOfXml);
             fs.writeFile(
               "blancco_qc_data/csvRequest.xml",
               formatXml(xml, { collapseContent: true }),
               function (err, result) {
                 if (err) {
-                  console.log("err");
+                  console.log(err);
                 } else {
                   console.log("Xml file successfully updated.");
                 }

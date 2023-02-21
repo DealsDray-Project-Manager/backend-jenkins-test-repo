@@ -2782,88 +2782,146 @@ module.exports = {
       if (firstChar.match(/[^a-zA-Z0-9]/)) {
         let deliveryItems = await delivery.find({ imei: value });
         if (deliveryItems.length == 0) {
-          restOfStr = value.slice(1);
-          deliveryItems = await delivery.find({ imei: restOfStr });
+          restOfStr = value.slice(1)
+          deliveryItems = await delivery.find({ imei: restOfStr })
           if (deliveryItems) {
-            resolve(deliveryItems);
+            resolve(deliveryItems)
           } else {
-            resolve({ status: 2 });
+            resolve({ status: 2 })
           }
         } else {
-          resolve(deliveryItems);
+          resolve(deliveryItems)
         }
-      } else if (firstChar.match(/[a-zA-Z0-9]/)) {
+      }
+      else if (firstChar.match(/[a-zA-Z0-9]/)) {
         let deliveryItems = await delivery.find({ imei: value });
         if (deliveryItems.length == 0) {
-          console.log("dataaa");
-          let deliveryItems = await delivery.find({ imei: `'${value}` });
+          console.log('dataaa');
+          let deliveryItems = await delivery.find({ imei: `'${value}` })
           if (deliveryItems) {
-            resolve(deliveryItems);
+            resolve(deliveryItems)
           } else {
-            resolve({ status: 2 });
+            resolve({ status: 2 })
           }
         } else {
-          resolve(deliveryItems);
+          resolve(deliveryItems)
         }
       } else {
-        resolve({ status: 2 });
+        resolve({ status: 2 })
       }
     });
   },
 
+
+  
+
+  
   imeiSearchOrder: (value) => {
     return new Promise(async (resolve, reject) => {
       firstChar = value.charAt(0);
       if (firstChar.match(/[^a-zA-Z0-9]/)) {
-        let orderItems = await orders.find({ imei: value });
+        // let orderItems = await orders.find({ imei: value });
+        orderItems = await orders.aggregate([
+          {
+            $match: {
+              imei: value,
+            },
+          },
+          {
+            $lookup: {
+              from: "products",
+              localField: `item_id`,
+              foreignField: "vendor_sku_id",
+              as: "products",
+            },
+          },
+        ])
+
+
+
+
         if (orderItems.length == 0) {
-          restOfStr = value.slice(1);
-          orderItems = await orders.find({ imei: restOfStr });
+          restOfStr = value.slice(1)
+          // orderItems = await orders.find({ imei: restOfStr })
+          orderItems = await orders.aggregate([
+            {
+              $match: {
+                imei: restOfStr,
+              },
+            },
+            {
+              $lookup: {
+                from: "products",
+                localField: `item_id`,
+                foreignField: "vendor_sku_id",
+                as: "products",
+              },
+            },
+          ])
           if (orderItems) {
-            resolve(orderItems);
+            resolve(orderItems)
           } else {
-            resolve({ status: 2 });
+            resolve({ status: 2 })
           }
         } else {
-          resolve(orderItems);
+          resolve(orderItems)
         }
-      } else if (firstChar.match(/[a-zA-Z0-9]/)) {
-        let orderItems = await orders.find({ imei: value });
+      }
+      else if (firstChar.match(/[a-zA-Z0-9]/)) {
+        // let orderItems = await orders.find({ imei: value });
+
+        orderItems = await orders.aggregate([
+          {
+            $match: {
+              imei:  value,
+            },
+          },
+          {
+            $lookup: {
+              from: "products",
+              localField: `item_id`,
+              foreignField: "vendor_sku_id",
+              as: "products",
+            },
+          },
+        ])
+
+
         if (orderItems.length == 0) {
-          let orderItems = await orders.find({ imei: `'${value}` });
+          // let orderItems = await orders.find({ imei: `'${value}` })
+          orderItems = await orders.aggregate([
+            {
+              $match: {
+                imei:  `'${value}`,
+              },
+            },
+            {
+              $lookup: {
+                from: "products",
+                localField: `item_id`,
+                foreignField: "vendor_sku_id",
+                as: "products",
+              },
+            },
+          ])
+
+
           if (orderItems) {
-            resolve(orderItems);
+            resolve(orderItems)
           } else {
-            resolve({ status: 2 });
+            resolve({ status: 2 })
           }
         } else {
-          resolve(orderItems);
+          resolve(orderItems)
         }
       } else {
-        resolve({ status: 2 });
+        resolve({ status: 2 })
       }
-    });
+    })
   },
 
-  // imeiSearchOrder: (value) => {
-  //   return new Promise(async (resolve, reject) => {
-  //     firstChar = value.charAt(0);
-  //     if (firstChar.match(/[^a-zA-Z0-9]/)) {
-  //       let orderItems = await orders.find({ imei: value });
-  //       console.log('orderItems');
-  //       if (orderItems?.length !== 0) {
-  //         resolve(orderItems)
-  //       } else {
-  //         resolve({ status: 2 })
-  //       }
-  //     } else {
-  //       let orderItems = await orders.find({ imei: `'${value}` });
-  //       if (orderItems?.length !== 0) {
-  //         resolve(orderItems)
-  //       } else {
-  //         resolve({ status: 2 })
-  //       }
-  //     }
-  //   })
-  // }
+
+
+
+
 };

@@ -1802,7 +1802,6 @@ router.post(
         brand,
         model
       );
-      console.log(data);
       if (data.status == 1) {
         res.status(200).json({
           message: "Valid Tray",
