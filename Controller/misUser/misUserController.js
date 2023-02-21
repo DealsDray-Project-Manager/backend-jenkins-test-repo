@@ -2919,9 +2919,12 @@ module.exports = {
       }
     })
   },
+  /*-----------------------PICKUP MODEULE-------------------------------*/
+  // pickupPageItemView:(type)=>{
+  //   return new Promise((resolve,reject)=>{
+      
+  //     const items=await delivery
+  //   })
 
-
-
-
-
+  // }
 };

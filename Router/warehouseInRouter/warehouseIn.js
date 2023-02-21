@@ -1548,10 +1548,10 @@ router.post("/sortingAgnetStatus/:username", async (req, res, next) => {
   }
 });
 /* CHECK CHARGING USER STATUS */
-router.post("/chargingAgentStatus/:username",async(req,res,next)=>{
+router.post("/chargingAgentStatus/:username", async (req, res, next) => {
   try {
-    const {username}=req.params
-    let data=await warehouseInController.checkChargingAgentStatus(username)
+    const { username } = req.params;
+    let data = await warehouseInController.checkChargingAgentStatus(username);
     if (data.status === 1) {
       res.status(200).json({
         data: "User is free",
@@ -1568,12 +1568,12 @@ router.post("/chargingAgentStatus/:username",async(req,res,next)=>{
   } catch (error) {
     next(error);
   }
-})
+});
 /* CHECK CHARGING USER STATUS */
-router.post("/bqcAgentStatus/:username",async(req,res,next)=>{
+router.post("/bqcAgentStatus/:username", async (req, res, next) => {
   try {
-    const {username}=req.params
-    let data=await warehouseInController.checkBqcAgentStatus(username)
+    const { username } = req.params;
+    let data = await warehouseInController.checkBqcAgentStatus(username);
     if (data.status === 1) {
       res.status(200).json({
         message: "Valid",
@@ -1762,30 +1762,36 @@ router.post("/salesBinItem/search/:uic", async (req, res, next) => {
   }
 });
 
-
 /*-------------------------------------AUDIT USER STATUS CHECKING------------------------------------------------------------*/
-router.post("/auditUserStatusChecking/:username/:brand/:model", async (req, res, next) => {
-  try {
-    const { username,brand,model } = req.params;
-    let data = await warehouseInController.checkAuditUserFreeOrNot(username,brand,model);
-    console.log(data);
-    if (data.status === 1) {
-      res.status(200).json({
-        data: "User is free",
-      });
-    } else if (data.status === 2) {
-      res.status(200).json({
-        data: "Agent already have a lot",
-      });
-    } else if (data.status === 3) {
-      res.status(200).json({
-        data: "User not active",
-      });
+router.post(
+  "/auditUserStatusChecking/:username/:brand/:model",
+  async (req, res, next) => {
+    try {
+      const { username, brand, model } = req.params;
+      let data = await warehouseInController.checkAuditUserFreeOrNot(
+        username,
+        brand,
+        model
+      );
+      console.log(data);
+      if (data.status === 1) {
+        res.status(200).json({
+          data: "User is free",
+        });
+      } else if (data.status === 2) {
+        res.status(200).json({
+          data: "Agent already have a lot",
+        });
+      } else if (data.status === 3) {
+        res.status(200).json({
+          data: "User not active",
+        });
+      }
+    } catch (error) {
+      next(error);
     }
-  } catch (error) {
-    next(error);
   }
-});
+);
 
 /*----------------------------AUDIT TRAY ASSIGN WITH OTHER TRAY CHECKING------------------------------------------------------*/
 
@@ -1850,20 +1856,27 @@ router.post("/auditTrayIssueToAgent", async (req, res, next) => {
 
 /*-------------------------------------FETCH ASSIGNED OTHER TRAY--------------------------------------------*/
 
-router.post("/fetchAssignedTrayForAudit/:username/:brand/:model", async (req, res, next) => {
-  try {
-    const { username,brand,model } = req.params;
-    let data = await warehouseInController.getAssignedTrayForAudit(username,brand,model);
-    console.log(data);
-    if (data) {
-      res.status(200).json({
-        data: data,
-      });
+router.post(
+  "/fetchAssignedTrayForAudit/:username/:brand/:model",
+  async (req, res, next) => {
+    try {
+      const { username, brand, model } = req.params;
+      let data = await warehouseInController.getAssignedTrayForAudit(
+        username,
+        brand,
+        model
+      );
+      console.log(data);
+      if (data) {
+        res.status(200).json({
+          data: data,
+        });
+      }
+    } catch (error) {
+      next(error);
     }
-  } catch (error) {
-    next(error);
   }
-});
+);
 
 /*-----------------------------------------RETURN FROM AUDIT WHT RELEASE----------------------------------------------------*/
 router.post("/wht-relase/:trayId", async (req, res, next) => {
@@ -1949,6 +1962,23 @@ router.post("/oneTrayAssigToAudit", async (req, res, next) => {
     } else {
       res.status(200).json({
         message: "Failed tray again",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
+/*------------------------------------------------CTX TRAY -----------------------------------*/
+// VIEW TRAY
+router.post("/ctxTray/:type/:location", async (req, res, next) => {
+  try {
+    const { type,location } = req.params;
+    const trayData = await warehouseInController.ctxTray(type,location);
+    if (trayData.status == 1) {
+      res.status(200).json({
+        data: trayData.tray,
+        message: "Success",
       });
     }
   } catch (error) {

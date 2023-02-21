@@ -1778,11 +1778,9 @@ module.exports = {
             data.sort_id == "Send for Recharging"
           ) {
             resolve({ data: data, status: 1 });
-          }
-          else if( data.sort_id == sortId){
+          } else if (data.sort_id == sortId) {
             resolve({ data: data, status: 1 });
-          }
-           else {
+          } else {
             resolve({ data: data, status: 3 });
           }
         } else {
@@ -3329,7 +3327,7 @@ module.exports = {
             },
           ],
         });
-      
+
         if (data.length != 0) {
           for (let x of data) {
             if (x.type_taxanomy == "WHT") {
@@ -3748,6 +3746,20 @@ module.exports = {
         reslove({ status: 1, item: arr });
       } else {
         reslove({ status: 2 });
+      }
+    });
+  },
+  ctxTray: (type,location) => {
+    return new Promise(async (reslove, reject) => {
+      if (type == "all") {
+        let tray = await masters.find({
+          prefix: "tray-master",
+          cpc:location,
+          type_taxanomy: { $nin: ["BOT", "PMT", "MMT", "WHT"] },
+        });
+        if (tray) {
+          reslove({ status: 1, tray: tray });
+        }
       }
     });
   },

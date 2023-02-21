@@ -1061,7 +1061,7 @@ router.post("/TrayMergeRequestSend", async (req, res, next) => {
     next(error);
   }
 });
-
+/*---------------------------------IMEI SEARCH--------------------------------------------*/
 router.post("/imeiDeliverySearch", async (req, res, next) => {
   try {
     const { value } = req.body;
@@ -1084,5 +1084,24 @@ router.post("/imeiOrderSearch", async (req, res, next) => {
     next(error);
   }
 });
-
+/*------------------------------------PICKUP MODULE-----------------------------------------------*/
+//GET ITEM BASED ON THE TABS
+router.post("/pickup/items/:type", async (req, res, next) => {
+  try {
+    const { type } = req.params;
+    const items = await misUserController.pickupPageItemView(type);
+    if (items.length !== 0) {
+      res.status(200).json({
+        data: items,
+      });
+    } else {
+      res.status(202).json({
+        data: items,
+        message: "No data found",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
 module.exports = router;
