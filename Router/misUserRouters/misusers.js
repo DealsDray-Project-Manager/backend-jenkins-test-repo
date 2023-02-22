@@ -999,6 +999,7 @@ router.post("/getSortingAgentMergeMmt/:location", async (req, res, next) => {
   try {
     const { location } = req.params;
     let data = await misUserController.getSortingAgentForMergeMmt(location);
+
     if (data) {
       res.status(200).json({
         data: data,
@@ -1086,18 +1087,128 @@ router.post("/imeiOrderSearch", async (req, res, next) => {
 });
 /*------------------------------------PICKUP MODULE-----------------------------------------------*/
 //GET ITEM BASED ON THE TABS
-router.post("/pickup/items/:type", async (req, res, next) => {
+router.post("/pickup/items/:type/:page/:size", async (req, res, next) => {
   try {
-    const { type } = req.params;
-    const items = await misUserController.pickupPageItemView(type);
-    if (items.length !== 0) {
+    let { type, page, size } = req.params;
+    if (!page) {
+      page = 1;
+    }
+    if (!size) {
+      size = 10;
+    }
+    page++;
+    const limit = parseInt(size);
+    const skip = (page - 1) * size;
+    const data = await misUserController.pickupPageItemView(type, skip, limit);
+
+    if (data.items.length !== 0) {
       res.status(200).json({
-        data: items,
+        data: data.items,
+        count: data.count,
       });
     } else {
       res.status(202).json({
-        data: items,
+        data: data.items,
+        count: data.count,
         message: "No data found",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+// SORT ITEM BASED ON THE BRAND AND MODEL
+router.post(
+  "/pickup/sortItem/:brand/:model/:type/:page/:size",
+  async (req, res, next) => {
+    try {
+      let { brand, model, type, page, size } = req.params;
+      if (!page) {
+        page = 1;
+      }
+      if (!size) {
+        size = 10;
+      }
+      page++;
+      const limit = parseInt(size);
+      const skip = (page - 1) * size;
+      let data = await misUserController.pickUpSortBrandModel(
+        brand,
+        model,
+        type,
+        limit,
+        skip
+      );
+      console.log(data);
+      if (data.items.length !== 0) {
+        res.status(200).json({
+          data: data.items,
+          count: data.count,
+        });
+      } else {
+        res.status(202).json({
+          data: data.items,
+          count: data.count,
+          message: "No records found",
+        });
+      }
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+// UIC SEARCH
+router.post("/pickup/uicSearch/:uic/:type", async (req, res, next) => {
+  try {
+    const { uic, type } = req.params;
+    const data = await misUserController.pickupPageUicSearch(uic, type);
+    console.log(data);
+    if (data.items.length !== 0) {
+      res.status(200).json({
+        data: data.items,
+        count: data.count,
+      });
+    } else {
+      res.status(202).json({
+        data: data.items,
+        count: data.count,
+        message: "No records found",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+// GET SORTING AGENT AND CHECK ITEMS BRAND AND MODEL ALSO FETCH WHT TRAY
+router.post("/pickup/whtTray", async (req, res, next) => {
+  try {
+    let data = await misUserController.pickupPageGetWhtTray(req.body);
+    console.log(data);
+    if (data.status == 1) {
+      res.status(200).json({
+        data: data.whtTray,
+      });
+    } else if (data.status == 2) {
+      res.status(202).json({
+        message: `${data.item} - Mismatch Brand or Model Not Possible to Assign or inprogress`,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
+// SEND ITEM TO PICKUP
+router.post("/pickup/requestSendToWh", async (req, res, next) => {
+  try {
+    let data = await misUserController.pickupRequestSendToWh(req.body);
+    if (data) {
+      res.status(200).json({
+        message: "Request sent to warehouse",
+      });
+    } else {
+      res.status(202).json({
+        message: "Failed tray again...",
       });
     }
   } catch (error) {

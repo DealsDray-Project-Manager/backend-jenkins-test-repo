@@ -102,6 +102,15 @@ const mastersSchema = mongoose.Schema({
   to_merge: {
     type: String,
   },
+  requested_date:{
+    type:Date
+  },
+  issued_date:{
+    type:Date
+  },
+  to_tray_for_pickup:{
+    type:String
+  }
 });
 const masters = mongoose.model("masters", mastersSchema);
 module.exports = {

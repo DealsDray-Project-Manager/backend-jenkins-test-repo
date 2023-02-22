@@ -2782,40 +2782,35 @@ module.exports = {
       if (firstChar.match(/[^a-zA-Z0-9]/)) {
         let deliveryItems = await delivery.find({ imei: value });
         if (deliveryItems.length == 0) {
-          restOfStr = value.slice(1)
-          deliveryItems = await delivery.find({ imei: restOfStr })
+          restOfStr = value.slice(1);
+          deliveryItems = await delivery.find({ imei: restOfStr });
           if (deliveryItems) {
-            resolve(deliveryItems)
+            resolve(deliveryItems);
           } else {
-            resolve({ status: 2 })
+            resolve({ status: 2 });
           }
         } else {
-          resolve(deliveryItems)
+          resolve(deliveryItems);
         }
-      }
-      else if (firstChar.match(/[a-zA-Z0-9]/)) {
+      } else if (firstChar.match(/[a-zA-Z0-9]/)) {
         let deliveryItems = await delivery.find({ imei: value });
         if (deliveryItems.length == 0) {
-          console.log('dataaa');
-          let deliveryItems = await delivery.find({ imei: `'${value}` })
+          console.log("dataaa");
+          let deliveryItems = await delivery.find({ imei: `'${value}` });
           if (deliveryItems) {
-            resolve(deliveryItems)
+            resolve(deliveryItems);
           } else {
-            resolve({ status: 2 })
+            resolve({ status: 2 });
           }
         } else {
-          resolve(deliveryItems)
+          resolve(deliveryItems);
         }
       } else {
-        resolve({ status: 2 })
+        resolve({ status: 2 });
       }
     });
   },
 
-
-  
-
-  
   imeiSearchOrder: (value) => {
     return new Promise(async (resolve, reject) => {
       firstChar = value.charAt(0);
@@ -2835,13 +2830,10 @@ module.exports = {
               as: "products",
             },
           },
-        ])
-
-
-
+        ]);
 
         if (orderItems.length == 0) {
-          restOfStr = value.slice(1)
+          restOfStr = value.slice(1);
           // orderItems = await orders.find({ imei: restOfStr })
           orderItems = await orders.aggregate([
             {
@@ -2857,23 +2849,22 @@ module.exports = {
                 as: "products",
               },
             },
-          ])
+          ]);
           if (orderItems) {
-            resolve(orderItems)
+            resolve(orderItems);
           } else {
-            resolve({ status: 2 })
+            resolve({ status: 2 });
           }
         } else {
-          resolve(orderItems)
+          resolve(orderItems);
         }
-      }
-      else if (firstChar.match(/[a-zA-Z0-9]/)) {
+      } else if (firstChar.match(/[a-zA-Z0-9]/)) {
         // let orderItems = await orders.find({ imei: value });
 
         orderItems = await orders.aggregate([
           {
             $match: {
-              imei:  value,
+              imei: value,
             },
           },
           {
@@ -2884,15 +2875,14 @@ module.exports = {
               as: "products",
             },
           },
-        ])
-
+        ]);
 
         if (orderItems.length == 0) {
           // let orderItems = await orders.find({ imei: `'${value}` })
           orderItems = await orders.aggregate([
             {
               $match: {
-                imei:  `'${value}`,
+                imei: `'${value}`,
               },
             },
             {
@@ -2903,28 +2893,463 @@ module.exports = {
                 as: "products",
               },
             },
-          ])
-
+          ]);
 
           if (orderItems) {
-            resolve(orderItems)
+            resolve(orderItems);
           } else {
-            resolve({ status: 2 })
+            resolve({ status: 2 });
           }
         } else {
-          resolve(orderItems)
+          resolve(orderItems);
         }
       } else {
-        resolve({ status: 2 })
+        resolve({ status: 2 });
       }
-    })
+    });
   },
   /*-----------------------PICKUP MODEULE-------------------------------*/
-  // pickupPageItemView:(type)=>{
-  //   return new Promise((resolve,reject)=>{
-      
-  //     const items=await delivery
-  //   })
+  pickupPageItemView: (type, skip, limit) => {
+    return new Promise(async (resolve, reject) => {
+      let items = [],
+        count = 0;
+      if (type == "Charge Done") {
+        items = await delivery.aggregate([
+          {
+            $match: {
+              charging_done_close: { $exists: true },
+              tray_location: "Warehouse",
+              assign_to_agent_bqc: { $exists: false },
+              sales_bin_date: { $exists: false },
+              pickup_request_sent_to_wh_date:{ $exists: false }
+            },
+          },
+          {
+            $lookup: {
+              from: "products",
+              localField: `item_id`,
+              foreignField: "vendor_sku_id",
+              as: "products",
+            },
+          },
+          {
+            $skip: skip,
+          },
+          {
+            $limit: limit,
+          },
+        ]);
+        count = await delivery.count({
+          charging_done_close: { $exists: true },
+          tray_location: "Warehouse",
+          assign_to_agent_bqc: { $exists: false },
+          sales_bin_date: { $exists: false },
+          pickup_request_sent_to_wh_date:{ $exists: false }
+        });
+      } else if (type == "BQC Done") {
+        items = await delivery.aggregate([
+          {
+            $match: {
+              bqc_done_close: { $exists: true },
+              tray_location: "Warehouse",
+              issued_to_audit: { $exists: false },
+              sales_bin_date: { $exists: false },
+              pickup_request_sent_to_wh_date:{ $exists: false }
+            },
+          },
+          {
+            $lookup: {
+              from: "products",
+              localField: `item_id`,
+              foreignField: "vendor_sku_id",
+              as: "products",
+            },
+          },
+          {
+            $skip: skip,
+          },
+          {
+            $limit: limit,
+          },
+        ]);
+        count = await delivery.count({
+          bqc_done_close: { $exists: true },
+          tray_location: "Warehouse",
+          issued_to_audit: { $exists: false },
+          sales_bin_date: { $exists: false },
+          pickup_request_sent_to_wh_date:{ $exists: false }
+        });
+      } else if (type == "Audit Done") {
+        items = await delivery.aggregate([
+          {
+            $match: {
+              audit_done_close: { $exists: true },
+              tray_location: "Warehouse",
+              issued_rdl_fls_one_date: { $exists: false },
+              sales_bin_date: { $exists: false },
+              pickup_request_sent_to_wh_date:{ $exists: false }
+            },
+          },
+          {
+            $lookup: {
+              from: "products",
+              localField: `item_id`,
+              foreignField: "vendor_sku_id",
+              as: "products",
+            },
+          },
+          {
+            $skip: skip,
+          },
+          {
+            $limit: limit,
+          },
+        ]);
+        count = await delivery.count({
+          audit_done_close: { $exists: true },
+          tray_location: "Warehouse",
+          issued_rdl_fls_one_date: { $exists: false },
+          sales_bin_date: { $exists: false },
+          pickup_request_sent_to_wh_date:{ $exists: false }
+        });
+      }
+      resolve({ items: items, count: count });
+    });
+  },
+  /*---------------------PICKUP SORT-------------------------------*/
+  pickUpSortBrandModel: (brand, model, type, limit, skip) => {
+    return new Promise(async (resolve, reject) => {
+      let items, count;
+      let itemId = await products.findOne(
+        { brand_name: brand, model_name: model },
+        { vendor_sku_id: 1 }
+      );
+      if (type == "Charge Done") {
+        items = await delivery.aggregate([
+          {
+            $match: {
+              charging_done_close: { $exists: true },
+              tray_location: "Warehouse",
+              item_id: itemId.vendor_sku_id,
+              assign_to_agent_bqc: { $exists: false },
+              sales_bin_date: { $exists: false },
+              pickup_request_sent_to_wh_date:{ $exists: false }
+            },
+          },
+          {
+            $lookup: {
+              from: "products",
+              localField: `item_id`,
+              foreignField: "vendor_sku_id",
+              as: "products",
+            },
+          },
+          {
+            $skip: skip,
+          },
+          {
+            $limit: limit,
+          },
+        ]);
+        count = await delivery.count({
+          charging_done_close: { $exists: true },
+          tray_location: "Warehouse",
+          item_id: itemId.vendor_sku_id,
+          assign_to_agent_bqc: { $exists: false },
+          sales_bin_date: { $exists: false },
+          pickup_request_sent_to_wh_date:{ $exists: false }
+        });
+      } else if (type == "BQC Done") {
+        items = await delivery.aggregate([
+          {
+            $match: {
+              bqc_done_close: { $exists: true },
+              tray_location: "Warehouse",
+              item_id: itemId.vendor_sku_id,
+              issued_to_audit: { $exists: false },
+              sales_bin_date: { $exists: false },
+              pickup_request_sent_to_wh_date:{ $exists: false }
+            },
+          },
+          {
+            $lookup: {
+              from: "products",
+              localField: `item_id`,
+              foreignField: "vendor_sku_id",
+              as: "products",
+            },
+          },
+          {
+            $skip: skip,
+          },
+          {
+            $limit: limit,
+          },
+        ]);
+        count = await delivery.count({
+          bqc_done_close: { $exists: true },
+          tray_location: "Warehouse",
+          item_id: itemId.vendor_sku_id,
+          issued_to_audit: { $exists: false },
+          sales_bin_date: { $exists: false },
+          pickup_request_sent_to_wh_date:{ $exists: false }
+        });
+      } else if (type == "Audit Done") {
+        items = await delivery.aggregate([
+          {
+            $match: {
+              audit_done_close: { $exists: true },
+              tray_location: "Warehouse",
+              item_id: itemId.vendor_sku_id,
+              issued_rdl_fls_one_date: { $exists: false },
+              sales_bin_date: { $exists: false },
+              pickup_request_sent_to_wh_date:{ $exists: false }
+            },
+          },
+          {
+            $lookup: {
+              from: "products",
+              localField: `item_id`,
+              foreignField: "vendor_sku_id",
+              as: "products",
+            },
+          },
+          {
+            $skip: 10,
+          },
+          {
+            $limit: limit,
+          },
+        ]);
 
-  // }
+        count = await delivery.count({
+          audit_done_close: { $exists: true },
+          tray_location: "Warehouse",
+          item_id: itemId.vendor_sku_id,
+          issued_rdl_fls_one_date: { $exists: false },
+          sales_bin_date: { $exists: false },
+          pickup_request_sent_to_wh_date:{ $exists: false }
+        });
+      }
+      resolve({ items: items, count: count });
+    });
+  },
+  /*-----------------------PICKUP PAGE UIC SEARCH--------------------------------*/
+  pickupPageUicSearch: (uic, type) => {
+    return new Promise(async (resolve, reject) => {
+      let items, count;
+      if (type == "Charge Done") {
+        items = await delivery.aggregate([
+          {
+            $match: {
+              charging_done_close: { $exists: true },
+              tray_location: "Warehouse",
+              "uic_code.code": { $regex: ".*" + uic + ".*", $options: "i" },
+              assign_to_agent_bqc: { $exists: false },
+              sales_bin_date: { $exists: false },
+              pickup_request_sent_to_wh_date:{ $exists: false }
+
+            },
+          },
+          {
+            $lookup: {
+              from: "products",
+              localField: `item_id`,
+              foreignField: "vendor_sku_id",
+              as: "products",
+            },
+          },
+
+          {
+            $limit: 100,
+          },
+        ]);
+        count = await delivery.count({
+          charging_done_close: { $exists: true },
+          tray_location: "Warehouse",
+          "uic_code.code": { $regex: ".*" + uic + ".*", $options: "i" },
+          assign_to_agent_bqc: { $exists: false },
+          sales_bin_date: { $exists: false },
+          pickup_request_sent_to_wh_date:{ $exists: false }
+
+        });
+      } else if (type == "BQC Done") {
+        items = await delivery.aggregate([
+          {
+            $match: {
+              bqc_done_close: { $exists: true },
+              tray_location: "Warehouse",
+              "uic_code.code": { $regex: ".*" + uic + ".*", $options: "i" },
+              issued_to_audit: { $exists: false },
+              sales_bin_date: { $exists: false },
+              pickup_request_sent_to_wh_date:{ $exists: false }
+
+            },
+          },
+          {
+            $lookup: {
+              from: "products",
+              localField: `item_id`,
+              foreignField: "vendor_sku_id",
+              as: "products",
+            },
+          },
+
+          {
+            $limit: 100,
+          },
+        ]);
+        count = await delivery.count({
+          bqc_done_close: { $exists: true },
+          tray_location: "Warehouse",
+          "uic_code.code": { $regex: ".*" + uic + ".*", $options: "i" },
+          issued_to_audit: { $exists: false },
+          sales_bin_date: { $exists: false },
+          pickup_request_sent_to_wh_date:{ $exists: false }
+
+        });
+      } else if (type == "Audit Done") {
+        items = await delivery.aggregate([
+          {
+            $match: {
+              audit_done_close: { $exists: true },
+              tray_location: "Warehouse",
+              "uic_code.code": { $regex: ".*" + uic + ".*", $options: "i" },
+              issued_rdl_fls_one_date: { $exists: false },
+              sales_bin_date: { $exists: false },
+              pickup_request_sent_to_wh_date:{ $exists: false }
+
+            },
+          },
+          {
+            $lookup: {
+              from: "products",
+              localField: `item_id`,
+              foreignField: "vendor_sku_id",
+              as: "products",
+            },
+          },
+
+          {
+            $limit: 100,
+          },
+        ]);
+
+        count = await delivery.count({
+          audit_done_close: { $exists: true },
+          tray_location: "Warehouse",
+          "uic_code.code": { $regex: ".*" + uic + ".*", $options: "i" },
+          issued_rdl_fls_one_date: { $exists: false },
+          sales_bin_date: { $exists: false },
+          pickup_request_sent_to_wh_date:{ $exists: false }
+
+        });
+      }
+      resolve({ items: items, count: count });
+    });
+  },
+  /*--------------------------GET WHT TRAY IN PICKUP PAGE----------------------------------*/
+  pickupPageGetWhtTray: (itemData) => {
+    return new Promise(async (resolve, reject) => {
+      let arr = [];
+      let prodct = [];
+      let item_id_wht = "";
+
+      for (let x of itemData.isCheck) {
+       
+        let checkWhtTray;
+        let checkBrand = await delivery.findOne({ "uic_code.code": x });
+        item_id_wht = checkBrand.item_id;
+        if (prodct.length == 0) {
+          prodct.push(checkBrand.item_id);
+        } 
+         if (prodct.includes(checkBrand.item_id) == false) {
+          arr.push(x);
+        } else {
+          console.log(itemData.type);
+          if (itemData.type == "Charge Done") {
+            checkWhtTray = await masters.findOne({
+              "items.uic": x,
+              sort_id: { $ne: "Ready to BQC" },
+            });
+            console.log(checkWhtTray);
+            if (checkWhtTray) {
+              arr.push(x);
+            }
+          } else if (itemData.type == "BQC Done") {
+            checkWhtTray = await masters.findOne({
+              "items.uic": x,
+              sort_id: { $ne: "Ready to Audit" },
+            });
+            if (checkWhtTray) {
+              arr.push(x);
+            }
+          } else if (itemData.type == "Audit Done") {
+            checkWhtTray = await masters.findOne({
+              "items.uic": x,
+              sort_id: { $ne: "Ready to RDL" },
+            });
+            if (checkWhtTray) {
+              arr.push(x);
+            }
+          }
+        }
+      }
+      if (arr.length == 0) {
+        let product = await products.findOne({ vendor_sku_id: item_id_wht });
+        let getWhtTray = await masters.find({
+          sort_id: "Open",
+          brand: product.brand_name,
+          model: product.model_name,
+        });
+        if (getWhtTray) {
+          resolve({ status: 1, whtTray: getWhtTray });
+        }
+      } else {
+        resolve({ item: arr, status: 2 });
+      }
+    });
+  },
+  pickupRequestSendToWh: (itemData) => {
+    console.log(itemData);
+    return new Promise(async (resolve, reject) => {
+      let sendtoPickupRequest;
+      for (let x of itemData.isCheck) {
+        let getDeliveryData = await delivery.findOne({ "uic_code.code": x });
+        if (getDeliveryData) {
+          let toTray=await masters.updateOne({code:itemData.toTray},{
+            $set:{
+              sort_id: "Pickup Request sent to Warehouse",
+              issued_user_name: itemData.user_name,
+            }
+          })
+          sendtoPickupRequest = await masters.updateOne(
+            { "items.uic": x },
+            {
+              $set: {
+                sort_id: "Pickup Request sent to Warehouse",
+                issued_user_name: itemData.user_name,
+                requested_date: Date.now(),
+                actual_items: [],
+                temp_array: [],
+                "items.$.pickup_toTray": itemData.toTray,
+                to_tray_for_pickup:itemData.toTray
+              },
+            }
+          );
+        }
+        let updateDelivery=await delivery.updateOne({"uic_code.code":x},{
+          $set:{
+            pickup_request_sent_to_wh_date:Date.now()
+          }
+        })
+      }
+      if (sendtoPickupRequest.matchedCount != 0) {
+     
+        resolve(sendtoPickupRequest);
+      } else {
+        resolve();
+      }
+    });
+  },
 };

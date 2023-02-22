@@ -392,6 +392,7 @@ module.exports = {
         .sort({ brand_id: 1 })
         .collation({ locale: "en_US", numericOrdering: true })
         .catch((err) => reject(err));
+       
       if (allBrands) {
         resolve(allBrands);
       }

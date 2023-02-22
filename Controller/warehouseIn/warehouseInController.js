@@ -3763,4 +3763,29 @@ module.exports = {
       }
     });
   },
+  pickupRequest:(location,type)=>{
+    return new Promise(async(resolve,reject)=>{
+      let tray=await masters.find({cpc:location,prefix:"tray-master",sort_id:type,to_tray_for_pickup:{$exists:true}})
+      if(tray){
+        resolve(tray)
+      }
+    })
+  },
+  pickupePageRequestApprove:(location,fromTray)=>{
+    return new Promise(async(resolve,reject)=>{
+      let arr = [];
+      let data = await masters.findOne({ cpc: location, code: fromTray,sort_id:"" });
+      if (data) {
+        let toTray = await masters.findOne({
+          cpc: location,
+          code: data.to_tray_for_pickup,
+        });
+        arr.push(data);
+        arr.push(toTray);
+        resolve(arr);
+      } else {
+        resolve();
+      }
+    });
+  }
 };

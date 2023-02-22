@@ -1973,8 +1973,8 @@ router.post("/oneTrayAssigToAudit", async (req, res, next) => {
 // VIEW TRAY
 router.post("/ctxTray/:type/:location", async (req, res, next) => {
   try {
-    const { type,location } = req.params;
-    const trayData = await warehouseInController.ctxTray(type,location);
+    const { type, location } = req.params;
+    const trayData = await warehouseInController.ctxTray(type, location);
     if (trayData.status == 1) {
       res.status(200).json({
         data: trayData.tray,
@@ -1985,5 +1985,45 @@ router.post("/ctxTray/:type/:location", async (req, res, next) => {
     next(error);
   }
 });
+/*--------------------------PICKUP---------------------------------------*/
+// PICKUP REQUEST
+router.post("/pickup/request/:location/:type", async (req, res, next) => {
+  try {
+    const { location, type } = req.params;
+    let data = await warehouseInController.pickupRequest(location, type);
+    if (data) {
+      res.status(200).json({
+        data: data,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+//APPROVE PAGE 
+router.post(
+  "/pickup/request/approve/:location/:fromTray",
+  async (req, res, next) => {
+    try {
+      const { location, fromTray } = req.params;
+      let data = await warehouseInController.pickupePageRequestApprove(
+        location,
+        fromTray
+      );
+      console.log(data);
+      if (data) {
+        res.status(200).json({
+          data: data,
+        });
+      } else {
+        res.status(202).json({
+          message: "You can't access this tray",
+        });
+      }
+    } catch (error) {
+      next(error);
+    }
+  }
+);
 
 module.exports = router;

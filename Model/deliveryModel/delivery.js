@@ -135,73 +135,79 @@ const deliverySchema = mongoose.Schema({
   bqc_out_date: {
     type: Date,
   },
-  bot_done_received:{
-    type:Date
+  bot_done_received: {
+    type: Date,
   },
-  charging_done_received:{
-    type:Date
+  charging_done_received: {
+    type: Date,
   },
-  bqc_done_received:{
-    type:Date
+  bqc_done_received: {
+    type: Date,
   },
-  charging_done_close:{
-    type:Date
+  charging_done_close: {
+    type: Date,
   },
-  bqc_done_close:{
-    type:Date
+  bqc_done_close: {
+    type: Date,
   },
-  received_from_sorting:{
-    type:Date
+  received_from_sorting: {
+    type: Date,
   },
-  closed_from_sorting:{
-    type:Date
+  closed_from_sorting: {
+    type: Date,
   },
-  charging:{
-    type:Object
+  charging: {
+    type: Object,
   },
-  bot_report:{
-    type:Object
+  bot_report: {
+    type: Object,
   },
-  bqc_report:{
-    type:Object
+  bqc_report: {
+    type: Object,
   },
-  bqc_software_report:{
-    type:Object
+  bqc_software_report: {
+    type: Object,
   },
-  issued_to_audit:{
-    type:Date
+  issued_to_audit: {
+    type: Date,
   },
-  audit_user_name:{
-    type:String
+  audit_user_name: {
+    type: String,
   },
-  audit_report:{
-    type:Object
+  audit_report: {
+    type: Object,
   },
-  audit_done_date:{
-    type:Date
+  audit_done_date: {
+    type: Date,
   },
-  audit_done_recieved:{
-    type:Date
+  audit_done_recieved: {
+    type: Date,
   },
-  audit_done_close:{
-    type:Date
+  audit_done_close: {
+    type: Date,
   },
-  sales_bin_date:{
-    type:Date
+  sales_bin_date: {
+    type: Date,
   },
-  sales_bin_status:{
-    type:String
+  sales_bin_status: {
+    type: String,
   },
-  sales_bin_grade:{
-    type:String
+  sales_bin_grade: {
+    type: String,
   },
-  sales_bin_wh_agent_name:{
-    type:String
+  sales_bin_wh_agent_name: {
+    type: String,
   },
-   sales_bin_desctiption:{
-    type:String
-  }
+  sales_bin_desctiption: {
+    type: String,
+  },
 
+  issued_to_rdl_fls_one_date: {
+    type: Date,
+  },
+    pickup_request_sent_to_wh_date:{
+      type:Date
+    }
 });
 
 const delivery = mongoose.model("delivery", deliverySchema);
