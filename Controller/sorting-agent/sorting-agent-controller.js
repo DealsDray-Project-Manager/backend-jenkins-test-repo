@@ -415,4 +415,17 @@ module.exports = {
       }
     });
   },
+  getAssignedPickupTray:(username)=>{
+    return new Promise(async (resolve, reject) => {
+      let data = await masters.find({
+        issued_user_name: username,
+        type_taxanomy: "WHT",
+        sort_id: "Issued to Sorting for Pickup",
+        to_tray_for_pickup:{$exists:true}
+      });
+      if (data) {
+        resolve(data);
+      }
+    });
+  }
 };
