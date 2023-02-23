@@ -2000,12 +2000,13 @@ router.post("/pickup/request/:location/:type", async (req, res, next) => {
     next(error);
   }
 });
-//APPROVE PAGE 
+//APPROVE PAGE
 router.post(
   "/pickup/request/approve/:location/:fromTray",
   async (req, res, next) => {
     try {
       const { location, fromTray } = req.params;
+      console.log(req.params);
       let data = await warehouseInController.pickupePageRequestApprove(
         location,
         fromTray
@@ -2025,5 +2026,51 @@ router.post(
     }
   }
 );
+// EX VS ACT PAGE DATA ACCESS
+router.post("/pickup/approve/ex-vs-act/:trayId", async (req, res, next) => {
+  try {
+    const { trayId } = req.params;
+    let data = await warehouseInController.pickupApproveExvsAct(trayId);
+    if (data.status === 1) {
+      res.status(200).json({
+        data: data.data,
+      });
+    } else if (data.status === 2) {
+      res.status(202).json({
+        message: `${trayId} - present at ${data.data.sort_id}`,
+      });
+    } else {
+      res.status(202).json({
+        message: `Details not found`,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+// PICKUP REQUEST APPROVE ISSUE TO SORTING AGENET
+router.post("/pickup/issueToAgent", async (req, res, next) => {
+  try {
+    console.log("-------------------------------------------");
+    console.log(req.body);
+    const { username, fromTray, toTray } = req.body;
+    let data = await warehouseInController.assigntoSoringForPickUp(
+      username,
+      fromTray,
+      toTray
+    );
+    if (data.status === 1) {
+      res.status(200).json({
+        message: "Successfully Issued",
+      });
+    } else if (data.status === 0) {
+      res.status(202).json({
+        message: "Failed Please Try Again",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
 
 module.exports = router;

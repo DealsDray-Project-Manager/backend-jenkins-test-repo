@@ -3297,6 +3297,9 @@ module.exports = {
             { issued_user_name: username, sort_id: "Closed By Sorting Agent" },
             { issued_user_name: username, sort_id: "Issued to Merging" },
             { issued_user_name: username, sort_id: "Merging Done" },
+            { issued_user_name: username, sort_id: "Issued to Sorting for Pickup" },
+            { issued_user_name: username, sort_id: "Pickup Done" },
+
           ],
         });
         if (data) {
@@ -3774,7 +3777,7 @@ module.exports = {
   pickupePageRequestApprove:(location,fromTray)=>{
     return new Promise(async(resolve,reject)=>{
       let arr = [];
-      let data = await masters.findOne({ cpc: location, code: fromTray,sort_id:"" });
+      let data = await masters.findOne({ cpc: location, code: fromTray,sort_id:"Pickup Request sent to Warehouse" });
       if (data) {
         let toTray = await masters.findOne({
           cpc: location,
@@ -3787,5 +3790,55 @@ module.exports = {
         resolve();
       }
     });
+  },
+  pickupApproveExvsAct:(trayId)=>{
+    return new Promise(async (resolve, reject) => {
+      let data = await masters.findOne({
+        code: trayId,
+      });
+      if (data) {
+        if (
+          data.sort_id === "Pickup Request sent to Warehouse" 
+        ) {
+          resolve({ data: data, status: 1 });
+        } else {
+          resolve({ data: data, status: 2 });
+        }
+      } else {
+        resolve({ data: data, status: 3 });
+      }
+    });
+  },
+  assigntoSoringForPickUp:(username,fromTray,toTray)=>{
+     return new Promise(async(resolve,reject)=>{
+        let updateFromTray=await masters.updateOne({
+          code:fromTray
+        },{
+          $set:{
+              issued_user_name:username,
+              requested_date:Date.now(),
+              sort_id:"Issued to Sorting for Pickup",
+              
+          }
+        })
+        let updateToTray=await masters.updateOne({
+          code:toTray
+        },{
+          $set:{
+              issued_user_name:username,
+              requested_date:Date.now(),
+              sort_id:"Issued to Sorting for Pickup",
+              
+          }
+        })
+        console.log(updateFromTray);
+        if(updateFromTray.modifiedCount != 0 && updateToTray.modifiedCount !== 0){
+        
+          resolve({status:1})
+        }
+        else{
+          resolve({status:2})
+        }
+     })
   }
 };
