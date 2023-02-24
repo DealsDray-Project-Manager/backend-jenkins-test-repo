@@ -412,6 +412,7 @@ router.post("/deleteBrand/:brandId", async (req, res, next) => {
 router.post("/bulkValidationProduct", async (req, res, next) => {
   try {
     let data = await superAdminController.validationBulkProduct(req.body);
+    console.log(data);
     if (data.status == true) {
       res.status(200).json({
         message: "Successfully Validated",
