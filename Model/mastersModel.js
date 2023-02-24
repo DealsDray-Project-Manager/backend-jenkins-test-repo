@@ -105,7 +105,7 @@ const mastersSchema = mongoose.Schema({
   requested_date:{
     type:Date
   },
-  issued_date:{
+  closed_date_agent:{
     type:Date
   },
   to_tray_for_pickup:{

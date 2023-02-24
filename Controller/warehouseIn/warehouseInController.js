@@ -1895,7 +1895,7 @@ module.exports = {
         let data = await masters.find({
           prefix: "tray-master",
           type_taxanomy: "WHT",
-          sort_id: status,
+          sort_id: "Send for BQC",
         });
         if (data) {
           resolve(data);
@@ -3297,9 +3297,11 @@ module.exports = {
             { issued_user_name: username, sort_id: "Closed By Sorting Agent" },
             { issued_user_name: username, sort_id: "Issued to Merging" },
             { issued_user_name: username, sort_id: "Merging Done" },
-            { issued_user_name: username, sort_id: "Issued to Sorting for Pickup" },
+            {
+              issued_user_name: username,
+              sort_id: "Issued to Sorting for Pickup",
+            },
             { issued_user_name: username, sort_id: "Pickup Done" },
-
           ],
         });
         if (data) {
@@ -3752,12 +3754,12 @@ module.exports = {
       }
     });
   },
-  ctxTray: (type,location) => {
+  ctxTray: (type, location) => {
     return new Promise(async (reslove, reject) => {
       if (type == "all") {
         let tray = await masters.find({
           prefix: "tray-master",
-          cpc:location,
+          cpc: location,
           type_taxanomy: { $nin: ["BOT", "PMT", "MMT", "WHT"] },
         });
         if (tray) {
@@ -3766,18 +3768,27 @@ module.exports = {
       }
     });
   },
-  pickupRequest:(location,type)=>{
-    return new Promise(async(resolve,reject)=>{
-      let tray=await masters.find({cpc:location,prefix:"tray-master",sort_id:type,to_tray_for_pickup:{$exists:true}})
-      if(tray){
-        resolve(tray)
+  pickupRequest: (location, type) => {
+    return new Promise(async (resolve, reject) => {
+      let tray = await masters.find({
+        cpc: location,
+        prefix: "tray-master",
+        sort_id: type,
+        to_tray_for_pickup: { $exists: true },
+      });
+      if (tray) {
+        resolve(tray);
       }
-    })
+    });
   },
-  pickupePageRequestApprove:(location,fromTray)=>{
-    return new Promise(async(resolve,reject)=>{
+  pickupePageRequestApprove: (location, fromTray) => {
+    return new Promise(async (resolve, reject) => {
       let arr = [];
-      let data = await masters.findOne({ cpc: location, code: fromTray,sort_id:"Pickup Request sent to Warehouse" });
+      let data = await masters.findOne({
+        cpc: location,
+        code: fromTray,
+        sort_id: "Pickup Request sent to Warehouse",
+      });
       if (data) {
         let toTray = await masters.findOne({
           cpc: location,
@@ -3791,15 +3802,13 @@ module.exports = {
       }
     });
   },
-  pickupApproveExvsAct:(trayId)=>{
+  pickupApproveExvsAct: (trayId) => {
     return new Promise(async (resolve, reject) => {
       let data = await masters.findOne({
         code: trayId,
       });
       if (data) {
-        if (
-          data.sort_id === "Pickup Request sent to Warehouse" 
-        ) {
+        if (data.sort_id === "Pickup Request sent to Warehouse") {
           resolve({ data: data, status: 1 });
         } else {
           resolve({ data: data, status: 2 });
@@ -3809,36 +3818,41 @@ module.exports = {
       }
     });
   },
-  assigntoSoringForPickUp:(username,fromTray,toTray)=>{
-     return new Promise(async(resolve,reject)=>{
-        let updateFromTray=await masters.updateOne({
-          code:fromTray
-        },{
-          $set:{
-              issued_user_name:username,
-              requested_date:Date.now(),
-              sort_id:"Issued to Sorting for Pickup",
-              
-          }
-        })
-        let updateToTray=await masters.updateOne({
-          code:toTray
-        },{
-          $set:{
-              issued_user_name:username,
-              requested_date:Date.now(),
-              sort_id:"Issued to Sorting for Pickup",
-              
-          }
-        })
-        console.log(updateFromTray);
-        if(updateFromTray.modifiedCount != 0 && updateToTray.modifiedCount !== 0){
-        
-          resolve({status:1})
+  assigntoSoringForPickUp: (username, fromTray, toTray) => {
+    return new Promise(async (resolve, reject) => {
+      let updateFromTray = await masters.updateOne(
+        {
+          code: fromTray,
+        },
+        {
+          $set: {
+            issued_user_name: username,
+            requested_date: Date.now(),
+            sort_id: "Issued to Sorting for Pickup",
+          },
         }
-        else{
-          resolve({status:2})
+      );
+      let updateToTray = await masters.updateOne(
+        {
+          code: toTray,
+        },
+        {
+          $set: {
+            issued_user_name: username,
+            requested_date: Date.now(),
+            sort_id: "Issued to Sorting for Pickup",
+          },
         }
-     })
-  }
+      );
+      console.log(updateFromTray);
+      if (
+        updateFromTray.modifiedCount != 0 &&
+        updateToTray.modifiedCount !== 0
+      ) {
+        resolve({ status: 1 });
+      } else {
+        resolve({ status: 2 });
+      }
+    });
+  },
 };

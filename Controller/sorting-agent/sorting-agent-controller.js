@@ -415,17 +415,171 @@ module.exports = {
       }
     });
   },
-  getAssignedPickupTray:(username)=>{
+  getAssignedPickupTray: (username) => {
     return new Promise(async (resolve, reject) => {
       let data = await masters.find({
         issued_user_name: username,
         type_taxanomy: "WHT",
         sort_id: "Issued to Sorting for Pickup",
-        to_tray_for_pickup:{$exists:true}
+        to_tray_for_pickup: { $exists: true },
       });
       if (data) {
         resolve(data);
       }
     });
+  },
+  pickupGetOntrayStartPage: (trayId) => {
+    return new Promise(async (resolve, reject) => {
+      let arr = [];
+      let data = await masters.findOne({
+        sort_id: "Issued to Sorting for Pickup",
+        code: trayId,
+      });
+      if (data) {
+        let toTray = await masters.findOne({
+          code: data.to_tray_for_pickup,
+        });
+        arr.push(data);
+        arr.push(toTray);
+        resolve(arr);
+      } else {
+        resolve();
+      }
+    });
+  },
+  pickupItemTransferUicScan: (uicData) => {
+    console.log(uicData);
+    return new Promise(async (resolve, reject) => {
+      let itemPresent = await delivery.findOne({
+        "uic_code.code": uicData.uic,
+      });
+      if (itemPresent) {
+        let checkItemPresentIntray = await masters.findOne({
+          code: uicData.fromTray,
+          items: { $elemMatch: { uic: uicData.uic } },
+        });
+        if (checkItemPresentIntray) {
+          let alreadyAdded = await masters.findOne({
+            $or: [
+              {
+                code: uicData.fromTray,
+                temp_array: { $elemMatch: { uic: uicData.uic } },
+              },
+              {
+                code: uicData.toTray,
+                items: { $elemMatch: { uic: uicData.uic } },
+              },
+            ],
+          });
+          let obj;
+
+          if (alreadyAdded == null) {
+            for (let x of checkItemPresentIntray?.items) {
+              if (x.uic == uicData.uic) {
+                obj = x;
+                break;
+              }
+            }
+            resolve({ status: 1, data: obj });
+          } else {
+            resolve({ status: 4 });
+          }
+        } else {
+          resolve({ status: 3 });
+        }
+      } else {
+        resolve({ status: 2 });
+      }
+    });
+  },
+  pickupItemTrasfer: (itemData) => {
+    return new Promise(async (resolve, reject) => {
+      if (
+        itemData.item.pickup_toTray == undefined ||
+        itemData.item.pickup_toTray == ""
+      ) {
+        let updateData = await masters.updateOne(
+          { code: itemData.fromTray },
+          {
+            $push: {
+              temp_array: itemData.item,
+            },
+          }
+        );
+        if (updateData.modifiedCount != 0) {
+          resolve({ status: 2 });
+        } else {
+          resolve({ status: 0 });
+        }
+      } else {
+        let itemTransfer = await masters.updateOne(
+          {
+            code: itemData.toTray,
+          },
+          {
+            $push: {
+              items: itemData.item,
+            },
+          }
+        );
+        let updateDelivery = await delivery.updateOne(
+          { "uic_code.code": itemData.item.uic },
+          {
+            $set: {
+              wht_tray: itemData.toTray,
+            },
+          }
+        );
+        if (itemTransfer.modifiedCount !== 0) {
+          let removeItem = await masters.updateOne(
+            {
+              code: itemData.fromTray,
+            },
+            {
+              $pull: {
+                items: {
+                  uic: itemData.item.uic,
+                },
+              },
+            }
+          );
+          if (removeItem.modifiedCount !== 0) {
+            resolve({ status: 1 });
+          } else {
+            resolve({ status: 0 });
+          }
+        } else {
+          resolve({ status: 0 });
+        }
+      }
+    });
+  },
+  pickupDoneClose:(trayData)=>{
+    return new Promise(async(resolve,reject)=>{
+      let updateFromTray=await masters.updateOne({code:trayData.fromtray},{
+        $set:{
+          temp_array:[],
+          actual_items:[],
+          sort_id:"Pickup Done Closed by Sorting Agent",
+          closed_date_agent:Date.now()
+        }
+      })
+      if(updateFromTray.modifiedCount !=0){
+        let updateToTray=await masters.updateOne({code:trayData.toTray},{
+            $set:{
+              temp_array:[],
+              actual_items:[],
+              sort_id:"Pickup Done Closed by Sorting Agent",
+              closed_date_agent:Date.now()
+            }
+        })
+        if(updateToTray.modifiedCount !==0){
+          resolve({status:1})
+        }
+      }
+      else{
+        resolve({status:2})
+      }
+    })
   }
 };
