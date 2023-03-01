@@ -2051,8 +2051,6 @@ router.post("/pickup/approve/ex-vs-act/:trayId", async (req, res, next) => {
 // PICKUP REQUEST APPROVE ISSUE TO SORTING AGENET
 router.post("/pickup/issueToAgent", async (req, res, next) => {
   try {
-    console.log("-------------------------------------------");
-    console.log(req.body);
     const { username, fromTray, toTray } = req.body;
     let data = await warehouseInController.assigntoSoringForPickUp(
       username,
@@ -2066,6 +2064,58 @@ router.post("/pickup/issueToAgent", async (req, res, next) => {
     } else if (data.status === 0) {
       res.status(202).json({
         message: "Failed Please Try Again",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+//PICKUP DONE CLOSED BY SORTING AGENT
+router.post("/pickup/returnFromSorting/:location", async (req, res, next) => {
+  try {
+    const { location } = req.params;
+    let data = await warehouseInController.getPickDoneClosedBySorting(location);
+    if (data) {
+      res.status(200).json({
+        data: data,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+// PICKUP DONE RECIEVE
+router.post("/pickup/recieve", async (req, res, next) => {
+  try {
+    let data = await warehouseInController.pickupDoneRecieve(req.body);
+    if (data.status == 1) {
+      res.status(200).json({
+        message: "Successfully Received",
+      });
+    } else if (data.status == 2) {
+      res.status(202).json({
+        message: "Failed",
+      });
+    } else {
+      res.status(202).json({
+        message: "Please Enter Valid Count",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+// PICKUP DONE CLOSE
+router.post("/pickupDone/close", async (req, res, next) => {
+  try {
+    let data = await warehouseInController.pickupdoneClose(req.body);
+    if (data.status == 1) {
+      res.status(200).json({
+        message: "Successfully Closed",
+      });
+    } else {
+      res.status(202).json({
+        message: "Failed",
       });
     }
   } catch (error) {

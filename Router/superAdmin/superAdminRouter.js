@@ -142,6 +142,7 @@ router.post("/changePassword", async (req, res, next) => {
 /*----------------------------CPC---------------------------------------*/
 router.get("/getCpc/", async (req, res) => {
   let data = await superAdminController.getCpc();
+
   if (data) {
     res.status(200).json({ status: 1, data: { data } });
   } else {
@@ -153,6 +154,7 @@ router.get("/getCpc/", async (req, res) => {
 router.post("/getWarehouseByLocation", async (req, res) => {
   try {
     const { name } = req.body;
+    console.log(name);
     let warehouse = await superAdminController.getWarehouse(name);
     if (warehouse) {
       res.status(200).json({ data: { warehouse } });
@@ -1166,7 +1168,6 @@ router.post("/search-admin-track-item", async (req, res, next) => {
     next(error);
   }
 });
-
 /*-----------------------------GET INUSE WHT--------------------------------------*/
 router.post("/getInuseWht", async (req, res, next) => {
   try {

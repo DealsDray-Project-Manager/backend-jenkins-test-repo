@@ -57,7 +57,6 @@ module.exports = {
     return new Promise(async (resolve, reject) => {
       let data;
       let checkTray = await masters.findOne({ code: trayData.trayId });
-      console.log(checkTray);
       if (checkTray?.sort_id == "Issued to Recharging") {
         data = await masters.findOneAndUpdate(
           { code: trayData.trayId },

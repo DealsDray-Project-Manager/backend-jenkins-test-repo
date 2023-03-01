@@ -19,11 +19,25 @@ module.exports = {
       let count = {
         sorting: 0,
         merge: 0,
+        pickup: 0,
+        pickupToTray:0,
       };
       count.sorting = await masters.count({
         issued_user_name: username,
         type_taxanomy: "BOT",
         sort_id: "Issued to sorting agent",
+      });
+      count.pickup = await masters.count({
+        issued_user_name: username,
+        type_taxanomy: "WHT",
+        sort_id: "Issued to Sorting for Pickup",
+        to_tray_for_pickup: { $ne: null },
+      });
+      count.pickupToTray = await masters.count({
+        issued_user_name: username,
+        type_taxanomy: "WHT",
+        sort_id: "Issued to Sorting for Pickup",
+        to_tray_for_pickup: { $eq:null  },
       });
       count.merge = await masters.count({
         $or: [
@@ -289,7 +303,6 @@ module.exports = {
           },
         ],
       });
-      console.log(data);
       if (data) {
         resolve(data);
       }
@@ -415,16 +428,28 @@ module.exports = {
       }
     });
   },
-  getAssignedPickupTray: (username) => {
+  getAssignedPickupTray: (username, type) => {
     return new Promise(async (resolve, reject) => {
-      let data = await masters.find({
-        issued_user_name: username,
-        type_taxanomy: "WHT",
-        sort_id: "Issued to Sorting for Pickup",
-        to_tray_for_pickup: { $exists: true },
-      });
-      if (data) {
-        resolve(data);
+      if (type == "fromTray") {
+        let data = await masters.find({
+          issued_user_name: username,
+          type_taxanomy: "WHT",
+          sort_id: "Issued to Sorting for Pickup",
+          to_tray_for_pickup: { $ne: null },
+        });
+        if (data) {
+          resolve(data);
+        }
+      } else {
+        let data = await masters.find({
+          issued_user_name: username,
+          type_taxanomy: "WHT",
+          sort_id: "Issued to Sorting for Pickup",
+          to_tray_for_pickup: null,
+        });
+        if (data) {
+          resolve(data);
+        }
       }
     });
   },
@@ -448,7 +473,6 @@ module.exports = {
     });
   },
   pickupItemTransferUicScan: (uicData) => {
-    console.log(uicData);
     return new Promise(async (resolve, reject) => {
       let itemPresent = await delivery.findOne({
         "uic_code.code": uicData.uic,
@@ -503,6 +527,7 @@ module.exports = {
           {
             $push: {
               temp_array: itemData.item,
+              actual_items: itemData.item,
             },
           }
         );
@@ -512,6 +537,14 @@ module.exports = {
           resolve({ status: 0 });
         }
       } else {
+        let updateData = await masters.updateOne(
+          { code: itemData.fromTray },
+          {
+            $push: {
+              actual_items: itemData.item,
+            },
+          }
+        );
         let itemTransfer = await masters.updateOne(
           {
             code: itemData.toTray,
@@ -530,55 +563,72 @@ module.exports = {
             },
           }
         );
-        if (itemTransfer.modifiedCount !== 0) {
-          let removeItem = await masters.updateOne(
-            {
-              code: itemData.fromTray,
-            },
-            {
-              $pull: {
-                items: {
-                  uic: itemData.item.uic,
-                },
-              },
-            }
-          );
-          if (removeItem.modifiedCount !== 0) {
-            resolve({ status: 1 });
-          } else {
-            resolve({ status: 0 });
-          }
+
+        if (updateDelivery.modifiedCount !== 0) {
+          resolve({ status: 1 });
         } else {
           resolve({ status: 0 });
         }
       }
     });
   },
-  pickupDoneClose:(trayData)=>{
-    return new Promise(async(resolve,reject)=>{
-      let updateFromTray=await masters.updateOne({code:trayData.fromtray},{
-        $set:{
-          temp_array:[],
-          actual_items:[],
-          sort_id:"Pickup Done Closed by Sorting Agent",
-          closed_date_agent:Date.now()
+  pickupDoneClose: (trayData) => {
+    return new Promise(async (resolve, reject) => {
+      let updateFromTray = await masters.updateOne(
+        { code: trayData.fromTray },
+        {
+          $set: {
+            temp_array: [],
+            actual_items: [],
+            sort_id: "Pickup Done Closed by Sorting Agent",
+            closed_date_agent: Date.now(),
+            items: trayData.allItem,
+          },
         }
-      })
-      if(updateFromTray.modifiedCount !=0){
-        let updateToTray=await masters.updateOne({code:trayData.toTray},{
-            $set:{
-              temp_array:[],
-              actual_items:[],
-              sort_id:"Pickup Done Closed by Sorting Agent",
-              closed_date_agent:Date.now()
+      );
+      
+      if (updateFromTray.modifiedCount != 0) {
+        if (trayData.toTrayLength == trayData.toTrayLimit) {
+          let updateToTray = await masters.updateOne(
+            { code: trayData.toTray },
+            {
+              $set: {
+                temp_array: [],
+                actual_items: [],
+                sort_id: "Pickup Done Closed by Sorting Agent",
+                closed_date_agent: Date.now(),
+              },
             }
-        })
-        if(updateToTray.modifiedCount !==0){
-          resolve({status:1})
+          );
+          if (updateToTray.modifiedCount !== 0) {
+            resolve({ status: 1 });
+          }
+        } else {
+          resolve({ status: 1 });
         }
+      } else {
+        resolve({ status: 2 });
+      }
+    });
+  },
+  pickupDoneEodClose:(trayId)=>{
+    return new Promise(async(resolve,reject)=>{
+      let updateToTray = await masters.updateOne(
+        { code: trayId },
+        {
+          $set: {
+            temp_array: [],
+            actual_items: [],
+            sort_id: "Pickup Done Closed by Sorting Agent",
+            closed_date_agent: Date.now(),
+          },
+        }
+      );
+      if(updateToTray.modifiedCount !==0){
+        resolve({status:1})
       }
       else{
-        resolve({status:2})
+        resolve({status:0})
       }
     })
   }

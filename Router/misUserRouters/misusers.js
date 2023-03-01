@@ -1087,29 +1087,21 @@ router.post("/imeiOrderSearch", async (req, res, next) => {
 });
 /*------------------------------------PICKUP MODULE-----------------------------------------------*/
 //GET ITEM BASED ON THE TABS
-router.post("/pickup/items/:type/:page/:size", async (req, res, next) => {
+router.post("/pickup/items/:type", async (req, res, next) => {
   try {
     let { type, page, size } = req.params;
-    if (!page) {
-      page = 1;
-    }
-    if (!size) {
-      size = 10;
-    }
-    page++;
-    const limit = parseInt(size);
-    const skip = (page - 1) * size;
-    const data = await misUserController.pickupPageItemView(type, skip, limit);
+
+    const data = await misUserController.pickupPageItemView(type);
+    console.log(data.items[0]);
 
     if (data.items.length !== 0) {
       res.status(200).json({
         data: data.items,
-        count: data.count,
       });
     } else {
       res.status(202).json({
         data: data.items,
-        count: data.count,
+
         message: "No data found",
       });
     }
@@ -1119,36 +1111,26 @@ router.post("/pickup/items/:type/:page/:size", async (req, res, next) => {
 });
 // SORT ITEM BASED ON THE BRAND AND MODEL
 router.post(
-  "/pickup/sortItem/:brand/:model/:type/:page/:size",
+  "/pickup/sortItem/:brand/:model/:type",
   async (req, res, next) => {
     try {
       let { brand, model, type, page, size } = req.params;
-      if (!page) {
-        page = 1;
-      }
-      if (!size) {
-        size = 10;
-      }
-      page++;
-      const limit = parseInt(size);
-      const skip = (page - 1) * size;
       let data = await misUserController.pickUpSortBrandModel(
         brand,
         model,
         type,
-        limit,
-        skip
+       
       );
       console.log(data);
       if (data.items.length !== 0) {
         res.status(200).json({
           data: data.items,
-          count: data.count,
+         
         });
       } else {
         res.status(202).json({
           data: data.items,
-          count: data.count,
+         
           message: "No records found",
         });
       }

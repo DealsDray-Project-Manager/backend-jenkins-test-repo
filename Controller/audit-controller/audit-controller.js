@@ -82,7 +82,7 @@ module.exports = {
             },
           ],
         });
-        console.log(obj);
+      
         resolve({ status: 1, tray: obj });
       } else {
         resolve({ status: 2 });

@@ -110,6 +110,9 @@ const mastersSchema = mongoose.Schema({
   },
   to_tray_for_pickup:{
     type:String
+  },
+  pickup_type:{
+    type:String
   }
 });
 const masters = mongoose.model("masters", mastersSchema);

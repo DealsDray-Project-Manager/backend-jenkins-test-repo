@@ -6,6 +6,7 @@ const { user } = require("../../Model/userModel");
 var mongoose = require("mongoose");
 const { products } = require("../../Model/productModel/product");
 const moment = require("moment");
+const elasticsearch = require("../../Elastic-search/elastic");
 
 /********************************************************************/
 /* 
@@ -40,6 +41,8 @@ module.exports = {
         returnFromMerge: 0,
         auditRequest: 0,
         otherTrayAuditDone: 0,
+        pickupRequest: 0,
+        returnFromPickup: 0,
       };
       count.bagIssueRequest = await masters.count({
         $or: [
@@ -108,6 +111,27 @@ module.exports = {
         type_taxanomy: "WHT",
         sort_id: "Ready to Audit",
         cpc: location,
+      });
+      count.pickupRequest = await masters.count({
+        prefix: "tray-master",
+        type_taxanomy: "WHT",
+        sort_id: "Pickup Request sent to Warehouse",
+        cpc: location,
+        to_tray_for_pickup: { $ne: null },
+      });
+      count.returnFromPickup = await masters.count({
+        $or: [
+          {
+            cpc: location,
+            type_taxanomy: "WHT",
+            sort_id: "Pickup Done Closed by Sorting Agent",
+          },
+          {
+            cpc: location,
+            type_taxanomy: "WHT",
+            sort_id: "Pickup Done Received",
+          },
+        ],
       });
       count.botToRelease = await masters.count({
         type_taxanomy: "BOT",
@@ -337,6 +361,7 @@ module.exports = {
   /*------------------------FIND ONE BAG or TRAY----------------------------*/
 
   getBagOneRequest: (masterId, status) => {
+    console.log(status);
     return new Promise(async (resolve, reject) => {
       let data = await masters.find({
         code: masterId,
@@ -467,7 +492,11 @@ module.exports = {
           },
         }
       );
-      if (data.status !== "Duplicate") {
+      if (data.status !== "Duplicate" || data.status !== "Invalid") {
+        let updateElastic = await elasticsearch.updateUic(
+          data.awbn_number,
+          data.bag_id
+        );
         let updateDelivery = await delivery.updateOne(
           { tracking_id: data.awbn_number },
           {
@@ -527,6 +556,7 @@ module.exports = {
       );
       if (data) {
         for (let x of data.items) {
+          let updateElastic=await elasticsearch.closeBagAfterItemPuted(x.awbn_number)
           let updateDelivery = await delivery.updateOne(
             { tracking_id: x.awbn_number },
             {
@@ -3300,8 +3330,13 @@ module.exports = {
             {
               issued_user_name: username,
               sort_id: "Issued to Sorting for Pickup",
+              to_tray_for_pickup: { $ne: null },
             },
-            { issued_user_name: username, sort_id: "Pickup Done" },
+            {
+              issued_user_name: username,
+              sort_id: "Pickup Done Closed by Sorting Agent",
+              to_tray_for_pickup: { $ne: null },
+            },
           ],
         });
         if (data) {
@@ -3774,7 +3809,7 @@ module.exports = {
         cpc: location,
         prefix: "tray-master",
         sort_id: type,
-        to_tray_for_pickup: { $exists: true },
+        to_tray_for_pickup: { $ne: null },
       });
       if (tray) {
         resolve(tray);
@@ -3828,6 +3863,8 @@ module.exports = {
           $set: {
             issued_user_name: username,
             requested_date: Date.now(),
+            actual_items: [],
+            temp_array: [],
             sort_id: "Issued to Sorting for Pickup",
           },
         }
@@ -3840,11 +3877,12 @@ module.exports = {
           $set: {
             issued_user_name: username,
             requested_date: Date.now(),
+            actual_items: [],
             sort_id: "Issued to Sorting for Pickup",
           },
         }
       );
-      console.log(updateFromTray);
+
       if (
         updateFromTray.modifiedCount != 0 &&
         updateToTray.modifiedCount !== 0
@@ -3852,6 +3890,133 @@ module.exports = {
         resolve({ status: 1 });
       } else {
         resolve({ status: 2 });
+      }
+    });
+  },
+  getPickDoneClosedBySorting: (location) => {
+    return new Promise(async (resolve, reject) => {
+      let data = await masters.find({
+        $or: [
+          {
+            cpc: location,
+            sort_id: "Pickup Done Closed by Sorting Agent",
+          },
+          {
+            cpc: location,
+            sort_id: "Pickup Done Received",
+          },
+        ],
+      });
+      if (data) {
+        resolve(data);
+      }
+    });
+  },
+  pickupDoneRecieve: (trayData) => {
+    console.log(trayData);
+    return new Promise(async (resolve, reject) => {
+      let tray = await masters.findOne({ code: trayData.trayId });
+      if (tray.items.length == trayData.counts) {
+        console.log(tray.items.length);
+        let update = await masters.updateOne(
+          { code: trayData.trayId },
+          {
+            $set: {
+              sort_id: "Pickup Done Received",
+            },
+          }
+        );
+        if (update.modifiedCount !== 0) {
+          resolve({ status: 1 });
+        } else {
+          resolve({ status: 2 });
+        }
+      } else {
+        resolve({ status: 3 });
+      }
+    });
+  },
+  pickupdoneClose: (trayData) => {
+    return new Promise(async (resolve, reject) => {
+      let data;
+      if (trayData.length == 0) {
+        data = await masters.updateOne(
+          { code: trayData.trayId },
+          {
+            $set: {
+              sort_id: "Open",
+              issued_user_name: null,
+              actual_items: [],
+              temp_array: [],
+              pickup_type: null,
+              items: [],
+              to_tray_for_pickup: null,
+            },
+          }
+        );
+      } else {
+        if (trayData.stage == "Charge Done") {
+          data = await masters.updateOne(
+            { code: trayData.trayId },
+            {
+              $set: {
+                sort_id: "Ready to BQC",
+                issued_user_name: null,
+                actual_items: [],
+                temp_array: [],
+                pickup_type: null,
+                to_tray_for_pickup: null,
+              },
+            }
+          );
+        } else if (trayData.stage == "BQC Done") {
+          data = await masters.updateOne(
+            { code: trayData.trayId },
+            {
+              $set: {
+                sort_id: "Ready to Audit",
+                issued_user_name: null,
+                actual_items: [],
+                temp_array: [],
+                pickup_type: null,
+                to_tray_for_pickup: null,
+              },
+            }
+          );
+        } else if (trayData.stage == "Recharge") {
+          data = await masters.updateOne(
+            { code: trayData.trayId },
+            {
+              $set: {
+                sort_id: "Closed",
+                issued_user_name: null,
+                actual_items: [],
+                temp_array: [],
+                pickup_type: null,
+                to_tray_for_pickup: null,
+              },
+            }
+          );
+        } else {
+          data = await masters.updateOne(
+            { code: trayData.trayId },
+            {
+              $set: {
+                sort_id: "Ready to RDL",
+                issued_user_name: null,
+                actual_items: [],
+                temp_array: [],
+                pickup_type: null,
+                to_tray_for_pickup: null,
+              },
+            }
+          );
+        }
+      }
+      if (data.modifiedCount != 0) {
+        resolve({ status: 1 });
+      } else {
+        resolve({ status: 0 });
       }
     });
   },

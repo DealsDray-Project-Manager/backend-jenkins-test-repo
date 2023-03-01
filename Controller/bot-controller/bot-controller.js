@@ -264,10 +264,8 @@ module.exports = {
             },
           }
         );
-        console.log(data);
         if (data) {
           for (let x of data.items) {
-            console.log(x.awbn_number);
             let deliveryTrack = await delivery.updateOne(
               { tracking_id: x.awbn_number },
               {

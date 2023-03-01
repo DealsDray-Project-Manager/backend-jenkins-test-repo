@@ -200,10 +200,10 @@ router.post("/mergeDoneTraySendToWarehouse", async (req, res, next) => {
 });
 /*--------------------------------PICKUP MODULE-------------------------------------*/
 // GET ASSIGNED TRAY FOR PICKUP
-router.post("/pickup/assigendTray/:username", async (req, res, next) => {
+router.post("/pickup/assigendTray/:username/:type", async (req, res, next) => {
   try {
-    const { username } = req.params;
-    let data = await sortingAgentController.getAssignedPickupTray(username);
+    const { username,type } = req.params;
+    let data = await sortingAgentController.getAssignedPickupTray(username,type);
     if (data) {
       res.status(200).json({
         data: data,
@@ -233,31 +233,31 @@ router.post("/pickup/getTray/:fromTray", async (req, res, next) => {
   }
 });
 // Pickup item transferpage uic scan
-router.post("/pickup/itemTransferUicScan",async(req,res,next)=>{
+router.post("/pickup/itemTransferUicScan", async (req, res, next) => {
   try {
-        let data=await sortingAgentController.pickupItemTransferUicScan(req.body)
-        if (data.status === 1) {
-          res.status(200).json({
-            data: data.data,
-            message: "Valid UIC",
-          });
-        } else if (data.status === 2) {
-          res.status(202).json({
-            message: "Invalid UIC",
-          });
-        } else if (data.status == 3) {
-          res.status(202).json({
-            message: "Item does not exists in the tray",
-          });
-        } else if (data.status == 4) {
-          res.status(202).json({
-            message: "Item Already added",
-          });
-        }
+    let data = await sortingAgentController.pickupItemTransferUicScan(req.body);
+    if (data.status === 1) {
+      res.status(200).json({
+        data: data.data,
+        message: "Valid UIC",
+      });
+    } else if (data.status === 2) {
+      res.status(202).json({
+        message: "Invalid UIC",
+      });
+    } else if (data.status == 3) {
+      res.status(202).json({
+        message: "Item does not exists in the tray",
+      });
+    } else if (data.status == 4) {
+      res.status(202).json({
+        message: "Item Already added",
+      });
+    }
   } catch (error) {
-    next(error)
+    next(error);
   }
-})
+});
 //Pickup module transfer to from tray to TO tray
 router.post("/pickup/itemTransfer", async (req, res, next) => {
   try {
@@ -269,7 +269,7 @@ router.post("/pickup/itemTransfer", async (req, res, next) => {
       });
     } else if (data.status == 2) {
       res.status(200).json({
-        message: `Item puted into ${fromTray} `,
+        message: `This item not move keep it in the ${fromTray} `,
       });
     } else {
       res.status(202).json({
@@ -281,9 +281,11 @@ router.post("/pickup/itemTransfer", async (req, res, next) => {
   }
 });
 // PICKUP DONE CLOSE BY WAREHOUSE
-router.post("/pickup/closeByWarehouse",async(req,res,next)=>{
+router.post("/pickup/closeTray", async (req, res, next) => {
   try {
-    let data=await  sortingAgentController.pickupDoneClose(req.body)
+    console.log(req.body);
+    let data = await sortingAgentController.pickupDoneClose(req.body);
+    console.log(data);
     if (data.status === 1) {
       res.status(200).json({
         message: "Successfully Sent to Warehouse",
@@ -294,7 +296,25 @@ router.post("/pickup/closeByWarehouse",async(req,res,next)=>{
       });
     }
   } catch (error) {
-    next(error)
+    next(error);
   }
-})
+});
+router.post("/pickup/edoCloseTray/:trayId", async (req, res, next) => {
+  try {
+    const {trayId}=req.params
+    let data = await sortingAgentController.pickupDoneEodClose(trayId);
+    console.log(data);
+    if (data.status === 1) {
+      res.status(200).json({
+        message: "Successfully Sent to Warehouse",
+      });
+    } else {
+      res.status(202).json({
+        message: "Failed Please tray again",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
 module.exports = router;
