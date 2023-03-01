@@ -2,6 +2,7 @@ const { delivery } = require("../../Model/deliveryModel/delivery");
 const { masters } = require("../../Model/mastersModel");
 const { orders } = require("../../Model/ordersModel/ordersModel");
 var mongoose = require("mongoose");
+const Elasticsearch=require("../../Elastic-search/elastic")
 /****************************************************************************** */
 module.exports = {
   getAssignedBagData: (userData) => {
@@ -69,7 +70,7 @@ module.exports = {
       let bag=await masters.findOne({code:bagData.bagId})
       if(bag){
         for (let x of bag.items) {
-          let deliveryTrack = await delivery.updateOne(
+          let deliveryTrack = await delivery.findOneAndUpdate(
             { tracking_id: x.awbn_number },
             {
               $set: {
@@ -78,8 +79,13 @@ module.exports = {
                 bot_report:x.bot_e
 
               },
+            },
+            { 
+              new: true, 
+              projection: { _id: 0 } 
             }
           );
+          let updateElasticSearch=await Elasticsearch.uicCodeGen(deliveryTrack)
         }
       }
       if (close.modifiedCount !== 0) {
@@ -192,7 +198,7 @@ module.exports = {
           }
         );
         if (res) {
-          let updateDelivery = await delivery.updateOne(
+          let updateDelivery = await delivery.findOneAndUpdate(
             { tracking_id: trayData.awbn_number },
             {
               $set: {
@@ -202,8 +208,13 @@ module.exports = {
                 tray_location: "Bag Opening",
                 bot_report:obj,
               },
+            },
+            { 
+              new: true, 
+              projection: { _id: 0 } 
             }
           );
+          let elasticsearchupdate=await Elasticsearch.uicCodeGen(updateDelivery)
           resolve({ status: 1 });
         } else {
           resolve({ status: 2 });
@@ -266,15 +277,20 @@ module.exports = {
         );
         if (data) {
           for (let x of data.items) {
-            let deliveryTrack = await delivery.updateOne(
+            let deliveryTrack = await delivery.findOneAndUpdate(
               { tracking_id: x.awbn_number },
               {
                 $set: {
                   tray_closed_by_bot: Date.now(),
                   tray_status: "Closed By Bot",
                 },
+              },
+              { 
+                new: true, 
+                projection: { _id: 0 } 
               }
             );
+            let updateElasticSearch=await Elasticsearch.uicCodeGen(this.deleteTrayItem)
           }
           resolve({ status: 1 });
         } else {

@@ -1,6 +1,7 @@
 const brand = require("../../Model/brandModel/brand");
 const { delivery } = require("../../Model/deliveryModel/delivery");
 const { masters } = require("../../Model/mastersModel");
+const Elasticsearch =require("../../Elastic-search/elastic")
 module.exports = {
   getAssignedSortingTray: (username) => {
     return new Promise(async (resolve, reject) => {
@@ -182,7 +183,7 @@ module.exports = {
           }
         );
         if (data.modifiedCount != 0) {
-          let updateDelivery = await delivery.updateOne(
+          let updateDelivery = await delivery.findOneAndUpdate(
             { tracking_id: itemData.awbn_number },
             {
               $set: {
@@ -190,9 +191,14 @@ module.exports = {
                 wht_tray_assigned_date: Date.now(),
                 tray_type: "WHT",
               },
+            },
+            { 
+              new: true, 
+              projection: { _id: 0 } 
             }
           );
-          if (updateDelivery.modifiedCount !== 0) {
+            let updateElastic=await Elasticsearch.uicCodeGen(updateDelivery)
+          if (updateDelivery) {
             resolve({ status: 3 });
           }
         } else {
@@ -330,25 +336,35 @@ module.exports = {
           }
         );
         if (mmtTrayData.trayType == "WHT") {
-          let updateDelivery = await delivery.updateOne(
+          let updateDelivery = await delivery.findOneAndUpdate(
             { tracking_id: mmtTrayData.item.tracking_id },
             {
               $set: {
                 tray_location: "Merging",
                 wht_tray: mmtTrayData.toTray,
               },
+            },
+            { 
+              new: true, 
+              projection: { _id: 0 } 
             }
           );
+          let updateElasticSearch=await Elasticsearch.uicCodeGen(updateDelivery)
         } else {
-          let updateDelivery = await delivery.updateOne(
+          let updateDelivery = await delivery.findOneAndUpdate(
             { tracking_id: mmtTrayData.item.awbn_number },
             {
               $set: {
                 tray_location: "Merging",
                 tray_id: mmtTrayData.toTray,
               },
+            },
+            { 
+              new: true, 
+              projection: { _id: 0 } 
             }
           );
+          let updateElasticSearch=await Elasticsearch.uicCodeGen(updateDelivery)
         }
         if (fromTrayItemRemove.modifiedCount !== 0) {
           resolve({ status: 1 });
@@ -520,7 +536,7 @@ module.exports = {
     return new Promise(async (resolve, reject) => {
       if (
         itemData.item.pickup_toTray == undefined ||
-        itemData.item.pickup_toTray == ""
+        itemData.item.pickup_toTray == "" || itemData.item.pickup_toTray == null
       ) {
         let updateData = await masters.updateOne(
           { code: itemData.fromTray },
@@ -545,6 +561,7 @@ module.exports = {
             },
           }
         );
+        itemData.item.pickup_toTray = null
         let itemTransfer = await masters.updateOne(
           {
             code: itemData.toTray,
@@ -555,14 +572,19 @@ module.exports = {
             },
           }
         );
-        let updateDelivery = await delivery.updateOne(
+        let updateDelivery = await delivery.findOneAndUpdate(
           { "uic_code.code": itemData.item.uic },
           {
             $set: {
               wht_tray: itemData.toTray,
             },
+          },
+          { 
+            new: true, 
+            projection: { _id: 0 } 
           }
         );
+        let updateElasticSearch=await Elasticsearch.uicCodeGen(updateDelivery)
 
         if (updateDelivery.modifiedCount !== 0) {
           resolve({ status: 1 });

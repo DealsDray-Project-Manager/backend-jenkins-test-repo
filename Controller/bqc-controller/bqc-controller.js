@@ -1,5 +1,6 @@
 const { delivery } = require("../../Model/deliveryModel/delivery");
 const { masters } = require("../../Model/mastersModel");
+const Elasticsearch = require("../../Elastic-search/elastic");
 /****************************************************************** */
 module.exports = {
   getAssignedTray: (username) => {
@@ -195,7 +196,7 @@ module.exports = {
       );
       if (data) {
         for (let x of data.items) {
-          let deliveryUpdate = await delivery.updateOne(
+          let deliveryUpdate = await delivery.findOneAndUpdate(
             {
               tracking_id: x.tracking_id,
             },
@@ -205,7 +206,14 @@ module.exports = {
                 tray_status: "BQC IN",
                 tray_location: "BQC",
               },
+            },
+            {
+              new: true,
+              projection: { _id: 0 },
             }
+          );
+          let updateElasticSearch = await Elasticsearch.uicCodeGen(
+            deliveryUpdate
           );
         }
         resolve(data);
@@ -243,7 +251,7 @@ module.exports = {
             } else {
               x.bqc_report.bqc_status = x.bqc_status;
             }
-            let deliveryUpdate = await delivery.updateOne(
+            let deliveryUpdate = await delivery.findOneAndUpdate(
               {
                 tracking_id: x.tracking_id,
               },
@@ -254,7 +262,15 @@ module.exports = {
                   tray_location: "BQC",
                   bqc_report: x.bqc_report,
                 },
+              },
+              {
+                new: true,
+                projection: { _id: 0 },
               }
+            );
+
+            let updateElasticSearch = await Elasticsearch.updateUic(
+              deliveryUpdate
             );
           }
           resolve(data);

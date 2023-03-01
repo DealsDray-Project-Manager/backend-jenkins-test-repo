@@ -1994,16 +1994,21 @@ module.exports = {
   },
   changeUicStatus: (id) => {
     return new Promise(async (resolve, reject) => {
-      let data = await delivery.updateOne(
+      let data = await delivery.findOneAndUpdate(
         { _id: id },
         {
           $set: {
             uic_status: "Printed",
             download_time: Date.now(),
           },
+        },
+        { 
+          new: true, 
+          projection: { _id: 0 } 
         }
       );
-      if (data.modifiedCount != 0) {
+      let updateElasticSearch=await elasticsearch.uicCodeGen(data)
+      if (data) {
         resolve({ status: true });
       } else {
         resolve({ status: false });

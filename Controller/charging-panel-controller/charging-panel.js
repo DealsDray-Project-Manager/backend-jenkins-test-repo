@@ -7,6 +7,7 @@ const { user } = require("../../Model/userModel");
 const { masters } = require("../../Model/mastersModel");
 const { badOrders } = require("../../Model/ordersModel/bad-orders-model");
 const { badDelivery } = require("../../Model/deliveryModel/bad-delivery");
+const Elasticsearch =require("../../Elastic-search/elastic")
 /********************************************************************************** */
 
 module.exports = {
@@ -84,7 +85,7 @@ module.exports = {
       }
       if (data) {
         for (let x of data.items) {
-          let deliveryUpdate = await delivery.updateOne(
+          let deliveryUpdate = await delivery.findOneAndUpdate(
             {
               tracking_id: x.tracking_id,
             },
@@ -94,8 +95,13 @@ module.exports = {
                 tray_status: "Charging In",
                 tray_location: "Charging",
               },
+            },
+            { 
+              new: true, 
+              projection: { _id: 0 } 
             }
           );
+          let updateElasticSearch=await Elasticsearch.uicCodeGen(deliveryUpdate)
         }
         resolve(data);
       } else {
@@ -134,7 +140,7 @@ module.exports = {
       }
       if (data) {
         for (let x of data.actual_items) {
-          let deliveryUpdate = await delivery.updateOne(
+          let deliveryUpdate = await delivery.findOneAndUpdate(
             {
               tracking_id: x.tracking_id,
             },
@@ -145,8 +151,13 @@ module.exports = {
                 tray_location: "Send to warehouse",
                 charging: x.charging,
               },
+            },
+            { 
+              new: true, 
+              projection: { _id: 0 } 
             }
           );
+          let elasticSearchUpdate=await Elasticsearch.uicCodeGen(deliveryUpdate)
         }
         resolve(data);
       } else {
