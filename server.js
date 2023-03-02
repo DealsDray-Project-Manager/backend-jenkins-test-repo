@@ -30,7 +30,7 @@ app.use(express.urlencoded({ limit: "25mb", extended: false }));
 // API for web
 app.use("/api/v7/superAdmin", superAdmin);
 //API for Mobile
-app.use("/api/mobile/v7/user", mobileUserRouter);
+app.use("/api/mobile/v8/user", mobileUserRouter);
 /* Api for Mis Users */
 app.use("/api/v7/mis", misUser);
 /* API for WarehouseIn */

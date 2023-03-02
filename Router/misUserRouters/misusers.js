@@ -63,7 +63,7 @@ router.post("/getBadOrders/:location", async (req, res, next) => {
   try {
     let data = await misUserController.getBadOrders(req.params.location);
     if (data) {
-      console.log(data);
+     
       res.status(200).json({
         data: data,
         message: "Success",
@@ -82,8 +82,12 @@ router.post("/ordersSearch", async (req, res, next) => {
   try {
     const { type, searchData, location } = req.body;
     let data = await misUserController.searchOrders(type, searchData, location);
-    if (data) {
+    if (data.length !== 0) {
       res.status(200).json({
+        data: data,
+      });
+    } else {
+      res.status(202).json({
         data: data,
       });
     }
@@ -100,10 +104,12 @@ router.post("/badOrdersSearch", async (req, res, next) => {
       searchData,
       location
     );
-    if (data) {
+    if (data.length !== 0) {
       res.status(200).json({
         data: data,
       });
+    } else {
+      res.status(202);
     }
   } catch (error) {
     next(error);
@@ -298,7 +304,7 @@ router.post("/importDelivery", async (req, res, next) => {
 router.post("/getDeliveryCount/:location", async (req, res, next) => {
   try {
     let data = await misUserController.getDeliveryCount(req.params.location);
-    console.log(data);
+  
     if (data) {
       res.status(200).json({
         data: data,
@@ -372,8 +378,12 @@ router.post("/search-mis-track-item", async (req, res, next) => {
       searchData,
       location
     );
-    if (data) {
+    if (data.length !== 0) {
       res.status(200).json({
+        data: data,
+      });
+    } else {
+      res.status(202).json({
         data: data,
       });
     }
@@ -390,8 +400,12 @@ router.post("/searchBadDelivery", async (req, res, next) => {
       searchData,
       location
     );
-    if (data) {
+    if (data.length !== 0) {
       res.status(200).json({
+        data: data,
+      });
+    } else {
+      res.status(202).json({
         data: data,
       });
     }
@@ -496,11 +510,11 @@ router.post("/addUicCode", async (req, res, next) => {
 /* Get uic genrated */
 router.post("/uicGeneratedRecon", async (req, res, next) => {
   try {
-    console.log(req.body);
+    
     let data = await misUserController.getUicRecon(req.body);
-    console.log(data.data.length);
+   
     if (data) {
-      console.log(data);
+     
       res.status(200).json({
         data: data.data,
         count: data.count,
@@ -630,7 +644,7 @@ router.post("/deleteBadDelivery", async (req, res, next) => {
 router.post("/getBagItemWithUic/:bagId", async (req, res, next) => {
   try {
     let data = await misUserController.getBagItemForUic(req.params.bagId);
-    console.log(data);
+  
     if (data.status == 1) {
       res.status(200).json({
         data: data.data,
@@ -815,7 +829,7 @@ router.post("/ready-for-charging-wht", async (req, res, next) => {
 /* SORT TRAY BASED ON THE BRAND AND MODEL */
 router.post("/toWhtTrayForMerge", async (req, res, next) => {
   try {
-    console.log(req.body);
+    
     const { location, brand, model, fromTray, itemCount, status } = req.body;
     let data = await misUserController.toWhtTrayForMerging(
       location,
@@ -985,6 +999,7 @@ router.post("/getSortingAgentMergeMmt/:location", async (req, res, next) => {
   try {
     const { location } = req.params;
     let data = await misUserController.getSortingAgentForMergeMmt(location);
+
     if (data) {
       res.status(200).json({
         data: data,
@@ -1003,7 +1018,6 @@ router.post(
   "/toMmtTrayForMerge/:fromTray/:location/:itemsCount",
   async (req, res, next) => {
     try {
-      console.log(req.params);
       const { fromTray, location, itemsCount } = req.params;
       let mmtTray = await misUserController.getToTrayMmtMerge(
         fromTray,
@@ -1027,7 +1041,6 @@ router.post(
 /* MMT TRAY MERGE REQUEST SEND TO WAREHOUSE */
 router.post("/TrayMergeRequestSend", async (req, res, next) => {
   try {
-    console.log(req.body);
     const { sort_agent, fromTray, toTray } = req.body;
     let data = await misUserController.mmtMergeRequestSendToWh(
       sort_agent,
@@ -1047,29 +1060,139 @@ router.post("/TrayMergeRequestSend", async (req, res, next) => {
     next(error);
   }
 });
-
-router.post('/imeiDeliverySearch',async(req,res,next)=>{
-  try{
+/*---------------------------------IMEI SEARCH--------------------------------------------*/
+router.post("/imeiDeliverySearch", async (req, res, next) => {
+  try {
     const { value } = req.body;
-    let resultdata=await misUserController.imeiSearchDelivery(value)
-  res.json({resultdata})
-  }catch(error){
+    let resultdata = await misUserController.imeiSearchDelivery(value);
+    res.json({ resultdata });
+  } catch (error) {
     next(error);
   }
 });
 
-router.post('/imeiOrderSearch',async(req,res,next)=>{
-  try{
+router.post("/imeiOrderSearch", async (req, res, next) => {
+  try {
     const { value } = req.body;
-    let resultdata=await misUserController.imeiSearchOrder(value)
-    if(resultdata?.status){
-        res.json({error:'invaid IMEI'})
+    let resultdata = await misUserController.imeiSearchOrder(value);
+    if (resultdata?.status) {
+      res.json({ error: "invaid IMEI" });
     }
-    res.json({resultdata})
-  }catch(error){
+    res.json({ resultdata });
+  } catch (error) {
     next(error);
   }
-})
+});
+/*------------------------------------PICKUP MODULE-----------------------------------------------*/
+//GET ITEM BASED ON THE TABS
+router.post("/pickup/items/:type", async (req, res, next) => {
+  try {
+    let { type, page, size } = req.params;
 
+    const data = await misUserController.pickupPageItemView(type);
+   
 
+    if (data.items.length !== 0) {
+      res.status(200).json({
+        data: data.items,
+      });
+    } else {
+      res.status(202).json({
+        data: data.items,
+
+        message: "No data found",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+// SORT ITEM BASED ON THE BRAND AND MODEL
+router.post(
+  "/pickup/sortItem/:brand/:model/:type",
+  async (req, res, next) => {
+    try {
+      let { brand, model, type, page, size } = req.params;
+      let data = await misUserController.pickUpSortBrandModel(
+        brand,
+        model,
+        type,
+       
+      );
+    
+      if (data.items.length !== 0) {
+        res.status(200).json({
+          data: data.items,
+         
+        });
+      } else {
+        res.status(202).json({
+          data: data.items,
+         
+          message: "No records found",
+        });
+      }
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+// UIC SEARCH
+router.post("/pickup/uicSearch/:uic/:type", async (req, res, next) => {
+  try {
+    const { uic, type } = req.params;
+    const data = await misUserController.pickupPageUicSearch(uic, type);
+   
+    if (data.items.length !== 0) {
+      res.status(200).json({
+        data: data.items,
+        count: data.count,
+      });
+    } else {
+      res.status(202).json({
+        data: data.items,
+        count: data.count,
+        message: "No records found",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+// GET SORTING AGENT AND CHECK ITEMS BRAND AND MODEL ALSO FETCH WHT TRAY
+router.post("/pickup/whtTray", async (req, res, next) => {
+  try {
+    let data = await misUserController.pickupPageGetWhtTray(req.body);
+   
+    if (data.status == 1) {
+      res.status(200).json({
+        data: data.whtTray,
+      });
+    } else if (data.status == 2) {
+      res.status(202).json({
+        message: `${data.item} - Mismatch Brand or Model Not Possible to Assign or inprogress`,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
+// SEND ITEM TO PICKUP
+router.post("/pickup/requestSendToWh", async (req, res, next) => {
+  try {
+    let data = await misUserController.pickupRequestSendToWh(req.body);
+    if (data) {
+      res.status(200).json({
+        message: "Request sent to warehouse",
+      });
+    } else {
+      res.status(202).json({
+        message: "Failed tray again...",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
 module.exports = router;

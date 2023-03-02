@@ -8,11 +8,11 @@ const { masters } = require("../../Model/mastersModel");
 const { badOrders } = require("../../Model/ordersModel/bad-orders-model");
 const { badDelivery } = require("../../Model/deliveryModel/bad-delivery");
 const moment = require("moment");
+const elasticsearch = require("../../Elastic-search/elastic");
 /******************************************************************* */
 
 module.exports = {
   bulkOrdersValidation: (ordersData) => {
-    console.log("d");
     return new Promise(async (resolve, reject) => {
       let err = {};
       let order_id = [];
@@ -145,6 +145,7 @@ module.exports = {
         assigCharging: 0,
         bqc: 0,
         audit: 0,
+        rdl: 0,
         botToWht: 0,
         whtMerge: 0,
         mmtMerge: 0,
@@ -209,6 +210,12 @@ module.exports = {
         sort_id: "Ready to Audit",
         cpc: location,
       });
+      count.rdl = await masters.count({
+        prefix: "tray-master",
+        type_taxanomy: "WHT",
+        sort_id: "Ready to RDL",
+        cpc: location,
+      });
       count.botToWht = await masters.count({
         type_taxanomy: "BOT",
         prefix: "tray-master",
@@ -231,7 +238,6 @@ module.exports = {
         partner_shop: location,
         delivery_status: "Delivered",
       });
-      console.log(count);
       if (count) {
         resolve(count);
       }
@@ -282,8 +288,6 @@ module.exports = {
         .find({ partner_shop: location }, { _id: 0, __v: 0 })
         .sort({ _id: -1 });
 
-      console.log(data);
-
       if (data) {
         resolve(data);
       }
@@ -308,6 +312,9 @@ module.exports = {
               as: "products",
             },
           },
+          {
+            $limit: 50,
+          },
         ]);
       } else if (searchType == "tracking_id") {
         allOrders = await orders.aggregate([
@@ -324,6 +331,9 @@ module.exports = {
               foreignField: "vendor_sku_id",
               as: "products",
             },
+          },
+          {
+            $limit: 50,
           },
         ]);
       } else if (searchType == "imei") {
@@ -342,6 +352,9 @@ module.exports = {
               as: "products",
             },
           },
+          {
+            $limit: 50,
+          },
         ]);
       } else if (searchType == "order_status") {
         allOrders = await orders.aggregate([
@@ -358,6 +371,9 @@ module.exports = {
               foreignField: "vendor_sku_id",
               as: "products",
             },
+          },
+          {
+            $limit: 50,
           },
         ]);
       } else if (searchType == "order_date") {
@@ -382,6 +398,9 @@ module.exports = {
               as: "products",
             },
           },
+          {
+            $limit: 50,
+          },
         ]);
       } else if (searchType == "item_id") {
         allOrders = await orders.aggregate([
@@ -399,6 +418,9 @@ module.exports = {
               as: "products",
             },
           },
+          {
+            $limit: 50,
+          },
         ]);
       } else if (searchType == "old_item_details") {
         allOrders = await orders.aggregate([
@@ -415,6 +437,9 @@ module.exports = {
               foreignField: "vendor_sku_id",
               as: "products",
             },
+          },
+          {
+            $limit: 50,
           },
         ]);
       }
@@ -450,11 +475,11 @@ module.exports = {
             },
           },
           {
+            $limit: 50,
+          },
+          {
             $project: { _id: 0, __v: 0 },
           },
-          // {
-          //     $unwind: "$products"
-          // }
         ]);
       } else if (searchType == "tracking_id") {
         allOrders = await badOrders.aggregate([
@@ -471,6 +496,9 @@ module.exports = {
               foreignField: "vendor_sku_id",
               as: "products",
             },
+          },
+          {
+            $limit: 50,
           },
           {
             $project: { _id: 0, __v: 0 },
@@ -491,6 +519,9 @@ module.exports = {
               foreignField: "vendor_sku_id",
               as: "products",
             },
+          },
+          {
+            $limit: 50,
           },
           {
             $project: { _id: 0, __v: 0 },
@@ -514,6 +545,9 @@ module.exports = {
               foreignField: "vendor_sku_id",
               as: "products",
             },
+          },
+          {
+            $limit: 50,
           },
           {
             $project: { _id: 0, __v: 0 },
@@ -542,6 +576,9 @@ module.exports = {
             },
           },
           {
+            $limit: 50,
+          },
+          {
             $project: { _id: 0, __v: 0 },
           },
         ]);
@@ -561,6 +598,9 @@ module.exports = {
               foreignField: "vendor_sku_id",
               as: "products",
             },
+          },
+          {
+            $limit: 50,
           },
           {
             $project: { _id: 0, __v: 0 },
@@ -583,6 +623,9 @@ module.exports = {
             },
           },
           {
+            $limit: 50,
+          },
+          {
             $project: { _id: 0, __v: 0 },
           },
         ]);
@@ -603,12 +646,15 @@ module.exports = {
             },
           },
           {
+            $limit: 50,
+          },
+          {
             $project: { _id: 0, __v: 0 },
           },
         ]);
       }
       if (allOrders) {
-        console.log(allOrders);
+    
         resolve(allOrders);
       }
     });
@@ -1343,6 +1389,9 @@ module.exports = {
       let data = await delivery
         .create(deliveryData.validItem)
         .catch((err) => reject(err));
+      let updateToelastic = await elasticsearch.addinToElastic(
+        deliveryData.validItem
+      );
       deliveryData.validItem.forEach(async (doc) => {
         let updateData = await orders.updateOne(
           { order_status: "NEW", order_id: doc.order_id },
@@ -1446,6 +1495,7 @@ module.exports = {
               order_id: { $regex: "^" + value + ".*", $options: "i" },
             },
           },
+
           {
             $lookup: {
               from: "orders",
@@ -1470,6 +1520,9 @@ module.exports = {
               ],
               as: "result",
             },
+          },
+          {
+            $limit: 50,
           },
         ]);
       } else if (searchType == "tracking_id") {
@@ -1505,6 +1558,9 @@ module.exports = {
               as: "result",
             },
           },
+          {
+            $limit: 50,
+          },
         ]);
       } else if (searchType == "imei") {
         allOrders = await delivery.aggregate([
@@ -1538,6 +1594,9 @@ module.exports = {
               ],
               as: "result",
             },
+          },
+          {
+            $limit: 50,
           },
         ]);
       } else if (searchType == "uic_status") {
@@ -1573,6 +1632,9 @@ module.exports = {
               as: "result",
             },
           },
+          {
+            $limit: 50,
+          },
         ]);
       } else if (searchType == "item_id") {
         allOrders = await delivery.aggregate([
@@ -1607,6 +1669,9 @@ module.exports = {
               as: "result",
             },
           },
+          {
+            $limit: 50,
+          },
         ]);
       }
       if (allOrders) {
@@ -1635,6 +1700,9 @@ module.exports = {
             },
           },
           {
+            $limit: 50,
+          },
+          {
             $unwind: "$delivery",
           },
         ]);
@@ -1657,6 +1725,7 @@ module.exports = {
           {
             $unwind: "$delivery",
           },
+
           {
             $match: {
               delivery_status: "Delivered",
@@ -1666,6 +1735,9 @@ module.exports = {
                 $options: "i",
               },
             },
+          },
+          {
+            $limit: 50,
           },
         ]);
       } else if (searchType == "uic") {
@@ -1684,6 +1756,7 @@ module.exports = {
               as: "delivery",
             },
           },
+
           {
             $unwind: "$delivery",
           },
@@ -1697,6 +1770,9 @@ module.exports = {
               },
             },
           },
+          {
+            $limit: 50,
+          },
         ]);
       }
       if (allData) {
@@ -1708,56 +1784,74 @@ module.exports = {
     return new Promise(async (resolve, reject) => {
       let allOrders;
       if (searchType == "order_id") {
-        allOrders = await badDelivery.find(
-          {
-            partner_shop: location,
-            order_id: { $regex: "^" + value + ".*", $options: "i" },
-          },
-          { _id: 0, __v: 0 }
-        );
+        allOrders = await badDelivery
+          .find(
+            {
+              partner_shop: location,
+              order_id: { $regex: "^" + value + ".*", $options: "i" },
+            },
+
+            { _id: 0, __v: 0 }
+          )
+          .limit(50);
       } else if (searchType == "tracking_id") {
-        allOrders = await badDelivery.find(
-          {
-            partner_shop: location,
-            tracking_id: { $regex: ".*" + value + ".*", $options: "i" },
-          },
-          { _id: 0, __v: 0 }
-        );
+        allOrders = await badDelivery
+          .find(
+            {
+              partner_shop: location,
+              tracking_id: { $regex: ".*" + value + ".*", $options: "i" },
+            },
+
+            { _id: 0, __v: 0 }
+          )
+          .limit(50);
       } else if (searchType == "imei") {
-        allOrders = await badDelivery.find(
-          {
-            partner_shop: location,
-            imei: { $regex: ".*" + value + ".*", $options: "i" },
-          },
-          { _id: 0, __v: 0 }
-        );
+        allOrders = await badDelivery
+          .find(
+            {
+              partner_shop: location,
+              imei: { $regex: ".*" + value + ".*", $options: "i" },
+            },
+
+            { _id: 0, __v: 0 }
+          )
+          .limit(50);
       } else if (searchType == "uic_status") {
-        allOrders = await badDelivery.find(
-          {
-            partner_shop: location,
-            order_status: { $regex: "^" + value + ".*", $options: "i" },
-          },
-          { _id: 0, __v: 0 }
-        );
+        allOrders = await badDelivery
+          .find(
+            {
+              partner_shop: location,
+              order_status: { $regex: "^" + value + ".*", $options: "i" },
+            },
+
+            { _id: 0, __v: 0 }
+          )
+          .limit(50);
       } else if (searchType == "order_date") {
         value = value.split("/");
         value = value.reverse();
         value = value.join("-");
-        allOrders = await badDelivery.find(
-          {
-            partner_shop: location,
-            order_date: { $regex: ".*" + value + ".*", $options: "i" },
-          },
-          { _id: 0, __v: 0 }
-        );
+        allOrders = await badDelivery
+          .find(
+            {
+              partner_shop: location,
+              order_date: { $regex: ".*" + value + ".*", $options: "i" },
+            },
+
+            { _id: 0, __v: 0 }
+          )
+          .limit(50);
       } else if (searchType == "item_id") {
-        allOrders = await badDelivery.find(
-          {
-            partner_shop: location,
-            item_id: { $regex: "^" + value + ".*", $options: "i" },
-          },
-          { _id: 0, __v: 0 }
-        );
+        allOrders = await badDelivery
+          .find(
+            {
+              partner_shop: location,
+              item_id: { $regex: "^" + value + ".*", $options: "i" },
+            },
+
+            { _id: 0, __v: 0 }
+          )
+          .limit(50);
       }
       if (allOrders) {
         resolve(allOrders);
@@ -1807,7 +1901,7 @@ module.exports = {
           useGrouping: false,
         }) +
         count;
-      let data = await delivery.updateOne(
+      let data = await delivery.findOneAndUpdate(
         { _id: uicData._id },
         {
           $set: {
@@ -1817,9 +1911,14 @@ module.exports = {
             uic_status: "Created",
           },
         },
-        { upsert: true }
+        {
+          new: true,
+          projection: { _id: 0 },
+        }
       );
-      if (data.modifiedCount != 0) {
+
+      if (data) {
+        let updateElastic = await elasticsearch.uicCodeGen(data);
         resolve(data);
       } else {
         resolve();
@@ -1895,16 +1994,21 @@ module.exports = {
   },
   changeUicStatus: (id) => {
     return new Promise(async (resolve, reject) => {
-      let data = await delivery.updateOne(
+      let data = await delivery.findOneAndUpdate(
         { _id: id },
         {
           $set: {
             uic_status: "Printed",
             download_time: Date.now(),
           },
+        },
+        { 
+          new: true, 
+          projection: { _id: 0 } 
         }
       );
-      if (data.modifiedCount != 0) {
+      let updateElasticSearch=await elasticsearch.uicCodeGen(data)
+      if (data) {
         resolve({ status: true });
       } else {
         resolve({ status: false });
@@ -2071,7 +2175,7 @@ module.exports = {
     });
   },
   getModelBasedDataFromBot: (trayData) => {
-    console.log(trayData);
+  
     return new Promise(async (resolve, reject) => {
       let temp_array = [];
       let data;
@@ -2345,7 +2449,7 @@ module.exports = {
           temp_array: arr,
           not_assigned: flag,
         };
-        console.log(obj);
+   
         resolve(obj);
       } else {
         resolve();
@@ -2387,8 +2491,7 @@ module.exports = {
             prefix: "tray-master",
             type_taxanomy: "WHT",
             brand: brand,
-            model,
-            model,
+            model: model,
             cpc: location,
             sort_id: "Audit Done Closed By Warehouse",
             code: { $ne: fromTray },
@@ -2400,8 +2503,7 @@ module.exports = {
             prefix: "tray-master",
             type_taxanomy: "WHT",
             brand: brand,
-            model,
-            model,
+            model: model,
             cpc: location,
             items: { $ne: [] },
             sort_id: "Inuse",
@@ -2409,6 +2511,7 @@ module.exports = {
           })
           .catch((err) => reject(err));
       }
+     
       if (whtTray.length !== 0) {
         for (let x of whtTray) {
           let count = x.limit - x.items.length;
@@ -2538,7 +2641,7 @@ module.exports = {
         })
         .catch((err) => reject(err));
       if (data) {
-        console.log(data);
+       
         resolve(data);
       } else {
         resolve();
@@ -2586,16 +2689,16 @@ module.exports = {
           code: { $ne: toTray },
         })
         .catch((err) => reject(err));
-      console.log(whtTray);
+   
       if (whtTray.length !== 0) {
         for (let x of whtTray) {
-          let count = x.limit - x.items.length;
+          let count = x.items.length + itemsCount;
           if (count >= itemsCount) {
             arr.push(x);
           }
         }
         if (arr.length !== 0) {
-          console.log(arr);
+         
           resolve({ status: 1, tray: arr });
         } else {
           resolve({ status: 2 });
@@ -2683,40 +2786,35 @@ module.exports = {
       if (firstChar.match(/[^a-zA-Z0-9]/)) {
         let deliveryItems = await delivery.find({ imei: value });
         if (deliveryItems.length == 0) {
-          restOfStr = value.slice(1)
-          deliveryItems = await delivery.find({ imei: restOfStr })
+          restOfStr = value.slice(1);
+          deliveryItems = await delivery.find({ imei: restOfStr });
           if (deliveryItems) {
-            resolve(deliveryItems)
+            resolve(deliveryItems);
           } else {
-            resolve({ status: 2 })
+            resolve({ status: 2 });
           }
         } else {
-          resolve(deliveryItems)
+          resolve(deliveryItems);
         }
-      }
-      else if (firstChar.match(/[a-zA-Z0-9]/)) {
+      } else if (firstChar.match(/[a-zA-Z0-9]/)) {
         let deliveryItems = await delivery.find({ imei: value });
         if (deliveryItems.length == 0) {
-          console.log('dataaa');
-          let deliveryItems = await delivery.find({ imei: `'${value}` })
+       
+          let deliveryItems = await delivery.find({ imei: `'${value}` });
           if (deliveryItems) {
-            resolve(deliveryItems)
+            resolve(deliveryItems);
           } else {
-            resolve({ status: 2 })
+            resolve({ status: 2 });
           }
         } else {
-          resolve(deliveryItems)
+          resolve(deliveryItems);
         }
       } else {
-        resolve({ status: 2 })
+        resolve({ status: 2 });
       }
     });
   },
 
-
-  
-
-  
   imeiSearchOrder: (value) => {
     return new Promise(async (resolve, reject) => {
       firstChar = value.charAt(0);
@@ -2736,13 +2834,10 @@ module.exports = {
               as: "products",
             },
           },
-        ])
-
-
-
+        ]);
 
         if (orderItems.length == 0) {
-          restOfStr = value.slice(1)
+          restOfStr = value.slice(1);
           // orderItems = await orders.find({ imei: restOfStr })
           orderItems = await orders.aggregate([
             {
@@ -2758,23 +2853,22 @@ module.exports = {
                 as: "products",
               },
             },
-          ])
+          ]);
           if (orderItems) {
-            resolve(orderItems)
+            resolve(orderItems);
           } else {
-            resolve({ status: 2 })
+            resolve({ status: 2 });
           }
         } else {
-          resolve(orderItems)
+          resolve(orderItems);
         }
-      }
-      else if (firstChar.match(/[a-zA-Z0-9]/)) {
+      } else if (firstChar.match(/[a-zA-Z0-9]/)) {
         // let orderItems = await orders.find({ imei: value });
 
         orderItems = await orders.aggregate([
           {
             $match: {
-              imei:  value,
+              imei: value,
             },
           },
           {
@@ -2785,15 +2879,14 @@ module.exports = {
               as: "products",
             },
           },
-        ])
-
+        ]);
 
         if (orderItems.length == 0) {
           // let orderItems = await orders.find({ imei: `'${value}` })
           orderItems = await orders.aggregate([
             {
               $match: {
-                imei:  `'${value}`,
+                imei: `'${value}`,
               },
             },
             {
@@ -2804,25 +2897,274 @@ module.exports = {
                 as: "products",
               },
             },
-          ])
-
+          ]);
 
           if (orderItems) {
-            resolve(orderItems)
+            resolve(orderItems);
           } else {
-            resolve({ status: 2 })
+            resolve({ status: 2 });
           }
         } else {
-          resolve(orderItems)
+          resolve(orderItems);
         }
       } else {
-        resolve({ status: 2 })
+        resolve({ status: 2 });
       }
-    })
+    });
   },
+  /*-----------------------PICKUP MODEULE-------------------------------*/
+  pickupPageItemView: (type, skip, limit) => {
+    return new Promise(async (resolve, reject) => {
+      let items = [];
 
+      if (type == "Charge Done") {
+        items = await masters.aggregate([
+          { $match: { sort_id: "Ready to BQC" } },
+          {
+            $unwind: "$items",
+          },
+        ]);
+      } else if (type == "BQC Done") {
+        items = await masters.aggregate([
+          { $match: { sort_id: "Ready to Audit" } },
+          {
+            $unwind: "$items",
+          },
+        ]);
+      } else if (type == "Audit Done") {
+        items = await masters.aggregate([
+          { $match: { sort_id: "Ready to RDL" } },
+          {
+            $unwind: "$items",
+          },
+        ]);
+      }
+      resolve({ items: items });
+    });
+  },
+  /*---------------------PICKUP SORT-------------------------------*/
+  pickUpSortBrandModel: (brand, model, type, limit, skip) => {
+    return new Promise(async (resolve, reject) => {
+      let items, count;
 
+      if (type == "Charge Done") {
+        items = await masters.aggregate([
+          { $match: { sort_id: "Ready to BQC", brand: brand, model: model } },
+          {
+            $unwind: "$items",
+          },
+        ]);
+      } else if (type == "BQC Done") {
+        items = await masters.aggregate([
+          { $match: { sort_id: "Ready to Audit", brand: brand, model: model } },
+          {
+            $unwind: "$items",
+          },
+        ]);
+      } else if (type == "Audit Done") {
+        items = await masters.aggregate([
+          { $match: { sort_id: "Ready to RDL", brand: brand, model: model } },
+          {
+            $unwind: "$items",
+          },
+        ]);
+      }
+      resolve({ items: items, count: count });
+    });
+  },
+  /*-----------------------PICKUP PAGE UIC SEARCH--------------------------------*/
+  pickupPageUicSearch: (uic, type) => {
+    return new Promise(async (resolve, reject) => {
+      let items, count;
+      if (type == "Charge Done") {
+        items = await delivery.aggregate([
+          {
+            $match: {
+              charging_done_close: { $exists: true },
+              tray_location: "Warehouse",
+              "uic_code.code": { $regex: ".*" + uic + ".*", $options: "i" },
+              assign_to_agent_bqc: { $exists: false },
+              sales_bin_date: { $exists: false },
+              pickup_request_sent_to_wh_date: { $exists: false },
+            },
+          },
+          {
+            $lookup: {
+              from: "products",
+              localField: `item_id`,
+              foreignField: "vendor_sku_id",
+              as: "products",
+            },
+          },
 
+          {
+            $limit: 100,
+          },
+        ]);
+        count = await delivery.count({
+          charging_done_close: { $exists: true },
+          tray_location: "Warehouse",
+          "uic_code.code": { $regex: ".*" + uic + ".*", $options: "i" },
+          assign_to_agent_bqc: { $exists: false },
+          sales_bin_date: { $exists: false },
+          pickup_request_sent_to_wh_date: { $exists: false },
+        });
+      } else if (type == "BQC Done") {
+        items = await delivery.aggregate([
+          {
+            $match: {
+              bqc_done_close: { $exists: true },
+              tray_location: "Warehouse",
+              "uic_code.code": { $regex: ".*" + uic + ".*", $options: "i" },
+              issued_to_audit: { $exists: false },
+              sales_bin_date: { $exists: false },
+              pickup_request_sent_to_wh_date: { $exists: false },
+            },
+          },
+          {
+            $lookup: {
+              from: "products",
+              localField: `item_id`,
+              foreignField: "vendor_sku_id",
+              as: "products",
+            },
+          },
 
+          {
+            $limit: 100,
+          },
+        ]);
+        count = await delivery.count({
+          bqc_done_close: { $exists: true },
+          tray_location: "Warehouse",
+          "uic_code.code": { $regex: ".*" + uic + ".*", $options: "i" },
+          issued_to_audit: { $exists: false },
+          sales_bin_date: { $exists: false },
+          pickup_request_sent_to_wh_date: { $exists: false },
+        });
+      } else if (type == "Audit Done") {
+        items = await delivery.aggregate([
+          {
+            $match: {
+              audit_done_close: { $exists: true },
+              tray_location: "Warehouse",
+              "uic_code.code": { $regex: ".*" + uic + ".*", $options: "i" },
+              issued_rdl_fls_one_date: { $exists: false },
+              sales_bin_date: { $exists: false },
+              pickup_request_sent_to_wh_date: { $exists: false },
+            },
+          },
+          {
+            $lookup: {
+              from: "products",
+              localField: `item_id`,
+              foreignField: "vendor_sku_id",
+              as: "products",
+            },
+          },
 
+          {
+            $limit: 100,
+          },
+        ]);
+
+        count = await delivery.count({
+          audit_done_close: { $exists: true },
+          tray_location: "Warehouse",
+          "uic_code.code": { $regex: ".*" + uic + ".*", $options: "i" },
+          issued_rdl_fls_one_date: { $exists: false },
+          sales_bin_date: { $exists: false },
+          pickup_request_sent_to_wh_date: { $exists: false },
+        });
+      }
+      resolve({ items: items, count: count });
+    });
+  },
+  /*--------------------------GET WHT TRAY IN PICKUP PAGE----------------------------------*/
+  pickupPageGetWhtTray: (itemData) => {
+    return new Promise(async (resolve, reject) => {
+      let arr = [];
+      let prodct = [];
+      let item_id_wht = "";
+      for (let x of itemData.isCheck) {
+        let checkBrand = await delivery.findOne({ "uic_code.code": x });
+        item_id_wht = checkBrand.item_id;
+        if (prodct.length == 0) {
+          prodct.push(checkBrand.item_id);
+        }
+        if (prodct.includes(checkBrand.item_id) == false) {
+          arr.push(x);
+        }
+      }
+      
+      if (arr.length == 0) {
+        let product = await products.findOne({ vendor_sku_id: item_id_wht });
+        let getWhtTray = await masters.find({
+          sort_id: "Open",
+          brand: product.brand_name,
+          model: product.model_name,
+          prefix: "tray-master",
+          type_taxanomy: "WHT",
+          limit: { $gte: itemData.isCheck.length.toString() },
+        });
+        if (getWhtTray) {
+          resolve({ status: 1, whtTray: getWhtTray });
+        }
+      } else {
+        resolve({ status: 2, item: arr });
+      }
+    });
+  },
+  pickupRequestSendToWh: (itemData) => {
+
+    return new Promise(async (resolve, reject) => {
+      let sendtoPickupRequest;
+      for (let x of itemData.isCheck) {
+        let getDeliveryData = await delivery.findOne({ "uic_code.code": x });
+        if (getDeliveryData) {
+          let toTray = await masters.updateOne(
+            { code: itemData.toTray },
+            {
+              $set: {
+                sort_id: "Pickup Request sent to Warehouse",
+                issued_user_name: itemData.user_name,
+                pickup_type: itemData.value,
+              },
+              $push: {
+                temp_array: x,
+              },
+            }
+          );
+          sendtoPickupRequest = await masters.updateOne(
+            { "items.uic": x,type_taxanomy:"WHT" },
+            {
+              $set: {
+                sort_id: "Pickup Request sent to Warehouse",
+                issued_user_name: itemData.user_name,
+                requested_date: Date.now(),
+                actual_items: [],
+                temp_array: [],
+                pickup_type: itemData.value,
+                "items.$.pickup_toTray": itemData.toTray,
+                to_tray_for_pickup: itemData.toTray,
+              },
+            }
+          );
+        }
+        let updateDelivery = await delivery.updateOne(
+          { "uic_code.code": x },
+          {
+            $set: {
+              pickup_request_sent_to_wh_date: Date.now(),
+            },
+          }
+        );
+      }
+      if (sendtoPickupRequest.matchedCount != 0) {
+        resolve(sendtoPickupRequest);
+      } else {
+        resolve();
+      }
+    });
+  },
 };

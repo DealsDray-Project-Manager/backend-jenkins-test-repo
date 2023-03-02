@@ -6,6 +6,7 @@ const { user } = require("../../Model/userModel");
 var mongoose = require("mongoose");
 const { products } = require("../../Model/productModel/product");
 const moment = require("moment");
+const elasticsearch = require("../../Elastic-search/elastic");
 
 /********************************************************************/
 /* 
@@ -40,6 +41,8 @@ module.exports = {
         returnFromMerge: 0,
         auditRequest: 0,
         otherTrayAuditDone: 0,
+        pickupRequest: 0,
+        returnFromPickup: 0,
       };
       count.bagIssueRequest = await masters.count({
         $or: [
@@ -108,6 +111,27 @@ module.exports = {
         type_taxanomy: "WHT",
         sort_id: "Ready to Audit",
         cpc: location,
+      });
+      count.pickupRequest = await masters.count({
+        prefix: "tray-master",
+        type_taxanomy: "WHT",
+        sort_id: "Pickup Request sent to Warehouse",
+        cpc: location,
+        to_tray_for_pickup: { $ne: null },
+      });
+      count.returnFromPickup = await masters.count({
+        $or: [
+          {
+            cpc: location,
+            type_taxanomy: "WHT",
+            sort_id: "Pickup Done Closed by Sorting Agent",
+          },
+          {
+            cpc: location,
+            type_taxanomy: "WHT",
+            sort_id: "Pickup Done Received",
+          },
+        ],
       });
       count.botToRelease = await masters.count({
         type_taxanomy: "BOT",
@@ -337,6 +361,7 @@ module.exports = {
   /*------------------------FIND ONE BAG or TRAY----------------------------*/
 
   getBagOneRequest: (masterId, status) => {
+    console.log(status);
     return new Promise(async (resolve, reject) => {
       let data = await masters.find({
         code: masterId,
@@ -467,7 +492,11 @@ module.exports = {
           },
         }
       );
-      if (data.status !== "Duplicate") {
+      if (data.status !== "Duplicate" || data.status !== "Invalid") {
+        let updateElastic = await elasticsearch.updateUic(
+          data.awbn_number,
+          data.bag_id
+        );
         let updateDelivery = await delivery.updateOne(
           { tracking_id: data.awbn_number },
           {
@@ -478,6 +507,8 @@ module.exports = {
             },
           }
         );
+       
+        
       }
       if (res) {
         resolve(res);
@@ -527,6 +558,9 @@ module.exports = {
       );
       if (data) {
         for (let x of data.items) {
+          let updateElastic = await elasticsearch.closeBagAfterItemPuted(
+            x.awbn_number
+          );
           let updateDelivery = await delivery.updateOne(
             { tracking_id: x.awbn_number },
             {
@@ -570,6 +604,7 @@ module.exports = {
             },
           }
         );
+        
       }
       if (data.modifiedCount !== 0) {
         resolve(data);
@@ -614,15 +649,20 @@ module.exports = {
         );
         if (data) {
           for (let x of data.items) {
-            let updateDelivery = await delivery.updateOne(
+            let updateDelivery = await delivery.findOneAndUpdate(
               { tracking_id: x.awbn_number },
               {
                 $set: {
                   assign_to_agent: Date.now(),
                   agent_name: data.issued_user_name,
                 },
+              },
+              {
+                new: true,
+                projection: { _id: 0 },
               }
             );
+            let updateElastic = await elasticsearch.uicCodeGen(updateDelivery);
           }
           for (let i = 0; i < issueData.try.length; i++) {
             let assignTray = await masters.updateOne(
@@ -964,7 +1004,7 @@ module.exports = {
           }
           if (data) {
             for (let i = 0; i < data.actual_items.length; i++) {
-              let deliveryTrack = await delivery.updateMany(
+              let deliveryTrack = await delivery.findOneAndUpdate(
                 { tracking_id: data.actual_items[i].tracking_id },
                 {
                   $set: {
@@ -972,8 +1012,14 @@ module.exports = {
                     tray_location: "Warehouse",
                     charging_done_received: Date.now(),
                   },
+                },
+                { 
+                  new: true, 
+                  projection: { _id: 0 } 
                 }
               );
+              let updateElasticSearch=await elasticsearch.uicCodeGen(deliveryTrack)
+
             }
             resolve({ status: 1 });
           } else {
@@ -996,15 +1042,20 @@ module.exports = {
             );
             if (data) {
               for (let i = 0; i < data.actual_items.length; i++) {
-                let deliveryTrack = await delivery.updateMany(
+                let deliveryTrack = await delivery.findOneAndUpdate(
                   { tracking_id: data.items[i].awbn_number },
                   {
                     $set: {
                       tray_status: "Audit Done  Received From Merging",
                       tray_location: "Warehouse",
                     },
+                  },
+                  { 
+                    new: true, 
+                    projection: { _id: 0 } 
                   }
                 );
+                let updateElasticSearch=await elasticsearch.uicCodeGen(deliveryTrack)
               }
               resolve({ status: 1 });
             } else {
@@ -1021,15 +1072,20 @@ module.exports = {
             );
             if (data) {
               for (let i = 0; i < data.actual_items.length; i++) {
-                let deliveryTrack = await delivery.updateMany(
+                let deliveryTrack = await delivery.findOneAndUpdate(
                   { tracking_id: data.items[i].awbn_number },
                   {
                     $set: {
                       tray_status: "Received From Merging",
                       tray_location: "Warehouse",
-                    },
+                  },
+                  },
+                  { 
+                    new: true, 
+                    projection: { _id: 0 } 
                   }
                 );
+                let updateElasticSearch=await  elasticsearch.uicCodeGen(deliveryTrack)
               }
               resolve({ status: 1 });
             } else {
@@ -1052,7 +1108,7 @@ module.exports = {
           );
           if (data) {
             for (let i = 0; i < data.items.length; i++) {
-              let deliveryTrack = await delivery.updateMany(
+              let deliveryTrack = await delivery.findOneAndUpdate(
                 { tracking_id: data.items[i].awbn_number },
                 {
                   $set: {
@@ -1060,8 +1116,13 @@ module.exports = {
                     tray_location: "Warehouse",
                     bot_done_received: Date.now(),
                   },
+                },
+                { 
+                  new: true, 
+                  projection: { _id: 0 } 
                 }
               );
+              let updateElasticSearch=await elasticsearch.uicCodeGen(deliveryTrack)
             }
             resolve({ status: 1 });
           } else {
@@ -1168,7 +1229,7 @@ module.exports = {
       }
       if (data) {
         for (let x of data.items) {
-          let deliveryTrack = await delivery.updateMany(
+          let deliveryTrack = await delivery.findOneAndUpdate(
             { tracking_id: x.awbn_number },
             {
               $set: {
@@ -1176,8 +1237,13 @@ module.exports = {
                 tray_status: "Closed By Warehouse",
                 tray_location: "Warehouse",
               },
+            },
+            { 
+              new: true, 
+              projection: { _id: 0 } 
             }
           );
+          let updateElastic=await elasticsearch.updateUic(deliveryTrack)
         }
         resolve(data);
       } else {
@@ -1680,7 +1746,8 @@ module.exports = {
         status == "Ready to Audit" ||
         status == "Inuse" ||
         status == "Issued to sorting agent" ||
-        status == "Inuse"
+        status == "Inuse" ||
+        status == "Ready to RDL"
       ) {
         data = await masters.find({
           prefix: "tray-master",
@@ -1776,6 +1843,8 @@ module.exports = {
             data.sort_id == "Send for charging" ||
             data.sort_id == "Send for Recharging"
           ) {
+            resolve({ data: data, status: 1 });
+          } else if (data.sort_id == sortId) {
             resolve({ data: data, status: 1 });
           } else {
             resolve({ data: data, status: 3 });
@@ -2011,15 +2080,20 @@ module.exports = {
         );
         if (data) {
           for (let x of data.items) {
-            let deliveryUpdate = await delivery.updateOne(
+            let deliveryUpdate = await delivery.findOneAndUpdate(
               { tracking_id: x.tracking_id },
               {
                 $set: {
                   agent_name_bqc: data.issued_user_name,
                   assign_to_agent_bqc: Date.now(),
                 },
+              },
+              { 
+                new: true, 
+                projection: { _id: 0 } 
               }
             );
+            let updateElasticSearch=await elasticsearch.uicCodeGen(deliveryUpdate)
           }
         }
       } else if (trayData.sortId == "Send for Recharging") {
@@ -2037,7 +2111,7 @@ module.exports = {
         );
         if (data) {
           for (let x of data.items) {
-            let deliveryUpdate = await delivery.updateOne(
+            let deliveryUpdate = await delivery.findOneAndUpdate(
               { tracking_id: x.tracking_id },
               {
                 $set: {
@@ -2045,8 +2119,13 @@ module.exports = {
                   assign_to_agent_charging: Date.now(),
                   tray_location: "Charging",
                 },
+              },
+              { 
+                new: true, 
+                projection: { _id: 0 } 
               }
             );
+            let updateElasticSearch= await elasticsearch.uicCodeGen(deliveryUpdate)
           }
         }
       } else {
@@ -2063,19 +2142,26 @@ module.exports = {
         );
         if (data) {
           for (let x of data.items) {
-            let deliveryUpdate = await delivery.updateOne(
+            let deliveryUpdate = await delivery.findOneAndUpdate(
               { tracking_id: x.tracking_id },
               {
                 $set: {
                   agent_name_charging: data.issued_user_name,
                   assign_to_agent_charging: Date.now(),
+                  tray_location: "Charging",
                 },
+              },
+              { 
+                new: true, 
+                projection: { _id: 0 } 
               }
             );
+            console.log(deliveryUpdate);
+            let updateElasticSearch=await elasticsearch.uicCodeGen(deliveryUpdate)
           }
         }
       }
-      if (data.modifiedCount != 0) {
+      if (data) {
         resolve(data);
       } else {
         resolve();
@@ -2291,7 +2377,7 @@ module.exports = {
         );
         if (data) {
           for (let x of data.items) {
-            let deliveryUpdate = await delivery.updateOne(
+            let deliveryUpdate = await delivery.findOneAndUpdate(
               {
                 tracking_id: x.tracking_id,
               },
@@ -2301,8 +2387,13 @@ module.exports = {
                   tray_location: "Warehouse",
                   bqc_done_close: Date.now(),
                 },
+              },
+              { 
+                new: true, 
+                projection: { _id: 0 } 
               }
             );
+            let updateElasticSearch=await elasticsearch.uicCodeGen(deliveryUpdate)
           }
           resolve(data);
         } else {
@@ -2322,7 +2413,7 @@ module.exports = {
         );
         if (data) {
           for (let x of data.items) {
-            let deliveryUpdate = await delivery.updateOne(
+            let deliveryUpdate = await delivery.findOneAndUpdate(
               {
                 tracking_id: x.tracking_id,
               },
@@ -2332,8 +2423,13 @@ module.exports = {
                   tray_location: "Warehouse",
                   charging_done_close: Date.now(),
                 },
+              },
+              { 
+                new: true, 
+                projection: { _id: 0 } 
               }
             );
+            let updateElasticSearch=await elasticsearch.uicCodeGen(deliveryUpdate)
           }
           resolve(data);
         } else {
@@ -2393,7 +2489,7 @@ module.exports = {
       }
       if (data) {
         for (let x of data.items) {
-          let deliveryUpdate = await delivery.updateOne(
+          let deliveryUpdate = await delivery.findOneAndUpdate(
             {
               tracking_id: x.tracking_id,
             },
@@ -2403,8 +2499,13 @@ module.exports = {
                 tray_location: "Warehouse",
                 audit_done_close: Date.now(),
               },
+            },
+            { 
+              new: true, 
+              projection: { _id: 0 } 
             }
           );
+          let updateElasticSearch=await elasticsearch.uicCodeGen(deliveryUpdate)
         }
         if (falg == true) {
           resolve({ status: 1 });
@@ -2508,7 +2609,7 @@ module.exports = {
         );
         if (data) {
           for (let i = 0; i < data.actual_items.length; i++) {
-            let deliveryTrack = await delivery.updateMany(
+            let deliveryTrack = await delivery.findOneAndUpdate(
               { tracking_id: data.actual_items[i].tracking_id },
               {
                 $set: {
@@ -2516,8 +2617,13 @@ module.exports = {
                   tray_location: "Warehouse",
                   bqc_done_received: Date.now(),
                 },
+              },
+              { 
+                new: true, 
+                projection: { _id: 0 } 
               }
             );
+            let updateElasticSearch=await elasticsearch.uicCodeGen(deliveryTrack)
           }
           resolve({ status: 1 });
         } else {
@@ -2545,7 +2651,7 @@ module.exports = {
         );
         if (data) {
           for (let x of data?.items) {
-            let deliveryTrack = await delivery.updateMany(
+            let deliveryTrack = await delivery.findOneAndUpdate(
               { tracking_id: x.tracking_id },
               {
                 $set: {
@@ -2553,8 +2659,13 @@ module.exports = {
                   tray_location: "Warehouse",
                   audit_done_recieved: Date.now(),
                 },
+              },
+              { 
+                new: true, 
+                projection: { _id: 0 } 
               }
             );
+            let updateElasticSearch=await elasticsearch.uicCodeGen(deliveryTrack)
           }
           resolve({ status: 1 });
         } else {
@@ -2582,7 +2693,7 @@ module.exports = {
         );
         if (data) {
           for (let x of data.items) {
-            let updateDelivery = await delivery.updateOne(
+            let updateDelivery = await delivery.findOneAndUpdate(
               {
                 tracking_id: x.tracking_id,
               },
@@ -2591,8 +2702,13 @@ module.exports = {
                   tray_location: "Warehouse",
                   received_from_sorting: Date.now(),
                 },
+              },
+              { 
+                new: true, 
+                projection: { _id: 0 } 
               }
             );
+            let updateElasticSearch=await elasticsearch.uicCodeGen(updateDelivery)
           }
           resolve({ status: 1 });
         }
@@ -2670,7 +2786,7 @@ module.exports = {
           x.type_taxanomy == "BOT"
         ) {
           for (let x of data.items) {
-            let deliveryUpdate = await delivery.updateOne(
+            let deliveryUpdate = await delivery.findOneAndUpdate(
               { tracking_id: x.awbn_number },
               {
                 $set: {
@@ -2678,8 +2794,13 @@ module.exports = {
                   sorting_agent_name: trayData.username,
                   handover_sorting_date: Date.now(),
                 },
+              },
+              { 
+                new: true, 
+                projection: { _id: 0 } 
               }
             );
+            let updateElasticSearch=await elasticsearch.uicCodeGen(deliveryUpdate)
           }
         }
       }
@@ -2709,7 +2830,7 @@ module.exports = {
         );
         if (data) {
           for (let x of data.items) {
-            let updateDelivery = await delivery.updateOne(
+            let updateDelivery = await delivery.findOneAndUpdate(
               {
                 tracking_id: x.tracking_id,
               },
@@ -2717,8 +2838,13 @@ module.exports = {
                 $set: {
                   closed_from_sorting: Date.now(),
                 },
+              },
+              { 
+                new: true, 
+                projection: { _id: 0 } 
               }
             );
+            let updateElasticSearch=await elasticsearch.uicCodeGen(updateDelivery)
           }
           resolve({ status: 1 });
         }
@@ -2735,7 +2861,7 @@ module.exports = {
         );
         if (data) {
           for (let x of data.items) {
-            let updateDelivery = await delivery.updateOne(
+            let updateDelivery = await delivery.findOneAndUpdate(
               {
                 tracking_id: x.tracking_id,
               },
@@ -2743,8 +2869,13 @@ module.exports = {
                 $set: {
                   closed_from_sorting: Date.now(),
                 },
+              },
+              { 
+                new: true, 
+                projection: { _id: 0 } 
               }
             );
+            let updateElasticSearch=await elasticsearch.uicCodeGen(updateDelivery)
           }
           resolve({ status: 2 });
         }
@@ -3242,7 +3373,7 @@ module.exports = {
       }
       if (data) {
         for (let x of data.items) {
-          let update = await delivery.updateOne(
+          let update = await delivery.findOneAndUpdate(
             {
               $or: [
                 { tracking_id: x.awbn_number },
@@ -3254,8 +3385,13 @@ module.exports = {
                 tray_close_wh_date: Date.now(),
                 tray_location: "Warehouse",
               },
+            },
+            { 
+              new: true, 
+              projection: { _id: 0 } 
             }
           );
+          let updateElastic=await elasticsearch.uicCodeGen(update)
         }
         let updateFromTray = await masters.updateOne(
           { code: fromTray },
@@ -3294,6 +3430,16 @@ module.exports = {
             { issued_user_name: username, sort_id: "Closed By Sorting Agent" },
             { issued_user_name: username, sort_id: "Issued to Merging" },
             { issued_user_name: username, sort_id: "Merging Done" },
+            {
+              issued_user_name: username,
+              sort_id: "Issued to Sorting for Pickup",
+              to_tray_for_pickup: { $ne: null },
+            },
+            {
+              issued_user_name: username,
+              sort_id: "Pickup Done Closed by Sorting Agent",
+              to_tray_for_pickup: { $ne: null },
+            },
           ],
         });
         if (data) {
@@ -3324,7 +3470,7 @@ module.exports = {
             },
           ],
         });
-      
+
         if (data.length != 0) {
           for (let x of data) {
             if (x.type_taxanomy == "WHT") {
@@ -3390,7 +3536,7 @@ module.exports = {
         );
         if (issue.type_taxanomy == "WHT") {
           for (let y of issue.items) {
-            let updateTrack = await delivery.updateOne(
+            let updateTrack = await delivery.findOneAndUpdate(
               { tracking_id: y.tracking_id },
               {
                 $set: {
@@ -3400,8 +3546,13 @@ module.exports = {
                   tray_status: "Issued to Audit",
                   "bqc_report.bqc_status": y?.bqc_status,
                 },
+              },
+              { 
+                new: true, 
+                projection: { _id: 0 } 
               }
             );
+            let updateElasticSearch=await elasticsearch.uicCodeGen(updateTrack)
           }
         }
       }
@@ -3743,6 +3894,237 @@ module.exports = {
         reslove({ status: 1, item: arr });
       } else {
         reslove({ status: 2 });
+      }
+    });
+  },
+  ctxTray: (type, location) => {
+    return new Promise(async (reslove, reject) => {
+      if (type == "all") {
+        let tray = await masters.find({
+          prefix: "tray-master",
+          cpc: location,
+          type_taxanomy: { $nin: ["BOT", "PMT", "MMT", "WHT"] },
+        });
+        if (tray) {
+          reslove({ status: 1, tray: tray });
+        }
+      }
+    });
+  },
+  pickupRequest: (location, type) => {
+    return new Promise(async (resolve, reject) => {
+      let tray = await masters.find({
+        cpc: location,
+        prefix: "tray-master",
+        sort_id: type,
+        to_tray_for_pickup: { $ne: null },
+      });
+      if (tray) {
+        resolve(tray);
+      }
+    });
+  },
+  pickupePageRequestApprove: (location, fromTray) => {
+    return new Promise(async (resolve, reject) => {
+      let arr = [];
+      let data = await masters.findOne({
+        cpc: location,
+        code: fromTray,
+        sort_id: "Pickup Request sent to Warehouse",
+      });
+      if (data) {
+        let toTray = await masters.findOne({
+          cpc: location,
+          code: data.to_tray_for_pickup,
+        });
+        arr.push(data);
+        arr.push(toTray);
+        resolve(arr);
+      } else {
+        resolve();
+      }
+    });
+  },
+  pickupApproveExvsAct: (trayId) => {
+    return new Promise(async (resolve, reject) => {
+      let data = await masters.findOne({
+        code: trayId,
+      });
+      if (data) {
+        if (data.sort_id === "Pickup Request sent to Warehouse") {
+          resolve({ data: data, status: 1 });
+        } else {
+          resolve({ data: data, status: 2 });
+        }
+      } else {
+        resolve({ data: data, status: 3 });
+      }
+    });
+  },
+  assigntoSoringForPickUp: (username, fromTray, toTray) => {
+    return new Promise(async (resolve, reject) => {
+      let updateFromTray = await masters.updateOne(
+        {
+          code: fromTray,
+        },
+        {
+          $set: {
+            issued_user_name: username,
+            requested_date: Date.now(),
+            actual_items: [],
+            temp_array: [],
+            sort_id: "Issued to Sorting for Pickup",
+          },
+        }
+      );
+      let updateToTray = await masters.updateOne(
+        {
+          code: toTray,
+        },
+        {
+          $set: {
+            issued_user_name: username,
+            requested_date: Date.now(),
+            actual_items: [],
+            sort_id: "Issued to Sorting for Pickup",
+          },
+        }
+      );
+
+      if (
+        updateFromTray.modifiedCount != 0 &&
+        updateToTray.modifiedCount !== 0
+      ) {
+        resolve({ status: 1 });
+      } else {
+        resolve({ status: 2 });
+      }
+    });
+  },
+  getPickDoneClosedBySorting: (location) => {
+    return new Promise(async (resolve, reject) => {
+      let data = await masters.find({
+        $or: [
+          {
+            cpc: location,
+            sort_id: "Pickup Done Closed by Sorting Agent",
+          },
+          {
+            cpc: location,
+            sort_id: "Pickup Done Received",
+          },
+        ],
+      });
+      if (data) {
+        resolve(data);
+      }
+    });
+  },
+  pickupDoneRecieve: (trayData) => {
+    console.log(trayData);
+    return new Promise(async (resolve, reject) => {
+      let tray = await masters.findOne({ code: trayData.trayId });
+      if (tray.items.length == trayData.counts) {
+        console.log(tray.items.length);
+        let update = await masters.updateOne(
+          { code: trayData.trayId },
+          {
+            $set: {
+              sort_id: "Pickup Done Received",
+            },
+          }
+        );
+        if (update.modifiedCount !== 0) {
+          resolve({ status: 1 });
+        } else {
+          resolve({ status: 2 });
+        }
+      } else {
+        resolve({ status: 3 });
+      }
+    });
+  },
+  pickupdoneClose: (trayData) => {
+    return new Promise(async (resolve, reject) => {
+      let data;
+      if (trayData.length == 0) {
+        data = await masters.updateOne(
+          { code: trayData.trayId },
+          {
+            $set: {
+              sort_id: "Open",
+              issued_user_name: null,
+              actual_items: [],
+              temp_array: [],
+              pickup_type: null,
+              items: [],
+              to_tray_for_pickup: null,
+            },
+          }
+        );
+      } else {
+        if (trayData.stage == "Charge Done") {
+          data = await masters.updateOne(
+            { code: trayData.trayId },
+            {
+              $set: {
+                sort_id: "Ready to BQC",
+                issued_user_name: null,
+                actual_items: [],
+                temp_array: [],
+                pickup_type: null,
+                to_tray_for_pickup: null,
+              },
+            }
+          );
+        } else if (trayData.stage == "BQC Done") {
+          data = await masters.updateOne(
+            { code: trayData.trayId },
+            {
+              $set: {
+                sort_id: "Ready to Audit",
+                issued_user_name: null,
+                actual_items: [],
+                temp_array: [],
+                pickup_type: null,
+                to_tray_for_pickup: null,
+              },
+            }
+          );
+        } else if (trayData.stage == "Recharge") {
+          data = await masters.updateOne(
+            { code: trayData.trayId },
+            {
+              $set: {
+                sort_id: "Closed",
+                issued_user_name: null,
+                actual_items: [],
+                temp_array: [],
+                pickup_type: null,
+                to_tray_for_pickup: null,
+              },
+            }
+          );
+        } else {
+          data = await masters.updateOne(
+            { code: trayData.trayId },
+            {
+              $set: {
+                sort_id: "Ready to RDL",
+                issued_user_name: null,
+                actual_items: [],
+                temp_array: [],
+                pickup_type: null,
+                to_tray_for_pickup: null,
+              },
+            }
+          );
+        }
+      }
+      if (data.modifiedCount != 0) {
+        resolve({ status: 1 });
+      } else {
+        resolve({ status: 0 });
       }
     });
   },
