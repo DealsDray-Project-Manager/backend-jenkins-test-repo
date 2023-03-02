@@ -316,63 +316,70 @@ module.exports = {
   },
   itemShiftToMmt: (mmtTrayData) => {
     return new Promise(async (resolve, reject) => {
-      let data = await masters.updateOne(
-        { code: mmtTrayData.toTray },
-        {
-          $push: {
-            items: mmtTrayData.item,
-          },
-        }
-      );
-      if (data.modifiedCount !== 0) {
-        let fromTrayItemRemove = await masters.updateOne(
-          { code: mmtTrayData.fromTray },
+      let checkTrayFull=await masters.findOne({code:mmtTrayData.toTray})
+      if(checkTrayFull.limit == checkTrayFull.items.length){
+        resolve({status:3})
+      }
+      else{
+
+        let data = await masters.updateOne(
+          { code: mmtTrayData.toTray },
           {
-            $pull: {
-              actual_items: {
-                uic: mmtTrayData.item.uic,
-              },
+            $push: {
+              items: mmtTrayData.item,
             },
           }
         );
-        if (mmtTrayData.trayType == "WHT") {
-          let updateDelivery = await delivery.findOneAndUpdate(
-            { tracking_id: mmtTrayData.item.tracking_id },
+        if (data.modifiedCount !== 0) {
+          let fromTrayItemRemove = await masters.updateOne(
+            { code: mmtTrayData.fromTray },
             {
-              $set: {
-                tray_location: "Merging",
-                wht_tray: mmtTrayData.toTray,
+              $pull: {
+                actual_items: {
+                  uic: mmtTrayData.item.uic,
+                },
               },
-            },
-            { 
-              new: true, 
-              projection: { _id: 0 } 
             }
           );
-          let updateElasticSearch=await Elasticsearch.uicCodeGen(updateDelivery)
+          if (mmtTrayData.trayType == "WHT") {
+            let updateDelivery = await delivery.findOneAndUpdate(
+              { tracking_id: mmtTrayData.item.tracking_id },
+              {
+                $set: {
+                  tray_location: "Merging",
+                  wht_tray: mmtTrayData.toTray,
+                },
+              },
+              { 
+                new: true, 
+                projection: { _id: 0 } 
+              }
+            );
+            let updateElasticSearch=await Elasticsearch.uicCodeGen(updateDelivery)
+          } else {
+            let updateDelivery = await delivery.findOneAndUpdate(
+              { tracking_id: mmtTrayData.item.awbn_number },
+              {
+                $set: {
+                  tray_location: "Merging",
+                  tray_id: mmtTrayData.toTray,
+                },
+              },
+              { 
+                new: true, 
+                projection: { _id: 0 } 
+              }
+            );
+            let updateElasticSearch=await Elasticsearch.uicCodeGen(updateDelivery)
+          }
+          if (fromTrayItemRemove.modifiedCount !== 0) {
+            resolve({ status: 1 });
+          } else {
+            resolve({ status: 0 });
+          }
         } else {
-          let updateDelivery = await delivery.findOneAndUpdate(
-            { tracking_id: mmtTrayData.item.awbn_number },
-            {
-              $set: {
-                tray_location: "Merging",
-                tray_id: mmtTrayData.toTray,
-              },
-            },
-            { 
-              new: true, 
-              projection: { _id: 0 } 
-            }
-          );
-          let updateElasticSearch=await Elasticsearch.uicCodeGen(updateDelivery)
-        }
-        if (fromTrayItemRemove.modifiedCount !== 0) {
           resolve({ status: 1 });
-        } else {
-          resolve({ status: 0 });
         }
-      } else {
-        resolve({ status: 1 });
       }
     });
   },

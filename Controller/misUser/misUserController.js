@@ -654,7 +654,6 @@ module.exports = {
         ]);
       }
       if (allOrders) {
-    
         resolve(allOrders);
       }
     });
@@ -2002,12 +2001,12 @@ module.exports = {
             download_time: Date.now(),
           },
         },
-        { 
-          new: true, 
-          projection: { _id: 0 } 
+        {
+          new: true,
+          projection: { _id: 0 },
         }
       );
-      let updateElasticSearch=await elasticsearch.uicCodeGen(data)
+      let updateElasticSearch = await elasticsearch.uicCodeGen(data);
       if (data) {
         resolve({ status: true });
       } else {
@@ -2175,7 +2174,6 @@ module.exports = {
     });
   },
   getModelBasedDataFromBot: (trayData) => {
-  
     return new Promise(async (resolve, reject) => {
       let temp_array = [];
       let data;
@@ -2449,7 +2447,7 @@ module.exports = {
           temp_array: arr,
           not_assigned: flag,
         };
-   
+
         resolve(obj);
       } else {
         resolve();
@@ -2511,11 +2509,10 @@ module.exports = {
           })
           .catch((err) => reject(err));
       }
-     
+
       if (whtTray.length !== 0) {
         for (let x of whtTray) {
-          let count = x.limit - x.items.length;
-          if (count >= itemCount) {
+          if (parseInt(x.limit) > parseInt(x.items.length)) {
             arr.push(x);
           }
         }
@@ -2641,7 +2638,6 @@ module.exports = {
         })
         .catch((err) => reject(err));
       if (data) {
-       
         resolve(data);
       } else {
         resolve();
@@ -2689,7 +2685,7 @@ module.exports = {
           code: { $ne: toTray },
         })
         .catch((err) => reject(err));
-   
+
       if (whtTray.length !== 0) {
         for (let x of whtTray) {
           let count = x.items.length + itemsCount;
@@ -2698,7 +2694,6 @@ module.exports = {
           }
         }
         if (arr.length !== 0) {
-         
           resolve({ status: 1, tray: arr });
         } else {
           resolve({ status: 2 });
@@ -2799,7 +2794,6 @@ module.exports = {
       } else if (firstChar.match(/[a-zA-Z0-9]/)) {
         let deliveryItems = await delivery.find({ imei: value });
         if (deliveryItems.length == 0) {
-       
           let deliveryItems = await delivery.find({ imei: `'${value}` });
           if (deliveryItems) {
             resolve(deliveryItems);
@@ -3096,7 +3090,7 @@ module.exports = {
           arr.push(x);
         }
       }
-      
+
       if (arr.length == 0) {
         let product = await products.findOne({ vendor_sku_id: item_id_wht });
         let getWhtTray = await masters.find({
@@ -3116,7 +3110,6 @@ module.exports = {
     });
   },
   pickupRequestSendToWh: (itemData) => {
-
     return new Promise(async (resolve, reject) => {
       let sendtoPickupRequest;
       for (let x of itemData.isCheck) {
@@ -3136,7 +3129,7 @@ module.exports = {
             }
           );
           sendtoPickupRequest = await masters.updateOne(
-            { "items.uic": x,type_taxanomy:"WHT" },
+            { "items.uic": x, type_taxanomy: "WHT" },
             {
               $set: {
                 sort_id: "Pickup Request sent to Warehouse",
