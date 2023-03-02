@@ -2148,6 +2148,7 @@ module.exports = {
                 $set: {
                   agent_name_charging: data.issued_user_name,
                   assign_to_agent_charging: Date.now(),
+                  tray_location: "Charging",
                 },
               },
               { 
@@ -2155,11 +2156,12 @@ module.exports = {
                 projection: { _id: 0 } 
               }
             );
-            let updateElasticSearch=await elasticsearch.updateUic(deliveryUpdate)
+            console.log(deliveryUpdate);
+            let updateElasticSearch=await elasticsearch.uicCodeGen(deliveryUpdate)
           }
         }
       }
-      if (data.modifiedCount != 0) {
+      if (data) {
         resolve(data);
       } else {
         resolve();

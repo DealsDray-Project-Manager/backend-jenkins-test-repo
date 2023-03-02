@@ -269,7 +269,7 @@ module.exports = {
               }
             );
 
-            let updateElasticSearch = await Elasticsearch.updateUic(
+            let updateElasticSearch = await Elasticsearch.uicCodeGen(
               deliveryUpdate
             );
           }

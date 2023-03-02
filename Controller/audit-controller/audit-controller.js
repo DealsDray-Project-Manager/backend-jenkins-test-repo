@@ -111,7 +111,6 @@ module.exports = {
             },
           ],
         });
-        console.log(checkAlreadyAdded);
         if (checkAlreadyAdded) {
           resolve({ status: 5 });
         } else {

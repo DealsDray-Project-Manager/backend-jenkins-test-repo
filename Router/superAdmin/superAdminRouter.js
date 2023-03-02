@@ -154,7 +154,7 @@ router.get("/getCpc/", async (req, res) => {
 router.post("/getWarehouseByLocation", async (req, res) => {
   try {
     const { name } = req.body;
-    console.log(name);
+   
     let warehouse = await superAdminController.getWarehouse(name);
     if (warehouse) {
       res.status(200).json({ data: { warehouse } });
@@ -414,7 +414,7 @@ router.post("/deleteBrand/:brandId", async (req, res, next) => {
 router.post("/bulkValidationProduct", async (req, res, next) => {
   try {
     let data = await superAdminController.validationBulkProduct(req.body);
-    console.log(data);
+
     if (data.status == true) {
       res.status(200).json({
         message: "Successfully Validated",
@@ -1144,8 +1144,8 @@ router.post("/itemTracking/:page/:size", async (req, res, next) => {
 router.post("/search-admin-track-item", async (req, res, next) => {
   try {
     const { type, searchData, location, rowsPerPage, page } = req.body;
-    console.log(req.body);
-    let data = await elasticsearch.mappings(searchData, page, rowsPerPage);
+ 
+    let data = await elasticsearch.superAdminTrackItemSearchData(searchData, page, rowsPerPage);
     // let data = await superAdminController.searchAdminTrackItem(
     //   type,
     //   searchData,
@@ -1344,7 +1344,7 @@ router.post("/viewCategory", async (req, res, next) => {
 /*-----------------------------EXTRA ONE--------------------------------------*/
 router.post("/update-cpc", async (req, res, next) => {
   try {
-    console.log("d");
+ 
     let data = await superAdminController.updateCPCExtra();
     if (data) {
       res.status(200).json({
@@ -1362,7 +1362,7 @@ router.post("/update-cpc", async (req, res, next) => {
 
 router.post("/update-wht-trayId", async (req, res, next) => {
   try {
-    console.log("d");
+   
     let data = await superAdminController.updateWhtTrayId();
     if (data) {
       res.status(200).json({

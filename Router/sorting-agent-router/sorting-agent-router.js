@@ -41,7 +41,7 @@ router.post(
         username,
         trayId
       );
-      console.log(data);
+    
       if (data.status == 1) {
         res.status(200).json({
           data: data.tray,
@@ -153,7 +153,7 @@ router.post("/getAssignedFromTray/:username", async (req, res, next) => {
   try {
     const { username } = req.params;
     let data = await sortingAgentController.getAssignedMmtTray(username);
-    console.log(data);
+  
     if (data) {
       res.status(200).json({
         data: data,
@@ -166,7 +166,7 @@ router.post("/getAssignedFromTray/:username", async (req, res, next) => {
 /* MMT MERGE ITEM SHIFTED FROM TO */
 router.post("/itemShifteToMmtTray", async (req, res, next) => {
   try {
-    console.log(req.body);
+  
     let data = await sortingAgentController.itemShiftToMmt(req.body);
     if (data.status === 1) {
       res.status(200).json({
@@ -218,7 +218,7 @@ router.post("/pickup/getTray/:fromTray", async (req, res, next) => {
   try {
     const { fromTray } = req.params;
     let data = await sortingAgentController.pickupGetOntrayStartPage(fromTray);
-    console.log(data);
+ 
     if (data) {
       res.status(200).json({
         data: data,
@@ -283,9 +283,9 @@ router.post("/pickup/itemTransfer", async (req, res, next) => {
 // PICKUP DONE CLOSE BY WAREHOUSE
 router.post("/pickup/closeTray", async (req, res, next) => {
   try {
-    console.log(req.body);
+   
     let data = await sortingAgentController.pickupDoneClose(req.body);
-    console.log(data);
+    
     if (data.status === 1) {
       res.status(200).json({
         message: "Successfully Sent to Warehouse",
@@ -303,7 +303,7 @@ router.post("/pickup/edoCloseTray/:trayId", async (req, res, next) => {
   try {
     const {trayId}=req.params
     let data = await sortingAgentController.pickupDoneEodClose(trayId);
-    console.log(data);
+   
     if (data.status === 1) {
       res.status(200).json({
         message: "Successfully Sent to Warehouse",

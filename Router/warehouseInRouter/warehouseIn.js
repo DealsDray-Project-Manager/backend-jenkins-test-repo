@@ -13,7 +13,6 @@ router.post("/dashboard/:location", async (req, res, next) => {
     const { location } = req.params;
     let data = await warehouseInController.dashboard(location);
     if (data) {
-      console.log(data);
       res.status(200).json({
         data: data,
         message: "Success",
@@ -106,7 +105,6 @@ router.post("/checkBotUserStatus/:username", async (req, res, next) => {
   try {
     const { username, bagId } = req.params;
     let data = await warehouseInController.checkBotUserStatus(username, bagId);
-    console.log(data);
     if (data.status === 1) {
       res.status(200).json({
         data: "User is free",
@@ -131,7 +129,6 @@ router.post("/checkAwbn", async (req, res, next) => {
   try {
     const { awbn, bagId, location } = req.body;
     let data = await warehouseInController.checkAwbin(awbn, bagId, location);
-    console.log(data);
     if (data.status == 1) {
       res.status(202).json({
         message: "AWBN Number does Not Exist",
@@ -553,7 +550,6 @@ router.post("/bagValidation/:bagId", async (req, res, next) => {
   try {
     const { bagId } = req.params;
     let data = await warehouseInController.bagValidationPmtMmtBot(bagId);
-    console.log(data);
     if (data.status === 1) {
       res.status(200).json({
         status: 1,
@@ -636,7 +632,7 @@ router.post(
   async (req, res, next) => {
     try {
       let data = await warehouseInController.autoFetchTray(req.params.username);
-      console.log(data);
+
       if (data) {
         res.status(200).json({
           pmtTray: data.pmtTray,
@@ -770,7 +766,6 @@ router.post("/whtTray/:location/:type", async (req, res, next) => {
 
 router.post("/wht-tray/:status/:location", async (req, res, next) => {
   try {
-    console.log(req.params);
     let data = await warehouseInController.getInUseWhtTray(
       req.params.status,
       req.params.location
@@ -789,7 +784,6 @@ router.post("/wht-tray/:status/:location", async (req, res, next) => {
 router.post("/getWhtTrayItem/:trayId/:sortId", async (req, res, next) => {
   try {
     const { trayId, sortId } = req.params;
-    console.log(sortId);
     let data = await warehouseInController.getWhtTrayitem(trayId, sortId);
     if (data.status == 1) {
       res.status(200).json({
@@ -854,8 +848,6 @@ router.post("/check-uic", async (req, res, next) => {
   try {
     const { trayId, uic } = req.body;
     let data = await warehouseInController.checkUicCode(uic, trayId);
-
-    console.log(data);
     if (data.status == 1) {
       res.status(202).json({
         message: "UIC Does Not Exists",
@@ -1364,7 +1356,6 @@ router.post("/bot-tray-report", async (req, res, next) => {
   try {
     const { location, botTray } = req.body;
     let data = await warehouseInController.getBotTrayReport(location, botTray);
-    console.log(data);
     if (data.status == 1) {
       res.status(200).json({
         data: data.data,
@@ -1392,7 +1383,6 @@ router.post(
   "/bot-tray-report-item-details/:location/:trayId/:muic",
   async (req, res, next) => {
     try {
-      console.log(req.params);
       const { location, trayId, muic } = req.params;
       let data = await warehouseInController.getItemDetailsOfBotTrayReport(
         location,
@@ -1439,7 +1429,7 @@ router.post(
         location,
         fromTray
       );
-      console.log(data);
+
       if (data) {
         res.status(200).json({
           data: data,
@@ -1458,14 +1448,12 @@ router.post(
 /*---------------------MMT TRAY SEND TO SORTING AGENT CONFIRM--------------------------------*/
 router.post("/mmtTraySendToSorting", async (req, res, next) => {
   try {
-    console.log(req.body);
     const { username, fromTray, toTray } = req.body;
     let data = await warehouseInController.assignToSortingAgent(
       username,
       fromTray,
       toTray
     );
-    console.log(data);
     if (data.status === 1) {
       res.status(200).json({
         message: "Successfully Assigned",
@@ -1731,7 +1719,6 @@ router.post("/salesBinItem/:location", async (req, res, next) => {
   try {
     const { location } = req.params;
     let data = await warehouseInController.getSalesBinItem(location);
-    console.log(data);
     if (data) {
       res.status(200).json({
         data: data,
@@ -1747,7 +1734,6 @@ router.post("/salesBinItem/search/:uic", async (req, res, next) => {
   try {
     const { uic } = req.params;
     let data = await warehouseInController.getSalesBinSearchData(uic);
-    console.log(data);
     if (data.status == 1) {
       res.status(200).json({
         data: data.item,
@@ -1773,7 +1759,6 @@ router.post(
         brand,
         model
       );
-      console.log(data);
       if (data.status === 1) {
         res.status(200).json({
           data: "User is free",
@@ -1837,7 +1822,6 @@ router.post(
 /*----------------------------------------AUDIT TRAY ISSUE TO AGENT----------------------------------------------- */
 
 router.post("/auditTrayIssueToAgent", async (req, res, next) => {
-  console.log(req.body);
   try {
     const data = await warehouseInController.auditTrayAssign(req.body);
     if (data.status == 1) {
@@ -1866,7 +1850,7 @@ router.post(
         brand,
         model
       );
-      console.log(data);
+
       if (data) {
         res.status(200).json({
           data: data,
@@ -1902,14 +1886,13 @@ router.post("/wht-relase/:trayId", async (req, res, next) => {
 router.post("/auditUserTrayForAssign", async (req, res, next) => {
   try {
     const { username, tray_type, tray_id, location } = req.body;
-    console.log(req.body);
     let data = await warehouseInController.auditUserTray(
       username,
       tray_type,
       tray_id,
       location
     );
-    console.log(data);
+
     if (data.status === 1) {
       res.status(200).json({
         message: "Valid",
@@ -2006,12 +1989,11 @@ router.post(
   async (req, res, next) => {
     try {
       const { location, fromTray } = req.params;
-      console.log(req.params);
       let data = await warehouseInController.pickupePageRequestApprove(
         location,
         fromTray
       );
-      console.log(data);
+
       if (data) {
         res.status(200).json({
           data: data,

@@ -63,7 +63,7 @@ router.post("/getBadOrders/:location", async (req, res, next) => {
   try {
     let data = await misUserController.getBadOrders(req.params.location);
     if (data) {
-      console.log(data);
+     
       res.status(200).json({
         data: data,
         message: "Success",
@@ -304,7 +304,7 @@ router.post("/importDelivery", async (req, res, next) => {
 router.post("/getDeliveryCount/:location", async (req, res, next) => {
   try {
     let data = await misUserController.getDeliveryCount(req.params.location);
-    console.log(data);
+  
     if (data) {
       res.status(200).json({
         data: data,
@@ -510,11 +510,11 @@ router.post("/addUicCode", async (req, res, next) => {
 /* Get uic genrated */
 router.post("/uicGeneratedRecon", async (req, res, next) => {
   try {
-    console.log(req.body);
+    
     let data = await misUserController.getUicRecon(req.body);
-    console.log(data.data.length);
+   
     if (data) {
-      console.log(data);
+     
       res.status(200).json({
         data: data.data,
         count: data.count,
@@ -644,7 +644,7 @@ router.post("/deleteBadDelivery", async (req, res, next) => {
 router.post("/getBagItemWithUic/:bagId", async (req, res, next) => {
   try {
     let data = await misUserController.getBagItemForUic(req.params.bagId);
-    console.log(data);
+  
     if (data.status == 1) {
       res.status(200).json({
         data: data.data,
@@ -829,7 +829,7 @@ router.post("/ready-for-charging-wht", async (req, res, next) => {
 /* SORT TRAY BASED ON THE BRAND AND MODEL */
 router.post("/toWhtTrayForMerge", async (req, res, next) => {
   try {
-    console.log(req.body);
+    
     const { location, brand, model, fromTray, itemCount, status } = req.body;
     let data = await misUserController.toWhtTrayForMerging(
       location,
@@ -1018,7 +1018,6 @@ router.post(
   "/toMmtTrayForMerge/:fromTray/:location/:itemsCount",
   async (req, res, next) => {
     try {
-      console.log(req.params);
       const { fromTray, location, itemsCount } = req.params;
       let mmtTray = await misUserController.getToTrayMmtMerge(
         fromTray,
@@ -1042,7 +1041,6 @@ router.post(
 /* MMT TRAY MERGE REQUEST SEND TO WAREHOUSE */
 router.post("/TrayMergeRequestSend", async (req, res, next) => {
   try {
-    console.log(req.body);
     const { sort_agent, fromTray, toTray } = req.body;
     let data = await misUserController.mmtMergeRequestSendToWh(
       sort_agent,
@@ -1092,7 +1090,7 @@ router.post("/pickup/items/:type", async (req, res, next) => {
     let { type, page, size } = req.params;
 
     const data = await misUserController.pickupPageItemView(type);
-    console.log(data.items[0]);
+   
 
     if (data.items.length !== 0) {
       res.status(200).json({
@@ -1121,7 +1119,7 @@ router.post(
         type,
        
       );
-      console.log(data);
+    
       if (data.items.length !== 0) {
         res.status(200).json({
           data: data.items,
@@ -1144,7 +1142,7 @@ router.post("/pickup/uicSearch/:uic/:type", async (req, res, next) => {
   try {
     const { uic, type } = req.params;
     const data = await misUserController.pickupPageUicSearch(uic, type);
-    console.log(data);
+   
     if (data.items.length !== 0) {
       res.status(200).json({
         data: data.items,
@@ -1165,7 +1163,7 @@ router.post("/pickup/uicSearch/:uic/:type", async (req, res, next) => {
 router.post("/pickup/whtTray", async (req, res, next) => {
   try {
     let data = await misUserController.pickupPageGetWhtTray(req.body);
-    console.log(data);
+   
     if (data.status == 1) {
       res.status(200).json({
         data: data.whtTray,

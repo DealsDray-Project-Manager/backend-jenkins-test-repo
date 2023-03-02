@@ -654,7 +654,7 @@ module.exports = {
         ]);
       }
       if (allOrders) {
-        console.log(allOrders);
+    
         resolve(allOrders);
       }
     });
@@ -2175,7 +2175,7 @@ module.exports = {
     });
   },
   getModelBasedDataFromBot: (trayData) => {
-    console.log(trayData);
+  
     return new Promise(async (resolve, reject) => {
       let temp_array = [];
       let data;
@@ -2449,7 +2449,7 @@ module.exports = {
           temp_array: arr,
           not_assigned: flag,
         };
-        console.log(obj);
+   
         resolve(obj);
       } else {
         resolve();
@@ -2511,7 +2511,7 @@ module.exports = {
           })
           .catch((err) => reject(err));
       }
-      console.log(whtTray);
+     
       if (whtTray.length !== 0) {
         for (let x of whtTray) {
           let count = x.limit - x.items.length;
@@ -2641,7 +2641,7 @@ module.exports = {
         })
         .catch((err) => reject(err));
       if (data) {
-        console.log(data);
+       
         resolve(data);
       } else {
         resolve();
@@ -2689,7 +2689,7 @@ module.exports = {
           code: { $ne: toTray },
         })
         .catch((err) => reject(err));
-      console.log(whtTray);
+   
       if (whtTray.length !== 0) {
         for (let x of whtTray) {
           let count = x.items.length + itemsCount;
@@ -2698,7 +2698,7 @@ module.exports = {
           }
         }
         if (arr.length !== 0) {
-          console.log(arr);
+         
           resolve({ status: 1, tray: arr });
         } else {
           resolve({ status: 2 });
@@ -2799,7 +2799,7 @@ module.exports = {
       } else if (firstChar.match(/[a-zA-Z0-9]/)) {
         let deliveryItems = await delivery.find({ imei: value });
         if (deliveryItems.length == 0) {
-          console.log("dataaa");
+       
           let deliveryItems = await delivery.find({ imei: `'${value}` });
           if (deliveryItems) {
             resolve(deliveryItems);
@@ -3096,7 +3096,7 @@ module.exports = {
           arr.push(x);
         }
       }
-      console.log(itemData.isCheck.length);
+      
       if (arr.length == 0) {
         let product = await products.findOne({ vendor_sku_id: item_id_wht });
         let getWhtTray = await masters.find({
@@ -3116,7 +3116,7 @@ module.exports = {
     });
   },
   pickupRequestSendToWh: (itemData) => {
-    console.log(itemData);
+
     return new Promise(async (resolve, reject) => {
       let sendtoPickupRequest;
       for (let x of itemData.isCheck) {
@@ -3136,7 +3136,7 @@ module.exports = {
             }
           );
           sendtoPickupRequest = await masters.updateOne(
-            { "items.uic": x },
+            { "items.uic": x,type_taxanomy:"WHT" },
             {
               $set: {
                 sort_id: "Pickup Request sent to Warehouse",
