@@ -9,8 +9,9 @@ const upload = require("../../Utils/multer");
 // jwt token
 const jwt = require("../../Utils/jwt_token");
 /* FS */
-var fs = require("fs");
-
+const fs = require("fs");
+/* ELASTIC SEARCH */
+const elasticsearch = require("../../Elastic-search/elastic");
 /**************************************************************************************************/
 
 /*
@@ -141,6 +142,7 @@ router.post("/changePassword", async (req, res, next) => {
 /*----------------------------CPC---------------------------------------*/
 router.get("/getCpc/", async (req, res) => {
   let data = await superAdminController.getCpc();
+
   if (data) {
     res.status(200).json({ status: 1, data: { data } });
   } else {
@@ -152,6 +154,7 @@ router.get("/getCpc/", async (req, res) => {
 router.post("/getWarehouseByLocation", async (req, res) => {
   try {
     const { name } = req.body;
+   
     let warehouse = await superAdminController.getWarehouse(name);
     if (warehouse) {
       res.status(200).json({ data: { warehouse } });
@@ -411,6 +414,7 @@ router.post("/deleteBrand/:brandId", async (req, res, next) => {
 router.post("/bulkValidationProduct", async (req, res, next) => {
   try {
     let data = await superAdminController.validationBulkProduct(req.body);
+
     if (data.status == true) {
       res.status(200).json({
         message: "Successfully Validated",
@@ -1139,14 +1143,20 @@ router.post("/itemTracking/:page/:size", async (req, res, next) => {
 /*-----------------------------SEARCH TRACK ITEM--------------------------------------*/
 router.post("/search-admin-track-item", async (req, res, next) => {
   try {
-    const { type, searchData, location } = req.body;
-    let data = await superAdminController.searchAdminTrackItem(
-      type,
-      searchData,
-      location
-    );
-    if (data) {
+    const { type, searchData, location, rowsPerPage, page } = req.body;
+ 
+    let data = await elasticsearch.superAdminTrackItemSearchData(searchData, page, rowsPerPage);
+    // let data = await superAdminController.searchAdminTrackItem(
+    //   type,
+    //   searchData,
+    //   location
+    // );
+    if (data.length != 0) {
       res.status(200).json({
+        data: data,
+      });
+    } else {
+      res.status(202).json({
         data: data,
       });
     }
@@ -1154,7 +1164,6 @@ router.post("/search-admin-track-item", async (req, res, next) => {
     next(error);
   }
 });
-
 /*-----------------------------GET INUSE WHT--------------------------------------*/
 router.post("/getInuseWht", async (req, res, next) => {
   try {
@@ -1296,12 +1305,46 @@ router.post("/sendToRdl", async (req, res, next) => {
   }
 });
 
+/*--------------------------------------------------------------------------------------------------------------*/
+// CREATE CATEGORY
+router.post("/createCategory", async (req, res, next) => {
+  try {
+    const createCategoryRes = await superAdminController.createCategoryMaster(
+      req.body
+    );
+    if (createCategoryRes.status == 1) {
+      res.status(200).json({
+        message: "Successfully Created",
+      });
+    } else {
+      res.status(202).json({
+        message: "Category already existed",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+// VIEW ALL THE CATEGORY
+router.post("/viewCategory", async (req, res, next) => {
+  try {
+    let categoryData = await superAdminController.findAllCategory();
+    if (categoryData) {
+      res.status(200).json({
+        data: categoryData,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
 /****************************************************************************************************** */
 
 /*-----------------------------EXTRA ONE--------------------------------------*/
 router.post("/update-cpc", async (req, res, next) => {
   try {
-    console.log("d");
+ 
     let data = await superAdminController.updateCPCExtra();
     if (data) {
       res.status(200).json({
@@ -1319,7 +1362,7 @@ router.post("/update-cpc", async (req, res, next) => {
 
 router.post("/update-wht-trayId", async (req, res, next) => {
   try {
-    console.log("d");
+   
     let data = await superAdminController.updateWhtTrayId();
     if (data) {
       res.status(200).json({

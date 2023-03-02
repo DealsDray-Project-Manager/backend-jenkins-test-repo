@@ -41,7 +41,7 @@ router.post(
         username,
         trayId
       );
-      console.log(data);
+    
       if (data.status == 1) {
         res.status(200).json({
           data: data.tray,
@@ -153,7 +153,7 @@ router.post("/getAssignedFromTray/:username", async (req, res, next) => {
   try {
     const { username } = req.params;
     let data = await sortingAgentController.getAssignedMmtTray(username);
-    console.log(data);
+  
     if (data) {
       res.status(200).json({
         data: data,
@@ -166,7 +166,7 @@ router.post("/getAssignedFromTray/:username", async (req, res, next) => {
 /* MMT MERGE ITEM SHIFTED FROM TO */
 router.post("/itemShifteToMmtTray", async (req, res, next) => {
   try {
-    console.log(req.body);
+  
     let data = await sortingAgentController.itemShiftToMmt(req.body);
     if (data.status === 1) {
       res.status(200).json({
@@ -185,6 +185,125 @@ router.post("/itemShifteToMmtTray", async (req, res, next) => {
 router.post("/mergeDoneTraySendToWarehouse", async (req, res, next) => {
   try {
     let data = await sortingAgentController.mergeDoneSendToWh(req.body);
+    if (data.status === 1) {
+      res.status(200).json({
+        message: "Successfully Sent to Warehouse",
+      });
+    } else {
+      res.status(202).json({
+        message: "Failed Please tray again",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+/*--------------------------------PICKUP MODULE-------------------------------------*/
+// GET ASSIGNED TRAY FOR PICKUP
+router.post("/pickup/assigendTray/:username/:type", async (req, res, next) => {
+  try {
+    const { username,type } = req.params;
+    let data = await sortingAgentController.getAssignedPickupTray(username,type);
+    if (data) {
+      res.status(200).json({
+        data: data,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+//GET ONE TRAY
+router.post("/pickup/getTray/:fromTray", async (req, res, next) => {
+  try {
+    const { fromTray } = req.params;
+    let data = await sortingAgentController.pickupGetOntrayStartPage(fromTray);
+ 
+    if (data) {
+      res.status(200).json({
+        data: data,
+      });
+    } else {
+      res.status(202).json({
+        message: "You can't access this tray",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+// Pickup item transferpage uic scan
+router.post("/pickup/itemTransferUicScan", async (req, res, next) => {
+  try {
+    let data = await sortingAgentController.pickupItemTransferUicScan(req.body);
+    if (data.status === 1) {
+      res.status(200).json({
+        data: data.data,
+        message: "Valid UIC",
+      });
+    } else if (data.status === 2) {
+      res.status(202).json({
+        message: "Invalid UIC",
+      });
+    } else if (data.status == 3) {
+      res.status(202).json({
+        message: "Item does not exists in the tray",
+      });
+    } else if (data.status == 4) {
+      res.status(202).json({
+        message: "Item Already added",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+//Pickup module transfer to from tray to TO tray
+router.post("/pickup/itemTransfer", async (req, res, next) => {
+  try {
+    const { toTray, fromTray } = req.body;
+    let data = await sortingAgentController.pickupItemTrasfer(req.body);
+    if (data.status == 1) {
+      res.status(200).json({
+        message: `Item successfully transfer to - ${toTray}`,
+      });
+    } else if (data.status == 2) {
+      res.status(200).json({
+        message: `This item not move keep it in the ${fromTray} `,
+      });
+    } else {
+      res.status(202).json({
+        message: "Item Transfer failed",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+// PICKUP DONE CLOSE BY WAREHOUSE
+router.post("/pickup/closeTray", async (req, res, next) => {
+  try {
+   
+    let data = await sortingAgentController.pickupDoneClose(req.body);
+    
+    if (data.status === 1) {
+      res.status(200).json({
+        message: "Successfully Sent to Warehouse",
+      });
+    } else {
+      res.status(202).json({
+        message: "Failed Please tray again",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+router.post("/pickup/edoCloseTray/:trayId", async (req, res, next) => {
+  try {
+    const {trayId}=req.params
+    let data = await sortingAgentController.pickupDoneEodClose(trayId);
+   
     if (data.status === 1) {
       res.status(200).json({
         message: "Successfully Sent to Warehouse",
