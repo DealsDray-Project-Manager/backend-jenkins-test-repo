@@ -1,0 +1,231 @@
+[33mcommit 3193fc64cac8877f4fd68032871df41e85866ad7[m[33m ([m[1;36mHEAD -> [m[1;32mmain-branch[m[33m)[m
+Author: Rafnas <mohd.rafnas@dealsdray.com>
+Date:   Tue Dec 13 16:46:29 2022 +0530
+
+    done
+
+[33mcommit bb0bf827858805640ab88a8748fce5c4302c242f[m[33m ([m[1;31mprexo/main-branch[m[33m)[m
+Author: Rafnas <mohd.rafnas@dealsdray.com>
+Date:   Tue Dec 13 16:41:22 2022 +0530
+
+    bug fix
+
+[33mcommit 1527e1070d9a5a6fd52987e2d1dbb0d08a33d552[m
+Merge: 623b394 c4f8e2c
+Author: Rafnas <mohd.rafnas@dealsdray.com>
+Date:   Tue Dec 13 16:40:00 2022 +0530
+
+    Merge branch 'version-3.1' into main-branch
+
+[33mcommit c4f8e2ceacb59e30ce9fb08afc7b5cc7a9f56b59[m[33m ([m[1;32mversion-3.1[m[33m)[m
+Author: Rafnas <mohd.rafnas@dealsdray.com>
+Date:   Tue Dec 13 15:30:02 2022 +0530
+
+    bug-fix
+
+[33mcommit b47f18f885b5feb239c4f7f5be4871387a1e31ae[m
+Author: Rafnas <mohd.rafnas@dealsdray.com>
+Date:   Tue Dec 13 14:47:01 2022 +0530
+
+    uat-released
+
+[33mcommit e650dc9da80d465c4fa8628e78c8fbca8ba09fad[m
+Author: Rafnas <mohd.rafnas@dealsdray.com>
+Date:   Tue Dec 13 11:35:56 2022 +0530
+
+    version-3.1-ready-for-testing
+
+[33mcommit 1c08b78dcb6caaf0bde65ac5598847d5a98ec2a5[m[33m ([m[1;32mproduction[m[33m)[m
+Author: Rafnas <mohd.rafnas@dealsdray.com>
+Date:   Mon Dec 12 12:13:31 2022 +0530
+
+    v3.0-bug-fix
+
+[33mcommit 623b394f7fb8a5f13f7ee90e0a0b51c1092abe72[m
+Author: Rafnas <mohd.rafnas@dealsdray.com>
+Date:   Mon Dec 12 12:11:50 2022 +0530
+
+    v4-progreess
+
+[33mcommit a448a1dcf6dff370629e6c4f88f34b02059c2d45[m
+Author: Rafnas <mohd.rafnas@dealsdray.com>
+Date:   Mon Dec 12 12:09:36 2022 +0530
+
+    v4
+
+[33mcommit 758f6f3de013f73451bbd188360ee100f9fd63cd[m
+Author: Rafnas <mohd.rafnas@dealsdray.com>
+Date:   Fri Dec 9 13:33:30 2022 +0530
+
+    v4-working-process
+
+[33mcommit 07c9f4d3061460f8cc0b96123f6956180fb111c2[m
+Merge: 236e490 63b2bd3
+Author: Rafnas <mohd.rafnas@dealsdray.com>
+Date:   Wed Dec 7 14:56:16 2022 +0530
+
+    Merge branch 'version_3.0' into main-branch
+
+[33mcommit 236e4905bf16823c6d49a09b8ae65599d26bdd5e[m
+Merge: 363c859 8cadc86
+Author: Rafnas <mohd.rafnas@dealsdray.com>
+Date:   Wed Dec 7 14:43:29 2022 +0530
+
+    Merge branch 'version_3.1' into main-branch
+
+[33mcommit 363c8597a8a00c03bbd7d6994d8061f017f98eb0[m
+Author: Rafnas <mohd.rafnas@dealsdray.com>
+Date:   Wed Dec 7 14:32:53 2022 +0530
+
+    main
+
+[33mcommit 87951f27a6bbedba177c6c141a9be9d40e3b6252[m
+Merge: 6bb9e4f 690f7b6
+Author: Rafnas <mohd.rafnas@dealsdray.com>
+Date:   Wed Dec 7 11:17:51 2022 +0530
+
+    Merge branch 'version_3.2' into main-branch
+
+[33mcommit 690f7b6844032fbbeaf32489f7b53fab30b99f3f[m[33m ([m[1;32mversion_3.2[m[33m)[m
+Author: Rafnas <mohd.rafnas@dealsdray.com>
+Date:   Wed Dec 7 11:04:33 2022 +0530
+
+    version-3.2-relased-on-live
+
+[33mcommit 63b2bd3c0049de4f2fc6a05d56901ef933f5f930[m[33m ([m[1;32mversion_3.0[m[33m)[m
+Author: Rafnas <mohd.rafnas@dealsdray.com>
+Date:   Tue Dec 6 15:22:18 2022 +0530
+
+    working-on-it-v4
+
+[33mcommit 9dc8840649a072b3464045fd4f1d0aecd6eab136[m
+Author: Rafnas <mohd.rafnas@dealsdray.com>
+Date:   Tue Dec 6 12:20:45 2022 +0530
+
+    uat-testing
+
+[33mcommit 6bb9e4f26892de4d2ef00ea553cab5279538a88b[m[33m ([m[1;32mversion_4.0[m[33m)[m
+Author: Rafnas <mohd.rafnas@dealsdray.com>
+Date:   Tue Dec 6 11:09:31 2022 +0530
+
+    done
+
+[33mcommit 220ba56619464649cfa3defd93cfee5f0cc8ef6f[m
+Author: Rafnas <mohd.rafnas@dealsdray.com>
+Date:   Tue Dec 6 10:16:58 2022 +0530
+
+    version-3.0 released on uat
+
+[33mcommit 649580cfafd946eca4858e6e288537f55744fdc3[m
+Author: Rafnas <mohd.rafnas@dealsdray.com>
+Date:   Mon Dec 5 16:51:27 2022 +0530
+
+    bug fix 3
+
+[33mcommit c35dddb755f56f6679b87dfe651481135fc0ac8a[m
+Author: Rafnas <mohd.rafnas@dealsdray.com>
+Date:   Mon Dec 5 15:54:10 2022 +0530
+
+    version-3.0 bug fix onr
+
+[33mcommit 8cadc865b9fa210d112a8e7e88a400b8c68f4b81[m[33m ([m[1;32mversion_3.1[m[33m)[m
+Author: Rafnas <mohd.rafnas@dealsdray.com>
+Date:   Mon Dec 5 14:30:56 2022 +0530
+
+    bug fix bag suggregation
+
+[33mcommit 24172ab3ae3022102fe28b799b6af59573ba3ae5[m
+Author: Rafnas <mohd.rafnas@dealsdray.com>
+Date:   Mon Dec 5 09:58:30 2022 +0530
+
+    version-3.0-rady-for-release
+
+[33mcommit b12e8f5a37eaa09bfa14973e24bcf03dfba344ea[m
+Author: Rafnas <mohd.rafnas@dealsdray.com>
+Date:   Mon Dec 5 09:47:08 2022 +0530
+
+    wht-merging-working on it
+
+[33mcommit 2f01d0d17a0303d6eb13960744149ad8191a5628[m
+Author: Rafnas <mohd.rafnas@dealsdray.com>
+Date:   Sat Dec 3 16:14:38 2022 +0530
+
+    trasegrigation-bug-done
+
+[33mcommit 705eb8d4e670903c93b76b07aed375271da0bdf5[m
+Author: Rafnas <mohd.rafnas@dealsdray.com>
+Date:   Sat Dec 3 11:19:10 2022 +0530
+
+    version_3.0_done
+
+[33mcommit 57b8adfaeb822d394a62bddebba700630837ae8d[m[33m ([m[1;32mversion-2.1[m[33m)[m
+Author: Rafnas <mohd.rafnas@dealsdray.com>
+Date:   Tue Nov 29 12:11:49 2022 +0530
+
+    version-2-bug-fixed
+
+[33mcommit f77a51ab6d086ebc247c95899cd13d1ffc0d16ba[m[33m ([m[1;32mversion_1.2_api[m[33m)[m
+Author: Rafnas <mohd.rafnas@dealsdray.com>
+Date:   Tue Nov 29 11:57:40 2022 +0530
+
+    version-2-all-reported-issues-solved
+
+[33mcommit 445375d93463676a193b6a92bef192e463fb1137[m
+Author: Rafnas <mohd.rafnas@dealsdray.com>
+Date:   Fri Nov 25 13:53:20 2022 +0530
+
+    version-2-issues-done
+
+[33mcommit 9769a807589faa645baaccd635c49ab29cf2de6a[m
+Author: Rafnas <mohd.rafnas@dealsdray.com>
+Date:   Sat Nov 19 17:32:32 2022 +0530
+
+    till wht tray merge
+
+[33mcommit 31c7f7c1bfc4c18d925277c01291b6b90717e1bc[m
+Author: Rafnas <mohd.rafnas@dealsdray.com>
+Date:   Fri Nov 18 10:12:58 2022 +0530
+
+    sample-commit-181120229:0
+
+[33mcommit 0f5e68f05e5820acf43c716b2204cc8f5b797e59[m
+Author: Rafnas <mohd.rafnas@dealsdray.com>
+Date:   Thu Nov 17 18:44:26 2022 +0530
+
+    tray-close-wh
+
+[33mcommit 3f09530b0d0016509375db57dd82892eeaf8b843[m
+Author: Rafnas <mohd.rafnas@dealsdray.com>
+Date:   Wed Nov 16 13:20:58 2022 +0530
+
+    planning pmt/mmt reuse
+
+[33mcommit 7b5da6c7965ad42a6c3ba4e9c87c006651fd642f[m
+Author: Rafnas <mohd.rafnas@dealsdray.com>
+Date:   Wed Nov 16 10:01:21 2022 +0530
+
+    pmt and mmt report and mmt/pmt reuse
+
+[33mcommit af607a7e58403803dd7f3219e403f1122a473177[m
+Author: Rafnas <mohd.rafnas@dealsdray.com>
+Date:   Tue Nov 15 13:37:00 2022 +0530
+
+    uat-update-15112022-till-bqc-new-plan
+
+[33mcommit e0d607711b6e35f1ee87262110000dd0ac0597ef[m
+Author: Rafnas <mohd.rafnas@dealsdray.com>
+Date:   Thu Nov 10 07:21:04 2022 +0530
+
+    multi bot to multi wht second plan
+
+[33mcommit 9d6973bc7f99c1b18b018807675ae22808d0d98d[m
+Author: Rafnas <mohd.rafnas@dealsdray.com>
+Date:   Mon Nov 7 16:01:22 2022 +0530
+
+    Version 2 based on the old tech picklist
+
+[33mcommit f5e6ed3e6b88d1d2e38a25efac8b0397af60dacd[m[33m ([m[1;31mprexo/version_1.2_api[m[33m)[m
+Author: Rafnas <mohd.rafnas@dealsdray.com>
+Date:   Mon Oct 17 17:16:58 2022 +0530
+
+    Till charging api
