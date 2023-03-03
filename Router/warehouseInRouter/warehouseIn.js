@@ -1975,6 +1975,7 @@ router.post("/ctxTray/:type/:location", async (req, res, next) => {
 /*--------------------------PICKUP---------------------------------------*/
 // PICKUP REQUEST
 router.post("/pickup/request/:location/:type", async (req, res, next) => {
+
   try {
     const { location, type } = req.params;
     let data = await warehouseInController.pickupRequest(location, type);
@@ -1993,6 +1994,7 @@ router.post(
   async (req, res, next) => {
     try {
       const { location, fromTray } = req.params;
+      console.log('hh');
       let data = await warehouseInController.pickupePageRequestApprove(
         location,
         fromTray
