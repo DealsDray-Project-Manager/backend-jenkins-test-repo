@@ -1182,5 +1182,22 @@ router.post("/pickup/requestSendToWh", async (req, res, next) => {
     next(error);
   }
 });
-/*-----------------------------------------------------------------------------------*/
+/*-------------------------------------------WHT UTILITY MODULE 7.2----------------------------------------*/
+// IMPORT XLSX DATA TO TEMP ORDER AND DELIVERY TABLE
+router.post("/whtUtility/importFile", async (req, res, next) => {
+  try {
+    let data = await misUserController.whtUtilityImportFile(req.body);
+    if (data.status == 1) {
+      res.status(200).json({
+        message: "Successfully Imported",
+      });
+    } else {
+      res.status(202).json({
+        message: "Import file failed",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
 module.exports = router;
