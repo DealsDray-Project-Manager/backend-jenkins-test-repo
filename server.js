@@ -23,6 +23,7 @@ const chargingPanel = require("./Router/charging-panel-router/charging-panel");
 const bqc = require("./Router/bqc-router/bqc-router");
 const sortingAgent = require("./Router/sorting-agent-router/sorting-agent-router");
 const auditPanel = require("./Router/audit-router/audit-router");
+const RDL_onePanel = require("./Router/RDL_one-router/RDL_one-router");
 app.use(logger("dev"));
 app.use(express.json({ limit: "25mb" }));
 app.use(cors());
@@ -45,6 +46,9 @@ app.use("/api/v7/bqc", bqc);
 app.use("/api/v7/sorting-agnet", sortingAgent);
 /* API for AUDIT AGNET panel */
 app.use("/api/v7/audit-agent", auditPanel);
+/* API for RDL_one AGNET panel */
+app.use("/api/v7/RDL_onePanel", RDL_onePanel);
+
 /* User-profile */
 app.use("/user/profile", express.static(__dirname + "/public/user-profile"));
 /* Product Image */

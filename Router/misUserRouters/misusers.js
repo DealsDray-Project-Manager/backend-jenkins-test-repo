@@ -1195,4 +1195,72 @@ router.post("/pickup/requestSendToWh", async (req, res, next) => {
     next(error);
   }
 });
+router.post("/auditDoneWht", async (req, res, next) => {
+  try {
+    let data = await misUserController.getAuditDone();
+    if (data) {
+      res.status(200).json({
+        data: data,
+      });
+    }else{
+      res.status(202).json()
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.post("/sendToRdl", async (req, res, next) => {
+  try {
+    const { tray,user_name } = req.body;
+    let data = await misUserController.sendToRdl(tray,user_name);
+    if (data.status == true) {
+      console.log('kkkskskskskks');
+
+      res.status(200).json({
+        message: "Request sent to Warehouse",
+      });
+    } else {
+      res.status(202).json({
+        message: "Request failed please try again...",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
+
+router.post(
+  "/get-RDL_one-users/:user_type/:location",
+  async (req, res, next) => {
+    try {
+      let data = await misUserController.getRDLoneUsers(
+        req.params.user_type,
+        req.params.location
+      );
+      if (data) {
+        res.status(200).json({
+          data: data,
+        });
+      }
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+router.post("/RDLoneDoneTray", async (req, res, next) => {
+  try {
+    let data = await misUserController.getRdlDonetray();
+    if (data) {
+      res.status(200).json({
+        data: data,
+      });
+    }else{
+      res.status(202).json()
+    }
+  } catch (error) {
+    next(error);
+  }
+});
 module.exports = router;

@@ -886,7 +886,7 @@ router.post("/wht-add-actual-item", async (req, res, next) => {
       });
     } else if (data.status == 3) {
       res.status(202).json({
-        message: "Item Already Added",
+        message: "Item Already Added",setLoading
       });
     }
   } catch (error) {
@@ -897,9 +897,11 @@ router.post("/wht-add-actual-item", async (req, res, next) => {
 /*--------------------------WHT TRAY ASSIGN TO CHARGING FROM WAREHOUSE--------------------------*/
 
 router.post("/issue-to-agent-wht", async (req, res, next) => {
+  console.log('kdkdkdkdkd');
   try {
     let data = await warehouseInController.issueToagentWht(req.body);
     if (data) {
+      console.log('lsslslsl');
       res.status(200).json({
         message: "Successfully Issued",
       });
@@ -1968,9 +1970,12 @@ router.post("/ctxTray/:type/:location", async (req, res, next) => {
     next(error);
   }
 });
+
+
 /*--------------------------PICKUP---------------------------------------*/
 // PICKUP REQUEST
 router.post("/pickup/request/:location/:type", async (req, res, next) => {
+
   try {
     const { location, type } = req.params;
     let data = await warehouseInController.pickupRequest(location, type);
@@ -1989,6 +1994,7 @@ router.post(
   async (req, res, next) => {
     try {
       const { location, fromTray } = req.params;
+      console.log('hh');
       let data = await warehouseInController.pickupePageRequestApprove(
         location,
         fromTray
@@ -2104,5 +2110,189 @@ router.post("/pickupDone/close", async (req, res, next) => {
     next(error);
   }
 });
+
+
+router.post("/request-for-RDL_one/:status/:location", async (req, res, next) => {
+  try {
+    let data = await warehouseInController.getRDLoneRequest(
+      req.params.status,
+      req.params.location
+    );
+    
+    if (data) {
+      res.status(200).json({
+        data: data,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
+
+router.post("/wht-add-actual-item-rdl-return", async (req, res, next) => {
+  try {
+    let data = await warehouseInController.addWhtActualReturnRdl(req.body);
+    if (data.status == 1) {
+      res.status(200).json({
+        message: "Successfully Added",
+      });
+    } else if (data.status == 2) {
+      res.status(202).json({
+        message: "Failed",
+      });
+    } else if (data.status == 3) {
+      res.status(202).json({
+        message: "Item Already Added",setLoading
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
+
+router.post("/issue-to-agent-wht-recived-rdl-one", async (req, res, next) => {
+  try {
+    let data = await warehouseInController.issueToagentWhtReciveRdOne(req.body);
+    if (data) {
+      console.log('lsslslsl');
+      res.status(200).json({
+        message: "Successfully Issued",
+      });
+    } else {
+      res.status(202).json({
+        message: "Failed",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
+
+router.post("/recieved-from-RDL_one", async (req, res, next) => {
+  try {
+    let data = await warehouseInController.RDLoneDoneRecieved(req.body);
+    if (data.status == 1) {
+      res.status(200).json({
+        message: "Successfully Received",
+      });
+    }
+    if (data.status == 3) {
+      res.status(202).json({
+        message: "Please Enter Valid Count",
+      });
+    } else {
+      res.status(202).json({
+        message: "Failed",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.post("/getWhtTrayItemRdlreturn/:trayId/:sortId", async (req, res, next) => {
+  try {
+    const { trayId, sortId } = req.params;
+    let data = await warehouseInController.getWhtTrayitemRdlreturn(trayId, sortId);
+    if (data.status == 1) {
+      res.status(200).json({
+        data: data.data,
+      });
+    } else if (data.status == 2) {
+      res.status(202).json({
+        message: "Details not found",
+      });
+    } else if (data.status == 3) {
+      res.status(202).json({
+        message: `${trayId} - present at ${data.data.sort_id}`,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
+
+router.post("/request-for-RDL_one_returnrdl/:status/:location", async (req, res, next) => {
+  try {
+    let data = await warehouseInController.getRDLonereturn(
+      req.params.status,
+      req.params.location
+    );
+    
+    if (data) {
+      res.status(200).json({
+        data: data,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.post("/trayItem/:trayid", async (req, res, next) => {
+  try {
+    console.log(req.params.trayid,"dadadadada");
+    let data = await warehouseInController.getTrayItmes(req.params.trayid);
+    if (data) {
+      res.status(200).json({
+        data: data,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.post("/check-uic-RDL-done", async (req, res, next) => {
+  try {
+    const { trayId, uic } = req.body;
+    let data = await warehouseInController.checkUicCodeRDLDone(uic, trayId);
+    if (data.status == 1) {
+      res.status(202).json({
+        message: "UIC Does Not Exists",
+      });
+    } else if (data.status == 2) {
+      res.status(202).json({
+        message: "UIC Not Exists In This Tray",
+      });
+    } else if (data.status == 3) {
+      res.status(202).json({
+        message: "Already Added",
+      });
+    } else if (data.status == 4) {
+      res.status(200).json({
+        message: "Valid UIC",
+        data: data.data,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.post("/issue-to-agent-wht-Recieved-RDL", async (req, res, next) => {
+  try {
+    let data = await warehouseInController.issueToagentWhtReceivedRdl(req.body);
+    if (data) {
+      res.status(200).json({
+        message: "Tray Closed Succcessfully",
+      });
+    } else {
+      res.status(202).json({
+        message: "Failed",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
+
+
+
 
 module.exports = router;

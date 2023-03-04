@@ -8,6 +8,7 @@ const { products } = require("../../Model/productModel/product");
 const { admin } = require("../../Model/adminModel/admins");
 const { usersHistory } = require("../../Model/users-history-model/model");
 const { delivery } = require("../../Model/deliveryModel/delivery");
+const { ctxCategory } = require("../../Model/ctxCategoryModel/category");
 const {
   mastersEditHistory,
 } = require("../../Model/masterHistoryModel/mastersHistory");
@@ -32,6 +33,9 @@ module.exports = {
 
   doLogin: (loginData) => {
     return new Promise(async (resolve, reject) => {
+
+      console.log(loginData);
+      console.log('loginData');
       let data = await admin.findOne({
         user_name: loginData.user_name,
         password: loginData.password,
@@ -44,12 +48,14 @@ module.exports = {
           password: loginData.password,
         });
         if (userGet) {
+          console.log('usrrrrr');
           let activeOrNotActive = await user.findOne({
             user_name: loginData.user_name,
             password: loginData.password,
             status: "Active",
           });
           if (activeOrNotActive) {
+            console.log('actieeeee');
             resolve({ status: 1, data: userGet });
           } else {
             resolve({ status: 3 });
@@ -724,15 +730,16 @@ module.exports = {
         { _id: infraId._id },
         {
           $set: {
-            name: infraId.name,
-            code: infraId.code,
-            address: infraId.address,
-            city: infraId.city,
-            state: infraId.state,
-            country: infraId.country,
-            pincode: infraId.pincode,
-            warehouse_type: infraId.warehouse_type,
-            parent_id: infraId.parent_id,
+            name: infraId?.name,
+            code: infraId?.code,
+            address: infraId?.address,
+            city: infraId?.city,
+            state: infraId?.state,
+            country: infraId?.country,
+            pincode: infraId?.pincode,
+            warehouse_type: infraId?.warehouse_type,
+            parent_id: infraId?.parent_id,
+            Location_type: infraId?.Location_type,
           },
         }
       );
@@ -1565,6 +1572,8 @@ module.exports = {
           bqc_software_report: 1,
           bot_report: 1,
           charging_done_date: 1,
+          bot_report: 1,
+          charging_done_date: 1,
         }
       );
       if (uicExists) {
@@ -1768,4 +1777,136 @@ module.exports = {
       resolve({ status: "Done" });
     });
   },
+
+  createctxcategory: (data) => {
+
+    return new Promise(async (resolve, reject) => {
+      let checkcodeExists = await ctxCategory.findOne({
+        $or: [
+          {
+            Code: data?.Code,
+          },
+          {
+
+            Float: data?.Float,
+          },
+        ],
+      });
+      if (checkcodeExists) {
+        resolve({ status: false });
+      } else {
+        let obj = {
+          Code: data?.Code,
+          Description: data?.Description,
+          Float: data?.Float,
+          created_at: Date.now(),
+        }
+        let dataa = await ctxCategory.create(obj);
+        if (dataa) {
+          resolve({ status: true });
+        }
+      }
+    })
+  },
+
+  getCtxCategorys: () => {
+    return new Promise(async (resolve, reject) => {
+      let data = await ctxCategory.find();
+      if (data) {
+        resolve(data);
+      } else {
+        resolve();
+      }
+    });
+  },
+
+  deleteCtxcategory: (code) => {
+    return new Promise(async (resolve, reject) => {
+      let categorySelected= await masters.find({type_taxanomy:code?.code})
+      if(categorySelected.length!==0){
+        resolve({ status: false});
+      }else{
+        let data = await ctxCategory.deleteOne({ Code: code?.code });
+        if (data) {
+          resolve(data);
+        } else {
+          resolve({ status: false });
+        }
+      }
+    })
+  },
+
+
+  geteditctxcategory: (code) => {
+    return new Promise(async (resolve, reject) => {
+      let data = await ctxCategory.findOne({ Code: code });
+      if (data) {
+        resolve(data);
+      } else {
+        resolve();
+      }
+    })
+  },
+
+  editctxcategory: (async (body) => {
+    console.log(body, 'bodyyyyx');
+    return new Promise(async (resolve, reject) => {
+      
+      const ActiveCategory = await ctxCategory.findOne({ _id: body._id })
+      const Float = await ctxCategory.findOne({ Float: body.Float })
+      const Code = await ctxCategory.findOne({ Code: body.Code })
+
+
+      if (Float && ActiveCategory.Float != body.Float) {
+        resolve({ status: false })
+      } else if (Code && ActiveCategory.Code != body.Code) {
+        console.log("Existing Code");
+        resolve({ status: false })
+      } else {
+        let data = await ctxCategory.findOneAndUpdate(
+          { _id: body?._id },
+          {
+            $set: {
+              Code: body?.Code,
+              Description: body?.Description,
+              Float: body?.Float,
+            }
+          }
+        );
+        if (data) {
+          console.log('gdgdg');
+          resolve({ status: true })
+        } else {
+          console.log('dsd');
+          resolve({ status: false })
+        }
+      }
+    })
+  }),
+
+
+  getCtxTrayCategory: () => {
+    return new Promise(async (resolve, reject) => {
+      let data = await ctxCategory.find();
+      if (data) {
+        resolve(data);
+      } else {
+        resolve();
+      }
+    })
+  },
+
+  categoryCheck: (body) => {
+    return new Promise(async (resolve, reject) => {
+      let data = await masters.find({type_taxanomy:body?.empId});
+      if (data?.length!==0) {
+        resolve({ status: true });
+      } else {
+        resolve({ status: false });
+      }
+    })
+  },
+
+
+
 };
