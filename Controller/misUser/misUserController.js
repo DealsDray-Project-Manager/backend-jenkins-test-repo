@@ -7,8 +7,8 @@ const { user } = require("../../Model/userModel");
 const { masters } = require("../../Model/mastersModel");
 const { badOrders } = require("../../Model/ordersModel/bad-orders-model");
 const { badDelivery } = require("../../Model/deliveryModel/bad-delivery");
-const {tempOrders}=require("../../Model/WhtUtility/tempOrder")
-const {tempDelivery}=require("../../Model/WhtUtility/tempDelivery")
+const { tempOrders } = require("../../Model/WhtUtility/tempOrder");
+const { tempDelivery } = require("../../Model/WhtUtility/tempDelivery");
 const moment = require("moment");
 const elasticsearch = require("../../Elastic-search/elastic");
 /******************************************************************* */
@@ -3162,69 +3162,137 @@ module.exports = {
       }
     });
   },
-  whtUtilityImportFile:(xlsxData)=>{
-    return new Promise(async(resolve,reject)=>{
-     
-      let count=0
-       for(let x of arr){
-        count++
-        let uicNum=""
-        if(count.length == 1){
-          uicNum="9203000000" + count
+  whtutilitySearch: (oldUc) => {
+    return new Promise(async (resolve, reject) => {
+      let tempDeliveryData = await tempDelivery.find({ old_uic: oldUc });
+      if (tempDeliveryData.length !== 0) {
+        let tempOrderData = await tempOrders.find({
+          $or: [
+            { order_id: tempDeliveryData[0].order_id },
+            { imei: tempDeliveryData[0].imei },
+          ],
+        });
+        let orgOrder = await orders.find({
+          $or: [
+            { order_id: tempDeliveryData[0].order_id },
+            { imei: tempDeliveryData[0].imei },
+          ],
+        });
+        let orgDelivery = await delivery.find({
+          $or: [
+            { order_id: tempDeliveryData[0].order_id },
+            { imei: tempDeliveryData[0].imei },
+          ],
+        });
+        resolve({
+          status: 1,
+          tempDeliveryData: tempDeliveryData,
+          tempOrderData: tempOrderData,
+          orgOrder: orgOrder,
+          orgDelivery: orgDelivery,
+        });
+      } else {
+        resolve({ status: 2 });
+      }
+    });
+  },
+  whtUtilityImportOrder: (orderData) => {
+    return new Promise(async (resolve, reject) => {
+      let arr = [];
+      let locationCheck = await infra.findOne({ code: orderData.partner_shop });
+      if (locationCheck == null) {
+        arr.push(`${orderData.partner_shop}- "Location Not Exists"`);
+      }
+      let brandAndModel = await products.findOne({
+        brand_name: {
+          $regex: new RegExp(
+            "^" + orderData?.old_item_details?.split(":")[0] + "$",
+            "i"
+          ),
+        },
+        model_name: {
+          $regex: new RegExp(
+            "^" + orderData?.old_item_details?.split(":")[1] + "$",
+            "i"
+          ),
+        },
+      });
+      if (brandAndModel == null) {
+        arr.push(
+          `${orderData?.old_item_details} - Brand name or model namee not Exists`
+        );
+      }
+      if (arr.length == 0) {
+        orderData.created_at = Date.now();
+        let importOrder = await orders.create(orderData);
+        if (importOrder) {
+          resolve({ status: 1 });
+        } else {
+          resolve({ status: 3 });
         }
-        else if(count.length == 2){
-          uicNum="920300000" + count
-        }
-        else if(count.length == 3){
-          uicNum="92030000" + count
-        }
-        else if(count.length == 4){
-          uicNum="9203000" + count
-        }
-        else if(count.length == 5){
-          uicNum="920300" + count
-        }
-        else if(count.length == 6){
-          uicNum="92030" + count
-        }
-         
-          let orderObj={
-             order_id:x.Order_ID.toString(),
-             order_date:new Date("01/01/2022"),
-             partner_shop:x.Partner_Shop,
-             item_id:x.Item_ID,
-             old_item_details:x.Model_Name,
-             imei:x.IMEI.toString(),
-             tracking_id:x.Tracking_ID.toString(),
-             created_at:Date.now(),
-             type:x.Last_Status,
-             delivery_status:"Delivered",
-             order_status:"NEW"
-          }
-          let objDelivery={
-            order_id:x.Order_ID.toString(),
-             order_date:new Date("01/01/2022"),
-             partner_shop:x.Partner_Shop,
-             item_id:x.Item_ID,
-             old_item_details:x.Model_Name,
-             imei:x.IMEI.toString(),
-             tracking_id:x.Tracking_ID.toString(),
-             created_at:Date.now(),
-             type:x.Last_Status,
-             uic_status:"Printed",
-             "uic_code.created_at":Date.now(),
-             "uic_code.code":uicNum,
-             created_at:Date.now(),
-             download_time:Date.now(),
+      } else {
+        resolve({ status: 2, arr: arr });
+      }
+    });
+  },
+  whtUtilityImportFile: (xlsxData) => {
+    return new Promise(async (resolve, reject) => {
+      let count = "";
+      for (let x of arr) {
+        count++;
+        let uicNum = "";
 
-          }
-          // let dataImportToOrder=await  tempOrders.create(orderObj)
-          let dataImportDelivery=await tempDelivery.create(objDelivery)
-       }
-       resolve({status:1})
+        if (count.toString().length == 1) {
+          uicNum = "9203000000" + count;
+        } else if (count.toString().length == 2) {
+          uicNum = "920300000" + count;
+        } else if (count.toString().length == 3) {
+          uicNum = "92030000" + count;
+        } else if (count.toString().length == 4) {
+          uicNum = "9203000" + count;
+        } else if (count.toString().length == 5) {
+          uicNum = "920300" + count;
+        } else if (count.toString().length == 6) {
+          uicNum = "92030" + count;
+        }
+
+        let orderObj = {
+          order_id: x.Order_ID.toString(),
+          order_date: new Date("01/01/2022"),
+          partner_shop: x.Partner_Shop,
+          item_id: x.Item_ID,
+          old_item_details: x.Model_Name,
+          imei: x.IMEI.toString(),
+          tracking_id: x.Tracking_ID.toString(),
+          created_at: Date.now(),
+          type: x.Last_Status,
+          delivery_status: "Delivered",
+          order_status: "NEW",
+        };
+        let objDelivery = {
+          order_id: x.Order_ID.toString(),
+          order_date: new Date("01/01/2022"),
+          partner_shop: x.Partner_Shop,
+          item_id: x.Item_ID,
+          old_item_details: x.Model_Name,
+          imei: x.IMEI.toString(),
+          tracking_id: x.Tracking_ID.toString(),
+          created_at: Date.now(),
+          type: x.Last_Status,
+          uic_status: "Printed",
+          "uic_code.created_at": Date.now(),
+          "uic_code.code": uicNum,
+          created_at: Date.now(),
+          download_time: Date.now(),
+          old_uic: x.Old_UIC,
+        };
+        // let dataImportToOrder=await  tempOrders.create(orderObj)
+        let dataImportDelivery = await tempDelivery.create(objDelivery);
+      }
+      resolve({ status: 1 });
       // let obj={
       // }
-      // let data=await 
-    })
-  }
+      // let data=await
+    });
+  },
 };

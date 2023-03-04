@@ -53,51 +53,10 @@ const tempOrdersSchema = mongoose.Schema({
   delivery_date: {
     type: Date,
   },
-  order_id_replaced: {
-    type: Number,
+  vedor_name:{
+    type:String
   },
-  deliverd_with_otp: {
-    type: String,
-  },
-  deliverd_with_bag_exception: {
-    type: String,
-  },
-  gc_amount_redeemed: {
-    type: Number,
-  },
-  gc_amount_refund: {
-    type: Number,
-  },
-  gc_redeem_time: {
-    type: Date,
-  },
-  gc_amount_refund_time: {
-    type: Date,
-  },
-  diagnstic_status: {
-    type: String,
-  },
-  vc_eligible: {
-    type: String,
-  },
-  customer_declaration_physical_defect_present: {
-    type: String,
-  },
-  customer_declaration_physical_defect_type: {
-    type: String,
-  },
-  partner_price_no_defect: {
-    type: String,
-  },
-  revised_partner_price: {
-    type: String,
-  },
-  delivery_fee: {
-    type: String,
-  },
-  exchange_facilitation_fee: {
-    type: String,
-  },
+  
   delivery_status: {
     type: String,
     default: "Pending",

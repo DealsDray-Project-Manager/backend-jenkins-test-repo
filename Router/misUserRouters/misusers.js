@@ -1200,4 +1200,50 @@ router.post("/whtUtility/importFile", async (req, res, next) => {
     next(error);
   }
 });
+//GET DATA for wht utility 
+router.post("/whtutility/search/:oldUic",async(req,res,next)=>{
+  try {
+    const {oldUic}=req.params
+    let data=await misUserController.whtutilitySearch(oldUic)
+    console.log(data);
+    if(data.status == 1){
+      res.status(200).json({
+        tempOrder:data.tempOrderData,
+        tempDelivery:data.tempDeliveryData,
+        orgOrder:data.orgOrder,
+        orgDelivery:data.orgDelivery
+      })
+    }
+    else{
+      res.status(202).json({
+        message:"No data found"
+      })
+    }
+  } catch (error) {
+    next(error)
+  }
+})
+//WHT UTILITY IMPORT ORDER 
+router.post("/whtutility/importOrder",async(req,res,next)=>{
+    try {
+      let data=await misUserController.whtUtilityImportOrder(req.body)
+      if(data.status == 1){
+        res.status(200).json({
+          message:"Successfully Added"
+        })
+      }
+      else if(data.status == 2){
+        res.status(202).json({
+          message:`${data.arr} - not exists`
+        })
+      }
+      else{
+        res.status(200).json({
+          message:"Failed please try again"
+        })
+      }
+    } catch (error) {
+      next(error)
+    }
+})
 module.exports = router;

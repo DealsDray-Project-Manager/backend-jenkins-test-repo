@@ -62,6 +62,9 @@ const tempDeliverySchema = mongoose.Schema({
   },
   old_uic:{
     type:String
+  },
+  type:{
+    type:String
   }
 
 });

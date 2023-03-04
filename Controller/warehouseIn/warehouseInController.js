@@ -3336,44 +3336,32 @@ module.exports = {
   mergeDoneTrayClose: (fromTray, toTray, type, length, limit, status) => {
     let data;
     return new Promise(async (resolve, reject) => {
-      if (status == "Audit Done Received From Merging") {
-        if (limit == length) {
-          data = await masters.findOneAndUpdate(
-            { code: toTray },
-            {
-              $set: {
-                sort_id: "Ready to RDL",
-                actual_items: [],
-                issued_user_name: null,
-                from_merge: null,
-                to_merge: null,
-                closed_time_wharehouse: Date.now(),
-              },
-            }
-          );
-        } else {
-          data = await masters.findOneAndUpdate(
-            { code: toTray },
-            {
-              $set: {
-                sort_id: "Audit Done Closed By Warehouse",
-                actual_items: [],
-                issued_user_name: null,
-                from_merge: null,
-                to_merge: null,
-                closed_time_wharehouse: Date.now(),
-              },
-            }
-          );
+      if (length == 0 && type !== "MMT") {
+        let updateFromTray = await masters.updateOne(
+          { code: toTray },
+          {
+            $set: {
+              sort_id: "Open",
+              actual_items: [],
+              temp_array: [],
+              items: [],
+              issued_user_name: null,
+              from_merge: null,
+              to_merge: null,
+            },
+          }
+        );
+        if (updateFromTray.modifiedCount !== 0) {
+          resolve({ status: 1 });
         }
       } else {
-        if (type == "WHT") {
-          if (length == limit) {
+        if (status == "Audit Done Received From Merging") {
+          if (limit == length) {
             data = await masters.findOneAndUpdate(
               { code: toTray },
               {
                 $set: {
-                  sort_id: "Closed",
+                  sort_id: "Ready to RDL",
                   actual_items: [],
                   issued_user_name: null,
                   from_merge: null,
@@ -3387,7 +3375,7 @@ module.exports = {
               { code: toTray },
               {
                 $set: {
-                  sort_id: "Inuse",
+                  sort_id: "Audit Done Closed By Warehouse",
                   actual_items: [],
                   issued_user_name: null,
                   from_merge: null,
@@ -3398,17 +3386,49 @@ module.exports = {
             );
           }
         } else {
-          data = await masters.findOneAndUpdate(
-            { code: toTray },
-            {
-              $set: {
-                sort_id: "Closed By Warehouse",
-                from_merge: null,
-                to_merge: null,
-                closed_time_wharehouse: Date.now(),
-              },
+          if (type == "WHT") {
+            if (length == limit) {
+              data = await masters.findOneAndUpdate(
+                { code: toTray },
+                {
+                  $set: {
+                    sort_id: "Closed",
+                    actual_items: [],
+                    issued_user_name: null,
+                    from_merge: null,
+                    to_merge: null,
+                    closed_time_wharehouse: Date.now(),
+                  },
+                }
+              );
+            } else {
+              data = await masters.findOneAndUpdate(
+                { code: toTray },
+                {
+                  $set: {
+                    sort_id: "Inuse",
+                    actual_items: [],
+                    issued_user_name: null,
+                    from_merge: null,
+                    to_merge: null,
+                    closed_time_wharehouse: Date.now(),
+                  },
+                }
+              );
             }
-          );
+          } else {
+            data = await masters.findOneAndUpdate(
+              { code: toTray },
+              {
+                $set: {
+                  sort_id: "Closed By Warehouse",
+                  from_merge: null,
+                  to_merge: null,
+                  closed_time_wharehouse: Date.now(),
+                },
+              }
+            );
+          }
         }
       }
       if (data) {
@@ -3454,11 +3474,7 @@ module.exports = {
             resolve({ status: 0 });
           }
         } else {
-          if (update) {
-            resolve({ status: 1 });
-          } else {
-            resolve({ status: 0 });
-          }
+          resolve({ status: 1 });
         }
       } else {
         resolve({ status: 0 });
