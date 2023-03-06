@@ -1200,50 +1200,99 @@ router.post("/whtUtility/importFile", async (req, res, next) => {
     next(error);
   }
 });
-//GET DATA for wht utility 
-router.post("/whtutility/search/:oldUic",async(req,res,next)=>{
+//GET DATA for wht utility
+router.post("/whtutility/search/:oldUic", async (req, res, next) => {
   try {
-    const {oldUic}=req.params
-    let data=await misUserController.whtutilitySearch(oldUic)
+    const { oldUic } = req.params;
+    let data = await misUserController.whtutilitySearch(oldUic);
     console.log(data);
-    if(data.status == 1){
+    if (data.status == 1) {
       res.status(200).json({
-        tempOrder:data.tempOrderData,
-        tempDelivery:data.tempDeliveryData,
-        orgOrder:data.orgOrder,
-        orgDelivery:data.orgDelivery
-      })
-    }
-    else{
+        tempOrder: data.tempOrderData,
+        tempDelivery: data.tempDeliveryData,
+        orgOrder: data.orgOrder,
+        orgDelivery: data.orgDelivery,
+      });
+    } else {
       res.status(202).json({
-        message:"No data found"
+        message: "No data found",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+//WHT UTILITY IMPORT ORDER
+router.post("/whtutility/importOrder", async (req, res, next) => {
+  try {
+    let data = await misUserController.whtUtilityImportOrder(req.body);
+    if (data.status == 1) {
+      res.status(200).json({
+        message: "Successfully Added",
+      });
+    } else if (data.status == 2) {
+      res.status(202).json({
+        message: `${data.arr} - not exists`,
+      });
+    } else {
+      res.status(200).json({
+        message: "Failed please try again",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+//WHT UTILITY GET BAG ID and BOT TRAY
+router.post("/whtUtility/bagAndBotTray/:location", async (req, res, next) => {
+  try {
+    const { location } = req.params;
+    let data = await misUserController.whtUtilityBagAndBot(location);
+    console.log(data);
+    if (data) {
+      res.status(200).json({
+        tray: data.tray,
+        bag: data.bag,
+        botUsers: data.botUsers,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+// WHT UTILITY BOT TRAY FOR INUSE 
+router.post("/whtUtility/botTray",async(req,res,next)=>{
+  try {
+    let data=await misUserController.whtUtilityGetBotTrayInuse()
+    if(data){
+      res.status(200).json({
+        data:data
       })
     }
   } catch (error) {
     next(error)
   }
 })
-//WHT UTILITY IMPORT ORDER 
-router.post("/whtutility/importOrder",async(req,res,next)=>{
-    try {
-      let data=await misUserController.whtUtilityImportOrder(req.body)
-      if(data.status == 1){
-        res.status(200).json({
-          message:"Successfully Added"
-        })
-      }
-      else if(data.status == 2){
-        res.status(202).json({
-          message:`${data.arr} - not exists`
-        })
-      }
-      else{
-        res.status(200).json({
-          message:"Failed please try again"
-        })
-      }
-    } catch (error) {
-      next(error)
+router.post("/whtUtility/addDelivery",async(req,res,next)=>{
+  try {
+    let data=await misUserController.whtutilityAddDelivery(req.body)
+    if(data.status == 1){
+      res.status(200).json({
+        message:"Successfully Imported"
+      })
     }
+    else if (data.status == 2) {
+      res.status(202).json({
+        message: `${data.arr} - not exists`,
+      });
+    } else {
+      res.status(200).json({
+        message: "Failed please try again",
+      });
+    }
+  } catch (error) {
+    next(error)
+  }
 })
+
 module.exports = router;

@@ -3196,6 +3196,48 @@ module.exports = {
       }
     });
   },
+  whtUtilityBagAndBot: (location) => {
+    return new Promise(async (resolve, reject) => {
+      let bag = await masters.find({
+        cpc: location,
+        prefix: "bag-master",
+        sort_id: "No Status",
+      });
+      let tray = await masters.find({
+        $or: [
+          {
+            cpc: location,
+            prefix: "tray-master",
+            sort_id: "Open",
+            type_taxanomy: "BOT",
+          },
+          {
+            cpc: location,
+            prefix: "tray-master",
+            sort_id: "Wht-utility-work",
+            type_taxanomy: "BOT",
+          },
+        ],
+      });
+      let botUsers = await user.find({
+        status: "Active",
+        cpc: location,
+        user_type: "Bag Opening",
+      });
+
+      resolve({ bag: bag, tray: tray, botUsers: botUsers });
+    });
+  },
+  whtUtilityGetBotTrayInuse: () => {
+    return new Promise(async (resolve, reject) => {
+      let data = await masters.find({
+        prefix: "tray-master",
+        sort_id: "Wht-utility-work",
+        type_taxanomy: "BOT",
+      });
+      resolve(data);
+    });
+  },
   whtUtilityImportOrder: (orderData) => {
     return new Promise(async (resolve, reject) => {
       let arr = [];
@@ -3235,9 +3277,85 @@ module.exports = {
       }
     });
   },
+  whtutilityAddDelivery: (deliveryData) => {
+    console.log(deliveryData);
+    return new Promise(async (resolve, reject) => {
+      let arr = [];
+      let locationCheck = await infra.findOne({
+        code: deliveryData.utilty.partner_shop,
+      });
+      if (locationCheck == null) {
+        arr.push(`${deliveryData.utilty.partner_shop}- "Location Not Exists"`);
+      }
+      let brandAndModel = await products.findOne({
+        vendor_sku_id: deliveryData.utilty.item_id,
+      });
+      if (brandAndModel == null) {
+        arr.push(`${deliveryData.utilty.item_id} - Vendor Sku Id not exists`);
+      }
+      if (arr.length == 0) {
+        deliveryData.utilty.created_at = Date.now();
+        deliveryData.utilty.stockin_date = Date.now();
+        deliveryData.utilty.stockin_date = Date.now();
+        deliveryData.utilty.bag_id = deliveryData.extra.bag_id;
+        deliveryData.utilty.agent_name = deliveryData.extra.bot_agent;
+        deliveryData.utilty.tray_id = deliveryData.extra.tray_id;
+        deliveryData.utilty.assign_to_agent = Date.now();
+        deliveryData.utilty.stock_in_status = "Valid";
+        deliveryData.utilty.bag_close_date = Date.now();
+        deliveryData.utilty.warehouse_close_date = Date.now();
+        deliveryData.utilty.tray_status = "Closed By Bot Agent";
+        deliveryData.utilty.tray_type = "BOT";
+        deliveryData.utilty.tray_location = "Warehouse";
+
+        let obj = {
+          awbn_number: deliveryData.utilty.tracking_id,
+          order_id: deliveryData.utilty?.order_id,
+          order_date: deliveryData.utilty?.order_date,
+          imei: deliveryData.utilty?.imei,
+          status: "Valid",
+          tray_id: deliveryData.extra.tray_id,
+          bag_id: deliveryData.extra.bag_id,
+          user_name: deliveryData.extra.bot_agent,
+          bag_assigned_date: Date.now(),
+          uic: deliveryData.utilty?.uic_code.code,
+        };
+        let importOrder = await delivery.create(deliveryData.utilty);
+        let updateOrder = await orders.updateOne(
+          { order_id: deliveryData.utilty.order_id },
+          {
+            $set: {
+              delivery_status: "Delivered",
+            },
+          }
+        );
+        let addToTray = await masters.updateOne(
+          {
+            code: deliveryData.extra.tray_id,
+          },
+          {
+            $push: {
+              items: obj,
+            },
+            $set: {
+              sort_id: "Wht-utility-work",
+            },
+          }
+        );
+        if (importOrder) {
+          resolve({ status: 1 });
+        } else {
+          resolve({ status: 3 });
+        }
+      } else {
+        resolve({ status: 2, arr: arr });
+      }
+    });
+  },
   whtUtilityImportFile: (xlsxData) => {
     return new Promise(async (resolve, reject) => {
       let count = "";
+
       for (let x of arr) {
         count++;
         let uicNum = "";
@@ -3261,7 +3379,9 @@ module.exports = {
           order_date: new Date("01/01/2022"),
           partner_shop: x.Partner_Shop,
           item_id: x.Item_ID,
-          old_item_details: x.Model_Name,
+          old_item_details: `${x.Model_Name.split(" ")[0]}:${
+            x.Model_Name.split(" ")[1] + " " + x.Model_Name.split(" ")[2]
+          }`,
           imei: x.IMEI.toString(),
           tracking_id: x.Tracking_ID.toString(),
           created_at: Date.now(),
@@ -3274,7 +3394,9 @@ module.exports = {
           order_date: new Date("01/01/2022"),
           partner_shop: x.Partner_Shop,
           item_id: x.Item_ID,
-          old_item_details: x.Model_Name,
+          old_item_details: `${x.Model_Name.split(" ")[0]}:${
+            x.Model_Name.split(" ")[1] + " " + x.Model_Name.split(" ")[2]
+          }`,
           imei: x.IMEI.toString(),
           tracking_id: x.Tracking_ID.toString(),
           created_at: Date.now(),
@@ -3285,6 +3407,7 @@ module.exports = {
           created_at: Date.now(),
           download_time: Date.now(),
           old_uic: x.Old_UIC,
+          delivery_date: Date.now(),
         };
         // let dataImportToOrder=await  tempOrders.create(orderObj)
         let dataImportDelivery = await tempDelivery.create(objDelivery);
