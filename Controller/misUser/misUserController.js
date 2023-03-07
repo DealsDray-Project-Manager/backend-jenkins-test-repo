@@ -3355,6 +3355,7 @@ module.exports = {
   whtUtilityImportFile: (xlsxData) => {
     return new Promise(async (resolve, reject) => {
       let count = "";
+    
 
       for (let x of arr) {
         count++;
@@ -3373,15 +3374,17 @@ module.exports = {
         } else if (count.toString().length == 6) {
           uicNum = "92030" + count;
         }
+        const string =x.Model_Name
+        const firstSpaceIndex = x.Model_Name.indexOf(' ');
+        const firstWord = string.substring(0, firstSpaceIndex);
+        const remainingWords = string.substring(firstSpaceIndex + 1);
 
         let orderObj = {
           order_id: x.Order_ID.toString(),
           order_date: new Date("01/01/2022"),
           partner_shop: x.Partner_Shop,
           item_id: x.Item_ID,
-          old_item_details: `${x.Model_Name.split(" ")[0]}:${
-            x.Model_Name.split(" ")[1] + " " + x.Model_Name.split(" ")[2]
-          }`,
+          old_item_details: `${firstWord}:${remainingWords}`,
           imei: x.IMEI.toString(),
           tracking_id: x.Tracking_ID.toString(),
           created_at: Date.now(),
@@ -3394,9 +3397,7 @@ module.exports = {
           order_date: new Date("01/01/2022"),
           partner_shop: x.Partner_Shop,
           item_id: x.Item_ID,
-          old_item_details: `${x.Model_Name.split(" ")[0]}:${
-            x.Model_Name.split(" ")[1] + " " + x.Model_Name.split(" ")[2]
-          }`,
+       
           imei: x.IMEI.toString(),
           tracking_id: x.Tracking_ID.toString(),
           created_at: Date.now(),
@@ -3409,8 +3410,8 @@ module.exports = {
           old_uic: x.Old_UIC,
           delivery_date: Date.now(),
         };
-        // let dataImportToOrder=await  tempOrders.create(orderObj)
-        let dataImportDelivery = await tempDelivery.create(objDelivery);
+        let dataImportToOrder=await  tempOrders.create(orderObj)
+        // let dataImportDelivery = await tempDelivery.create(objDelivery);
       }
       resolve({ status: 1 });
       // let obj={
