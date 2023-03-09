@@ -1286,7 +1286,7 @@ router.post("/whtUtility/addDelivery",async(req,res,next)=>{
         message: `${data.arr} - not exists`,
       });
     } else {
-      res.status(200).json({
+      res.status(202).json({
         message: "Failed please try again",
       });
     }

@@ -1074,7 +1074,7 @@ module.exports = {
       let exist = await masters.findOne({
         $or: [
           {
-            $and: [{ name: mastersData.name }, { prefix: mastersData.prefix }],
+            $and: [{ name: mastersData.name },{ code: mastersData.code }, { prefix: mastersData.prefix }],
           },
         ],
       });

@@ -3484,7 +3484,7 @@ module.exports = {
 
   /*-----------------CHECK SORTING AGENT IS FREE OR NOT-------------------------*/
 
-  getSortingAgentStatus: (username) => {
+  getSortingAgentStatus: (username,toTray) => {
     return new Promise(async (resolve, reject) => {
       let userActive = await user.findOne({ user_name: username });
       if (userActive.status == "Active") {
@@ -3503,6 +3503,18 @@ module.exports = {
               issued_user_name: username,
               sort_id: "Pickup Done Closed by Sorting Agent",
               to_tray_for_pickup: { $ne: null },
+            },
+            {
+              issued_user_name: username,
+              sort_id: "Pickup Done Closed by Sorting Agent",
+              to_tray_for_pickup:  null,
+              code:{$ne:toTray}
+            },
+            {
+              issued_user_name: username,
+              sort_id: "Pickup Done Closed by Sorting Agent",
+              to_tray_for_pickup:  null,
+              code:{$ne:toTray}
             },
           ],
         });

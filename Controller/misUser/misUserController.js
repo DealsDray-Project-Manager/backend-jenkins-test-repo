@@ -90,34 +90,34 @@ module.exports = {
             model_name.push(x?.old_item_details?.split(":")[1]);
             err["model_name_does_not_exist"] = model_name;
           }
-          let imei_nmuber = await orders.findOne({
-            imei: x?.imei,
-            order_status: x?.order_status,
-          });
-          if (imei_nmuber) {
-            let obj = {
-              imei: x?.imei,
-              status: x?.order_status,
-            };
-            imei.push(obj);
-            err["imei_number_is_duplicate"] = imei;
-          } else {
-            if (
-              ordersData.item.some(
-                (data, index) =>
-                  data?.imei == x?.imei &&
-                  data?.order_status == x?.order_status &&
-                  index != i
-              )
-            ) {
-              let obj = {
-                imei: x?.imei,
-                status: x?.order_status,
-              };
-              imei.push(obj);
-              err["imei_number_is_duplicate"] = imei;
-            }
-          }
+          // let imei_nmuber = await orders.findOne({
+          //   imei: x?.imei,
+          //   order_status: x?.order_status,
+          // });
+          // if (imei_nmuber) {
+          //   let obj = {
+          //     imei: x?.imei,
+          //     status: x?.order_status,
+          //   };
+          //   imei.push(obj);
+          //   err["imei_number_is_duplicate"] = imei;
+          // } else {
+          //   if (
+          //     ordersData.item.some(
+          //       (data, index) =>
+          //         data?.imei == x?.imei &&
+          //         data?.order_status == x?.order_status &&
+          //         index != i
+          //     )
+          //   ) {
+          //     let obj = {
+          //       imei: x?.imei,
+          //       status: x?.order_status,
+          //     };
+          //     imei.push(obj);
+          //     err["imei_number_is_duplicate"] = imei;
+          //   }
+          // }
         } else {
           order_status.push(x.order_status);
           err["order_status"] = order_status;
@@ -3307,6 +3307,8 @@ module.exports = {
         deliveryData.utilty.tray_status = "Closed By Bot Agent";
         deliveryData.utilty.tray_type = "BOT";
         deliveryData.utilty.tray_location = "Warehouse";
+        deliveryData.utilty.bot_done_received=Date.now()
+        deliveryData.utilty.tray_closed_by_bot=Date.now()
 
         let obj = {
           awbn_number: deliveryData.utilty.tracking_id,
@@ -3355,8 +3357,7 @@ module.exports = {
   whtUtilityImportFile: (xlsxData) => {
     return new Promise(async (resolve, reject) => {
       let count = "";
-    
-
+      
       for (let x of arr) {
         count++;
         let uicNum = "";
@@ -3382,7 +3383,7 @@ module.exports = {
         let orderObj = {
           order_id: x.Order_ID.toString(),
           order_date: new Date("01/01/2022"),
-          partner_shop: x.Partner_Shop,
+          partner_shop: "Gurgaon_122016",
           item_id: x.Item_ID,
           old_item_details: `${firstWord}:${remainingWords}`,
           imei: x.IMEI.toString(),
@@ -3395,7 +3396,7 @@ module.exports = {
         let objDelivery = {
           order_id: x.Order_ID.toString(),
           order_date: new Date("01/01/2022"),
-          partner_shop: x.Partner_Shop,
+          partner_shop: "Gurgaon_122016",
           item_id: x.Item_ID,
        
           imei: x.IMEI.toString(),
@@ -3410,8 +3411,8 @@ module.exports = {
           old_uic: x.Old_UIC,
           delivery_date: Date.now(),
         };
-        let dataImportToOrder=await  tempOrders.create(orderObj)
-        // let dataImportDelivery = await tempDelivery.create(objDelivery);
+        // let dataImportToOrder=await  tempOrders.create(orderObj)
+        let dataImportDelivery = await tempDelivery.create(objDelivery);
       }
       resolve({ status: 1 });
       // let obj={
