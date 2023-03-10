@@ -2682,6 +2682,7 @@ module.exports = {
   /*-----------------BQC DONE RECIEVED--------------------------*/
 
   bqcDoneRecieved: (trayData) => {
+    console.log('ksks');
     return new Promise(async (resolve, reject) => {
       let tray = await masters.findOne({ code: trayData.trayId });
       if (tray?.actual_items?.length == trayData.counts) {
@@ -2709,6 +2710,7 @@ module.exports = {
                 projection: { _id: 0 } 
               }
             );
+             console.log('kskssk');
             let updateElasticSearch=await elasticsearch.uicCodeGen(deliveryTrack)
           }
           resolve({ status: 1 });

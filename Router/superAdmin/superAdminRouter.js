@@ -1146,7 +1146,7 @@ router.post("/search-admin-track-item", async (req, res, next) => {
   try {
     const { type, searchData, location, rowsPerPage, page } = req.body;
  
-    let data = await elasticsearch.superAdminTrackItemSearchData(searchData, page, rowsPerPage);
+    let data = await elasticsearch.creatIndex(searchData, page, rowsPerPage);
     // let data = await superAdminController.searchAdminTrackItem(
     //   type,
     //   searchData,

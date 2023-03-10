@@ -1156,15 +1156,18 @@ router.post("/recieved-from-bqc", async (req, res, next) => {
   try {
     let data = await warehouseInController.bqcDoneRecieved(req.body);
     if (data.status == 1) {
+      console.log('kitttiiii');
       res.status(200).json({
         message: "Successfully Received",
       });
     }
     if (data.status == 3) {
+      console.log('kitteelaa');
       res.status(202).json({
         message: "Please Enter Valid Count",
       });
     } else {
+      console.log('kittoooooo');
       res.status(202).json({
         message: "Failed",
       });
