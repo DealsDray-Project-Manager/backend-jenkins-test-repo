@@ -24,6 +24,8 @@ const bqc = require("./Router/bqc-router/bqc-router");
 const sortingAgent = require("./Router/sorting-agent-router/sorting-agent-router");
 const auditPanel = require("./Router/audit-router/audit-router");
 const RDL_onePanel = require("./Router/RDL_one-router/RDL_one-router");
+const salesPanel = require("./Router/sales-agent-router/sales-agent-router");
+const pricingpanel = require("./Router/pricing-router/pricing-router");
 app.use(logger("dev"));
 app.use(express.json({ limit: "25mb" }));
 app.use(cors());
@@ -48,6 +50,12 @@ app.use("/api/v7/sorting-agnet", sortingAgent);
 app.use("/api/v7/audit-agent", auditPanel);
 /* API for RDL_one AGNET panel */
 app.use("/api/v7/RDL_onePanel", RDL_onePanel);
+/* API for sales AGNET panel */
+app.use("/api/v7/sales-agent", salesPanel);
+/* API for pricing AGNET panel */
+app.use("/api/v7/pricing-agent", pricingpanel);
+
+
 
 /* User-profile */
 app.use("/user/profile", express.static(__dirname + "/public/user-profile"));
