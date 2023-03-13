@@ -507,8 +507,6 @@ module.exports = {
             },
           }
         );
-       
-        
       }
       if (res) {
         resolve(res);
@@ -604,7 +602,6 @@ module.exports = {
             },
           }
         );
-        
       }
       if (data.modifiedCount !== 0) {
         resolve(data);
@@ -1013,13 +1010,14 @@ module.exports = {
                     charging_done_received: Date.now(),
                   },
                 },
-                { 
-                  new: true, 
-                  projection: { _id: 0 } 
+                {
+                  new: true,
+                  projection: { _id: 0 },
                 }
               );
-              let updateElasticSearch=await elasticsearch.uicCodeGen(deliveryTrack)
-
+              let updateElasticSearch = await elasticsearch.uicCodeGen(
+                deliveryTrack
+              );
             }
             resolve({ status: 1 });
           } else {
@@ -1050,12 +1048,14 @@ module.exports = {
                       tray_location: "Warehouse",
                     },
                   },
-                  { 
-                    new: true, 
-                    projection: { _id: 0 } 
+                  {
+                    new: true,
+                    projection: { _id: 0 },
                   }
                 );
-                let updateElasticSearch=await elasticsearch.uicCodeGen(deliveryTrack)
+                let updateElasticSearch = await elasticsearch.uicCodeGen(
+                  deliveryTrack
+                );
               }
               resolve({ status: 1 });
             } else {
@@ -1078,14 +1078,16 @@ module.exports = {
                     $set: {
                       tray_status: "Received From Merging",
                       tray_location: "Warehouse",
+                    },
                   },
-                  },
-                  { 
-                    new: true, 
-                    projection: { _id: 0 } 
+                  {
+                    new: true,
+                    projection: { _id: 0 },
                   }
                 );
-                let updateElasticSearch=await  elasticsearch.uicCodeGen(deliveryTrack)
+                let updateElasticSearch = await elasticsearch.uicCodeGen(
+                  deliveryTrack
+                );
               }
               resolve({ status: 1 });
             } else {
@@ -1117,12 +1119,14 @@ module.exports = {
                     bot_done_received: Date.now(),
                   },
                 },
-                { 
-                  new: true, 
-                  projection: { _id: 0 } 
+                {
+                  new: true,
+                  projection: { _id: 0 },
                 }
               );
-              let updateElasticSearch=await elasticsearch.uicCodeGen(deliveryTrack)
+              let updateElasticSearch = await elasticsearch.uicCodeGen(
+                deliveryTrack
+              );
             }
             resolve({ status: 1 });
           } else {
@@ -1238,12 +1242,12 @@ module.exports = {
                 tray_location: "Warehouse",
               },
             },
-            { 
-              new: true, 
-              projection: { _id: 0 } 
+            {
+              new: true,
+              projection: { _id: 0 },
             }
           );
-          let updateElastic=await elasticsearch.updateUic(deliveryTrack)
+          let updateElastic = await elasticsearch.updateUic(deliveryTrack);
         }
         resolve(data);
       } else {
@@ -2088,12 +2092,14 @@ module.exports = {
                   assign_to_agent_bqc: Date.now(),
                 },
               },
-              { 
-                new: true, 
-                projection: { _id: 0 } 
+              {
+                new: true,
+                projection: { _id: 0 },
               }
             );
-            let updateElasticSearch=await elasticsearch.uicCodeGen(deliveryUpdate)
+            let updateElasticSearch = await elasticsearch.uicCodeGen(
+              deliveryUpdate
+            );
           }
         }
       } else if (trayData.sortId == "Send for Recharging") {
@@ -2120,12 +2126,14 @@ module.exports = {
                   tray_location: "Charging",
                 },
               },
-              { 
-                new: true, 
-                projection: { _id: 0 } 
+              {
+                new: true,
+                projection: { _id: 0 },
               }
             );
-            let updateElasticSearch= await elasticsearch.uicCodeGen(deliveryUpdate)
+            let updateElasticSearch = await elasticsearch.uicCodeGen(
+              deliveryUpdate
+            );
           }
         }
       } else {
@@ -2151,13 +2159,15 @@ module.exports = {
                   tray_location: "Charging",
                 },
               },
-              { 
-                new: true, 
-                projection: { _id: 0 } 
+              {
+                new: true,
+                projection: { _id: 0 },
               }
             );
             console.log(deliveryUpdate);
-            let updateElasticSearch=await elasticsearch.uicCodeGen(deliveryUpdate)
+            let updateElasticSearch = await elasticsearch.uicCodeGen(
+              deliveryUpdate
+            );
           }
         }
       }
@@ -2388,12 +2398,14 @@ module.exports = {
                   bqc_done_close: Date.now(),
                 },
               },
-              { 
-                new: true, 
-                projection: { _id: 0 } 
+              {
+                new: true,
+                projection: { _id: 0 },
               }
             );
-            let updateElasticSearch=await elasticsearch.uicCodeGen(deliveryUpdate)
+            let updateElasticSearch = await elasticsearch.uicCodeGen(
+              deliveryUpdate
+            );
           }
           resolve(data);
         } else {
@@ -2424,12 +2436,14 @@ module.exports = {
                   charging_done_close: Date.now(),
                 },
               },
-              { 
-                new: true, 
-                projection: { _id: 0 } 
+              {
+                new: true,
+                projection: { _id: 0 },
               }
             );
-            let updateElasticSearch=await elasticsearch.uicCodeGen(deliveryUpdate)
+            let updateElasticSearch = await elasticsearch.uicCodeGen(
+              deliveryUpdate
+            );
           }
           resolve(data);
         } else {
@@ -2500,12 +2514,14 @@ module.exports = {
                 audit_done_close: Date.now(),
               },
             },
-            { 
-              new: true, 
-              projection: { _id: 0 } 
+            {
+              new: true,
+              projection: { _id: 0 },
             }
           );
-          let updateElasticSearch=await elasticsearch.uicCodeGen(deliveryUpdate)
+          let updateElasticSearch = await elasticsearch.uicCodeGen(
+            deliveryUpdate
+          );
         }
         if (falg == true) {
           resolve({ status: 1 });
@@ -2618,12 +2634,14 @@ module.exports = {
                   bqc_done_received: Date.now(),
                 },
               },
-              { 
-                new: true, 
-                projection: { _id: 0 } 
+              {
+                new: true,
+                projection: { _id: 0 },
               }
             );
-            let updateElasticSearch=await elasticsearch.uicCodeGen(deliveryTrack)
+            let updateElasticSearch = await elasticsearch.uicCodeGen(
+              deliveryTrack
+            );
           }
           resolve({ status: 1 });
         } else {
@@ -2660,12 +2678,14 @@ module.exports = {
                   audit_done_recieved: Date.now(),
                 },
               },
-              { 
-                new: true, 
-                projection: { _id: 0 } 
+              {
+                new: true,
+                projection: { _id: 0 },
               }
             );
-            let updateElasticSearch=await elasticsearch.uicCodeGen(deliveryTrack)
+            let updateElasticSearch = await elasticsearch.uicCodeGen(
+              deliveryTrack
+            );
           }
           resolve({ status: 1 });
         } else {
@@ -2703,12 +2723,14 @@ module.exports = {
                   received_from_sorting: Date.now(),
                 },
               },
-              { 
-                new: true, 
-                projection: { _id: 0 } 
+              {
+                new: true,
+                projection: { _id: 0 },
               }
             );
-            let updateElasticSearch=await elasticsearch.uicCodeGen(updateDelivery)
+            let updateElasticSearch = await elasticsearch.uicCodeGen(
+              updateDelivery
+            );
           }
           resolve({ status: 1 });
         }
@@ -2795,12 +2817,14 @@ module.exports = {
                   handover_sorting_date: Date.now(),
                 },
               },
-              { 
-                new: true, 
-                projection: { _id: 0 } 
+              {
+                new: true,
+                projection: { _id: 0 },
               }
             );
-            let updateElasticSearch=await elasticsearch.uicCodeGen(deliveryUpdate)
+            let updateElasticSearch = await elasticsearch.uicCodeGen(
+              deliveryUpdate
+            );
           }
         }
       }
@@ -2839,12 +2863,14 @@ module.exports = {
                   closed_from_sorting: Date.now(),
                 },
               },
-              { 
-                new: true, 
-                projection: { _id: 0 } 
+              {
+                new: true,
+                projection: { _id: 0 },
               }
             );
-            let updateElasticSearch=await elasticsearch.uicCodeGen(updateDelivery)
+            let updateElasticSearch = await elasticsearch.uicCodeGen(
+              updateDelivery
+            );
           }
           resolve({ status: 1 });
         }
@@ -2870,12 +2896,14 @@ module.exports = {
                   closed_from_sorting: Date.now(),
                 },
               },
-              { 
-                new: true, 
-                projection: { _id: 0 } 
+              {
+                new: true,
+                projection: { _id: 0 },
               }
             );
-            let updateElasticSearch=await elasticsearch.uicCodeGen(updateDelivery)
+            let updateElasticSearch = await elasticsearch.uicCodeGen(
+              updateDelivery
+            );
           }
           resolve({ status: 2 });
         }
@@ -3266,23 +3294,35 @@ module.exports = {
             prefix: "tray-master",
             sort_id: "Merging Done",
             items: { $ne: [] },
+            type_taxanomy: "MMT",
+          },
+          {
+            cpc: location,
+            prefix: "tray-master",
+            sort_id: "Merging Done",
+            type_taxanomy: "WHT",
           },
           {
             cpc: location,
             refix: "tray-master",
             sort_id: "Received From Merging",
             items: { $ne: [] },
+            type_taxanomy: "MMT",
           },
           {
             cpc: location,
             refix: "tray-master",
-            items: { $ne: [] },
+            sort_id: "Received From Merging",
+            type_taxanomy: "WHT",
+          },
+          {
+            cpc: location,
+            refix: "tray-master",
             sort_id: "Audit Done Return from Merging",
           },
           {
             cpc: location,
             refix: "tray-master",
-            items: { $ne: [] },
             sort_id: "Audit Done Received From Merging",
           },
         ],
@@ -3296,44 +3336,32 @@ module.exports = {
   mergeDoneTrayClose: (fromTray, toTray, type, length, limit, status) => {
     let data;
     return new Promise(async (resolve, reject) => {
-      if (status == "Audit Done Received From Merging") {
-        if (limit == length) {
-          data = await masters.findOneAndUpdate(
-            { code: toTray },
-            {
-              $set: {
-                sort_id: "Ready to RDL",
-                actual_items: [],
-                issued_user_name: null,
-                from_merge: null,
-                to_merge: null,
-                closed_time_wharehouse: Date.now(),
-              },
-            }
-          );
-        } else {
-          data = await masters.findOneAndUpdate(
-            { code: toTray },
-            {
-              $set: {
-                sort_id: "Audit Done Closed By Warehouse",
-                actual_items: [],
-                issued_user_name: null,
-                from_merge: null,
-                to_merge: null,
-                closed_time_wharehouse: Date.now(),
-              },
-            }
-          );
+      if (length == 0 && type !== "MMT") {
+        let updateFromTray = await masters.updateOne(
+          { code: toTray },
+          {
+            $set: {
+              sort_id: "Open",
+              actual_items: [],
+              temp_array: [],
+              items: [],
+              issued_user_name: null,
+              from_merge: null,
+              to_merge: null,
+            },
+          }
+        );
+        if (updateFromTray.modifiedCount !== 0) {
+          resolve({ status: 1 });
         }
       } else {
-        if (type == "WHT") {
-          if (length == limit) {
+        if (status == "Audit Done Received From Merging") {
+          if (limit == length) {
             data = await masters.findOneAndUpdate(
               { code: toTray },
               {
                 $set: {
-                  sort_id: "Closed",
+                  sort_id: "Ready to RDL",
                   actual_items: [],
                   issued_user_name: null,
                   from_merge: null,
@@ -3347,7 +3375,7 @@ module.exports = {
               { code: toTray },
               {
                 $set: {
-                  sort_id: "Inuse",
+                  sort_id: "Audit Done Closed By Warehouse",
                   actual_items: [],
                   issued_user_name: null,
                   from_merge: null,
@@ -3358,17 +3386,49 @@ module.exports = {
             );
           }
         } else {
-          data = await masters.findOneAndUpdate(
-            { code: toTray },
-            {
-              $set: {
-                sort_id: "Closed By Warehouse",
-                from_merge: null,
-                to_merge: null,
-                closed_time_wharehouse: Date.now(),
-              },
+          if (type == "WHT") {
+            if (length == limit) {
+              data = await masters.findOneAndUpdate(
+                { code: toTray },
+                {
+                  $set: {
+                    sort_id: "Closed",
+                    actual_items: [],
+                    issued_user_name: null,
+                    from_merge: null,
+                    to_merge: null,
+                    closed_time_wharehouse: Date.now(),
+                  },
+                }
+              );
+            } else {
+              data = await masters.findOneAndUpdate(
+                { code: toTray },
+                {
+                  $set: {
+                    sort_id: "Inuse",
+                    actual_items: [],
+                    issued_user_name: null,
+                    from_merge: null,
+                    to_merge: null,
+                    closed_time_wharehouse: Date.now(),
+                  },
+                }
+              );
             }
-          );
+          } else {
+            data = await masters.findOneAndUpdate(
+              { code: toTray },
+              {
+                $set: {
+                  sort_id: "Closed By Warehouse",
+                  from_merge: null,
+                  to_merge: null,
+                  closed_time_wharehouse: Date.now(),
+                },
+              }
+            );
+          }
         }
       }
       if (data) {
@@ -3386,31 +3446,35 @@ module.exports = {
                 tray_location: "Warehouse",
               },
             },
-            { 
-              new: true, 
-              projection: { _id: 0 } 
+            {
+              new: true,
+              projection: { _id: 0 },
             }
           );
-          let updateElastic=await elasticsearch.uicCodeGen(update)
+          let updateElastic = await elasticsearch.uicCodeGen(update);
         }
-        let updateFromTray = await masters.updateOne(
-          { code: fromTray },
-          {
-            $set: {
-              sort_id: "Open",
-              actual_items: [],
-              temp_array: [],
-              items: [],
-              issued_user_name: null,
-              from_merge: null,
-              to_merge: null,
-            },
+        if (type == "MMT") {
+          let updateFromTray = await masters.updateOne(
+            { code: fromTray },
+            {
+              $set: {
+                sort_id: "Open",
+                actual_items: [],
+                temp_array: [],
+                items: [],
+                issued_user_name: null,
+                from_merge: null,
+                to_merge: null,
+              },
+            }
+          );
+          if (updateFromTray) {
+            resolve({ status: 1 });
+          } else {
+            resolve({ status: 0 });
           }
-        );
-        if (updateFromTray) {
-          resolve({ status: 1 });
         } else {
-          resolve({ status: 0 });
+          resolve({ status: 1 });
         }
       } else {
         resolve({ status: 0 });
@@ -3420,7 +3484,7 @@ module.exports = {
 
   /*-----------------CHECK SORTING AGENT IS FREE OR NOT-------------------------*/
 
-  getSortingAgentStatus: (username) => {
+  getSortingAgentStatus: (username,toTray) => {
     return new Promise(async (resolve, reject) => {
       let userActive = await user.findOne({ user_name: username });
       if (userActive.status == "Active") {
@@ -3440,8 +3504,21 @@ module.exports = {
               sort_id: "Pickup Done Closed by Sorting Agent",
               to_tray_for_pickup: { $ne: null },
             },
+            {
+              issued_user_name: username,
+              sort_id: "Issued to Sorting for Pickup",
+              to_tray_for_pickup:  null,
+              code:{$ne:toTray}
+            },
+            {
+              issued_user_name: username,
+              sort_id: "Pickup Done Closed by Sorting Agent",
+              to_tray_for_pickup:  null,
+              code:{$ne:toTray}
+            },
           ],
         });
+       console.log(data);
         if (data) {
           resolve({ status: 2 });
         } else {
@@ -3547,12 +3624,14 @@ module.exports = {
                   "bqc_report.bqc_status": y?.bqc_status,
                 },
               },
-              { 
-                new: true, 
-                projection: { _id: 0 } 
+              {
+                new: true,
+                projection: { _id: 0 },
               }
             );
-            let updateElasticSearch=await elasticsearch.uicCodeGen(updateTrack)
+            let updateElasticSearch = await elasticsearch.uicCodeGen(
+              updateTrack
+            );
           }
         }
       }

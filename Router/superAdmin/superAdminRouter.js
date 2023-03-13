@@ -773,7 +773,7 @@ router.post("/trayIdGenrate/:type", async (req, res, next) => {
 /*-----------------------------GET HIGHEST MASTER ID FOR BAG--------------------------------------*/
 router.post("/getMasterHighest/:prefix", async (req, res, next) => {
   try {
-    if (req.params.prefix == "Gurgaon_122016") {
+    if (req.params.prefix == "Gurgaon_122016" || req.params.prefix == "Gurgaon_122003") {
       let obj;
       fs.readFile(
         "myjsonfile.json",
@@ -908,7 +908,7 @@ router.post("/createBulkBag", async (req, res, next) => {
             ).length;
             obj.bagBanglore = obj.bagBanglore + blr;
             let ggrn = req.body.filter(
-              (data) => data.cpc == "Gurgaon_122016"
+              (data) => data.cpc == "Gurgaon_122016" || data.cpc == "Gurgaon_122003"
             ).length;
             obj.bagGurgaon = obj.bagGurgaon + ggrn;
             json = JSON.stringify(obj);
