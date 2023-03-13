@@ -9,7 +9,7 @@ const { delivery } = require("../Model/deliveryModel/delivery");
 
 exports = module.exports = () => {
   try {
-    corn.schedule("25 16 * * *", () => {
+    corn.schedule("00 20 * * *", () => {
       /*---------------------------xml read ------------------------------------*/
       fs.readFile(
         "blancco_qc_data/csvRequest.xml",
@@ -18,12 +18,10 @@ exports = module.exports = () => {
           xmlParser.parseString(data, function (err, dataOfXml) {
             if (err) console.log(err);
 
-
             // here we log the results of our xml string conversion
             dataOfXml.request["export-report"][0].search[0].$.value =
               new Date().toISOString().split("T")[0] + "T00:00:00+0000";
             //currentdate
-
 
             let currentDate = new Date();
             dataOfXml.request["export-report"][0].search[1].$.value =
@@ -54,10 +52,10 @@ exports = module.exports = () => {
     console.log(error);
   }
   try {
-    corn.schedule("37 14 * * *", () => {
+    corn.schedule("00 23 * * *", () => {
       /*----------------------------------------------CSV READ-----------------------------*/
       let result = [];
-      fs.createReadStream("blancco_qc_data/blancco_qc_data-dummy-12 demo.csv")
+      fs.createReadStream("blancco_qc_data/blancco_qc_data.csv")
         .pipe(csvParser())
         .on("data", (data) => {
           data["device_color_one"] = data["Device_Color"];

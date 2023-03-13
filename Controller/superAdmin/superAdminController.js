@@ -1771,4 +1771,99 @@ module.exports = {
       resolve({ status: "Done" });
     });
   },
+  extraReAudit:()=>{
+    return new Promise(async(resolve,reject)=>{
+      let arr=[
+        "WHT1010",
+        "WHT1014",
+        "WHT1021",
+        "WHT1035",
+        "WHT1036",
+        "WHT1037",
+        "WHT1039",
+        "WHT1043",
+        "WHT1050",
+        "WHT1051",
+        "WHT1054",
+        "WHT1057",
+        "WHT1084",
+        "WHT1100",
+        "WHT1106",
+        "WHT1125",
+        "WHT1135",
+        "WHT1141",
+        "WHT1149",
+        "WHT1205",
+        "WHT1210",
+        "WHT1213",
+        "WHT1218",
+        "WHT1243",
+        "WHT1252",
+        "WHT1255",
+        "WHT1257",
+        "WHT1264",
+        "WHT1269",
+        "WHT1275",
+        "WHT1280",
+        "WHT1286",
+        "WHT1299",
+        "WHT1301",
+        "WHT1302",
+        "WHT1305",
+        "WHT1312",
+        "WHT1322",
+        "WHT1323",
+        "WHT1338",
+        "WHT1340",
+        "WHT1348",
+        "WHT1398",
+        "WHT1453",
+        "WHT1481",
+        "WHT1489",
+        "WHT1526",
+        "WHT1532",
+        "WHT1006",
+        "WHT1052",
+        "WHT1111",
+        "WHT1116",
+        "WHT1131",
+        "WHT1226",
+        "WHT1234",
+        "WHT1240",
+        "WHT1249",
+        "WHT1307",
+        "WHT1331",
+        "WHT1342",
+        "WHT1405",
+        "WHT1425",
+        "WHT1428",
+        "WHT1430",
+        "WHT1434",
+        "WHT1483",
+        "WHT1485",
+        "WHT1488",
+        "WHT1490",
+        "WHT1491",
+        "WHT1531",
+        "WHT1538",
+        "WHT1386",
+        "WHT1034",
+      ]
+      console.log(arr.length);
+      for(let x of arr){
+        let data =await masters.updateOne({
+          code:x
+        },{
+          $set:{
+            sort_id: "Ready to Audit",
+            issued_user_name: null,
+            actual_items: [],
+            temp_array:[]
+          }
+        })
+        console.log(data);
+      }
+      resolve(arr)
+    })
+  }
 };

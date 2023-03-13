@@ -1413,4 +1413,23 @@ router.post("/fixBaggingIssue", async (req, res, next) => {
     next(error);
   }
 });
+// EXTRA 07032023 REAUDIT 
+router.post("/extra/reAuditTray",async(req,res,next)=>{
+  try {
+    let data=await superAdminController.extraReAudit()
+    if(data){
+      res.status(200).json({
+        message:"Successfully Done"
+
+      })
+    }
+    else{
+      res.status(202).json({
+        message:"Failed"
+      })
+    }
+  } catch (error) {
+    next(error)
+  }
+})
 module.exports = router;
