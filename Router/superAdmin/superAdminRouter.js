@@ -67,6 +67,7 @@ router.post("/superAdminDashboard", async (req, res, next) => {
 router.post("/login", async (req, res, next) => {
   try {
     let loginData = await superAdminController.doLogin(req.body);
+   
     if (loginData.status == 1) {
       const jwtToken = await jwt.jwtSign(loginData.data);
       res.status(200).json({
@@ -1145,7 +1146,7 @@ router.post("/search-admin-track-item", async (req, res, next) => {
   try {
     const { type, searchData, location, rowsPerPage, page } = req.body;
  
-    let data = await elasticsearch.superAdminTrackItemSearchData(searchData, page, rowsPerPage);
+    let data = await elasticsearch.creatIndex(searchData, page, rowsPerPage);
     // let data = await superAdminController.searchAdminTrackItem(
     //   type,
     //   searchData,
@@ -1395,6 +1396,216 @@ router.post("/part-records-import", async (req, res, next) => {
     next(error);
   }
 });
+
+
+router.post('/addcategory',async(req,res,next)=>{
+  try{
+    let data=await superAdminController.createctxcategory(req.body)
+    if (data.status == true) {
+      res.status(200).json({ 
+        message: "Successfully category Added",
+      });
+    } else {
+      res.status(202).json({
+        message: "category is already exist",
+      });
+    }
+  }catch(error){
+    next(error);
+  }
+
+})
+
+
+
+
+router.post("/getCtxCategorys", async (req, res, next) => {
+  try {
+    let data = await superAdminController.getCtxCategorys();
+    if (data) {
+      res.status(200).json(data);
+    } else {
+      res.status(202).json({error:"CTX ctaegory not Exist"});
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.post("/deleteCtxcategory", async (req, res, next) => {
+  try {
+    let data = await superAdminController.deleteCtxcategory(req.body);
+    if (data.acknowledged==true) {
+      res.status(200).json(data)
+    } else if(data.status==false){
+      res.status(202).json({error:"you can't delete this category "})
+    }
+    else {
+      res.status(202).json({error:"you can't delete this category "})
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.get("/geteditctxcategory/:code", async (req, res) => {
+  try {
+    let user = await superAdminController.geteditctxcategory(req.params.code);
+    if (user) {
+      res.status(200).json({ data: user });
+    }
+  } catch (error) {
+    next(error)
+  }
+});
+
+router.post("/editctxcategory",async(req,res,next)=>{
+  try{
+    let user = await superAdminController.editctxcategory(req.body)
+    if(user.status==true){
+      res.status(200).json({ message:'Done'});
+    }
+    else{
+      res.status(202).json({error:'Category Already exist'})
+    }
+  }catch(error){
+    next(error)
+  }
+})
+
+router.get("/getCtxTrayCategory", async (req, res) => {
+  try {
+    let user = await superAdminController.getCtxTrayCategory();
+    if (user) {
+      res.status(200).json(user);
+    }
+  } catch (error) {
+    next(error)
+  }
+});
+
+router.post("/categoryCheck",async(req,res,next)=>{
+  try{
+   ;
+    let user = await superAdminController.categoryCheck(req.body)
+    if(user?.status==true){
+      res.status(200).json({Exist:true});
+    }
+    else{
+      res.status(202).json({Exist:false})
+    }
+  }catch(error){
+    next(error)
+  }
+})
+
+
+
+
+
+router.post('/addcategory',async(req,res,next)=>{
+  try{
+    let data=await superAdminController.createctxcategory(req.body)
+    if (data.status == true) {
+      res.status(200).json({ 
+        message: "Successfully category Added",
+      });
+    } else {
+      res.status(202).json({
+        message: "category is already exist",
+      });
+    }
+  }catch(error){
+    next(error);
+  }
+
+})
+
+
+
+
+router.post("/getCtxCategorys", async (req, res, next) => {
+  try {
+    let data = await superAdminController.getCtxCategorys();
+    if (data) {
+      res.status(200).json(data);
+    } else {
+      res.status(202).json({error:"CTX ctaegory not Exist"});
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.post("/deleteCtxcategory", async (req, res, next) => {
+  try {
+    let data = await superAdminController.deleteCtxcategory(req.body);
+    if (data.acknowledged==true) {
+      res.status(200).json(data)
+    } else if(data.status==false){
+      res.status(202).json({error:"you can't delete this category "})
+    }
+    else {
+      res.status(202).json({error:"you can't delete this category "})
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.get("/geteditctxcategory/:code", async (req, res) => {
+  try {
+    let user = await superAdminController.geteditctxcategory(req.params.code);
+    if (user) {
+      res.status(200).json({ data: user });
+    }
+  } catch (error) {
+    next(error)
+  }
+});
+
+router.post("/editctxcategory",async(req,res,next)=>{
+  try{
+    let user = await superAdminController.editctxcategory(req.body)
+    if(user.status==true){
+      res.status(200).json({ message:'Done'});
+    }
+    else{
+      res.status(202).json({error:'Category Already exist'})
+    }
+  }catch(error){
+    next(error)
+  }
+})
+
+router.get("/getCtxTrayCategory", async (req, res) => {
+  try {
+    let user = await superAdminController.getCtxTrayCategory();
+    if (user) {
+      res.status(200).json(user);
+    }
+  } catch (error) {
+    next(error)
+  }
+});
+
+router.post("/categoryCheck",async(req,res,next)=>{
+  try{
+   ;
+    let user = await superAdminController.categoryCheck(req.body)
+    if(user?.status==true){
+      res.status(200).json({Exist:true});
+    }
+    else{
+      res.status(202).json({Exist:false})
+    }
+  }catch(error){
+    next(error)
+  }
+})
+
+
+
 
 /***********************************************EXTRA QUREY SECTION*********************************************************** */
 router.post("/fixBaggingIssue", async (req, res, next) => {

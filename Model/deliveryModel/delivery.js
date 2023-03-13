@@ -207,7 +207,30 @@ const deliverySchema = mongoose.Schema({
   },
     pickup_request_sent_to_wh_date:{
       type:Date
-    }
+    },
+  audit_done_close:{
+    type:Date
+  },
+  rdl_fls_one_user_name:{
+    type:String
+  },
+  rdl_fls_issued_date:{
+    type:Date
+  },
+  rdl_fls_closed_date:{
+    type:Date
+  },
+  rdl_fls_done_recieved_date:{
+    type:Date
+  },
+  rdl_fls_done_closed_wh:{
+    type:Date
+  },
+  rdl_fls_one_report:{
+    type:Object
+  }
+
+
 });
 
 const delivery = mongoose.model("delivery", deliverySchema);

@@ -152,6 +152,8 @@ module.exports = {
         whtMerge: 0,
         mmtMerge: 0,
         trackItem: 0,
+        rdl_one:0,
+        rdl_two:0
       };
       count.orders = await orders.count({ partner_shop: location });
 
@@ -216,6 +218,12 @@ module.exports = {
         prefix: "tray-master",
         type_taxanomy: "WHT",
         sort_id: "Ready to RDL",
+        cpc: location,
+      });
+      count.rdl_two = await masters.count({
+        prefix: "tray-master",
+        type_taxanomy: "WHT",
+        sort_id: "Ready to RDL_two",
         cpc: location,
       });
       count.botToWht = await masters.count({
@@ -2878,7 +2886,6 @@ module.exports = {
         ]);
 
         if (orderItems.length == 0) {
-          // let orderItems = await orders.find({ imei: `'${value}` })
           orderItems = await orders.aggregate([
             {
               $match: {
@@ -3162,6 +3169,66 @@ module.exports = {
       }
     });
   },
+  getAuditDone: () => {
+    return new Promise(async (resolve, reject) => {
+      let data = await masters.find({
+        sort_id: "Ready to RDL",
+        type_taxanomy: "WHT",
+      });
+      if (data) {
+        resolve(data);
+      }
+    });
+  },
+
+sendToRdl: (tray,user_name) => {
+    return new Promise(async (resolve, reject) => {
+      let sendtoRdlMis;
+      for (let x of tray) {
+        sendtoRdlMis = await masters.findOneAndUpdate(
+          { code: x },
+          {
+            $set: { 
+              sort_id: "send for RDL_one",
+              actual_items: [],
+              issued_user_name: user_name,
+              from_merge: null,
+              to_merge: null,
+            },
+          }
+        );
+      }
+      if (sendtoRdlMis) {
+        resolve({ status: true });
+      } else {
+        resolve({ status: false });
+      }
+    });
+  },
+
+ getRDLoneUsers: (userType, location) => {
+    return new Promise(async (resolve, reject) => {
+      let data = await user
+        .find({ user_type: userType, status: "Active", cpc: location })
+        .sort({ user_name: 1 });
+      if (data) {
+        resolve(data);
+      }
+    });
+  },
+getRdlDonetray: () => {
+    return new Promise(async (resolve, reject) => {
+      let data = await masters.find({
+        sort_id: "Ready to RDL_two",
+        type_taxanomy: "WHT",
+      });
+      if (data) {
+        resolve(data);
+      }
+    });
+  },
+
+
   whtutilitySearch: (oldUc) => {
     return new Promise(async (resolve, reject) => {
       let tempDeliveryData = await tempDelivery.aggregate([
