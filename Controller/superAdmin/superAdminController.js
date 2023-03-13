@@ -13,8 +13,8 @@ const {
 } = require("../../Model/masterHistoryModel/mastersHistory");
 const moment = require("moment");
 
-const IISDOMAIN = "http://prexo-v7-2-dev-api.dealsdray.com/user/profile/";
-const IISDOMAINPRDT = "http://prexo-v7-2-dev-api.dealsdray.com/product/image/";
+const IISDOMAIN = "http://prexo-v7-2-uat-api.dealsdray.com/user/profile/";
+const IISDOMAINPRDT = "http://prexo-v7-2-uat-api.dealsdray.com/product/image/";
 
 /************************************************************************************************** */
 
@@ -99,7 +99,7 @@ module.exports = {
         "items.status": "Invalid",
       });
       count.trackItem = await orders.count({ delivery_status: "Delivered" });
-     
+
       if (count) {
         resolve(count);
       }
@@ -1074,7 +1074,11 @@ module.exports = {
       let exist = await masters.findOne({
         $or: [
           {
-            $and: [{ name: mastersData.name },{ code: mastersData.code }, { prefix: mastersData.prefix }],
+            $and: [
+              { name: mastersData.name },
+              { code: mastersData.code },
+              { prefix: mastersData.prefix },
+            ],
           },
         ],
       });
@@ -1732,7 +1736,6 @@ module.exports = {
       for (let x of tray) {
         if (x.items.length !== 0) {
           for (let y of x.items) {
-         
             let obj;
             if (x.type_taxanomy == "BOT") {
               obj = {

@@ -1516,6 +1516,7 @@ router.post("/mergeDoneMmttrayClose", async (req, res, next) => {
 /*--------------------- ASSIGNMENT OF MMT AND WHT AND BOT FOR SORTING USER_CHECKING--------------------------------*/
 router.post("/sortingAgnetStatus/:username/:toTray", async (req, res, next) => {
   try {
+    console.log(req.params);
     const { username,toTray } = req.params;
     let data = await warehouseInController.getSortingAgentStatus(username,toTray);
     if (data.status === 1) {

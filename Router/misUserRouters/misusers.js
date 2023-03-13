@@ -1205,7 +1205,7 @@ router.post("/whtutility/search/:oldUic", async (req, res, next) => {
   try {
     const { oldUic } = req.params;
     let data = await misUserController.whtutilitySearch(oldUic);
-    console.log(data);
+  
     if (data.status == 1) {
       res.status(200).json({
         tempOrder: data.tempOrderData,
@@ -1260,28 +1260,27 @@ router.post("/whtUtility/bagAndBotTray/:location", async (req, res, next) => {
     next(error);
   }
 });
-// WHT UTILITY BOT TRAY FOR INUSE 
-router.post("/whtUtility/botTray",async(req,res,next)=>{
+// WHT UTILITY BOT TRAY FOR INUSE
+router.post("/whtUtility/botTray", async (req, res, next) => {
   try {
-    let data=await misUserController.whtUtilityGetBotTrayInuse()
-    if(data){
+    let data = await misUserController.whtUtilityGetBotTrayInuse();
+    if (data) {
       res.status(200).json({
-        data:data
-      })
+        data: data,
+      });
     }
   } catch (error) {
-    next(error)
+    next(error);
   }
-})
-router.post("/whtUtility/addDelivery",async(req,res,next)=>{
+});
+router.post("/whtUtility/addDelivery", async (req, res, next) => {
   try {
-    let data=await misUserController.whtutilityAddDelivery(req.body)
-    if(data.status == 1){
+    let data = await misUserController.whtutilityAddDelivery(req.body);
+    if (data.status == 1) {
       res.status(200).json({
-        message:"Successfully Imported"
-      })
-    }
-    else if (data.status == 2) {
+        message: "Successfully Imported",
+      });
+    } else if (data.status == 2) {
       res.status(202).json({
         message: `${data.arr} - not exists`,
       });
@@ -1291,8 +1290,86 @@ router.post("/whtUtility/addDelivery",async(req,res,next)=>{
       });
     }
   } catch (error) {
+    next(error);
+  }
+});
+//BOT TRAY CLOSE PAGE
+router.post("/whtUtility/botTray/closePage/:trayId/:status", async (req, res, next) => {
+  try {
+    const { trayId ,status} = req.params;
+    let data = await misUserController.whtUtilityBotTrayGetOne(trayId,status);
+    if (data.status == 1) {
+      res.status(200).json({
+        data: data.tray,
+      });
+    } else if (data.status == 2) {
+      res.status(202).json({
+        message: "Tray is not exists",
+      });
+    } else if (data.status == 3) {
+      res.status(202).json({
+        message: "You can't access this data",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+//OLD UIC SCAN FOR BOT TRAY CLOSE
+router.post("/whtUtility/botTray/oldUic", async (req, res, next) => {
+  try {
+    const { trayId, uic } = req.body;
+    let data = await misUserController.checkUicFroWhtUtility(trayId, uic);
+    console.log(data);
+    if (data.status == 1) {
+      res.status(202).json({
+        message: "UIC Does Not Exists",
+      });
+    } else if (data.status == 2) {
+      res.status(202).json({
+        message: "UIC Not Exists In This Tray",
+      });
+    } else if (data.status == 3) {
+      res.status(202).json({
+        message: "Already Added",
+      });
+    } else if (data.status == 4) {
+      res.status(200).json({
+        message: "Valid UIC",
+        data: data.data,
+      });
+    } else if (data.status == 6) {
+      res.status(202).json({
+        message: "Not Delivered",
+        data: data.data,
+      });
+    } else if (data.status == 7) {
+      res.status(202).json({
+        message: "UIC not printed Yet",
+        data: data.data,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+// WHT UTILITY OLD UIC TO NEW UIC SAVE
+router.post("/whtUtility/resticker/save/:trayId",async(req,res,next)=>{
+  try {
+    const {trayId}=req.params
+    let data=await misUserController.whtUtilityRestickerSave(trayId)
+    if(data.status == 1){
+      res.status(200).json({
+        message:"Data Saved"
+      })
+    }
+    else{
+      res.status(202).json({
+        message:"Failed Please tray again..."
+      })
+    }
+  } catch (error) {
     next(error)
   }
-})
-
+}) 
 module.exports = router;

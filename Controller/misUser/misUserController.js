@@ -3164,26 +3164,57 @@ module.exports = {
   },
   whtutilitySearch: (oldUc) => {
     return new Promise(async (resolve, reject) => {
-      let tempDeliveryData = await tempDelivery.find({ old_uic: oldUc });
+      let tempDeliveryData = await tempDelivery.aggregate([
+        { $match: { old_uic: oldUc } },
+        {
+          $lookup: {
+            from: "products",
+            localField: `item_id`,
+            foreignField: "vendor_sku_id",
+            as: "products",
+          },
+        },
+      ]);
       if (tempDeliveryData.length !== 0) {
-        let tempOrderData = await tempOrders.find({
-          $or: [
-            { order_id: tempDeliveryData[0].order_id },
-            { imei: tempDeliveryData[0].imei },
-          ],
-        });
-        let orgOrder = await orders.find({
-          $or: [
-            { order_id: tempDeliveryData[0].order_id },
-            { imei: tempDeliveryData[0].imei },
-          ],
-        });
-        let orgDelivery = await delivery.find({
-          $or: [
-            { order_id: tempDeliveryData[0].order_id },
-            { imei: tempDeliveryData[0].imei },
-          ],
-        });
+        let tempOrderData = await tempOrders.aggregate([
+          {
+            $match: { order_id: tempDeliveryData[0].order_id },
+          },
+          {
+            $lookup: {
+              from: "products",
+              localField: `item_id`,
+              foreignField: "vendor_sku_id",
+              as: "products",
+            },
+          },
+        ]);
+        let orgOrder = await orders.aggregate([
+          {
+            $match: { order_id: tempDeliveryData[0].order_id },
+          },
+          {
+            $lookup: {
+              from: "products",
+              localField: `item_id`,
+              foreignField: "vendor_sku_id",
+              as: "products",
+            },
+          },
+        ]);
+        let orgDelivery = await delivery.aggregate([
+          {
+            $match: { order_id: tempDeliveryData[0].order_id },
+          },
+          {
+            $lookup: {
+              from: "products",
+              localField: `item_id`,
+              foreignField: "vendor_sku_id",
+              as: "products",
+            },
+          },
+        ]);
         resolve({
           status: 1,
           tempDeliveryData: tempDeliveryData,
@@ -3206,12 +3237,14 @@ module.exports = {
       let tray = await masters.find({
         $or: [
           {
+            $expr: { $ne: [ { $size: "$items" }, { $toInt: "$limit" } ] },
             cpc: location,
             prefix: "tray-master",
             sort_id: "Open",
             type_taxanomy: "BOT",
           },
           {
+            $expr: { $ne: [ { $size: "$items" }, { $toInt: "$limit" } ] },
             cpc: location,
             prefix: "tray-master",
             sort_id: "Wht-utility-work",
@@ -3231,14 +3264,25 @@ module.exports = {
   whtUtilityGetBotTrayInuse: () => {
     return new Promise(async (resolve, reject) => {
       let data = await masters.find({
-        prefix: "tray-master",
-        sort_id: "Wht-utility-work",
-        type_taxanomy: "BOT",
+        $or:[
+          {
+            prefix: "tray-master",
+            sort_id: "Wht-utility-work",
+            type_taxanomy: "BOT",
+          },
+          {
+            prefix: "tray-master",
+            sort_id:"Wht-utility Resticker Done",
+            type_taxanomy: "BOT",
+          }
+        ]
+       
       });
       resolve(data);
     });
   },
   whtUtilityImportOrder: (orderData) => {
+    console.log(orderData);
     return new Promise(async (resolve, reject) => {
       let arr = [];
       let locationCheck = await infra.findOne({ code: orderData.partner_shop });
@@ -3246,18 +3290,7 @@ module.exports = {
         arr.push(`${orderData.partner_shop}- "Location Not Exists"`);
       }
       let brandAndModel = await products.findOne({
-        brand_name: {
-          $regex: new RegExp(
-            "^" + orderData?.old_item_details?.split(":")[0] + "$",
-            "i"
-          ),
-        },
-        model_name: {
-          $regex: new RegExp(
-            "^" + orderData?.old_item_details?.split(":")[1] + "$",
-            "i"
-          ),
-        },
+        vendor_sku_id: orderData.item_id,
       });
       if (brandAndModel == null) {
         arr.push(
@@ -3277,8 +3310,84 @@ module.exports = {
       }
     });
   },
+  whtUtilityBotTrayGetOne: (trayId,status) => {
+    return new Promise(async (resolve, reject) => {
+      let data = await masters.findOne({ code: trayId });
+      if (data) {
+        if (data.sort_id == status) {
+          resolve({ status: 1, tray: data });
+        } else {
+          resolve({ status: 3 });
+        }
+      } else {
+        resolve({ status: 2 });
+      }
+    });
+  },
+  checkUicFroWhtUtility: (trayId, uic) => {
+    return new Promise(async (resolve, reject) => {
+      let data = await tempDelivery.findOne({ old_uic: uic });
+      if (data) {
+        let getDelivery = await delivery.findOne({ order_id: data.order_id });
+        if (getDelivery) {
+          if (getDelivery.uic_status == "Printed") {
+            let checkExitThisTray = await masters.findOne({
+              code: trayId,
+              items: { $elemMatch: { uic: getDelivery.uic_code.code } },
+            });
+            if (checkExitThisTray) {
+              let alreadyAdded = await masters.findOne({
+                code: trayId,
+                "actual_items.uic": getDelivery.uic_code.code,
+              });
+              if (alreadyAdded) {
+                resolve({ status: 3 });
+              } else {
+                let arr = [];
+                let obj;
+                for (let x of checkExitThisTray.items) {
+                  if (x.uic == getDelivery.uic_code.code) {
+                    obj = x;
+                  }
+                }
+                let findProduct = await products.findOne({
+                  vendor_sku_id: getDelivery.item_id,
+                });
+                arr.push(obj);
+                arr.push(findProduct);
+                resolve({ status: 4, data: arr });
+              }
+            } else {
+              resolve({ status: 2 });
+            }
+          } else {
+            resolve({ status: 7 });
+          }
+        } else {
+          resolve({ status: 6 });
+        }
+      } else {
+        resolve({ status: 1 });
+      }
+    });
+  },
+  whtUtilityRestickerSave:(trayId)=>{
+      return new Promise(async(resolve,reject)=>{
+        let data=await masters.updateOne({code:trayId},{
+          $set:{
+            sort_id:"Wht-utility Resticker Done",
+            actual_items:[]
+          }
+        })
+        if(data.modifiedCount !== 0){
+          resolve({status:1})
+        }
+        else{
+          resolve({status:0})
+        }
+      })
+  },
   whtutilityAddDelivery: (deliveryData) => {
-    console.log(deliveryData);
     return new Promise(async (resolve, reject) => {
       let arr = [];
       let locationCheck = await infra.findOne({
@@ -3307,9 +3416,8 @@ module.exports = {
         deliveryData.utilty.tray_status = "Closed By Bot Agent";
         deliveryData.utilty.tray_type = "BOT";
         deliveryData.utilty.tray_location = "Warehouse";
-        deliveryData.utilty.bot_done_received=Date.now()
-        deliveryData.utilty.tray_closed_by_bot=Date.now()
-
+        deliveryData.utilty.bot_done_received = Date.now();
+        deliveryData.utilty.tray_closed_by_bot = Date.now();
         let obj = {
           awbn_number: deliveryData.utilty.tracking_id,
           order_id: deliveryData.utilty?.order_id,
@@ -3321,6 +3429,7 @@ module.exports = {
           user_name: deliveryData.extra.bot_agent,
           bag_assigned_date: Date.now(),
           uic: deliveryData.utilty?.uic_code.code,
+          old_uic: deliveryData.utilty.old_uic,
         };
         let importOrder = await delivery.create(deliveryData.utilty);
         let updateOrder = await orders.updateOne(
@@ -3357,7 +3466,7 @@ module.exports = {
   whtUtilityImportFile: (xlsxData) => {
     return new Promise(async (resolve, reject) => {
       let count = "";
-      
+    
       for (let x of arr) {
         count++;
         let uicNum = "";
@@ -3375,8 +3484,8 @@ module.exports = {
         } else if (count.toString().length == 6) {
           uicNum = "92030" + count;
         }
-        const string =x.Model_Name
-        const firstSpaceIndex = x.Model_Name.indexOf(' ');
+        const string = x.Model_Name;
+        const firstSpaceIndex = x.Model_Name.indexOf(" ");
         const firstWord = string.substring(0, firstSpaceIndex);
         const remainingWords = string.substring(firstSpaceIndex + 1);
 
@@ -3398,12 +3507,12 @@ module.exports = {
           order_date: new Date("01/01/2022"),
           partner_shop: "Gurgaon_122016",
           item_id: x.Item_ID,
-       
+
           imei: x.IMEI.toString(),
           tracking_id: x.Tracking_ID.toString(),
           created_at: Date.now(),
           type: x.Last_Status,
-          uic_status: "Printed",
+          uic_status: "Created",
           "uic_code.created_at": Date.now(),
           "uic_code.code": uicNum,
           created_at: Date.now(),

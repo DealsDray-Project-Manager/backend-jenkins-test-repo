@@ -3506,7 +3506,7 @@ module.exports = {
             },
             {
               issued_user_name: username,
-              sort_id: "Pickup Done Closed by Sorting Agent",
+              sort_id: "Issued to Sorting for Pickup",
               to_tray_for_pickup:  null,
               code:{$ne:toTray}
             },
@@ -3518,6 +3518,7 @@ module.exports = {
             },
           ],
         });
+       console.log(data);
         if (data) {
           resolve({ status: 2 });
         } else {
