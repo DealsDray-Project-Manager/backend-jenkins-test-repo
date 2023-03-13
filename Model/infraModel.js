@@ -36,7 +36,7 @@ const infraSchema=mongoose.Schema({
     warehouse_type:{
         type:String
     },
-    Location_type:{
+    location_type:{
         type:String
     }
 })

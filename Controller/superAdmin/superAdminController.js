@@ -14,8 +14,8 @@ const {
 } = require("../../Model/masterHistoryModel/mastersHistory");
 const moment = require("moment");
 
-const IISDOMAIN = "http://prexo-v7-2-uat-api.dealsdray.com/user/profile/";
-const IISDOMAINPRDT = "http://prexo-v7-2-uat-api.dealsdray.com/product/image/";
+const IISDOMAIN = "http://prexo-v8-dev-api.dealsdray.com/user/profile/";
+const IISDOMAINPRDT = "http://prexo-v8-dev-api.dealsdray.com/product/image/";
 
 /************************************************************************************************** */
 
@@ -166,7 +166,15 @@ module.exports = {
       }
     });
   },
-
+  /*-------------------------------LOCATION TYPE -------------------------------*/
+  getLocationType:(code)=>{
+    return new Promise(async(resolve,reject)=>{
+      let data=await infra.find({code:code})
+      if(data){
+        resolve(data)
+      }
+    })
+  },
   /*--------------------------------USERS HISTORY--------------------------------*/
 
   getUsersHistory: (username) => {
@@ -739,7 +747,7 @@ module.exports = {
             pincode: infraId?.pincode,
             warehouse_type: infraId?.warehouse_type,
             parent_id: infraId?.parent_id,
-            Location_type: infraId?.Location_type,
+            location_type: infraId?.location_type,
           },
         }
       );
@@ -755,12 +763,18 @@ module.exports = {
 
   deleteInfra: (infraId) => {
     return new Promise(async (resolve, reject) => {
+    let checkUsed=await user.findOne({cpc:infraId})
+    if(checkUsed){
+      resolve({status:2})
+    }
+    else{
       let data = await infra.deleteOne({ code: infraId });
       if (data.deletedCount != 0) {
-        resolve(data);
+        resolve({status:1});
       } else {
-        resolve();
+        resolve({status:0});
       }
+    }
     });
   },
 

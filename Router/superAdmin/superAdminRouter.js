@@ -49,6 +49,20 @@ router.post(
   }
 );
 
+/*-----------------------------FETCH LOCATION TYPE--------------------------------------*/
+router.post("/location/type/:code",async(req,res,next)=>{
+  try {
+    const {code}=req.params
+    let data=await superAdminController.getLocationType(code)
+    if(data){
+      res.status(200).json({
+        data:data
+      })
+    }
+  } catch (error) {
+    next(error)
+  }
+})
 /*-----------------------------SUP-ADMIN DASHBOARD--------------------------------------*/
 router.post("/superAdminDashboard", async (req, res, next) => {
   try {
@@ -666,11 +680,17 @@ router.post("/editInfra", async (req, res, next) => {
 router.post("/deleteInfra/:infraId", async (req, res, next) => {
   try {
     let data = await superAdminController.deleteInfra(req.params.infraId);
-    if (data) {
+    if (data.status == 1) {
       res.status(200).json({
         message: "Successfully Deleted",
       });
-    } else {
+    }
+    else if(data.status == 2){
+      res.status(202).json({
+        message:"You can't delete"
+      })
+    }
+     else {
       res.status(202).json({
         message: "Failed",
       });
