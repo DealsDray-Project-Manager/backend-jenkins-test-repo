@@ -1514,10 +1514,11 @@ router.post("/mergeDoneMmttrayClose", async (req, res, next) => {
 });
 
 /*--------------------- ASSIGNMENT OF MMT AND WHT AND BOT FOR SORTING USER_CHECKING--------------------------------*/
-router.post("/sortingAgnetStatus/:username", async (req, res, next) => {
+router.post("/sortingAgnetStatus/:username/:toTray", async (req, res, next) => {
   try {
-    const { username } = req.params;
-    let data = await warehouseInController.getSortingAgentStatus(username);
+    console.log(req.params);
+    const { username,toTray } = req.params;
+    let data = await warehouseInController.getSortingAgentStatus(username,toTray);
     if (data.status === 1) {
       res.status(200).json({
         data: "User is free",
@@ -1535,6 +1536,7 @@ router.post("/sortingAgnetStatus/:username", async (req, res, next) => {
     next(error);
   }
 });
+
 /* CHECK CHARGING USER STATUS */
 router.post("/chargingAgentStatus/:username", async (req, res, next) => {
   try {

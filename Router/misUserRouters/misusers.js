@@ -63,7 +63,6 @@ router.post("/getBadOrders/:location", async (req, res, next) => {
   try {
     let data = await misUserController.getBadOrders(req.params.location);
     if (data) {
-     
       res.status(200).json({
         data: data,
         message: "Success",
@@ -304,7 +303,7 @@ router.post("/importDelivery", async (req, res, next) => {
 router.post("/getDeliveryCount/:location", async (req, res, next) => {
   try {
     let data = await misUserController.getDeliveryCount(req.params.location);
-  
+
     if (data) {
       res.status(200).json({
         data: data,
@@ -510,11 +509,9 @@ router.post("/addUicCode", async (req, res, next) => {
 /* Get uic genrated */
 router.post("/uicGeneratedRecon", async (req, res, next) => {
   try {
-    
     let data = await misUserController.getUicRecon(req.body);
-   
+
     if (data) {
-     
       res.status(200).json({
         data: data.data,
         count: data.count,
@@ -644,7 +641,7 @@ router.post("/deleteBadDelivery", async (req, res, next) => {
 router.post("/getBagItemWithUic/:bagId", async (req, res, next) => {
   try {
     let data = await misUserController.getBagItemForUic(req.params.bagId);
-  
+
     if (data.status == 1) {
       res.status(200).json({
         data: data.data,
@@ -829,7 +826,6 @@ router.post("/ready-for-charging-wht", async (req, res, next) => {
 /* SORT TRAY BASED ON THE BRAND AND MODEL */
 router.post("/toWhtTrayForMerge", async (req, res, next) => {
   try {
-    
     const { location, brand, model, fromTray, itemCount, status } = req.body;
     let data = await misUserController.toWhtTrayForMerging(
       location,
@@ -1061,28 +1057,29 @@ router.post("/TrayMergeRequestSend", async (req, res, next) => {
   }
 });
 /*---------------------------------IMEI SEARCH--------------------------------------------*/
-router.post("/imeiDeliverySearch", async (req, res, next) => {
-  try {
-    const { value } = req.body;
-    let resultdata = await misUserController.imeiSearchDelivery(value);
-    res.json({ resultdata });
-  } catch (error) {
-    next(error);
-  }
-});
+//THIS TWO API'S ARE NOT NEED IN V7.2 IMEI SEARCH CONVERTED TO UIC SEARCH FROM TEMP TABLE
+// router.post("/imeiDeliverySearch", async (req, res, next) => {
+//   try {
+//     const { value } = req.body;
+//     let resultdata = await misUserController.imeiSearchDelivery(value);
+//     res.json({ resultdata });
+//   } catch (error) {
+//     next(error);
+//   }
+// });
 
-router.post("/imeiOrderSearch", async (req, res, next) => {
-  try {
-    const { value } = req.body;
-    let resultdata = await misUserController.imeiSearchOrder(value);
-    if (resultdata?.status) {
-      res.json({ error: "invaid IMEI" });
-    }
-    res.json({ resultdata });
-  } catch (error) {
-    next(error);
-  }
-});
+// router.post("/imeiOrderSearch", async (req, res, next) => {
+//   try {
+//     const { value } = req.body;
+//     let resultdata = await misUserController.imeiSearchOrder(value);
+//     if (resultdata?.status) {
+//       res.json({ error: "invaid IMEI" });
+//     }
+//     res.json({ resultdata });
+//   } catch (error) {
+//     next(error);
+//   }
+// });
 /*------------------------------------PICKUP MODULE-----------------------------------------------*/
 //GET ITEM BASED ON THE TABS
 router.post("/pickup/items/:type", async (req, res, next) => {
@@ -1090,7 +1087,6 @@ router.post("/pickup/items/:type", async (req, res, next) => {
     let { type, page, size } = req.params;
 
     const data = await misUserController.pickupPageItemView(type);
-   
 
     if (data.items.length !== 0) {
       res.status(200).json({
@@ -1108,41 +1104,32 @@ router.post("/pickup/items/:type", async (req, res, next) => {
   }
 });
 // SORT ITEM BASED ON THE BRAND AND MODEL
-router.post(
-  "/pickup/sortItem/:brand/:model/:type",
-  async (req, res, next) => {
-    try {
-      let { brand, model, type, page, size } = req.params;
-      let data = await misUserController.pickUpSortBrandModel(
-        brand,
-        model,
-        type,
-       
-      );
-    
-      if (data.items.length !== 0) {
-        res.status(200).json({
-          data: data.items,
-         
-        });
-      } else {
-        res.status(202).json({
-          data: data.items,
-         
-          message: "No records found",
-        });
-      }
-    } catch (error) {
-      next(error);
+router.post("/pickup/sortItem/:brand/:model/:type", async (req, res, next) => {
+  try {
+    let { brand, model, type, page, size } = req.params;
+    let data = await misUserController.pickUpSortBrandModel(brand, model, type);
+
+    if (data.items.length !== 0) {
+      res.status(200).json({
+        data: data.items,
+      });
+    } else {
+      res.status(202).json({
+        data: data.items,
+
+        message: "No records found",
+      });
     }
+  } catch (error) {
+    next(error);
   }
-);
+});
 // UIC SEARCH
 router.post("/pickup/uicSearch/:uic/:type", async (req, res, next) => {
   try {
     const { uic, type } = req.params;
     const data = await misUserController.pickupPageUicSearch(uic, type);
-   
+
     if (data.items.length !== 0) {
       res.status(200).json({
         data: data.items,
@@ -1163,7 +1150,7 @@ router.post("/pickup/uicSearch/:uic/:type", async (req, res, next) => {
 router.post("/pickup/whtTray", async (req, res, next) => {
   try {
     let data = await misUserController.pickupPageGetWhtTray(req.body);
-   
+
     if (data.status == 1) {
       res.status(200).json({
         data: data.whtTray,
@@ -1195,4 +1182,194 @@ router.post("/pickup/requestSendToWh", async (req, res, next) => {
     next(error);
   }
 });
+/*-------------------------------------------WHT UTILITY MODULE 7.2----------------------------------------*/
+// IMPORT XLSX DATA TO TEMP ORDER AND DELIVERY TABLE
+router.post("/whtUtility/importFile", async (req, res, next) => {
+  try {
+    let data = await misUserController.whtUtilityImportFile(req.body);
+    if (data.status == 1) {
+      res.status(200).json({
+        message: "Successfully Imported",
+      });
+    } else {
+      res.status(202).json({
+        message: "Import file failed",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+//GET DATA for wht utility
+router.post("/whtutility/search/:oldUic", async (req, res, next) => {
+  try {
+    const { oldUic } = req.params;
+    let data = await misUserController.whtutilitySearch(oldUic);
+  
+    if (data.status == 1) {
+      res.status(200).json({
+        tempOrder: data.tempOrderData,
+        tempDelivery: data.tempDeliveryData,
+        orgOrder: data.orgOrder,
+        orgDelivery: data.orgDelivery,
+      });
+    } else {
+      res.status(202).json({
+        message: "No data found",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+//WHT UTILITY IMPORT ORDER
+router.post("/whtutility/importOrder", async (req, res, next) => {
+  try {
+    let data = await misUserController.whtUtilityImportOrder(req.body);
+    if (data.status == 1) {
+      res.status(200).json({
+        message: "Successfully Added",
+      });
+    } else if (data.status == 2) {
+      res.status(202).json({
+        message: `${data.arr} - not exists`,
+      });
+    } else {
+      res.status(200).json({
+        message: "Failed please try again",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+//WHT UTILITY GET BAG ID and BOT TRAY
+router.post("/whtUtility/bagAndBotTray/:location", async (req, res, next) => {
+  try {
+    const { location } = req.params;
+    let data = await misUserController.whtUtilityBagAndBot(location);
+    console.log(data);
+    if (data) {
+      res.status(200).json({
+        tray: data.tray,
+        bag: data.bag,
+        botUsers: data.botUsers,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+// WHT UTILITY BOT TRAY FOR INUSE
+router.post("/whtUtility/botTray", async (req, res, next) => {
+  try {
+    let data = await misUserController.whtUtilityGetBotTrayInuse();
+    if (data) {
+      res.status(200).json({
+        data: data,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+router.post("/whtUtility/addDelivery", async (req, res, next) => {
+  try {
+    let data = await misUserController.whtutilityAddDelivery(req.body);
+    if (data.status == 1) {
+      res.status(200).json({
+        message: "Successfully Imported",
+      });
+    } else if (data.status == 2) {
+      res.status(202).json({
+        message: `${data.arr} - not exists`,
+      });
+    } else {
+      res.status(202).json({
+        message: "Failed please try again",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+//BOT TRAY CLOSE PAGE
+router.post("/whtUtility/botTray/closePage/:trayId/:status", async (req, res, next) => {
+  try {
+    const { trayId ,status} = req.params;
+    let data = await misUserController.whtUtilityBotTrayGetOne(trayId,status);
+    if (data.status == 1) {
+      res.status(200).json({
+        data: data.tray,
+      });
+    } else if (data.status == 2) {
+      res.status(202).json({
+        message: "Tray is not exists",
+      });
+    } else if (data.status == 3) {
+      res.status(202).json({
+        message: "You can't access this data",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+//OLD UIC SCAN FOR BOT TRAY CLOSE
+router.post("/whtUtility/botTray/oldUic", async (req, res, next) => {
+  try {
+    const { trayId, uic } = req.body;
+    let data = await misUserController.checkUicFroWhtUtility(trayId, uic);
+    console.log(data);
+    if (data.status == 1) {
+      res.status(202).json({
+        message: "UIC Does Not Exists",
+      });
+    } else if (data.status == 2) {
+      res.status(202).json({
+        message: "UIC Not Exists In This Tray",
+      });
+    } else if (data.status == 3) {
+      res.status(202).json({
+        message: "Already Added",
+      });
+    } else if (data.status == 4) {
+      res.status(200).json({
+        message: "Valid UIC",
+        data: data.data,
+      });
+    } else if (data.status == 6) {
+      res.status(202).json({
+        message: "Not Delivered",
+        data: data.data,
+      });
+    } else if (data.status == 7) {
+      res.status(202).json({
+        message: "UIC not printed Yet",
+        data: data.data,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+// WHT UTILITY OLD UIC TO NEW UIC SAVE
+router.post("/whtUtility/resticker/save/:trayId",async(req,res,next)=>{
+  try {
+    const {trayId}=req.params
+    let data=await misUserController.whtUtilityRestickerSave(trayId)
+    if(data.status == 1){
+      res.status(200).json({
+        message:"Data Saved"
+      })
+    }
+    else{
+      res.status(202).json({
+        message:"Failed Please tray again..."
+      })
+    }
+  } catch (error) {
+    next(error)
+  }
+}) 
 module.exports = router;

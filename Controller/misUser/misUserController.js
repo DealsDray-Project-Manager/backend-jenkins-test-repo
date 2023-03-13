@@ -7,6 +7,8 @@ const { user } = require("../../Model/userModel");
 const { masters } = require("../../Model/mastersModel");
 const { badOrders } = require("../../Model/ordersModel/bad-orders-model");
 const { badDelivery } = require("../../Model/deliveryModel/bad-delivery");
+const { tempOrders } = require("../../Model/WhtUtility/tempOrder");
+const { tempDelivery } = require("../../Model/WhtUtility/tempDelivery");
 const moment = require("moment");
 const elasticsearch = require("../../Elastic-search/elastic");
 /******************************************************************* */
@@ -88,34 +90,34 @@ module.exports = {
             model_name.push(x?.old_item_details?.split(":")[1]);
             err["model_name_does_not_exist"] = model_name;
           }
-          let imei_nmuber = await orders.findOne({
-            imei: x?.imei,
-            order_status: x?.order_status,
-          });
-          if (imei_nmuber) {
-            let obj = {
-              imei: x?.imei,
-              status: x?.order_status,
-            };
-            imei.push(obj);
-            err["imei_number_is_duplicate"] = imei;
-          } else {
-            if (
-              ordersData.item.some(
-                (data, index) =>
-                  data?.imei == x?.imei &&
-                  data?.order_status == x?.order_status &&
-                  index != i
-              )
-            ) {
-              let obj = {
-                imei: x?.imei,
-                status: x?.order_status,
-              };
-              imei.push(obj);
-              err["imei_number_is_duplicate"] = imei;
-            }
-          }
+          // let imei_nmuber = await orders.findOne({
+          //   imei: x?.imei,
+          //   order_status: x?.order_status,
+          // });
+          // if (imei_nmuber) {
+          //   let obj = {
+          //     imei: x?.imei,
+          //     status: x?.order_status,
+          //   };
+          //   imei.push(obj);
+          //   err["imei_number_is_duplicate"] = imei;
+          // } else {
+          //   if (
+          //     ordersData.item.some(
+          //       (data, index) =>
+          //         data?.imei == x?.imei &&
+          //         data?.order_status == x?.order_status &&
+          //         index != i
+          //     )
+          //   ) {
+          //     let obj = {
+          //       imei: x?.imei,
+          //       status: x?.order_status,
+          //     };
+          //     imei.push(obj);
+          //     err["imei_number_is_duplicate"] = imei;
+          //   }
+          // }
         } else {
           order_status.push(x.order_status);
           err["order_status"] = order_status;
@@ -654,7 +656,6 @@ module.exports = {
         ]);
       }
       if (allOrders) {
-    
         resolve(allOrders);
       }
     });
@@ -2002,12 +2003,12 @@ module.exports = {
             download_time: Date.now(),
           },
         },
-        { 
-          new: true, 
-          projection: { _id: 0 } 
+        {
+          new: true,
+          projection: { _id: 0 },
         }
       );
-      let updateElasticSearch=await elasticsearch.uicCodeGen(data)
+      let updateElasticSearch = await elasticsearch.uicCodeGen(data);
       if (data) {
         resolve({ status: true });
       } else {
@@ -2175,7 +2176,6 @@ module.exports = {
     });
   },
   getModelBasedDataFromBot: (trayData) => {
-  
     return new Promise(async (resolve, reject) => {
       let temp_array = [];
       let data;
@@ -2449,7 +2449,7 @@ module.exports = {
           temp_array: arr,
           not_assigned: flag,
         };
-   
+
         resolve(obj);
       } else {
         resolve();
@@ -2511,11 +2511,10 @@ module.exports = {
           })
           .catch((err) => reject(err));
       }
-     
+
       if (whtTray.length !== 0) {
         for (let x of whtTray) {
-          let count = x.limit - x.items.length;
-          if (count >= itemCount) {
+          if (parseInt(x.limit) > parseInt(x.items.length)) {
             arr.push(x);
           }
         }
@@ -2641,7 +2640,6 @@ module.exports = {
         })
         .catch((err) => reject(err));
       if (data) {
-       
         resolve(data);
       } else {
         resolve();
@@ -2689,7 +2687,7 @@ module.exports = {
           code: { $ne: toTray },
         })
         .catch((err) => reject(err));
-   
+
       if (whtTray.length !== 0) {
         for (let x of whtTray) {
           let count = x.items.length + itemsCount;
@@ -2698,7 +2696,6 @@ module.exports = {
           }
         }
         if (arr.length !== 0) {
-         
           resolve({ status: 1, tray: arr });
         } else {
           resolve({ status: 2 });
@@ -2799,7 +2796,6 @@ module.exports = {
       } else if (firstChar.match(/[a-zA-Z0-9]/)) {
         let deliveryItems = await delivery.find({ imei: value });
         if (deliveryItems.length == 0) {
-       
           let deliveryItems = await delivery.find({ imei: `'${value}` });
           if (deliveryItems) {
             resolve(deliveryItems);
@@ -3096,7 +3092,7 @@ module.exports = {
           arr.push(x);
         }
       }
-      
+
       if (arr.length == 0) {
         let product = await products.findOne({ vendor_sku_id: item_id_wht });
         let getWhtTray = await masters.find({
@@ -3116,7 +3112,6 @@ module.exports = {
     });
   },
   pickupRequestSendToWh: (itemData) => {
-
     return new Promise(async (resolve, reject) => {
       let sendtoPickupRequest;
       for (let x of itemData.isCheck) {
@@ -3136,7 +3131,7 @@ module.exports = {
             }
           );
           sendtoPickupRequest = await masters.updateOne(
-            { "items.uic": x,type_taxanomy:"WHT" },
+            { "items.uic": x, type_taxanomy: "WHT" },
             {
               $set: {
                 sort_id: "Pickup Request sent to Warehouse",
@@ -3165,6 +3160,373 @@ module.exports = {
       } else {
         resolve();
       }
+    });
+  },
+  whtutilitySearch: (oldUc) => {
+    return new Promise(async (resolve, reject) => {
+      let tempDeliveryData = await tempDelivery.aggregate([
+        { $match: { old_uic: oldUc } },
+        {
+          $lookup: {
+            from: "products",
+            localField: `item_id`,
+            foreignField: "vendor_sku_id",
+            as: "products",
+          },
+        },
+      ]);
+      if (tempDeliveryData.length !== 0) {
+        let tempOrderData = await tempOrders.aggregate([
+          {
+            $match: { order_id: tempDeliveryData[0].order_id },
+          },
+          {
+            $lookup: {
+              from: "products",
+              localField: `item_id`,
+              foreignField: "vendor_sku_id",
+              as: "products",
+            },
+          },
+        ]);
+        let orgOrder = await orders.aggregate([
+          {
+            $match: { order_id: tempDeliveryData[0].order_id },
+          },
+          {
+            $lookup: {
+              from: "products",
+              localField: `item_id`,
+              foreignField: "vendor_sku_id",
+              as: "products",
+            },
+          },
+        ]);
+        let orgDelivery = await delivery.aggregate([
+          {
+            $match: { order_id: tempDeliveryData[0].order_id },
+          },
+          {
+            $lookup: {
+              from: "products",
+              localField: `item_id`,
+              foreignField: "vendor_sku_id",
+              as: "products",
+            },
+          },
+        ]);
+        resolve({
+          status: 1,
+          tempDeliveryData: tempDeliveryData,
+          tempOrderData: tempOrderData,
+          orgOrder: orgOrder,
+          orgDelivery: orgDelivery,
+        });
+      } else {
+        resolve({ status: 2 });
+      }
+    });
+  },
+  whtUtilityBagAndBot: (location) => {
+    return new Promise(async (resolve, reject) => {
+      let bag = await masters.find({
+        cpc: location,
+        prefix: "bag-master",
+        sort_id: "No Status",
+      });
+      let tray = await masters.find({
+        $or: [
+          {
+            $expr: { $ne: [ { $size: "$items" }, { $toInt: "$limit" } ] },
+            cpc: location,
+            prefix: "tray-master",
+            sort_id: "Open",
+            type_taxanomy: "BOT",
+          },
+          {
+            $expr: { $ne: [ { $size: "$items" }, { $toInt: "$limit" } ] },
+            cpc: location,
+            prefix: "tray-master",
+            sort_id: "Wht-utility-work",
+            type_taxanomy: "BOT",
+          },
+        ],
+      });
+      let botUsers = await user.find({
+        status: "Active",
+        cpc: location,
+        user_type: "Bag Opening",
+      });
+
+      resolve({ bag: bag, tray: tray, botUsers: botUsers });
+    });
+  },
+  whtUtilityGetBotTrayInuse: () => {
+    return new Promise(async (resolve, reject) => {
+      let data = await masters.find({
+        $or:[
+          {
+            prefix: "tray-master",
+            sort_id: "Wht-utility-work",
+            type_taxanomy: "BOT",
+          },
+          {
+            prefix: "tray-master",
+            sort_id:"Wht-utility Resticker Done",
+            type_taxanomy: "BOT",
+          }
+        ]
+       
+      });
+      resolve(data);
+    });
+  },
+  whtUtilityImportOrder: (orderData) => {
+    console.log(orderData);
+    return new Promise(async (resolve, reject) => {
+      let arr = [];
+      let locationCheck = await infra.findOne({ code: orderData.partner_shop });
+      if (locationCheck == null) {
+        arr.push(`${orderData.partner_shop}- "Location Not Exists"`);
+      }
+      let brandAndModel = await products.findOne({
+        vendor_sku_id: orderData.item_id,
+      });
+      if (brandAndModel == null) {
+        arr.push(
+          `${orderData?.old_item_details} - Brand name or model namee not Exists`
+        );
+      }
+      if (arr.length == 0) {
+        orderData.created_at = Date.now();
+        let importOrder = await orders.create(orderData);
+        if (importOrder) {
+          resolve({ status: 1 });
+        } else {
+          resolve({ status: 3 });
+        }
+      } else {
+        resolve({ status: 2, arr: arr });
+      }
+    });
+  },
+  whtUtilityBotTrayGetOne: (trayId,status) => {
+    return new Promise(async (resolve, reject) => {
+      let data = await masters.findOne({ code: trayId });
+      if (data) {
+        if (data.sort_id == status) {
+          resolve({ status: 1, tray: data });
+        } else {
+          resolve({ status: 3 });
+        }
+      } else {
+        resolve({ status: 2 });
+      }
+    });
+  },
+  checkUicFroWhtUtility: (trayId, uic) => {
+    return new Promise(async (resolve, reject) => {
+      let data = await tempDelivery.findOne({ old_uic: uic });
+      if (data) {
+        let getDelivery = await delivery.findOne({ order_id: data.order_id });
+        if (getDelivery) {
+          if (getDelivery.uic_status == "Printed") {
+            let checkExitThisTray = await masters.findOne({
+              code: trayId,
+              items: { $elemMatch: { uic: getDelivery.uic_code.code } },
+            });
+            if (checkExitThisTray) {
+              let alreadyAdded = await masters.findOne({
+                code: trayId,
+                "actual_items.uic": getDelivery.uic_code.code,
+              });
+              if (alreadyAdded) {
+                resolve({ status: 3 });
+              } else {
+                let arr = [];
+                let obj;
+                for (let x of checkExitThisTray.items) {
+                  if (x.uic == getDelivery.uic_code.code) {
+                    obj = x;
+                  }
+                }
+                let findProduct = await products.findOne({
+                  vendor_sku_id: getDelivery.item_id,
+                });
+                arr.push(obj);
+                arr.push(findProduct);
+                resolve({ status: 4, data: arr });
+              }
+            } else {
+              resolve({ status: 2 });
+            }
+          } else {
+            resolve({ status: 7 });
+          }
+        } else {
+          resolve({ status: 6 });
+        }
+      } else {
+        resolve({ status: 1 });
+      }
+    });
+  },
+  whtUtilityRestickerSave:(trayId)=>{
+      return new Promise(async(resolve,reject)=>{
+        let data=await masters.updateOne({code:trayId},{
+          $set:{
+            sort_id:"Wht-utility Resticker Done",
+            actual_items:[]
+          }
+        })
+        if(data.modifiedCount !== 0){
+          resolve({status:1})
+        }
+        else{
+          resolve({status:0})
+        }
+      })
+  },
+  whtutilityAddDelivery: (deliveryData) => {
+    return new Promise(async (resolve, reject) => {
+      let arr = [];
+      let locationCheck = await infra.findOne({
+        code: deliveryData.utilty.partner_shop,
+      });
+      if (locationCheck == null) {
+        arr.push(`${deliveryData.utilty.partner_shop}- "Location Not Exists"`);
+      }
+      let brandAndModel = await products.findOne({
+        vendor_sku_id: deliveryData.utilty.item_id,
+      });
+      if (brandAndModel == null) {
+        arr.push(`${deliveryData.utilty.item_id} - Vendor Sku Id not exists`);
+      }
+      if (arr.length == 0) {
+        deliveryData.utilty.created_at = Date.now();
+        deliveryData.utilty.stockin_date = Date.now();
+        deliveryData.utilty.stockin_date = Date.now();
+        deliveryData.utilty.bag_id = deliveryData.extra.bag_id;
+        deliveryData.utilty.agent_name = deliveryData.extra.bot_agent;
+        deliveryData.utilty.tray_id = deliveryData.extra.tray_id;
+        deliveryData.utilty.assign_to_agent = Date.now();
+        deliveryData.utilty.stock_in_status = "Valid";
+        deliveryData.utilty.bag_close_date = Date.now();
+        deliveryData.utilty.warehouse_close_date = Date.now();
+        deliveryData.utilty.tray_status = "Closed By Bot Agent";
+        deliveryData.utilty.tray_type = "BOT";
+        deliveryData.utilty.tray_location = "Warehouse";
+        deliveryData.utilty.bot_done_received = Date.now();
+        deliveryData.utilty.tray_closed_by_bot = Date.now();
+        let obj = {
+          awbn_number: deliveryData.utilty.tracking_id,
+          order_id: deliveryData.utilty?.order_id,
+          order_date: deliveryData.utilty?.order_date,
+          imei: deliveryData.utilty?.imei,
+          status: "Valid",
+          tray_id: deliveryData.extra.tray_id,
+          bag_id: deliveryData.extra.bag_id,
+          user_name: deliveryData.extra.bot_agent,
+          bag_assigned_date: Date.now(),
+          uic: deliveryData.utilty?.uic_code.code,
+          old_uic: deliveryData.utilty.old_uic,
+        };
+        let importOrder = await delivery.create(deliveryData.utilty);
+        let updateOrder = await orders.updateOne(
+          { order_id: deliveryData.utilty.order_id },
+          {
+            $set: {
+              delivery_status: "Delivered",
+            },
+          }
+        );
+        let addToTray = await masters.updateOne(
+          {
+            code: deliveryData.extra.tray_id,
+          },
+          {
+            $push: {
+              items: obj,
+            },
+            $set: {
+              sort_id: "Wht-utility-work",
+            },
+          }
+        );
+        if (importOrder) {
+          resolve({ status: 1 });
+        } else {
+          resolve({ status: 3 });
+        }
+      } else {
+        resolve({ status: 2, arr: arr });
+      }
+    });
+  },
+  whtUtilityImportFile: (xlsxData) => {
+    return new Promise(async (resolve, reject) => {
+      let count = "";
+    
+      for (let x of arr) {
+        count++;
+        let uicNum = "";
+
+        if (count.toString().length == 1) {
+          uicNum = "9203000000" + count;
+        } else if (count.toString().length == 2) {
+          uicNum = "920300000" + count;
+        } else if (count.toString().length == 3) {
+          uicNum = "92030000" + count;
+        } else if (count.toString().length == 4) {
+          uicNum = "9203000" + count;
+        } else if (count.toString().length == 5) {
+          uicNum = "920300" + count;
+        } else if (count.toString().length == 6) {
+          uicNum = "92030" + count;
+        }
+        const string = x.Model_Name;
+        const firstSpaceIndex = x.Model_Name.indexOf(" ");
+        const firstWord = string.substring(0, firstSpaceIndex);
+        const remainingWords = string.substring(firstSpaceIndex + 1);
+
+        let orderObj = {
+          order_id: x.Order_ID.toString(),
+          order_date: new Date("01/01/2022"),
+          partner_shop: "Gurgaon_122016",
+          item_id: x.Item_ID,
+          old_item_details: `${firstWord}:${remainingWords}`,
+          imei: x.IMEI.toString(),
+          tracking_id: x.Tracking_ID.toString(),
+          created_at: Date.now(),
+          type: x.Last_Status,
+          delivery_status: "Delivered",
+          order_status: "NEW",
+        };
+        let objDelivery = {
+          order_id: x.Order_ID.toString(),
+          order_date: new Date("01/01/2022"),
+          partner_shop: "Gurgaon_122016",
+          item_id: x.Item_ID,
+
+          imei: x.IMEI.toString(),
+          tracking_id: x.Tracking_ID.toString(),
+          created_at: Date.now(),
+          type: x.Last_Status,
+          uic_status: "Created",
+          "uic_code.created_at": Date.now(),
+          "uic_code.code": uicNum,
+          created_at: Date.now(),
+          download_time: Date.now(),
+          old_uic: x.Old_UIC,
+          delivery_date: Date.now(),
+        };
+        // let dataImportToOrder=await  tempOrders.create(orderObj)
+        let dataImportDelivery = await tempDelivery.create(objDelivery);
+      }
+      resolve({ status: 1 });
+      // let obj={
+      // }
+      // let data=await
     });
   },
 };
