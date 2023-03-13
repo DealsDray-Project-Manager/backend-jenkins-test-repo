@@ -13,8 +13,8 @@ const {
 } = require("../../Model/masterHistoryModel/mastersHistory");
 const moment = require("moment");
 
-const IISDOMAIN = "http://prexo-v7-2-uat-api.dealsdray.com/user/profile/";
-const IISDOMAINPRDT = "http://prexo-v7-2-uat-api.dealsdray.com/product/image/";
+const IISDOMAIN = "http://prexo-testing-api.dealsdray.com/user/profile/";
+const IISDOMAINPRDT = "http://prexo-testing-api.dealsdray.com/product/image/";
 
 /************************************************************************************************** */
 
