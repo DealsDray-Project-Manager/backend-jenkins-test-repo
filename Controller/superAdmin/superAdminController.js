@@ -1874,10 +1874,8 @@ module.exports = {
       }
       resolve(arr)
     })
-  }
-
+  },
   createctxcategory: (data) => {
-
     return new Promise(async (resolve, reject) => {
       let checkcodeExists = await ctxCategory.findOne({
         $or: [
