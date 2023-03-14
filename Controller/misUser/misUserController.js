@@ -152,11 +152,10 @@ module.exports = {
         whtMerge: 0,
         mmtMerge: 0,
         trackItem: 0,
-        rdl_one:0,
-        rdl_two:0
+        rdl_one: 0,
+        rdl_two: 0,
       };
       count.orders = await orders.count({ partner_shop: location });
-
       count.badOrders = await badOrders.count({ partner_shop: location });
       count.delivered = await orders.count({
         partner_shop: location,
@@ -223,7 +222,7 @@ module.exports = {
       count.rdl_two = await masters.count({
         prefix: "tray-master",
         type_taxanomy: "WHT",
-        sort_id: "Ready to RDL_two",
+        sort_id: "Ready to RDL-Repair",
         cpc: location,
       });
       count.botToWht = await masters.count({
@@ -3181,20 +3180,20 @@ module.exports = {
     });
   },
 
-assignToAgentRequestToWhRdlFls: (tray,user_name) => {
+  assignToAgentRequestToWhRdlFls: (tray, user_name) => {
     return new Promise(async (resolve, reject) => {
       let sendtoRdlMis;
       for (let x of tray) {
         sendtoRdlMis = await masters.findOneAndUpdate(
           { code: x },
           {
-            $set: { 
+            $set: {
               sort_id: "Send for RDL-FLS",
               actual_items: [],
               issued_user_name: user_name,
               from_merge: null,
               to_merge: null,
-              requested_date:Date.now()
+              requested_date: Date.now(),
             },
           }
         );
@@ -3217,7 +3216,7 @@ assignToAgentRequestToWhRdlFls: (tray,user_name) => {
       }
     });
   },
-getRdlDonetray: () => {
+  getRdlDonetray: () => {
     return new Promise(async (resolve, reject) => {
       let data = await masters.find({
         sort_id: "Ready to RDL-Repair",
@@ -3228,7 +3227,6 @@ getRdlDonetray: () => {
       }
     });
   },
-
 
   whtutilitySearch: (oldUc) => {
     return new Promise(async (resolve, reject) => {
@@ -3305,14 +3303,14 @@ getRdlDonetray: () => {
       let tray = await masters.find({
         $or: [
           {
-            $expr: { $ne: [ { $size: "$items" }, { $toInt: "$limit" } ] },
+            $expr: { $ne: [{ $size: "$items" }, { $toInt: "$limit" }] },
             cpc: location,
             prefix: "tray-master",
             sort_id: "Open",
             type_taxanomy: "BOT",
           },
           {
-            $expr: { $ne: [ { $size: "$items" }, { $toInt: "$limit" } ] },
+            $expr: { $ne: [{ $size: "$items" }, { $toInt: "$limit" }] },
             cpc: location,
             prefix: "tray-master",
             sort_id: "Wht-utility-work",
@@ -3332,7 +3330,7 @@ getRdlDonetray: () => {
   whtUtilityGetBotTrayInuse: () => {
     return new Promise(async (resolve, reject) => {
       let data = await masters.find({
-        $or:[
+        $or: [
           {
             prefix: "tray-master",
             sort_id: "Wht-utility-work",
@@ -3340,11 +3338,10 @@ getRdlDonetray: () => {
           },
           {
             prefix: "tray-master",
-            sort_id:"Wht-utility Resticker Done",
+            sort_id: "Wht-utility Resticker Done",
             type_taxanomy: "BOT",
-          }
-        ]
-       
+          },
+        ],
       });
       resolve(data);
     });
@@ -3378,7 +3375,7 @@ getRdlDonetray: () => {
       }
     });
   },
-  whtUtilityBotTrayGetOne: (trayId,status) => {
+  whtUtilityBotTrayGetOne: (trayId, status) => {
     return new Promise(async (resolve, reject) => {
       let data = await masters.findOne({ code: trayId });
       if (data) {
@@ -3439,21 +3436,23 @@ getRdlDonetray: () => {
       }
     });
   },
-  whtUtilityRestickerSave:(trayId)=>{
-      return new Promise(async(resolve,reject)=>{
-        let data=await masters.updateOne({code:trayId},{
-          $set:{
-            sort_id:"Wht-utility Resticker Done",
-            actual_items:[]
-          }
-        })
-        if(data.modifiedCount !== 0){
-          resolve({status:1})
+  whtUtilityRestickerSave: (trayId) => {
+    return new Promise(async (resolve, reject) => {
+      let data = await masters.updateOne(
+        { code: trayId },
+        {
+          $set: {
+            sort_id: "Wht-utility Resticker Done",
+            actual_items: [],
+          },
         }
-        else{
-          resolve({status:0})
-        }
-      })
+      );
+      if (data.modifiedCount !== 0) {
+        resolve({ status: 1 });
+      } else {
+        resolve({ status: 0 });
+      }
+    });
   },
   whtutilityAddDelivery: (deliveryData) => {
     return new Promise(async (resolve, reject) => {
@@ -3534,7 +3533,8 @@ getRdlDonetray: () => {
   whtUtilityImportFile: (xlsxData) => {
     return new Promise(async (resolve, reject) => {
       let count = "";
-    
+      let arr
+
       for (let x of arr) {
         count++;
         let uicNum = "";

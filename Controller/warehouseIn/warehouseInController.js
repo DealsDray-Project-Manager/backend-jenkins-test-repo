@@ -43,6 +43,8 @@ module.exports = {
         otherTrayAuditDone: 0,
         pickupRequest: 0,
         returnFromPickup: 0,
+        rdlFlsRequest:0,
+        returnFromRdlFls:0
       };
       count.bagIssueRequest = await masters.count({
         $or: [
@@ -242,6 +244,28 @@ module.exports = {
         type_taxanomy: "WHT",
         sort_id: "Issued to sorting agent",
         cpc: location,
+      });
+      count.rdlFlsRequest = await masters.count({
+        prefix: "tray-master",
+        type_taxanomy: "WHT",
+        sort_id: "Send for RDL-FLS",
+        cpc: location,
+      });
+      count.returnFromRdlFls = await masters.count({
+        $or: [
+          {
+            prefix: "tray-master",
+            type_taxanomy: "WHT",
+            sort_id: "Closed By RDL-FLS",
+            cpc: location,
+          },
+          {
+            prefix: "tray-master",
+            type_taxanomy: "WHT",
+            sort_id: "Received From RDL-FLS",
+            cpc: location,
+          },
+        ],
       });
       count.returnFromSorting = await masters.count({
         $or: [
