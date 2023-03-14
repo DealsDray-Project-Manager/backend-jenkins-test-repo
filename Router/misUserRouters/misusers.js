@@ -1387,13 +1387,12 @@ router.post("/auditDoneWht", async (req, res, next) => {
   }
 });
 
-router.post("/sendToRdl", async (req, res, next) => {
+router.post("/assignToAgent/rdl-fls/sentToWarehouse", async (req, res, next) => {
   try {
     const { tray,user_name } = req.body;
-    let data = await misUserController.sendToRdl(tray,user_name);
+    let data = await misUserController.assignToAgentRequestToWhRdlFls(tray,user_name);
     if (data.status == true) {
-      console.log('kkkskskskskks');
-
+    
       res.status(200).json({
         message: "Request sent to Warehouse",
       });
@@ -1409,10 +1408,10 @@ router.post("/sendToRdl", async (req, res, next) => {
 
 
 router.post(
-  "/get-RDL_one-users/:user_type/:location",
+  "/assignToAgent/rdl-fls/users/:user_type/:location",
   async (req, res, next) => {
     try {
-      let data = await misUserController.getRDLoneUsers(
+      let data = await misUserController.getRdlFlsUser(
         req.params.user_type,
         req.params.location
       );

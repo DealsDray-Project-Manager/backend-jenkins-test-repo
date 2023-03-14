@@ -222,6 +222,22 @@ module.exports = {
           pickup_request_sent_to_wh_date: {
             type: "date",
           },
+          rdl_fls_one_user_name: {
+            type: "text",
+          },
+          rdl_fls_issued_date: {
+            type: "date",
+          },
+          rdl_fls_closed_date: {
+            type: "date",
+          },
+          rdl_fls_done_recieved_date: {
+            type: "date",
+          },
+          rdl_fls_done_closed_wh: {
+            type: "date",
+          },
+          
         },
       },
     });

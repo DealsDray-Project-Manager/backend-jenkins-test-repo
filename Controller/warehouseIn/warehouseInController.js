@@ -1884,67 +1884,51 @@ module.exports = {
         } else {
           resolve({ data: data, status: 2 });
         }
-      } else if (sortId === "Send for RDL_one") {
-        console.log('lfofofoffofof');
+      } else if (sortId === "Send for RDL-FLS") {
+        console.log("lfofofoffofof");
         let data = await masters.findOne({ code: trayId });
         if (data) {
-          console.log(data, "dataaaaa6");
-          if (
-            data?.sort_id == "send for RDL_one"
-          ) {
+          if (data?.sort_id == "Send for RDL-FLS") {
             resolve({ data: data, status: 1 });
           } else {
             resolve({ data: data, status: 3 });
           }
-        } }else if (sortId === "RDL_one_done_send_to_warehouse") {
-          console.log('lfofofoffofofxxxxx');
-          let data = await masters.findOne({ code: trayId });
-          if (data) {
-            console.log(data, "dataaaaa6");
-            if (
-              data?.sort_id == "RDL_one_done_send_to_warehouse"
-            ) {
-              resolve({ data: data, status: 1 });
-            } else {
-              resolve({ data: data, status: 3 });
-            }
-          }
-          else {
-            resolve({ data: data, status: 2 });
-          }
         }
-        else if (sortId === "Received from RDL_one") {
-          console.log('lfofofoffofofxxxxxxxxxccvvvvv');
-          let data = await masters.findOne({ code: trayId });
-          if (data) {
-            console.log(data, "dataaaaa6cccc");
-            if (
-              data?.sort_id == "Received From RDL_one"
-            ) {
-              resolve({ data: data, status: 1 });
-              console.log('dsdsdsdbbb');
-            } else {
-              resolve({ data: data, status: 3 });
-              console.log('cccccxx');
-            }
-          }
-          else {
-            resolve({ data: data, status: 2 });
-          }
-        }
-        else {
-          let data = await masters.findOne({ code: trayId });
-          if (data) {
-            if (data.sort_id == sortId) {
-              resolve({ data: data, status: 1 });
-            } else {
-              resolve({ data: data, status: 3 });
-            }
+      } else if (sortId === "Closed by RDL-FLS") {
+        let data = await masters.findOne({ code: trayId });
+        if (data) {
+          if (data?.sort_id == "Closed by RDL-FLS") {
+            resolve({ data: data, status: 1 });
           } else {
-            resolve({ data: data, status: 2 });
+            resolve({ data: data, status: 3 });
           }
+        } else {
+          resolve({ data: data, status: 2 });
         }
-  })
+      } else if (sortId === "Received from RDL-FLS") {
+        let data = await masters.findOne({ code: trayId });
+        if (data) {
+          if (data?.sort_id == "Received From RDL-FLS") {
+            resolve({ data: data, status: 1 });
+          } else {
+            resolve({ data: data, status: 3 });
+          }
+        } else {
+          resolve({ data: data, status: 2 });
+        }
+      } else {
+        let data = await masters.findOne({ code: trayId });
+        if (data) {
+          if (data.sort_id == sortId) {
+            resolve({ data: data, status: 1 });
+          } else {
+            resolve({ data: data, status: 3 });
+          }
+        } else {
+          resolve({ data: data, status: 2 });
+        }
+      }
+    });
   },
 
   /*------------------GET REQUESTS---------------------------*/
@@ -2116,8 +2100,6 @@ module.exports = {
 
   issueToagentWht: (trayData) => {
     return new Promise(async (resolve, reject) => {
-
-      console.log('ksksssk')
       let data;
       if (trayData.sortId == "Send for BQC") {
         data = await masters.findOneAndUpdate(
@@ -2133,7 +2115,7 @@ module.exports = {
           }
         );
         if (data) {
-          console.log('kkkdddkkd');
+          console.log("kkkdddkkd");
           for (let x of data.items) {
             let deliveryUpdate = await delivery.findOneAndUpdate(
               { tracking_id: x.tracking_id },
@@ -2187,31 +2169,37 @@ module.exports = {
             );
           }
         }
-      } else if (trayData.sortId == "send for RDL_one") {
-        console.log('kskskskskkskskskskssksk');
+      } else if (trayData.sortId == "Send for RDL-FLS") {
         data = await masters.findOneAndUpdate(
           { code: trayData.trayId },
           {
             $set: {
               actual_items: [],
               description: trayData.description,
-              sort_id: "Issued to RDL_one",
-              assigned_date: Date.now(),
+              sort_id: "Issued to RDL-FLS",
+              requested_date: Date.now(),
               temp_array: [],
             },
           }
         );
         if (data) {
           for (let x of data.items) {
-            let deliveryUpdate = await delivery.updateOne(
+            let deliveryUpdate = await delivery.findOneAndUpdate(
               { tracking_id: x.tracking_id },
               {
                 $set: {
                   rdl_fls_one_user_name: data?.issued_user_name,
                   rdl_fls_issued_date: Date.now(),
-                  tray_location: "RDL_one",
+                  tray_location: "RDL-FLS",
                 },
+              },
+              {
+                new: true,
+                projection: { _id: 0 },
               }
+            );
+            let updateElasticSearch = await elasticsearch.uicCodeGen(
+              deliveryUpdate
             );
             if (deliveryUpdate) {
               resolve(data);
@@ -2219,10 +2207,8 @@ module.exports = {
               resolve();
             }
           }
-
         }
-      }
-      else {
+      } else {
         data = await masters.findOneAndUpdate(
           { code: trayData.trayId },
           {
@@ -2698,7 +2684,7 @@ module.exports = {
   /*-----------------BQC DONE RECIEVED--------------------------*/
 
   bqcDoneRecieved: (trayData) => {
-    console.log('ksks');
+    console.log("ksks");
     return new Promise(async (resolve, reject) => {
       let tray = await masters.findOne({ code: trayData.trayId });
       if (tray?.actual_items?.length == trayData.counts) {
@@ -3571,7 +3557,7 @@ module.exports = {
 
   /*-----------------CHECK SORTING AGENT IS FREE OR NOT-------------------------*/
 
-  getSortingAgentStatus: (username,toTray) => {
+  getSortingAgentStatus: (username, toTray) => {
     return new Promise(async (resolve, reject) => {
       let userActive = await user.findOne({ user_name: username });
       if (userActive.status == "Active") {
@@ -3594,18 +3580,18 @@ module.exports = {
             {
               issued_user_name: username,
               sort_id: "Issued to Sorting for Pickup",
-              to_tray_for_pickup:  null,
-              code:{$ne:toTray}
+              to_tray_for_pickup: null,
+              code: { $ne: toTray },
             },
             {
               issued_user_name: username,
               sort_id: "Pickup Done Closed by Sorting Agent",
-              to_tray_for_pickup:  null,
-              code:{$ne:toTray}
+              to_tray_for_pickup: null,
+              code: { $ne: toTray },
             },
           ],
         });
-       console.log(data);
+        console.log(data);
         if (data) {
           resolve({ status: 2 });
         } else {
@@ -4294,7 +4280,28 @@ module.exports = {
       }
     });
   },
-
+  checkRdlFlsUserStatus: (username) => {
+    console.log(username);
+    return new Promise(async (resolve, reject) => {
+      let userActive = await user.findOne({ user_name: username });
+      if (userActive.status == "Active") {
+        let data = await masters.findOne({
+          $or: [
+            { issued_user_name: username, sort_id: "Issued to RDL-FLS" },
+            { issued_user_name: username, sort_id: "Closed By RDL-FLS" },
+          ],
+        });
+        console.log(data);
+        if (data) {
+          resolve({ status: 2 });
+        } else {
+          resolve({ status: 1 });
+        }
+      } else {
+        resolve({ status: 3 });
+      }
+    });
+  },
   getRDLoneRequest: (status, location) => {
     return new Promise(async (resolve, reject) => {
       let data = await masters.find({
@@ -4310,38 +4317,36 @@ module.exports = {
       if (data) {
         resolve(data);
       }
-    })
+    });
   },
-
 
   addWhtActualReturnRdl: (trayItemData) => {
     return new Promise(async (resolve, reject) => {
-      
-        let checkAlreadyAdded = await masters.findOne({
-          code: trayItemData.trayId,
-          "actual_items.uic": trayItemData.item.uic,
-        });
-        if (checkAlreadyAdded) {
-          resolve({ status: 3 });
-        } else {
-          let data = await masters.updateOne(
-            { code: trayItemData.trayId },
-            {
-              $push: {
-                actual_items: trayItemData.item,
-              },
-            }
-          );
-          if (data.matchedCount != 0) {
-            resolve({ status: 1 });
-          } else {
-            resolve({ status: 2 });
+      let checkAlreadyAdded = await masters.findOne({
+        code: trayItemData.trayId,
+        "actual_items.uic": trayItemData.item.uic,
+      });
+      if (checkAlreadyAdded) {
+        resolve({ status: 3 });
+      } else {
+        let data = await masters.updateOne(
+          { code: trayItemData.trayId },
+          {
+            $push: {
+              actual_items: trayItemData.item,
+            },
           }
+        );
+        if (data.matchedCount != 0) {
+          resolve({ status: 1 });
+        } else {
+          resolve({ status: 2 });
         }
-      
+      }
     });
   },
   getRDLonereturn: (status, location) => {
+    console.log(status);
     return new Promise(async (resolve, reject) => {
       let data = await masters.find({
         $or: [
@@ -4354,25 +4359,20 @@ module.exports = {
           {
             prefix: "tray-master",
             type_taxanomy: "WHT",
-            sort_id: "Received From RDL_one",
+            sort_id: "Received From RDL-FLS",
             cpc: location,
-          }
-
+          },
         ],
       });
       if (data) {
         resolve(data);
       }
-    })
+    });
   },
-
-
-
-
 
   issueToagentWhtReciveRdOne: (trayData) => {
     return new Promise(async (resolve, reject) => {
-      if (trayData.sortId == "RDL_one_done_send_to_warehouse") {
+      if (trayData.sortId == "Closed by RDL-FLS") {
         data = await masters.findOneAndUpdate(
           { code: trayData?.trayId },
           {
@@ -4380,23 +4380,21 @@ module.exports = {
               actual_items: [],
               description: trayData?.description,
               temp_array: [],
-              sort_id: "Recived from RDL_one",
+              sort_id: "Recived from RDL-FLS",
               assigned_date: Date.now(),
             },
           }
         );
-       
+
         if (data?.modifiedCount != 0) {
           resolve(data);
         } else {
           resolve();
         }
-      }  
+      }
     });
   },
 
-
-  
   RDLoneDoneRecieved: (trayData) => {
     return new Promise(async (resolve, reject) => {
       let tray = await masters.findOne({ code: trayData.trayId });
@@ -4405,7 +4403,7 @@ module.exports = {
           { code: trayData.trayId },
           {
             $set: {
-              sort_id: "Received From RDL_one",
+              sort_id: "Received From RDL-FLS",
             },
           }
         );
@@ -4415,7 +4413,7 @@ module.exports = {
               { tracking_id: data.items[i].tracking_id },
               {
                 $set: {
-                  tray_status: "Recevied From RDL_one",
+                  tray_status: "Recevied From RDL-FLS",
                   tray_location: "Warehouse",
                   rdl_fls_done_recieved_date: Date.now(),
                 },
@@ -4432,7 +4430,6 @@ module.exports = {
     });
   },
 
-
   getWhtTrayitemRdlreturn: (trayId, sortId) => {
     return new Promise(async (resolve, reject) => {
       if (sortId == "Received From RDL_one") {
@@ -4442,20 +4439,19 @@ module.exports = {
         } else {
           resolve({ data: data, status: 2 });
         }
-      }  
-        else {
-          let data = await masters.findOne({ code: trayId });
-          if (data) {
-            if (data.sort_id == sortId) {
-              resolve({ data: data, status: 1 });
-            } else {
-              resolve({ data: data, status: 3 });
-            }
+      } else {
+        let data = await masters.findOne({ code: trayId });
+        if (data) {
+          if (data.sort_id == sortId) {
+            resolve({ data: data, status: 1 });
           } else {
-            resolve({ data: data, status: 2 });
+            resolve({ data: data, status: 3 });
           }
+        } else {
+          resolve({ data: data, status: 2 });
         }
-  })
+      }
+    });
   },
 
   getTrayItmes: (trayId) => {
@@ -4500,42 +4496,38 @@ module.exports = {
     });
   },
 
-
-  issueToagentWhtReceivedRdl: (trayData) => {
+  rdlFlsDoneClose: (trayData) => {
     return new Promise(async (resolve, reject) => {
       let data;
-      if (trayData.sortId == "Received From RDL_one") {
-        data = await masters.findOneAndUpdate(
-          { code: trayData.trayId },
-          {
-            $set: {
-              actual_items: [],
-              description: trayData.description,
-              temp_array: [],
-              sort_id: "Ready to RDL_two",
-              assigned_date: Date.now(),
-            },
-          }
-        );
-        if (data) {
-          for (let x of data.items) {
-            let deliveryUpdate = await delivery.updateOne(
-              { tracking_id: x.tracking_id },
-              {
-                $set: {
-                  rdl_fls_done_closed_wh: Date.now(),
-                },
-              }
-            );
-          }
+      data = await masters.findOneAndUpdate(
+        { code: trayData.trayId },
+        {
+          $set: {
+            actual_items: [],
+            description: trayData.description,
+            temp_array: [],
+            sort_id: "Ready to RDL-Repair",
+            assigned_date: Date.now(),
+          },
         }
-        if (data?.modifiedCount != 0) {
-          resolve(data);
-        } else {
-          resolve();
+      );
+      if (data) {
+        for (let x of data.items) {
+          let deliveryUpdate = await delivery.updateOne(
+            { tracking_id: x.tracking_id },
+            {
+              $set: {
+                rdl_fls_done_closed_wh: Date.now(),
+              },
+            }
+          );
         }
-      } 
+      }
+      if (data?.modifiedCount != 0) {
+        resolve(data);
+      } else {
+        resolve();
+      }
     });
   },
-
 };

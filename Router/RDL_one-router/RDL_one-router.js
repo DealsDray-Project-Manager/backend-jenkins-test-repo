@@ -79,12 +79,12 @@ router.post("/request-for-RDL_one/:status/:location", async (req, res, next) => 
 
 
 
-  router.post("/issue-to-agent-wht", async (req, res, next) => {
+  router.post("/rdl-fls/closeRdlFlsWhtTray", async (req, res, next) => {
     try {
-      let data = await RDL_0neController.issueToagentWht(req.body);
+      let data = await RDL_0neController.rdlFlsDoneClose(req.body);
       if (data) {
         res.status(200).json({
-          message: "Successfully Issued",
+          message: "Successfully sent to Warehouse",
         });
       } else {
         res.status(202).json({

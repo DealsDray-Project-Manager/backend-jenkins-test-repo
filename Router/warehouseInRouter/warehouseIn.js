@@ -897,11 +897,11 @@ router.post("/wht-add-actual-item", async (req, res, next) => {
 /*--------------------------WHT TRAY ASSIGN TO CHARGING FROM WAREHOUSE--------------------------*/
 
 router.post("/issue-to-agent-wht", async (req, res, next) => {
-  console.log('kdkdkdkdkd');
+ 
   try {
     let data = await warehouseInController.issueToagentWht(req.body);
     if (data) {
-      console.log('lsslslsl');
+  
       res.status(200).json({
         message: "Successfully Issued",
       });
@@ -2116,8 +2116,30 @@ router.post("/pickupDone/close", async (req, res, next) => {
   }
 });
 
-
-router.post("/request-for-RDL_one/:status/:location", async (req, res, next) => {
+/*-----------------------------------------RDL WORK--------------------------------------*/
+//CHECK RDL-FLS USER FREE OR NOT 
+router.post("/checkRdl-flsUserStatus/:username",async(req,res,next)=>{
+  try {
+    const {username}=req.params
+    let data=await warehouseInController.checkRdlFlsUserStatus(username)
+    if (data.status === 1) {
+      res.status(200).json({
+        data: "User is free",
+      });
+    } else if (data.status === 2) {
+      res.status(202).json({
+        data: "Agent already have a lot",
+      });
+    } else if (data.status === 3) {
+      res.status(202).json({
+        data: "User not active",
+      });
+    }
+  } catch (error) {
+   next(error) 
+  }
+})
+router.post("/request-for-RDL-fls/:status/:location", async (req, res, next) => {
   try {
     let data = await warehouseInController.getRDLoneRequest(
       req.params.status,
@@ -2221,7 +2243,7 @@ router.post("/getWhtTrayItemRdlreturn/:trayId/:sortId", async (req, res, next) =
 });
 
 
-router.post("/request-for-RDL_one_returnrdl/:status/:location", async (req, res, next) => {
+router.post("/request-for-RDL_one_returnrdl-fls/:status/:location", async (req, res, next) => {
   try {
     let data = await warehouseInController.getRDLonereturn(
       req.params.status,
@@ -2279,9 +2301,9 @@ router.post("/check-uic-RDL-done", async (req, res, next) => {
   }
 });
 
-router.post("/issue-to-agent-wht-Recieved-RDL", async (req, res, next) => {
+router.post("/rdl-fls/closedByWh", async (req, res, next) => {
   try {
-    let data = await warehouseInController.issueToagentWhtReceivedRdl(req.body);
+    let data = await warehouseInController.rdlFlsDoneClose(req.body);
     if (data) {
       res.status(200).json({
         message: "Tray Closed Succcessfully",

@@ -3181,7 +3181,7 @@ module.exports = {
     });
   },
 
-sendToRdl: (tray,user_name) => {
+assignToAgentRequestToWhRdlFls: (tray,user_name) => {
     return new Promise(async (resolve, reject) => {
       let sendtoRdlMis;
       for (let x of tray) {
@@ -3189,11 +3189,12 @@ sendToRdl: (tray,user_name) => {
           { code: x },
           {
             $set: { 
-              sort_id: "send for RDL_one",
+              sort_id: "Send for RDL-FLS",
               actual_items: [],
               issued_user_name: user_name,
               from_merge: null,
               to_merge: null,
+              requested_date:Date.now()
             },
           }
         );
@@ -3206,7 +3207,7 @@ sendToRdl: (tray,user_name) => {
     });
   },
 
- getRDLoneUsers: (userType, location) => {
+  getRdlFlsUser: (userType, location) => {
     return new Promise(async (resolve, reject) => {
       let data = await user
         .find({ user_type: userType, status: "Active", cpc: location })
@@ -3219,7 +3220,7 @@ sendToRdl: (tray,user_name) => {
 getRdlDonetray: () => {
     return new Promise(async (resolve, reject) => {
       let data = await masters.find({
-        sort_id: "Ready to RDL_two",
+        sort_id: "Ready to RDL-Repair",
         type_taxanomy: "WHT",
       });
       if (data) {

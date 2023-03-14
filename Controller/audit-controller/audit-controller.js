@@ -126,6 +126,7 @@ module.exports = {
               bqc_software_report: 1,
               bot_report: 1,
               charging_done_date: 1,
+              audit_report:1,
             }
           );
           if (uicExists) {
@@ -135,6 +136,7 @@ module.exports = {
               });
               obj.delivery = uicExists;
               obj.order = getOrder;
+              obj.checkIntray=checkIntray
 
               resolve({ status: 1, data: obj });
             } else {
