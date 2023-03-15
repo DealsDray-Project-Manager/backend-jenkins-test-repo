@@ -33,9 +33,6 @@ module.exports = {
 
   doLogin: (loginData) => {
     return new Promise(async (resolve, reject) => {
-
-      console.log(loginData);
-      console.log('loginData');
       let data = await admin.findOne({
         user_name: loginData.user_name,
         password: loginData.password,
@@ -48,14 +45,14 @@ module.exports = {
           password: loginData.password,
         });
         if (userGet) {
-          console.log('usrrrrr');
+      
           let activeOrNotActive = await user.findOne({
             user_name: loginData.user_name,
             password: loginData.password,
             status: "Active",
           });
           if (activeOrNotActive) {
-            console.log('actieeeee');
+            
             resolve({ status: 1, data: userGet });
           } else {
             resolve({ status: 3 });
@@ -74,8 +71,19 @@ module.exports = {
       count.warehouse = await infra.count({ type_taxanomy: "Warehouse" });
       count.brand = await brands.count({});
       count.products = await products.count({});
+      count.ctxCategory = await ctxCategory.count({});
       count.tray = await masters.count({ prefix: "tray-master" });
       count.bag = await masters.count({ prefix: "bag-master" });
+      count.readyForTransferSales = await masters.count({
+        prefix: "tray-master",
+        sort_id:"Audit Done Closed By Warehouse",
+        type_taxanomy: { $nin: ["BOT", "PMT", "MMT", "WHT"] },
+      });
+      count.readyForRdl = await masters.count({
+        sort_id: "Audit Done Closed By Warehouse",
+        type_taxanomy: "WHT",
+        prefix:"tray-master",
+      });
       count.readyForChargingInuse = await masters.count({
         type_taxanomy: "WHT",
         prefix: "tray-master",
@@ -936,22 +944,22 @@ module.exports = {
           tray_id.push(trayData[i].tray_id);
           err["tray_id"] = tray_id;
         }
-        if (trayID > 1999 && trayData[i].tray_category == "CTA") {
-          tray_id.push(trayData[i].tray_id);
-          err["tray_id"] = tray_id;
-        }
-        if (trayID > 2999 && trayData[i].tray_category == "CTB") {
-          tray_id.push(trayData[i].tray_id);
-          err["tray_id"] = tray_id;
-        }
-        if (trayID > 3999 && trayData[i].tray_category == "CTC") {
-          tray_id.push(trayData[i].tray_id);
-          err["tray_id"] = tray_id;
-        }
-        if (trayID > 4999 && trayData[i].tray_category == "CTD") {
-          tray_id.push(trayData[i].tray_id);
-          err["tray_id"] = tray_id;
-        }
+        // if (trayID > 1999 && trayData[i].tray_category == "CTA") {
+        //   tray_id.push(trayData[i].tray_id);
+        //   err["tray_id"] = tray_id;
+        // }
+        // if (trayID > 2999 && trayData[i].tray_category == "CTB") {
+        //   tray_id.push(trayData[i].tray_id);
+        //   err["tray_id"] = tray_id;
+        // }
+        // if (trayID > 3999 && trayData[i].tray_category == "CTC") {
+        //   tray_id.push(trayData[i].tray_id);
+        //   err["tray_id"] = tray_id;
+        // }
+        // if (trayID > 4999 && trayData[i].tray_category == "CTD") {
+        //   tray_id.push(trayData[i].tray_id);
+        //   err["tray_id"] = tray_id;
+        // }
         let trayName = await masters.findOne({
           prefix: "tray-master",
           name: trayData[i].tray_name,
@@ -1659,9 +1667,19 @@ module.exports = {
       }
     });
   },
+  ctxTrayClosedByWh:()=>{
+     return new Promise(async(resolve,reject)=>{
+      let data=await masters.find({
+        prefix: "tray-master",
+        sort_id:"Audit Done Closed By Warehouse",
+        type_taxanomy: { $nin: ["BOT", "PMT", "MMT", "WHT"] },
+      })
+      resolve(data)
+     })
+  },
   /*--------------------------------AUDIT DONE TRAY  FORCEFULL SEND TO RDL-----------------------------------*/
 
-  sendToRdl: (trayIds) => {
+  forceFullReadySendSup: (trayIds,type) => {
     return new Promise(async (resolve, reject) => {
       let sendtoRdlMis;
       for (let x of trayIds) {
@@ -1669,7 +1687,7 @@ module.exports = {
           { code: x },
           {
             $set: {
-              sort_id: "Ready to RDL",
+              sort_id: type,
               actual_items: [],
               issued_user_name: null,
               from_merge: null,
@@ -2016,6 +2034,26 @@ module.exports = {
       }
     })
   },
+  addCpcType:()=>{
+    return new Promise(async(resolve,reject)=>{
+      let updateProcessing =await user.updateMany({cpc:"Gurgaon_122016"},{
+        $set:{
+          cpc_type:"Processing"
+        }
+      })
+      let updateDock =await user.updateMany({cpc:"Bangalore_560067"},{
+        $set:{
+          cpc_type:"Dock"
+        }
+      })
+      if(updateDock){
+        resolve({status:1})
+      }
+      else{
+        resolve({status:0})
+      }
+    })
+  }
 
 
 

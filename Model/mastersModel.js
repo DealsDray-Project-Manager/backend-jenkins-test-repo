@@ -113,6 +113,9 @@ const mastersSchema = mongoose.Schema({
   },
   pickup_type:{
     type:String
+  },
+  recommend_location:{
+    type:String
   }
 });
 const masters = mongoose.model("masters", mastersSchema);

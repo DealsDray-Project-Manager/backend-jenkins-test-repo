@@ -43,8 +43,8 @@ module.exports = {
         otherTrayAuditDone: 0,
         pickupRequest: 0,
         returnFromPickup: 0,
-        rdlFlsRequest:0,
-        returnFromRdlFls:0
+        rdlFlsRequest: 0,
+        returnFromRdlFls: 0,
       };
       count.bagIssueRequest = await masters.count({
         $or: [
@@ -902,12 +902,12 @@ module.exports = {
           let assignedOrNot = await masters.findOne({
             type_taxanomy: "BOT",
             code: trayId,
-            issued_user_name: { $ne: null },
+            sort_id: "Open",
           });
           if (assignedOrNot) {
-            resolve({ status: 2 });
-          } else {
             resolve({ status: 1, id: trayId, tray_status: data.sort_id });
+          } else {
+            resolve({ status: 2 });
           }
         } else {
           resolve({ status: 4 });
@@ -4085,6 +4085,17 @@ module.exports = {
           reslove({ status: 1, tray: tray });
         }
       }
+      else {
+        let tray = await masters.find({
+          prefix: "tray-master",
+          cpc: location,
+          sort_id: type,
+          type_taxanomy: { $nin: ["BOT", "PMT", "MMT", "WHT"] },
+        });
+        if (tray) {
+          reslove({ status: 1, tray: tray });
+        }
+      }
     });
   },
   pickupRequest: (location, type) => {
@@ -4554,4 +4565,85 @@ module.exports = {
       }
     });
   },
+  ctxTrayTransferApprove:(trayData)=>{
+    console.log(trayData);
+    return new Promise(async(resolve,reject)=>{
+      if(trayData.page=="Mis-ctx-receive"){
+       let data
+        for(let x of trayData.ischeck){
+          data=await masters.updateOne({code:x},{
+            $set:{
+             sort_id:trayData.sortId,
+             recommend_location:null,
+             actual_items:[],
+             temp_array:[]
+            }
+         })
+        }
+       if(data.modifiedCount !=0){
+         resolve({status:3})
+       }
+       else{
+         resolve({status:0})
+       }
+      }
+      else if(trayData.page=="Sales-Warehouse-approve"){
+        console.log("w");
+        let data
+
+        if(trayData.length == trayData.limit){
+          data=await masters.updateOne({code:trayData.trayId},{
+             $set:{
+              sort_id:trayData.sortId,
+              recommend_location:null,
+              actual_items:[],
+              temp_array:[]
+             }
+          })
+          if(data.modifiedCount !=0){
+            resolve({status:4})
+          }
+          else{
+            resolve({status:0})
+          }
+        }
+        else{
+          data=await masters.updateOne({code:trayData.trayId},{
+            $set:{
+             sort_id:"Audit Done Closed By Warehouse",
+             recommend_location:null,
+             actual_items:[],
+             temp_array:[]
+            }
+         })
+        }
+        if(data.modifiedCount !=0){
+          resolve({status:5})
+        }
+        else{
+          resolve({status:0})
+        }
+        
+      }
+      else{
+
+        let data=await masters.updateOne({code:trayData.trayId},{
+           $set:{
+            cpc:trayData.sales_location,
+            description:trayData.description,
+            sort_id:trayData.sortId,
+            recommend_location:null,
+            actual_items:[],
+            temp_array:[]
+           }
+        })
+        if(data.modifiedCount !=0){
+          resolve({status:1})
+        }
+        else{
+          resolve({status:0})
+        }
+      }
+    })
+  }
 };

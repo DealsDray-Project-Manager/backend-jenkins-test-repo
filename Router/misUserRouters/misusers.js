@@ -826,14 +826,15 @@ router.post("/ready-for-charging-wht", async (req, res, next) => {
 /* SORT TRAY BASED ON THE BRAND AND MODEL */
 router.post("/toWhtTrayForMerge", async (req, res, next) => {
   try {
-    const { location, brand, model, fromTray, itemCount, status } = req.body;
+    const { location, brand, model, fromTray, itemCount, status,type } = req.body;
     let data = await misUserController.toWhtTrayForMerging(
       location,
       brand,
       model,
       fromTray,
       itemCount,
-      status
+      status,
+      type
     );
     if (data.status === 1) {
       res.status(200).json({
@@ -1439,4 +1440,37 @@ router.post("/RDLoneDoneTray", async (req, res, next) => {
     next(error);
   }
 });
+/*------------------------------------CTX TRAY TRANSFER--------------------------------*/
+// GET SALES LOCATION 
+router.post("/ctx/getSalesLocation",async(req,res,next)=>{
+  try {
+    let data=await misUserController.getSalesLocation()
+    console.log(data);
+    if(data){
+      res.status(200).json({
+        data:data
+      })
+    }
+  } catch (error) {
+    next(error)
+  }
+})
+//ctx tray transfer request sent to warehouse
+router.post("/ctx/transferRequestSend",async(req,res,next)=>{
+  try {
+    const data=await misUserController.ctxTrayTransferRequestSend(req.body)
+    if(data.status == 1){
+      res.status(200).json({
+        message:"Request Sent to Warehouse"
+      })
+    }
+    else if(data.status == 2){
+      res.status(202).json({
+        message:"Failed Please try again..."
+      })
+    }
+  } catch (error) {
+    next(error)
+  }
+})
 module.exports = router;

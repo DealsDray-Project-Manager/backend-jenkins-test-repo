@@ -2317,7 +2317,41 @@ router.post("/rdl-fls/closedByWh", async (req, res, next) => {
     next(error);
   }
 });
-
+/*-------------------------------------------------CTX TRAY -------------------------------------------*/
+router.post("/ctx/transferRequest/approve",async(req,res,next)=>{
+  try {
+    const {sales_location}=req.body
+    const data=await warehouseInController.ctxTrayTransferApprove(req.body)
+    console.log(data);
+    if(data.status == 1){
+      res.status(200).json({
+        message:`Successfully Transfer to ${sales_location} -Sales `
+      })
+    }
+    else if(data.status == 3){
+      res.status(200).json({
+        message:`Successfully Received and Sent to Warehouse`
+      })
+    }
+    else if(data.status == 4){
+      res.status(200).json({
+        message:`Successfully Closed and Ready to Pricing`
+      })
+    }
+    else if(data.status == 5){
+      res.status(200).json({
+        message:`Successfully Closed and Not Ready to Pricing`
+      })
+    }
+    else{
+      res.status(202).json({
+        message:"Failed Please tray again..."
+      })
+    }
+  } catch (error) {
+    next(error)
+  }
+})
 
 
 

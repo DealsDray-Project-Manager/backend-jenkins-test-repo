@@ -50,19 +50,19 @@ router.post(
 );
 
 /*-----------------------------FETCH LOCATION TYPE--------------------------------------*/
-router.post("/location/type/:code",async(req,res,next)=>{
+router.post("/location/type/:code", async (req, res, next) => {
   try {
-    const {code}=req.params
-    let data=await superAdminController.getLocationType(code)
-    if(data){
+    const { code } = req.params;
+    let data = await superAdminController.getLocationType(code);
+    if (data) {
       res.status(200).json({
-        data:data
-      })
+        data: data,
+      });
     }
   } catch (error) {
-    next(error)
+    next(error);
   }
-})
+});
 /*-----------------------------SUP-ADMIN DASHBOARD--------------------------------------*/
 router.post("/superAdminDashboard", async (req, res, next) => {
   try {
@@ -81,7 +81,7 @@ router.post("/superAdminDashboard", async (req, res, next) => {
 router.post("/login", async (req, res, next) => {
   try {
     let loginData = await superAdminController.doLogin(req.body);
-   
+
     if (loginData.status == 1) {
       const jwtToken = await jwt.jwtSign(loginData.data);
       res.status(200).json({
@@ -169,7 +169,7 @@ router.get("/getCpc/", async (req, res) => {
 router.post("/getWarehouseByLocation", async (req, res) => {
   try {
     const { name } = req.body;
-   
+
     let warehouse = await superAdminController.getWarehouse(name);
     if (warehouse) {
       res.status(200).json({ data: { warehouse } });
@@ -684,13 +684,11 @@ router.post("/deleteInfra/:infraId", async (req, res, next) => {
       res.status(200).json({
         message: "Successfully Deleted",
       });
-    }
-    else if(data.status == 2){
+    } else if (data.status == 2) {
       res.status(202).json({
-        message:"You can't delete"
-      })
-    }
-     else {
+        message: "You can't delete",
+      });
+    } else {
       res.status(202).json({
         message: "Failed",
       });
@@ -762,7 +760,8 @@ router.post("/trayIdGenrate/:type", async (req, res, next) => {
             res.status(200).json({
               data: obj.WHT,
             });
-          } else if (type == "CTA") {
+          } 
+          else if (type == "CTA") {
             res.status(200).json({
               data: obj.CTA,
             });
@@ -794,7 +793,10 @@ router.post("/trayIdGenrate/:type", async (req, res, next) => {
 /*-----------------------------GET HIGHEST MASTER ID FOR BAG--------------------------------------*/
 router.post("/getMasterHighest/:prefix", async (req, res, next) => {
   try {
-    if (req.params.prefix == "Gurgaon_122016" || req.params.prefix == "Gurgaon_122003") {
+    if (
+      req.params.prefix == "Gurgaon_122016" ||
+      req.params.prefix == "Gurgaon_122003"
+    ) {
       let obj;
       fs.readFile(
         "myjsonfile.json",
@@ -929,7 +931,8 @@ router.post("/createBulkBag", async (req, res, next) => {
             ).length;
             obj.bagBanglore = obj.bagBanglore + blr;
             let ggrn = req.body.filter(
-              (data) => data.cpc == "Gurgaon_122016" || data.cpc == "Gurgaon_122003"
+              (data) =>
+                data.cpc == "Gurgaon_122016" || data.cpc == "Gurgaon_122003"
             ).length;
             obj.bagGurgaon = obj.bagGurgaon + ggrn;
             json = JSON.stringify(obj);
@@ -1165,8 +1168,12 @@ router.post("/itemTracking/:page/:size", async (req, res, next) => {
 router.post("/search-admin-track-item", async (req, res, next) => {
   try {
     const { type, searchData, location, rowsPerPage, page } = req.body;
- 
-    let data = await elasticsearch.superAdminTrackItemSearchData(searchData, page, rowsPerPage);
+
+    let data = await elasticsearch.superAdminTrackItemSearchData(
+      searchData,
+      page,
+      rowsPerPage
+    );
     // let data = await superAdminController.searchAdminTrackItem(
     //   type,
     //   searchData,
@@ -1306,12 +1313,24 @@ router.post("/auditDoneWht", async (req, res, next) => {
     next(error);
   }
 });
-
-// SEND TO RDL
-router.post("/sendToRdl", async (req, res, next) => {
+/*-----------------------------------------GET AUDIT DONE WHT TRAY------------------------------------------------*/
+router.post("/ctxTray/closedByWh", async (req, res, next) => {
   try {
-    const { ischeck } = req.body;
-    let data = await superAdminController.sendToRdl(ischeck);
+    let data = await superAdminController.ctxTrayClosedByWh();
+    if (data) {
+      res.status(200).json({
+        data: data,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+// SEND TO RDL
+router.post("/forceFullReadySend", async (req, res, next) => {
+  try {
+    const { ischeck, type } = req.body;
+    let data = await superAdminController.forceFullReadySendSup(ischeck, type);
     if (data.status == 1) {
       res.status(200).json({
         message: "Successfully sent MIS",
@@ -1365,7 +1384,6 @@ router.post("/viewCategory", async (req, res, next) => {
 /*-----------------------------EXTRA ONE--------------------------------------*/
 router.post("/update-cpc", async (req, res, next) => {
   try {
- 
     let data = await superAdminController.updateCPCExtra();
     if (data) {
       res.status(200).json({
@@ -1383,7 +1401,6 @@ router.post("/update-cpc", async (req, res, next) => {
 
 router.post("/update-wht-trayId", async (req, res, next) => {
   try {
-   
     let data = await superAdminController.updateWhtTrayId();
     if (data) {
       res.status(200).json({
@@ -1417,12 +1434,11 @@ router.post("/part-records-import", async (req, res, next) => {
   }
 });
 
-
-router.post('/addcategory',async(req,res,next)=>{
-  try{
-    let data=await superAdminController.createctxcategory(req.body)
+router.post("/addcategory", async (req, res, next) => {
+  try {
+    let data = await superAdminController.createctxcategory(req.body);
     if (data.status == true) {
-      res.status(200).json({ 
+      res.status(200).json({
         message: "Successfully category Added",
       });
     } else {
@@ -1430,14 +1446,10 @@ router.post('/addcategory',async(req,res,next)=>{
         message: "category is already exist",
       });
     }
-  }catch(error){
+  } catch (error) {
     next(error);
   }
-
-})
-
-
-
+});
 
 router.post("/getCtxCategorys", async (req, res, next) => {
   try {
@@ -1445,7 +1457,7 @@ router.post("/getCtxCategorys", async (req, res, next) => {
     if (data) {
       res.status(200).json(data);
     } else {
-      res.status(202).json({error:"CTX ctaegory not Exist"});
+      res.status(202).json({ error: "CTX ctaegory not Exist" });
     }
   } catch (error) {
     next(error);
@@ -1455,13 +1467,12 @@ router.post("/getCtxCategorys", async (req, res, next) => {
 router.post("/deleteCtxcategory", async (req, res, next) => {
   try {
     let data = await superAdminController.deleteCtxcategory(req.body);
-    if (data.acknowledged==true) {
-      res.status(200).json(data)
-    } else if(data.status==false){
-      res.status(202).json({error:"you can't delete this category "})
-    }
-    else {
-      res.status(202).json({error:"you can't delete this category "})
+    if (data.acknowledged == true) {
+      res.status(200).json(data);
+    } else if (data.status == false) {
+      res.status(202).json({ error: "you can't delete this category " });
+    } else {
+      res.status(202).json({ error: "you can't delete this category " });
     }
   } catch (error) {
     next(error);
@@ -1475,23 +1486,22 @@ router.get("/geteditctxcategory/:code", async (req, res) => {
       res.status(200).json({ data: user });
     }
   } catch (error) {
-    next(error)
+    next(error);
   }
 });
 
-router.post("/editctxcategory",async(req,res,next)=>{
-  try{
-    let user = await superAdminController.editctxcategory(req.body)
-    if(user.status==true){
-      res.status(200).json({ message:'Done'});
+router.post("/editctxcategory", async (req, res, next) => {
+  try {
+    let user = await superAdminController.editctxcategory(req.body);
+    if (user.status == true) {
+      res.status(200).json({ message: "Done" });
+    } else {
+      res.status(202).json({ error: "Category Already exist" });
     }
-    else{
-      res.status(202).json({error:'Category Already exist'})
-    }
-  }catch(error){
-    next(error)
+  } catch (error) {
+    next(error);
   }
-})
+});
 
 router.get("/getCtxTrayCategory", async (req, res) => {
   try {
@@ -1500,34 +1510,28 @@ router.get("/getCtxTrayCategory", async (req, res) => {
       res.status(200).json(user);
     }
   } catch (error) {
-    next(error)
+    next(error);
   }
 });
 
-router.post("/categoryCheck",async(req,res,next)=>{
-  try{
-   ;
-    let user = await superAdminController.categoryCheck(req.body)
-    if(user?.status==true){
-      res.status(200).json({Exist:true});
+router.post("/categoryCheck", async (req, res, next) => {
+  try {
+    let user = await superAdminController.categoryCheck(req.body);
+    if (user?.status == true) {
+      res.status(200).json({ Exist: true });
+    } else {
+      res.status(202).json({ Exist: false });
     }
-    else{
-      res.status(202).json({Exist:false})
-    }
-  }catch(error){
-    next(error)
+  } catch (error) {
+    next(error);
   }
-})
+});
 
-
-
-
-
-router.post('/addcategory',async(req,res,next)=>{
-  try{
-    let data=await superAdminController.createctxcategory(req.body)
+router.post("/addcategory", async (req, res, next) => {
+  try {
+    let data = await superAdminController.createctxcategory(req.body);
     if (data.status == true) {
-      res.status(200).json({ 
+      res.status(200).json({
         message: "Successfully category Added",
       });
     } else {
@@ -1535,14 +1539,10 @@ router.post('/addcategory',async(req,res,next)=>{
         message: "category is already exist",
       });
     }
-  }catch(error){
+  } catch (error) {
     next(error);
   }
-
-})
-
-
-
+});
 
 router.post("/getCtxCategorys", async (req, res, next) => {
   try {
@@ -1550,7 +1550,7 @@ router.post("/getCtxCategorys", async (req, res, next) => {
     if (data) {
       res.status(200).json(data);
     } else {
-      res.status(202).json({error:"CTX ctaegory not Exist"});
+      res.status(202).json({ error: "CTX ctaegory not Exist" });
     }
   } catch (error) {
     next(error);
@@ -1560,13 +1560,12 @@ router.post("/getCtxCategorys", async (req, res, next) => {
 router.post("/deleteCtxcategory", async (req, res, next) => {
   try {
     let data = await superAdminController.deleteCtxcategory(req.body);
-    if (data.acknowledged==true) {
-      res.status(200).json(data)
-    } else if(data.status==false){
-      res.status(202).json({error:"you can't delete this category "})
-    }
-    else {
-      res.status(202).json({error:"you can't delete this category "})
+    if (data.acknowledged == true) {
+      res.status(200).json(data);
+    } else if (data.status == false) {
+      res.status(202).json({ error: "you can't delete this category " });
+    } else {
+      res.status(202).json({ error: "you can't delete this category " });
     }
   } catch (error) {
     next(error);
@@ -1580,23 +1579,22 @@ router.get("/geteditctxcategory/:code", async (req, res) => {
       res.status(200).json({ data: user });
     }
   } catch (error) {
-    next(error)
+    next(error);
   }
 });
 
-router.post("/editctxcategory",async(req,res,next)=>{
-  try{
-    let user = await superAdminController.editctxcategory(req.body)
-    if(user.status==true){
-      res.status(200).json({ message:'Done'});
+router.post("/editctxcategory", async (req, res, next) => {
+  try {
+    let user = await superAdminController.editctxcategory(req.body);
+    if (user.status == true) {
+      res.status(200).json({ message: "Done" });
+    } else {
+      res.status(202).json({ error: "Category Already exist" });
     }
-    else{
-      res.status(202).json({error:'Category Already exist'})
-    }
-  }catch(error){
-    next(error)
+  } catch (error) {
+    next(error);
   }
-})
+});
 
 router.get("/getCtxTrayCategory", async (req, res) => {
   try {
@@ -1605,33 +1603,28 @@ router.get("/getCtxTrayCategory", async (req, res) => {
       res.status(200).json(user);
     }
   } catch (error) {
-    next(error)
+    next(error);
   }
 });
 
-router.post("/categoryCheck",async(req,res,next)=>{
-  try{
-   ;
-    let user = await superAdminController.categoryCheck(req.body)
-    if(user?.status==true){
-      res.status(200).json({Exist:true});
+router.post("/categoryCheck", async (req, res, next) => {
+  try {
+    let user = await superAdminController.categoryCheck(req.body);
+    if (user?.status == true) {
+      res.status(200).json({ Exist: true });
+    } else {
+      res.status(202).json({ Exist: false });
     }
-    else{
-      res.status(202).json({Exist:false})
-    }
-  }catch(error){
-    next(error)
+  } catch (error) {
+    next(error);
   }
-})
-
-
-
+});
 
 /***********************************************EXTRA QUREY SECTION*********************************************************** */
-router.post("/fixBaggingIssue", async (req, res, next) => {
+router.post("/user/addCpcType", async (req, res, next) => {
   try {
-    let data = await superAdminController.fixBaggingIssueWithAwbn();
-    if (data) {
+    let data = await superAdminController.addCpcType();
+    if (data.status == 1) {
       res.status(200).json({
         message: "Successfully updated",
       });
@@ -1644,23 +1637,21 @@ router.post("/fixBaggingIssue", async (req, res, next) => {
     next(error);
   }
 });
-// EXTRA 07032023 REAUDIT 
-router.post("/extra/reAuditTray",async(req,res,next)=>{
+// EXTRA 07032023 REAUDIT
+router.post("/extra/reAuditTray", async (req, res, next) => {
   try {
-    let data=await superAdminController.extraReAudit()
-    if(data){
+    let data = await superAdminController.extraReAudit();
+    if (data) {
       res.status(200).json({
-        message:"Successfully Done"
-
-      })
-    }
-    else{
+        message: "Successfully Done",
+      });
+    } else {
       res.status(202).json({
-        message:"Failed"
-      })
+        message: "Failed",
+      });
     }
   } catch (error) {
-    next(error)
+    next(error);
   }
-})
+});
 module.exports = router;

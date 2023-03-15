@@ -63,6 +63,9 @@ const userSchema=mongoose.Schema({
       last_otp:{
           type:Number,
           default:null
+      },
+      cpc_type:{
+        type:String
       }
 })
 const user=mongoose.model("users",userSchema)

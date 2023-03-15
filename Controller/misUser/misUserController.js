@@ -154,6 +154,7 @@ module.exports = {
         trackItem: 0,
         rdl_one: 0,
         rdl_two: 0,
+        readyToTransfer: 0,
       };
       count.orders = await orders.count({ partner_shop: location });
       count.badOrders = await badOrders.count({ partner_shop: location });
@@ -206,6 +207,12 @@ module.exports = {
         type_taxanomy: "WHT",
         sort_id: "Ready to BQC",
         cpc: location,
+      });
+      count.readyToTransfer = await masters.count({
+        prefix: "tray-master",
+        cpc: location,
+        sort_id: "Ready to Transfer to Sales",
+        type_taxanomy: { $nin: ["BOT", "PMT", "MMT", "WHT"] },
       });
       count.audit = await masters.count({
         prefix: "tray-master",
@@ -2487,12 +2494,13 @@ module.exports = {
     model,
     fromTray,
     itemCount,
-    status
+    status,
+    type
   ) => {
     return new Promise(async (resolve, reject) => {
       let arr = [];
       let whtTray;
-      if (status == "Audit Done Closed By Warehouse") {
+      if (type == "WHT") {
         whtTray = await masters
           .find({
             prefix: "tray-master",
@@ -2508,12 +2516,11 @@ module.exports = {
         whtTray = await masters
           .find({
             prefix: "tray-master",
-            type_taxanomy: "WHT",
+            type_taxanomy: type,
             brand: brand,
             model: model,
             cpc: location,
-            items: { $ne: [] },
-            sort_id: "Inuse",
+            sort_id: "Audit Done Closed By Warehouse",
             code: { $ne: fromTray },
           })
           .catch((err) => reject(err));
@@ -3179,7 +3186,6 @@ module.exports = {
       }
     });
   },
-
   assignToAgentRequestToWhRdlFls: (tray, user_name) => {
     return new Promise(async (resolve, reject) => {
       let sendtoRdlMis;
@@ -3205,7 +3211,6 @@ module.exports = {
       }
     });
   },
-
   getRdlFlsUser: (userType, location) => {
     return new Promise(async (resolve, reject) => {
       let data = await user
@@ -3227,7 +3232,30 @@ module.exports = {
       }
     });
   },
-
+  getSalesLocation: () => {
+    return new Promise(async (resolve, reject) => {
+      let locationGet = await infra.find({ location_type: "Sales" });
+      resolve(locationGet);
+    });
+  },
+  ctxTrayTransferRequestSend: (trayData) => {
+    console.log(trayData);
+    return new Promise(async (resolve, reject) => {
+      for (let x of trayData.tray) {
+        const sentToWarehouse = await masters.updateOne(
+          { code: x },
+          {
+            $set: {
+              sort_id: trayData.sort_id,
+              requested_date: Date.now(),
+              recommend_location: trayData.sales,
+            },
+          }
+        );
+      }
+      resolve({ status: 1 });
+    });
+  },
   whtutilitySearch: (oldUc) => {
     return new Promise(async (resolve, reject) => {
       let tempDeliveryData = await tempDelivery.aggregate([
@@ -3533,7 +3561,7 @@ module.exports = {
   whtUtilityImportFile: (xlsxData) => {
     return new Promise(async (resolve, reject) => {
       let count = "";
-      let arr
+      let arr;
 
       for (let x of arr) {
         count++;
