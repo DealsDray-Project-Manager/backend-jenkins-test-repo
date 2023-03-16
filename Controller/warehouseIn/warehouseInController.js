@@ -3581,7 +3581,7 @@ module.exports = {
       });
       if (checkId == null) {
         resolve({ status: 4 });
-      } else if (checkId?.brand !== brand && checkId?.model !== model) {
+      } else if (checkId?.brand !== brand || checkId?.model !== model) {
         resolve({ status: 5 });
       } else if (checkId.type_taxanomy == trayType) {
         if (checkId.sort_id == "Open") {
