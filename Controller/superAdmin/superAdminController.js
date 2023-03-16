@@ -14,8 +14,8 @@ const {
 } = require("../../Model/masterHistoryModel/mastersHistory");
 const moment = require("moment");
 
-const IISDOMAIN = "http://prexo-v8-dev-api.dealsdray.com/user/profile/";
-const IISDOMAINPRDT = "http://prexo-v8-dev-api.dealsdray.com/product/image/";
+const IISDOMAIN = "http://prexo-testing-api.dealsdray.com/user/profile/";
+const IISDOMAINPRDT = "http://prexo-testing-api.dealsdray.com/product/image/";
 
 /************************************************************************************************** */
 
@@ -45,14 +45,12 @@ module.exports = {
           password: loginData.password,
         });
         if (userGet) {
-      
           let activeOrNotActive = await user.findOne({
             user_name: loginData.user_name,
             password: loginData.password,
             status: "Active",
           });
           if (activeOrNotActive) {
-            
             resolve({ status: 1, data: userGet });
           } else {
             resolve({ status: 3 });
@@ -76,13 +74,13 @@ module.exports = {
       count.bag = await masters.count({ prefix: "bag-master" });
       count.readyForTransferSales = await masters.count({
         prefix: "tray-master",
-        sort_id:"Audit Done Closed By Warehouse",
+        sort_id: "Audit Done Closed By Warehouse",
         type_taxanomy: { $nin: ["BOT", "PMT", "MMT", "WHT"] },
       });
       count.readyForRdl = await masters.count({
         sort_id: "Audit Done Closed By Warehouse",
         type_taxanomy: "WHT",
-        prefix:"tray-master",
+        prefix: "tray-master",
       });
       count.readyForChargingInuse = await masters.count({
         type_taxanomy: "WHT",
@@ -175,13 +173,13 @@ module.exports = {
     });
   },
   /*-------------------------------LOCATION TYPE -------------------------------*/
-  getLocationType:(code)=>{
-    return new Promise(async(resolve,reject)=>{
-      let data=await infra.find({code:code})
-      if(data){
-        resolve(data)
+  getLocationType: (code) => {
+    return new Promise(async (resolve, reject) => {
+      let data = await infra.find({ code: code });
+      if (data) {
+        resolve(data);
       }
-    })
+    });
   },
   /*--------------------------------USERS HISTORY--------------------------------*/
 
@@ -771,18 +769,17 @@ module.exports = {
 
   deleteInfra: (infraId) => {
     return new Promise(async (resolve, reject) => {
-    let checkUsed=await user.findOne({cpc:infraId})
-    if(checkUsed){
-      resolve({status:2})
-    }
-    else{
-      let data = await infra.deleteOne({ code: infraId });
-      if (data.deletedCount != 0) {
-        resolve({status:1});
+      let checkUsed = await user.findOne({ cpc: infraId });
+      if (checkUsed) {
+        resolve({ status: 2 });
       } else {
-        resolve({status:0});
+        let data = await infra.deleteOne({ code: infraId });
+        if (data.deletedCount != 0) {
+          resolve({ status: 1 });
+        } else {
+          resolve({ status: 0 });
+        }
       }
-    }
     });
   },
 
@@ -1667,19 +1664,19 @@ module.exports = {
       }
     });
   },
-  ctxTrayClosedByWh:()=>{
-     return new Promise(async(resolve,reject)=>{
-      let data=await masters.find({
+  ctxTrayClosedByWh: () => {
+    return new Promise(async (resolve, reject) => {
+      let data = await masters.find({
         prefix: "tray-master",
-        sort_id:"Audit Done Closed By Warehouse",
+        sort_id: "Audit Done Closed By Warehouse",
         type_taxanomy: { $nin: ["BOT", "PMT", "MMT", "WHT"] },
-      })
-      resolve(data)
-     })
+      });
+      resolve(data);
+    });
   },
   /*--------------------------------AUDIT DONE TRAY  FORCEFULL SEND TO RDL-----------------------------------*/
 
-  forceFullReadySendSup: (trayIds,type) => {
+  forceFullReadySendSup: (trayIds, type) => {
     return new Promise(async (resolve, reject) => {
       let sendtoRdlMis;
       for (let x of trayIds) {
@@ -1812,9 +1809,9 @@ module.exports = {
       resolve({ status: "Done" });
     });
   },
-  extraReAudit:()=>{
-    return new Promise(async(resolve,reject)=>{
-      let arr=[
+  extraReAudit: () => {
+    return new Promise(async (resolve, reject) => {
+      let arr = [
         "WHT1010",
         "WHT1014",
         "WHT1021",
@@ -1889,52 +1886,55 @@ module.exports = {
         "WHT1538",
         "WHT1386",
         "WHT1034",
-      ]
+      ];
       console.log(arr.length);
-      for(let x of arr){
-        let data =await masters.updateOne({
-          code:x
-        },{
-          $set:{
-            sort_id: "Ready to Audit",
-            issued_user_name: null,
-            actual_items: [],
-            temp_array:[]
+      for (let x of arr) {
+        let data = await masters.updateOne(
+          {
+            code: x,
+          },
+          {
+            $set: {
+              sort_id: "Ready to Audit",
+              issued_user_name: null,
+              actual_items: [],
+              temp_array: [],
+            },
           }
-        })
+        );
         console.log(data);
       }
-      resolve(arr)
-    })
+      resolve(arr);
+    });
   },
   createctxcategory: (data) => {
+    console.log(data);
     return new Promise(async (resolve, reject) => {
       let checkcodeExists = await ctxCategory.findOne({
         $or: [
           {
-            Code: data?.Code,
+            code: data?.code,
           },
           {
-
-            Float: data?.Float,
+            float: data?.float,
+          },
+          {
+            sereis_start: { $gte: data.sereis_start },
+            series_end: { $lte: data.series_end },
           },
         ],
       });
+
       if (checkcodeExists) {
         resolve({ status: false });
       } else {
-        let obj = {
-          Code: data?.Code,
-          Description: data?.Description,
-          Float: data?.Float,
-          created_at: Date.now(),
-        }
-        let dataa = await ctxCategory.create(obj);
+        data.created_at = Date.now();
+        let dataa = await ctxCategory.create(data);
         if (dataa) {
           resolve({ status: true });
         }
       }
-    })
+    });
   },
 
   getCtxCategorys: () => {
@@ -1950,10 +1950,10 @@ module.exports = {
 
   deleteCtxcategory: (code) => {
     return new Promise(async (resolve, reject) => {
-      let categorySelected= await masters.find({type_taxanomy:code?.code})
-      if(categorySelected.length!==0){
-        resolve({ status: false});
-      }else{
+      let categorySelected = await masters.find({ type_taxanomy: code?.code });
+      if (categorySelected.length !== 0) {
+        resolve({ status: false });
+      } else {
         let data = await ctxCategory.deleteOne({ Code: code?.code });
         if (data) {
           resolve(data);
@@ -1961,57 +1961,49 @@ module.exports = {
           resolve({ status: false });
         }
       }
-    })
+    });
   },
-
 
   geteditctxcategory: (code) => {
     return new Promise(async (resolve, reject) => {
-      let data = await ctxCategory.findOne({ Code: code });
+      let data = await ctxCategory.findOne({ code: code });
       if (data) {
         resolve(data);
       } else {
         resolve();
       }
-    })
+    });
   },
 
-  editctxcategory: (async (body) => {
-    console.log(body, 'bodyyyyx');
+  editctxcategory: async (body) => {
     return new Promise(async (resolve, reject) => {
-      
-      const ActiveCategory = await ctxCategory.findOne({ _id: body._id })
-      const Float = await ctxCategory.findOne({ Float: body.Float })
-      const Code = await ctxCategory.findOne({ Code: body.Code })
-
-
-      if (Float && ActiveCategory.Float != body.Float) {
-        resolve({ status: false })
-      } else if (Code && ActiveCategory.Code != body.Code) {
-        console.log("Existing Code");
-        resolve({ status: false })
+      const Float = await ctxCategory.findOne({
+        $or: [
+          { float: body.float, _id: { $ne: body._id } },
+          { code: body.code, _id: { $ne: body._id } },
+        ],
+      });
+      if (Float) {
+        resolve({ status: false });
       } else {
         let data = await ctxCategory.findOneAndUpdate(
           { _id: body?._id },
           {
             $set: {
-              Code: body?.Code,
-              Description: body?.Description,
-              Float: body?.Float,
-            }
+              code: body?.code,
+              description: body?.description,
+              float: body?.float,
+            },
           }
         );
         if (data) {
-          console.log('gdgdg');
-          resolve({ status: true })
+          resolve({ status: true });
         } else {
-          console.log('dsd');
-          resolve({ status: false })
+          resolve({ status: false });
         }
       }
-    })
-  }),
-
+    });
+  },
 
   getCtxTrayCategory: () => {
     return new Promise(async (resolve, reject) => {
@@ -2021,40 +2013,42 @@ module.exports = {
       } else {
         resolve();
       }
-    })
+    });
   },
 
   categoryCheck: (body) => {
     return new Promise(async (resolve, reject) => {
-      let data = await masters.find({type_taxanomy:body?.empId});
-      if (data?.length!==0) {
+      let data = await masters.find({ type_taxanomy: body?.empId });
+      if (data?.length !== 0) {
         resolve({ status: true });
       } else {
         resolve({ status: false });
       }
-    })
+    });
   },
-  addCpcType:()=>{
-    return new Promise(async(resolve,reject)=>{
-      let updateProcessing =await user.updateMany({cpc:"Gurgaon_122016"},{
-        $set:{
-          cpc_type:"Processing"
+  addCpcType: () => {
+    return new Promise(async (resolve, reject) => {
+      let updateProcessing = await user.updateMany(
+        { cpc: "Gurgaon_122016" },
+        {
+          $set: {
+            cpc_type: "Processing",
+          },
         }
-      })
-      let updateDock =await user.updateMany({cpc:"Bangalore_560067"},{
-        $set:{
-          cpc_type:"Dock"
+      );
+      let updateDock = await user.updateMany(
+        { cpc: "Bangalore_560067" },
+        {
+          $set: {
+            cpc_type: "Dock",
+          },
         }
-      })
-      if(updateDock){
-        resolve({status:1})
+      );
+      if (updateDock) {
+        resolve({ status: 1 });
+      } else {
+        resolve({ status: 0 });
       }
-      else{
-        resolve({status:0})
-      }
-    })
-  }
-
-
-
+    });
+  },
 };

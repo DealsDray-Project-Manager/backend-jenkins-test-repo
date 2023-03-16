@@ -2,14 +2,20 @@ const mongoose = require("mongoose")
 
 const ctxCategorySchema = mongoose.Schema({
    
-    Code: {
+    code: {
         type: String
     },
-    Description: {
+    description: {
         type: String
     },
-    Float: {
-        type: String
+    float: {
+        type: Number
+    },
+    sereis_start:{
+        type:Number
+    },
+    series_end:{
+        type:Number
     },
     created_at:{
         type:Date

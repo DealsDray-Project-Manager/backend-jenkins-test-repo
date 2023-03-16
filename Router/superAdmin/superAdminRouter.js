@@ -760,8 +760,7 @@ router.post("/trayIdGenrate/:type", async (req, res, next) => {
             res.status(200).json({
               data: obj.WHT,
             });
-          } 
-          else if (type == "CTA") {
+          } else if (type == "CTA") {
             res.status(200).json({
               data: obj.CTA,
             });
@@ -1436,14 +1435,36 @@ router.post("/part-records-import", async (req, res, next) => {
 
 router.post("/addcategory", async (req, res, next) => {
   try {
+    const {code,sereis_start}=req.body
     let data = await superAdminController.createctxcategory(req.body);
     if (data.status == true) {
+      fs.readFile(
+        "myjsonfile.json",
+        "utf8",
+        function readFileCallback(err, datafile) {
+          if (err) {
+          } else {
+            obj = JSON.parse(datafile);
+            obj[code] = sereis_start;
+            json = JSON.stringify(obj);
+            fs.writeFile(
+              "myjsonfile.json",
+              json,
+              "utf8",
+              function readFileCallback(err, data) {
+                if (err) {
+                }
+              }
+            );
+          }
+        }
+      );
       res.status(200).json({
         message: "Successfully category Added",
       });
     } else {
       res.status(202).json({
-        message: "category is already exist",
+        message: "Please check your category or float or sereis",
       });
     }
   } catch (error) {
@@ -1527,22 +1548,6 @@ router.post("/categoryCheck", async (req, res, next) => {
   }
 });
 
-router.post("/addcategory", async (req, res, next) => {
-  try {
-    let data = await superAdminController.createctxcategory(req.body);
-    if (data.status == true) {
-      res.status(200).json({
-        message: "Successfully category Added",
-      });
-    } else {
-      res.status(202).json({
-        message: "category is already exist",
-      });
-    }
-  } catch (error) {
-    next(error);
-  }
-});
 
 router.post("/getCtxCategorys", async (req, res, next) => {
   try {
@@ -1572,29 +1577,8 @@ router.post("/deleteCtxcategory", async (req, res, next) => {
   }
 });
 
-router.get("/geteditctxcategory/:code", async (req, res) => {
-  try {
-    let user = await superAdminController.geteditctxcategory(req.params.code);
-    if (user) {
-      res.status(200).json({ data: user });
-    }
-  } catch (error) {
-    next(error);
-  }
-});
 
-router.post("/editctxcategory", async (req, res, next) => {
-  try {
-    let user = await superAdminController.editctxcategory(req.body);
-    if (user.status == true) {
-      res.status(200).json({ message: "Done" });
-    } else {
-      res.status(202).json({ error: "Category Already exist" });
-    }
-  } catch (error) {
-    next(error);
-  }
-});
+
 
 router.get("/getCtxTrayCategory", async (req, res) => {
   try {

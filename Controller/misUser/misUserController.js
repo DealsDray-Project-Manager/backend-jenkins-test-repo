@@ -2722,7 +2722,7 @@ module.exports = {
   mmtMergeRequestSendToWh: (sortingAgent, fromTray, toTray) => {
     return new Promise(async (resolve, reject) => {
       let whtTray = await masters.findOne({ code: fromTray });
-      if (whtTray.sort_id === "Audit Done Closed By Warehouse") {
+      if (whtTray.sort_id === "Audit Done Closed By Warehouse" && whtTray.type_taxanomy == "WHT") {
         let updateFromTray = await masters.updateOne(
           { code: fromTray },
           {
@@ -2824,7 +2824,6 @@ module.exports = {
       }
     });
   },
-
   imeiSearchOrder: (value) => {
     return new Promise(async (resolve, reject) => {
       firstChar = value.charAt(0);

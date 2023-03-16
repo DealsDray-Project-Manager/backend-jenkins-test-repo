@@ -3678,7 +3678,7 @@ module.exports = {
       });
       if (checkId == null) {
         resolve({ status: 4 });
-      } else if (checkId?.brand !== brand && checkId?.model !== model) {
+      } else if (checkId?.brand !== brand || checkId?.model !== model) {
         resolve({ status: 5 });
       } else if (checkId.type_taxanomy == trayType) {
         if (checkId.sort_id == "Open") {
@@ -4084,8 +4084,27 @@ module.exports = {
         if (tray) {
           reslove({ status: 1, tray: tray });
         }
-      }
-      else {
+      } else if (type == "Audit Done Closed By Warehouse") {
+        let tray = await masters.find({
+          $or: [
+            {
+              prefix: "tray-master",
+              cpc: location,
+              sort_id: "Audit Done Closed By Warehouse",
+              type_taxanomy: { $nin: ["BOT", "PMT", "MMT", "WHT"] },
+            },
+            {
+              prefix: "tray-master",
+              sort_id: "Ready for Merging",
+              cpc: location,
+              type_taxanomy: { $nin: ["BOT", "PMT", "MMT", "WHT"] },
+            },
+          ],
+        });
+        if (tray) {
+          reslove({ status: 1, tray: tray });
+        }
+      } else {
         let tray = await masters.find({
           prefix: "tray-master",
           cpc: location,
@@ -4565,85 +4584,86 @@ module.exports = {
       }
     });
   },
-  ctxTrayTransferApprove:(trayData)=>{
+  ctxTrayTransferApprove: (trayData) => {
     console.log(trayData);
-    return new Promise(async(resolve,reject)=>{
-      if(trayData.page=="Mis-ctx-receive"){
-       let data
-        for(let x of trayData.ischeck){
-          data=await masters.updateOne({code:x},{
-            $set:{
-             sort_id:trayData.sortId,
-             recommend_location:null,
-             actual_items:[],
-             temp_array:[]
+    return new Promise(async (resolve, reject) => {
+      if (trayData.page == "Mis-ctx-receive") {
+        let data;
+        for (let x of trayData.ischeck) {
+          data = await masters.updateOne(
+            { code: x },
+            {
+              $set: {
+                sort_id: trayData.sortId,
+                recommend_location: null,
+                actual_items: [],
+                temp_array: [],
+              },
             }
-         })
+          );
         }
-       if(data.modifiedCount !=0){
-         resolve({status:3})
-       }
-       else{
-         resolve({status:0})
-       }
-      }
-      else if(trayData.page=="Sales-Warehouse-approve"){
-        console.log("w");
-        let data
-
-        if(trayData.length == trayData.limit){
-          data=await masters.updateOne({code:trayData.trayId},{
-             $set:{
-              sort_id:trayData.sortId,
-              recommend_location:null,
-              actual_items:[],
-              temp_array:[]
-             }
-          })
-          if(data.modifiedCount !=0){
-            resolve({status:4})
-          }
-          else{
-            resolve({status:0})
-          }
+        if (data.modifiedCount != 0) {
+          resolve({ status: 3 });
+        } else {
+          resolve({ status: 0 });
         }
-        else{
-          data=await masters.updateOne({code:trayData.trayId},{
-            $set:{
-             sort_id:"Audit Done Closed By Warehouse",
-             recommend_location:null,
-             actual_items:[],
-             temp_array:[]
+      } else if (trayData.page == "Sales-Warehouse-approve") {
+        let data;
+        if (trayData.length == trayData.limit) {
+          data = await masters.updateOne(
+            { code: trayData.trayId },
+            {
+              $set: {
+                sort_id: trayData.sortId,
+                recommend_location: null,
+                actual_items: [],
+                temp_array: [],
+              },
             }
-         })
+          );
+          if (data.modifiedCount != 0) {
+            resolve({ status: 4 });
+          } else {
+            resolve({ status: 0 });
+          }
+        } else {
+          data = await masters.updateOne(
+            { code: trayData.trayId },
+            {
+              $set: {
+                sort_id: "Ready for Merging",
+                recommend_location: null,
+                actual_items: [],
+                temp_array: [],
+              },
+            }
+          );
         }
-        if(data.modifiedCount !=0){
-          resolve({status:5})
+        if (data.modifiedCount != 0) {
+          resolve({ status: 5 });
+        } else {
+          resolve({ status: 0 });
         }
-        else{
-          resolve({status:0})
+      } else {
+        let data = await masters.updateOne(
+          { code: trayData.trayId },
+          {
+            $set: {
+              cpc: trayData.sales_location,
+              description: trayData.description,
+              sort_id: trayData.sortId,
+              recommend_location: null,
+              actual_items: [],
+              temp_array: [],
+            },
+          }
+        );
+        if (data.modifiedCount != 0) {
+          resolve({ status: 1 });
+        } else {
+          resolve({ status: 0 });
         }
-        
       }
-      else{
-
-        let data=await masters.updateOne({code:trayData.trayId},{
-           $set:{
-            cpc:trayData.sales_location,
-            description:trayData.description,
-            sort_id:trayData.sortId,
-            recommend_location:null,
-            actual_items:[],
-            temp_array:[]
-           }
-        })
-        if(data.modifiedCount !=0){
-          resolve({status:1})
-        }
-        else{
-          resolve({status:0})
-        }
-      }
-    })
-  }
+    });
+  },
 };

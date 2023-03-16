@@ -886,7 +886,8 @@ router.post("/wht-add-actual-item", async (req, res, next) => {
       });
     } else if (data.status == 3) {
       res.status(202).json({
-        message: "Item Already Added",setLoading
+        message: "Item Already Added",
+        setLoading,
       });
     }
   } catch (error) {
@@ -897,11 +898,9 @@ router.post("/wht-add-actual-item", async (req, res, next) => {
 /*--------------------------WHT TRAY ASSIGN TO CHARGING FROM WAREHOUSE--------------------------*/
 
 router.post("/issue-to-agent-wht", async (req, res, next) => {
- 
   try {
     let data = await warehouseInController.issueToagentWht(req.body);
     if (data) {
-  
       res.status(200).json({
         message: "Successfully Issued",
       });
@@ -1156,18 +1155,18 @@ router.post("/recieved-from-bqc", async (req, res, next) => {
   try {
     let data = await warehouseInController.bqcDoneRecieved(req.body);
     if (data.status == 1) {
-      console.log('kitttiiii');
+      console.log("kitttiiii");
       res.status(200).json({
         message: "Successfully Received",
       });
     }
     if (data.status == 3) {
-      console.log('kitteelaa');
+      console.log("kitteelaa");
       res.status(202).json({
         message: "Please Enter Valid Count",
       });
     } else {
-      console.log('kittoooooo');
+      console.log("kittoooooo");
       res.status(202).json({
         message: "Failed",
       });
@@ -1522,8 +1521,11 @@ router.post("/mergeDoneMmttrayClose", async (req, res, next) => {
 router.post("/sortingAgnetStatus/:username/:toTray", async (req, res, next) => {
   try {
     console.log(req.params);
-    const { username,toTray } = req.params;
-    let data = await warehouseInController.getSortingAgentStatus(username,toTray);
+    const { username, toTray } = req.params;
+    let data = await warehouseInController.getSortingAgentStatus(
+      username,
+      toTray
+    );
     if (data.status === 1) {
       res.status(200).json({
         data: "User is free",
@@ -1976,11 +1978,9 @@ router.post("/ctxTray/:type/:location", async (req, res, next) => {
   }
 });
 
-
 /*--------------------------PICKUP---------------------------------------*/
 // PICKUP REQUEST
 router.post("/pickup/request/:location/:type", async (req, res, next) => {
-
   try {
     const { location, type } = req.params;
     let data = await warehouseInController.pickupRequest(location, type);
@@ -1999,7 +1999,7 @@ router.post(
   async (req, res, next) => {
     try {
       const { location, fromTray } = req.params;
-      console.log('hh');
+      console.log("hh");
       let data = await warehouseInController.pickupePageRequestApprove(
         location,
         fromTray
@@ -2117,11 +2117,11 @@ router.post("/pickupDone/close", async (req, res, next) => {
 });
 
 /*-----------------------------------------RDL WORK--------------------------------------*/
-//CHECK RDL-FLS USER FREE OR NOT 
-router.post("/checkRdl-flsUserStatus/:username",async(req,res,next)=>{
+//CHECK RDL-FLS USER FREE OR NOT
+router.post("/checkRdl-flsUserStatus/:username", async (req, res, next) => {
   try {
-    const {username}=req.params
-    let data=await warehouseInController.checkRdlFlsUserStatus(username)
+    const { username } = req.params;
+    let data = await warehouseInController.checkRdlFlsUserStatus(username);
     if (data.status === 1) {
       res.status(200).json({
         data: "User is free",
@@ -2136,26 +2136,28 @@ router.post("/checkRdl-flsUserStatus/:username",async(req,res,next)=>{
       });
     }
   } catch (error) {
-   next(error) 
-  }
-})
-router.post("/request-for-RDL-fls/:status/:location", async (req, res, next) => {
-  try {
-    let data = await warehouseInController.getRDLoneRequest(
-      req.params.status,
-      req.params.location
-    );
-    
-    if (data) {
-      res.status(200).json({
-        data: data,
-      });
-    }
-  } catch (error) {
     next(error);
   }
 });
+router.post(
+  "/request-for-RDL-fls/:status/:location",
+  async (req, res, next) => {
+    try {
+      let data = await warehouseInController.getRDLoneRequest(
+        req.params.status,
+        req.params.location
+      );
 
+      if (data) {
+        res.status(200).json({
+          data: data,
+        });
+      }
+    } catch (error) {
+      next(error);
+    }
+  }
+);
 
 router.post("/wht-add-actual-item-rdl-return", async (req, res, next) => {
   try {
@@ -2170,7 +2172,8 @@ router.post("/wht-add-actual-item-rdl-return", async (req, res, next) => {
       });
     } else if (data.status == 3) {
       res.status(202).json({
-        message: "Item Already Added",setLoading
+        message: "Item Already Added",
+        setLoading,
       });
     }
   } catch (error) {
@@ -2178,12 +2181,11 @@ router.post("/wht-add-actual-item-rdl-return", async (req, res, next) => {
   }
 });
 
-
 router.post("/issue-to-agent-wht-recived-rdl-one", async (req, res, next) => {
   try {
     let data = await warehouseInController.issueToagentWhtReciveRdOne(req.body);
     if (data) {
-      console.log('lsslslsl');
+      console.log("lsslslsl");
       res.status(200).json({
         message: "Successfully Issued",
       });
@@ -2196,7 +2198,6 @@ router.post("/issue-to-agent-wht-recived-rdl-one", async (req, res, next) => {
     next(error);
   }
 });
-
 
 router.post("/recieved-from-RDL_one", async (req, res, next) => {
   try {
@@ -2220,49 +2221,57 @@ router.post("/recieved-from-RDL_one", async (req, res, next) => {
   }
 });
 
-router.post("/getWhtTrayItemRdlreturn/:trayId/:sortId", async (req, res, next) => {
-  try {
-    const { trayId, sortId } = req.params;
-    let data = await warehouseInController.getWhtTrayitemRdlreturn(trayId, sortId);
-    if (data.status == 1) {
-      res.status(200).json({
-        data: data.data,
-      });
-    } else if (data.status == 2) {
-      res.status(202).json({
-        message: "Details not found",
-      });
-    } else if (data.status == 3) {
-      res.status(202).json({
-        message: `${trayId} - present at ${data.data.sort_id}`,
-      });
+router.post(
+  "/getWhtTrayItemRdlreturn/:trayId/:sortId",
+  async (req, res, next) => {
+    try {
+      const { trayId, sortId } = req.params;
+      let data = await warehouseInController.getWhtTrayitemRdlreturn(
+        trayId,
+        sortId
+      );
+      if (data.status == 1) {
+        res.status(200).json({
+          data: data.data,
+        });
+      } else if (data.status == 2) {
+        res.status(202).json({
+          message: "Details not found",
+        });
+      } else if (data.status == 3) {
+        res.status(202).json({
+          message: `${trayId} - present at ${data.data.sort_id}`,
+        });
+      }
+    } catch (error) {
+      next(error);
     }
-  } catch (error) {
-    next(error);
   }
-});
+);
 
+router.post(
+  "/request-for-RDL_one_returnrdl-fls/:status/:location",
+  async (req, res, next) => {
+    try {
+      let data = await warehouseInController.getRDLonereturn(
+        req.params.status,
+        req.params.location
+      );
 
-router.post("/request-for-RDL_one_returnrdl-fls/:status/:location", async (req, res, next) => {
-  try {
-    let data = await warehouseInController.getRDLonereturn(
-      req.params.status,
-      req.params.location
-    );
-    
-    if (data) {
-      res.status(200).json({
-        data: data,
-      });
+      if (data) {
+        res.status(200).json({
+          data: data,
+        });
+      }
+    } catch (error) {
+      next(error);
     }
-  } catch (error) {
-    next(error);
   }
-});
+);
 
 router.post("/trayItem/:trayid", async (req, res, next) => {
   try {
-    console.log(req.params.trayid,"dadadadada");
+    console.log(req.params.trayid, "dadadadada");
     let data = await warehouseInController.getTrayItmes(req.params.trayid);
     if (data) {
       res.status(200).json({
@@ -2318,42 +2327,35 @@ router.post("/rdl-fls/closedByWh", async (req, res, next) => {
   }
 });
 /*-------------------------------------------------CTX TRAY -------------------------------------------*/
-router.post("/ctx/transferRequest/approve",async(req,res,next)=>{
+router.post("/ctx/transferRequest/approve", async (req, res, next) => {
   try {
-    const {sales_location}=req.body
-    const data=await warehouseInController.ctxTrayTransferApprove(req.body)
+    const { sales_location } = req.body;
+    const data = await warehouseInController.ctxTrayTransferApprove(req.body);
     console.log(data);
-    if(data.status == 1){
+    if (data.status == 1) {
       res.status(200).json({
-        message:`Successfully Transfer to ${sales_location} -Sales `
-      })
-    }
-    else if(data.status == 3){
+        message: `Successfully Transfer to ${sales_location} -Sales `,
+      });
+    } else if (data.status == 3) {
       res.status(200).json({
-        message:`Successfully Received and Sent to Warehouse`
-      })
-    }
-    else if(data.status == 4){
+        message: `Successfully Received and Sent to Warehouse`,
+      });
+    } else if (data.status == 4) {
       res.status(200).json({
-        message:`Successfully Closed and Ready to Pricing`
-      })
-    }
-    else if(data.status == 5){
+        message: `Successfully Closed and Ready to Pricing`,
+      });
+    } else if (data.status == 5) {
       res.status(200).json({
-        message:`Successfully Closed and Not Ready to Pricing`
-      })
-    }
-    else{
+        message: `Successfully Closed and Not Ready to Pricing`,
+      });
+    } else {
       res.status(202).json({
-        message:"Failed Please tray again..."
-      })
+        message: "Failed Please tray again...",
+      });
     }
   } catch (error) {
-    next(error)
+    next(error);
   }
-})
-
-
-
+});
 
 module.exports = router;

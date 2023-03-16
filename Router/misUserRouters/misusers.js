@@ -826,7 +826,8 @@ router.post("/ready-for-charging-wht", async (req, res, next) => {
 /* SORT TRAY BASED ON THE BRAND AND MODEL */
 router.post("/toWhtTrayForMerge", async (req, res, next) => {
   try {
-    const { location, brand, model, fromTray, itemCount, status,type } = req.body;
+    const { location, brand, model, fromTray, itemCount, status, type } =
+      req.body;
     let data = await misUserController.toWhtTrayForMerging(
       location,
       brand,
@@ -842,7 +843,7 @@ router.post("/toWhtTrayForMerge", async (req, res, next) => {
       });
     } else if (data.status === 0) {
       res.status(202).json({
-        message: "Currently no wht tray in this brand and model",
+        message: `Currently no ${type} tray in this brand and model`,
       });
     }
   } catch (error) {
@@ -1206,7 +1207,7 @@ router.post("/whtutility/search/:oldUic", async (req, res, next) => {
   try {
     const { oldUic } = req.params;
     let data = await misUserController.whtutilitySearch(oldUic);
-  
+
     if (data.status == 1) {
       res.status(200).json({
         tempOrder: data.tempOrderData,
@@ -1295,27 +1296,33 @@ router.post("/whtUtility/addDelivery", async (req, res, next) => {
   }
 });
 //BOT TRAY CLOSE PAGE
-router.post("/whtUtility/botTray/closePage/:trayId/:status", async (req, res, next) => {
-  try {
-    const { trayId ,status} = req.params;
-    let data = await misUserController.whtUtilityBotTrayGetOne(trayId,status);
-    if (data.status == 1) {
-      res.status(200).json({
-        data: data.tray,
-      });
-    } else if (data.status == 2) {
-      res.status(202).json({
-        message: "Tray is not exists",
-      });
-    } else if (data.status == 3) {
-      res.status(202).json({
-        message: "You can't access this data",
-      });
+router.post(
+  "/whtUtility/botTray/closePage/:trayId/:status",
+  async (req, res, next) => {
+    try {
+      const { trayId, status } = req.params;
+      let data = await misUserController.whtUtilityBotTrayGetOne(
+        trayId,
+        status
+      );
+      if (data.status == 1) {
+        res.status(200).json({
+          data: data.tray,
+        });
+      } else if (data.status == 2) {
+        res.status(202).json({
+          message: "Tray is not exists",
+        });
+      } else if (data.status == 3) {
+        res.status(202).json({
+          message: "You can't access this data",
+        });
+      }
+    } catch (error) {
+      next(error);
     }
-  } catch (error) {
-    next(error);
   }
-});
+);
 //OLD UIC SCAN FOR BOT TRAY CLOSE
 router.post("/whtUtility/botTray/oldUic", async (req, res, next) => {
   try {
@@ -1355,24 +1362,23 @@ router.post("/whtUtility/botTray/oldUic", async (req, res, next) => {
   }
 });
 // WHT UTILITY OLD UIC TO NEW UIC SAVE
-router.post("/whtUtility/resticker/save/:trayId",async(req,res,next)=>{
+router.post("/whtUtility/resticker/save/:trayId", async (req, res, next) => {
   try {
-    const {trayId}=req.params
-    let data=await misUserController.whtUtilityRestickerSave(trayId)
-    if(data.status == 1){
+    const { trayId } = req.params;
+    let data = await misUserController.whtUtilityRestickerSave(trayId);
+    if (data.status == 1) {
       res.status(200).json({
-        message:"Data Saved"
-      })
-    }
-    else{
+        message: "Data Saved",
+      });
+    } else {
       res.status(202).json({
-        message:"Failed Please tray again..."
-      })
+        message: "Failed Please tray again...",
+      });
     }
   } catch (error) {
-    next(error)
+    next(error);
   }
-}) 
+});
 router.post("/auditDoneWht", async (req, res, next) => {
   try {
     let data = await misUserController.getAuditDone();
@@ -1380,33 +1386,37 @@ router.post("/auditDoneWht", async (req, res, next) => {
       res.status(200).json({
         data: data,
       });
-    }else{
-      res.status(202).json()
-    }
-  } catch (error) {
-    next(error);
-  }
-});
-
-router.post("/assignToAgent/rdl-fls/sentToWarehouse", async (req, res, next) => {
-  try {
-    const { tray,user_name } = req.body;
-    let data = await misUserController.assignToAgentRequestToWhRdlFls(tray,user_name);
-    if (data.status == true) {
-    
-      res.status(200).json({
-        message: "Request sent to Warehouse",
-      });
     } else {
-      res.status(202).json({
-        message: "Request failed please try again...",
-      });
+      res.status(202).json();
     }
   } catch (error) {
     next(error);
   }
 });
 
+router.post(
+  "/assignToAgent/rdl-fls/sentToWarehouse",
+  async (req, res, next) => {
+    try {
+      const { tray, user_name } = req.body;
+      let data = await misUserController.assignToAgentRequestToWhRdlFls(
+        tray,
+        user_name
+      );
+      if (data.status == true) {
+        res.status(200).json({
+          message: "Request sent to Warehouse",
+        });
+      } else {
+        res.status(202).json({
+          message: "Request failed please try again...",
+        });
+      }
+    } catch (error) {
+      next(error);
+    }
+  }
+);
 
 router.post(
   "/assignToAgent/rdl-fls/users/:user_type/:location",
@@ -1433,44 +1443,43 @@ router.post("/RDLoneDoneTray", async (req, res, next) => {
       res.status(200).json({
         data: data,
       });
-    }else{
-      res.status(202).json()
+    } else {
+      res.status(202).json();
     }
   } catch (error) {
     next(error);
   }
 });
 /*------------------------------------CTX TRAY TRANSFER--------------------------------*/
-// GET SALES LOCATION 
-router.post("/ctx/getSalesLocation",async(req,res,next)=>{
+// GET SALES LOCATION
+router.post("/ctx/getSalesLocation", async (req, res, next) => {
   try {
-    let data=await misUserController.getSalesLocation()
+    let data = await misUserController.getSalesLocation();
     console.log(data);
-    if(data){
+    if (data) {
       res.status(200).json({
-        data:data
-      })
+        data: data,
+      });
     }
   } catch (error) {
-    next(error)
+    next(error);
   }
-})
+});
 //ctx tray transfer request sent to warehouse
-router.post("/ctx/transferRequestSend",async(req,res,next)=>{
+router.post("/ctx/transferRequestSend", async (req, res, next) => {
   try {
-    const data=await misUserController.ctxTrayTransferRequestSend(req.body)
-    if(data.status == 1){
+    const data = await misUserController.ctxTrayTransferRequestSend(req.body);
+    if (data.status == 1) {
       res.status(200).json({
-        message:"Request Sent to Warehouse"
-      })
-    }
-    else if(data.status == 2){
+        message: "Request Sent to Warehouse",
+      });
+    } else if (data.status == 2) {
       res.status(202).json({
-        message:"Failed Please try again..."
-      })
+        message: "Failed Please try again...",
+      });
     }
   } catch (error) {
-    next(error)
+    next(error);
   }
-})
+});
 module.exports = router;
