@@ -1155,18 +1155,15 @@ router.post("/recieved-from-bqc", async (req, res, next) => {
   try {
     let data = await warehouseInController.bqcDoneRecieved(req.body);
     if (data.status == 1) {
-      console.log("kitttiiii");
       res.status(200).json({
         message: "Successfully Received",
       });
     }
     if (data.status == 3) {
-      console.log("kitteelaa");
       res.status(202).json({
         message: "Please Enter Valid Count",
       });
     } else {
-      console.log("kittoooooo");
       res.status(202).json({
         message: "Failed",
       });
@@ -1208,7 +1205,7 @@ router.post("/recieved-from-sorting", async (req, res, next) => {
         message: "Successfully Received",
       });
     } else if (data.status == 2) {
-      res.status(200).json({
+      res.status(202).json({
         message: "Please Enter Valid Count",
       });
     } else {
@@ -1468,7 +1465,7 @@ router.post("/mmtTraySendToSorting", async (req, res, next) => {
       });
     } else if (data.status === 2) {
       res.status(202).json({
-        message: `${username} - user have already mmt tray`,
+        message: `Agent already have a lot `,
       });
     }
   } catch (error) {
@@ -1520,7 +1517,6 @@ router.post("/mergeDoneMmttrayClose", async (req, res, next) => {
 /*--------------------- ASSIGNMENT OF MMT AND WHT AND BOT FOR SORTING USER_CHECKING--------------------------------*/
 router.post("/sortingAgnetStatus/:username/:toTray", async (req, res, next) => {
   try {
-    console.log(req.params);
     const { username, toTray } = req.params;
     let data = await warehouseInController.getSortingAgentStatus(
       username,
@@ -1531,11 +1527,11 @@ router.post("/sortingAgnetStatus/:username/:toTray", async (req, res, next) => {
         data: "User is free",
       });
     } else if (data.status === 2) {
-      res.status(200).json({
+      res.status(202).json({
         data: "Agent already have a lot",
       });
     } else if (data.status === 3) {
-      res.status(200).json({
+      res.status(202).json({
         data: "User not active",
       });
     }
@@ -1999,7 +1995,7 @@ router.post(
   async (req, res, next) => {
     try {
       const { location, fromTray } = req.params;
-      console.log("hh");
+
       let data = await warehouseInController.pickupePageRequestApprove(
         location,
         fromTray
@@ -2185,7 +2181,6 @@ router.post("/issue-to-agent-wht-recived-rdl-one", async (req, res, next) => {
   try {
     let data = await warehouseInController.issueToagentWhtReciveRdOne(req.body);
     if (data) {
-      console.log("lsslslsl");
       res.status(200).json({
         message: "Successfully Issued",
       });
@@ -2271,7 +2266,6 @@ router.post(
 
 router.post("/trayItem/:trayid", async (req, res, next) => {
   try {
-    console.log(req.params.trayid, "dadadadada");
     let data = await warehouseInController.getTrayItmes(req.params.trayid);
     if (data) {
       res.status(200).json({
@@ -2331,7 +2325,6 @@ router.post("/ctx/transferRequest/approve", async (req, res, next) => {
   try {
     const { sales_location } = req.body;
     const data = await warehouseInController.ctxTrayTransferApprove(req.body);
-    console.log(data);
     if (data.status == 1) {
       res.status(200).json({
         message: `Successfully Transfer to ${sales_location} -Sales `,
@@ -2357,5 +2350,21 @@ router.post("/ctx/transferRequest/approve", async (req, res, next) => {
     next(error);
   }
 });
+/*---------------------------------CTX TO STX-------------------------*/
+// return from sorting 
+router.post("/returnFromsorting/ctxToStx/tray/:location", async (req, res, next) => {
+  try {
+    let data = await warehouseInController.sortingCtxToStxTray(
+      req.params.location
+    );
+    if (data) {
+      res.status(200).json({
+        data: data,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
 
-module.exports = router;
+module.exports = router

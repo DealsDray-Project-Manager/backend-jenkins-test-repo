@@ -5,7 +5,7 @@ const Elasticsearch = require("../../Elastic-search/elastic");
 
 module.exports = {
   getAssignedTray: (username) => {
-    console.log(username);
+  
     return new Promise(async (resolve, reject) => {
       let data = await masters.find({
         $or: [{ issued_user_name: username, sort_id: "Issued to RDL-FLS" }],

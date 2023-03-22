@@ -322,4 +322,20 @@ router.post("/pickup/edoCloseTray/:trayId", async (req, res, next) => {
     next(error);
   }
 });
+/*-------------------------------------CTX TO STX SORTING-------------------------------*/
+// get assigned ctx tray
+router.post("/sorting/ctx/assignedTray/:username", async (req, res, next) => {
+  try {
+    const { username } = req.params;
+    let data = await sortingAgentController.sortingGetAssignedCtxTray(username);
+
+    if (data) {
+      res.status(200).json({
+        data: data,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
 module.exports = router;

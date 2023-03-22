@@ -733,14 +733,14 @@ router.post("/bulkValidationBag", async (req, res, next) => {
 });
 
 /*-----------------------------TRAY ID GENERATION--------------------------------------*/
-router.post("/trayIdGenrate/:type", async (req, res, next) => {
+router.post("/trayIdGenrate", async (req, res, next) => {
   try {
-    const { type } = req.params;
+    const { type } = req.body;
     let obj;
     fs.readFile(
       "myjsonfile.json",
       "utf8",
-      function readFileCallback(err, data) {
+      async function readFileCallback(err, data) {
         if (err) {
         } else {
           obj = JSON.parse(data);
@@ -760,26 +760,42 @@ router.post("/trayIdGenrate/:type", async (req, res, next) => {
             res.status(200).json({
               data: obj.WHT,
             });
-          } else if (type == "CTA") {
-            res.status(200).json({
-              data: obj.CTA,
-            });
-          } else if (type == "CTB") {
-            res.status(200).json({
-              data: obj.CTB,
-            });
-          } else if (type == "CTC") {
-            res.status(200).json({
-              data: obj.CTC,
-            });
-          } else if (type == "CTD") {
-            res.status(200).json({
-              data: obj.CTD,
-            });
-          } else {
+          }
+          //  else if (type == "CTA") {
+          //   res.status(200).json({
+          //     data: obj.CTA,
+          //   });
+          // } else if (type == "CTB") {
+          //   res.status(200).json({
+          //     data: obj.CTB,
+          //   });
+          // } else if (type == "CTC") {
+          //   res.status(200).json({
+          //     data: obj.CTC,
+          //   });
+          // } else if (type == "CTD") {
+          //   res.status(200).json({
+          //     data: obj.CTD,
+          //   });
+          // }
+          else if (type == "tray-master") {
             res.status(200).json({
               data: obj,
             });
+          } else {
+            let checkLimit = await superAdminController.ctxCategoryLimit(
+              type,
+              obj[type]
+            );
+            if (checkLimit.status == 2) {
+              res.status(202).json({
+                message: `${type}-tray limit exceeded`,
+              });
+            } else {
+              res.status(200).json({
+                data: obj[type],
+              });
+            }
           }
         }
       }
@@ -873,6 +889,7 @@ router.post("/bulkValidationTray", async (req, res, next) => {
 /*-----------------------------CREATE BULK TRAY--------------------------------------*/
 router.post("/createBulkTray", async (req, res, next) => {
   try {
+    const { allCount } = req.body;
     let data = await superAdminController.addbulkTray(req.body.item);
     if (data) {
       fs.readFile(
@@ -882,14 +899,17 @@ router.post("/createBulkTray", async (req, res, next) => {
           if (err) {
           } else {
             obj = JSON.parse(datafile);
-            obj.BOT = req.body.allCount.BOT;
-            obj.MMT = req.body.allCount.MMT;
-            obj.WHT = req.body.allCount.WHT;
-            obj.PMT = req.body.allCount.PMT;
-            obj.CTA = req.body.allCount.CTA;
-            obj.CTB = req.body.allCount.CTB;
-            obj.CTC = req.body.allCount.CTC;
-            obj.CTD = req.body.allCount.CTD;
+            for (let key in allCount) {
+              obj[key] = allCount[key];
+            }
+            // obj.BOT = req.body.allCount.BOT;
+            // obj.MMT = req.body.allCount.MMT;
+            // obj.WHT = req.body.allCount.WHT;
+            // obj.PMT = req.body.allCount.PMT;
+            // obj.CTA = req.body.allCount.CTA;
+            // obj.CTB = req.body.allCount.CTB;
+            // obj.CTC = req.body.allCount.CTC;
+            // obj.CTD = req.body.allCount.CTD;
 
             json = JSON.stringify(obj);
             fs.writeFile(
@@ -1018,15 +1038,18 @@ router.post("/createMasters", async (req, res, next) => {
                 obj.MMT = obj.MMT + 1;
               } else if (type_taxanomy == "WHT") {
                 obj.WHT = obj.WHT + 1;
-              } else if (type_taxanomy == "CTA") {
-                obj.CTA = obj.CTA + 1;
-              } else if (type_taxanomy == "CTB") {
-                obj.CTB = obj.CTB + 1;
-              } else if (type_taxanomy == "CTC") {
-                obj.CTC = obj.CTC + 1;
-              } else if (type_taxanomy == "CTD") {
-                obj.CTD = obj.CTD + 1;
+              } else {
+                obj[type_taxanomy] = obj[type_taxanomy] + 1;
               }
+              //  else if (type_taxanomy == "CTA") {
+              //   obj.CTA = obj.CTA + 1;
+              // } else if (type_taxanomy == "CTB") {
+              //   obj.CTB = obj.CTB + 1;
+              // } else if (type_taxanomy == "CTC") {
+              //   obj.CTC = obj.CTC + 1;
+              // } else if (type_taxanomy == "CTD") {
+              //   obj.CTD = obj.CTD + 1;
+              // }
               json = JSON.stringify(obj);
               fs.writeFile(
                 "myjsonfile.json",
@@ -1142,12 +1165,7 @@ router.post("/deleteMaster/:masterId", async (req, res, next) => {
 router.post("/itemTracking/:page/:size", async (req, res, next) => {
   try {
     let { page, size } = req.params;
-    if (!page) {
-      page = 1;
-    }
-    if (!size) {
-      size = 10;
-    }
+
     page++;
     const limit = parseInt(size);
     const skip = (page - 1) * size;
@@ -1435,7 +1453,7 @@ router.post("/part-records-import", async (req, res, next) => {
 
 router.post("/addcategory", async (req, res, next) => {
   try {
-    const {code,sereis_start}=req.body
+    const { code, sereis_start } = req.body;
     let data = await superAdminController.createctxcategory(req.body);
     if (data.status == true) {
       fs.readFile(
@@ -1446,6 +1464,7 @@ router.post("/addcategory", async (req, res, next) => {
           } else {
             obj = JSON.parse(datafile);
             obj[code] = sereis_start;
+
             json = JSON.stringify(obj);
             fs.writeFile(
               "myjsonfile.json",
@@ -1526,9 +1545,9 @@ router.post("/editctxcategory", async (req, res, next) => {
 
 router.get("/getCtxTrayCategory", async (req, res) => {
   try {
-    let user = await superAdminController.getCtxTrayCategory();
-    if (user) {
-      res.status(200).json(user);
+    let ctxCategory = await superAdminController.getCtxTrayCategory();
+    if (ctxCategory) {
+      res.status(200).json(ctxCategory);
     }
   } catch (error) {
     next(error);
@@ -1547,7 +1566,6 @@ router.post("/categoryCheck", async (req, res, next) => {
     next(error);
   }
 });
-
 
 router.post("/getCtxCategorys", async (req, res, next) => {
   try {
@@ -1571,20 +1589,6 @@ router.post("/deleteCtxcategory", async (req, res, next) => {
       res.status(202).json({ error: "you can't delete this category " });
     } else {
       res.status(202).json({ error: "you can't delete this category " });
-    }
-  } catch (error) {
-    next(error);
-  }
-});
-
-
-
-
-router.get("/getCtxTrayCategory", async (req, res) => {
-  try {
-    let user = await superAdminController.getCtxTrayCategory();
-    if (user) {
-      res.status(200).json(user);
     }
   } catch (error) {
     next(error);

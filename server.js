@@ -55,8 +55,6 @@ app.use("/api/v7/sales-agent", salesPanel);
 /* API for pricing AGNET panel */
 app.use("/api/v7/pricing-agent", pricingpanel);
 
-
-
 /* User-profile */
 app.use("/user/profile", express.static(__dirname + "/public/user-profile"));
 /* Product Image */

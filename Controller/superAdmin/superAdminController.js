@@ -14,12 +14,13 @@ const {
 } = require("../../Model/masterHistoryModel/mastersHistory");
 const moment = require("moment");
 
-const IISDOMAIN = "http://prexo-testing-api.dealsdray.com/user/profile/";
-const IISDOMAINPRDT = "http://prexo-testing-api.dealsdray.com/product/image/";
+const IISDOMAIN = "http://prexo-v8-dev-api.dealsdray.com/user/profile/";
+const IISDOMAINPRDT = "http://prexo-v8-dev-api.dealsdray.com/product/image/";
 
 /************************************************************************************************** */
 
 /* 
+
 
 
 @ SUPER ADMIN CONTROLLER FETCH DATA FROM MONGODB DATA BASE PREXO AND MAKE CHANGES ON DB 
@@ -527,9 +528,9 @@ module.exports = {
           brand.push(productsData[i].brand_name);
           err["brand_name"] = brand;
         }
-
         let modelName = await products.findOne({
           model_name: productsData[i].model_name,
+          brand_name: productsData[i].brand_name,
         });
         if (modelName) {
           model.push(modelName.model_name);
@@ -539,6 +540,10 @@ module.exports = {
             productsData.some(
               (data, index) =>
                 data.model_name == productsData[i].model_name && index != i
+            ) &&
+            productsData.some(
+              (data, index) =>
+                data.brand_name == productsData[i].brand_name && index != i
             )
           ) {
             model.push(productsData[i].model_name);
@@ -549,6 +554,7 @@ module.exports = {
       if (Object.keys(err).length === 0) {
         resolve({ status: true });
       } else {
+        console.log(err);
         resolve({ status: false, err: err });
       }
     });
@@ -881,7 +887,19 @@ module.exports = {
       }
     });
   },
-
+  ctxCategoryLimit: (trayType, currentCount) => {
+    return new Promise(async (resolve, reject) => {
+      let data = await ctxCategory.findOne({
+        code: trayType,
+        series_end: { $gte: currentCount },
+      });
+      if (data) {
+        resolve({ status: 1 });
+      } else {
+        resolve({ status: 2 });
+      }
+    });
+  },
   /*--------------------------------BULK TRAY VALIDATION-----------------------------------*/
 
   bulkValidationTray: (trayData) => {
@@ -895,8 +913,31 @@ module.exports = {
       let warehouse = [];
       let cpc = [];
       let trayLimit = [];
+      let category = [];
 
       for (let i = 0; i < trayData.length; i++) {
+        let trayID = trayData[i].tray_id.split(
+          `${trayData[i].tray_category}`
+        )[1];
+        if (
+          trayData[i].tray_category !== "BOT" &&
+          trayData[i].tray_category !== "PMT" &&
+          trayData[i].tray_category !== "MMT" &&
+          trayData[i].tray_category !== "WHT"
+        ) {
+          let checkCategory = await ctxCategory.findOne({
+            code: trayData[i].tray_category,
+          });
+          if (checkCategory == null) {
+            category.push(trayData[i].tray_category);
+            err["category"] = category;
+          } else {
+            if (trayID > checkCategory) {
+              tray_id.push(trayData[i].tray_id);
+              err["tray_id"] = tray_id;
+            }
+          }
+        }
         if (
           trayData[i].tray_limit <= 0 ||
           trayData[i].tray_limit > 99 ||
@@ -922,25 +963,30 @@ module.exports = {
             err["warehouse_does_not_exist"] = warehouse;
           }
         }
-        let trayID = trayData[i].tray_id.split(
-          `${trayData[i].tray_category}`
-        )[1];
         if (trayID > 2251 && trayData[i].tray_category == "BOT") {
           tray_id.push(trayData[i].tray_id);
           err["tray_id"] = tray_id;
-        }
-        if (trayID > 8051 && trayData[i].tray_category == "MMT") {
+        } else if (trayID > 8051 && trayData[i].tray_category == "MMT") {
           tray_id.push(trayData[i].tray_id);
           err["tray_id"] = tray_id;
-        }
-        if (trayID > 1501 && trayData[i].tray_category == "WHT") {
+        } else if (trayID > 1501 && trayData[i].tray_category == "WHT") {
           tray_id.push(trayData[i].tray_id);
           err["tray_id"] = tray_id;
-        }
-        if (trayID > 8151 && trayData[i].tray_category == "PMT") {
+        } else if (trayID > 8151 && trayData[i].tray_category == "PMT") {
           tray_id.push(trayData[i].tray_id);
           err["tray_id"] = tray_id;
+        } else {
+          let checkSereisEnd = await ctxCategory.findOne({
+            code: trayData[i]?.tray_category,
+          });
+          if (checkSereisEnd) {
+            if (checkSereisEnd.series_end < trayID) {
+              tray_id.push(trayData[i].tray_id);
+              err["tray_id"] = tray_id;
+            }
+          }
         }
+
         // if (trayID > 1999 && trayData[i].tray_category == "CTA") {
         //   tray_id.push(trayData[i].tray_id);
         //   err["tray_id"] = tray_id;
@@ -994,21 +1040,27 @@ module.exports = {
           }
         }
         if (
-          trayData[i].tray_category == "WHT" ||
-          trayData[i].tray_category == "CTA" ||
-          trayData[i].tray_category == "CTB" ||
-          trayData[i].tray_category == "CTC" ||
-          trayData[i].tray_category == "CTD"
+          trayData[i].tray_category !== "BOT" ||
+          trayData[i].tray_category !== "PMT" ||
+          trayData[i].tray_category !== "PMT" ||
+          trayData[i].tray_category !== "WHT"
         ) {
           let brandModel = await brands.findOne({
-            brand_name: trayData[i].tray_brand,
+            brand_name: {
+              $regex: new RegExp("^" + trayData[i].tray_brand, "i"),
+            },
           });
           if (brandModel == null) {
             brand.push(trayData[i].tray_brand);
             err["brand"] = brand;
           }
           let modelName = await products.findOne({
-            model_name: trayData[i].tray_model,
+            model_name: {
+              $regex: new RegExp("^" + trayData[i].tray_model, "i"),
+            },
+            brand_name: {
+              $regex: new RegExp("^" + trayData[i].tray_brand, "i"),
+            },
           });
           if (modelName == null) {
             model.push(trayData[i].tray_model);
@@ -1740,7 +1792,6 @@ module.exports = {
               }
             );
             if (updateId.modifiedCount != 0) {
-              console.log(updateId);
             }
           }
         } else if (x.actual_items.length != 0) {
@@ -1887,7 +1938,7 @@ module.exports = {
         "WHT1386",
         "WHT1034",
       ];
-      console.log(arr.length);
+
       for (let x of arr) {
         let data = await masters.updateOne(
           {
@@ -1902,7 +1953,6 @@ module.exports = {
             },
           }
         );
-        console.log(data);
       }
       resolve(arr);
     });
@@ -1916,9 +1966,11 @@ module.exports = {
             code: data?.code,
           },
           {
+            category_type: data.category_type,
             float: data?.float,
           },
           {
+            category_type: data.category_type,
             sereis_start: { $gte: data.sereis_start },
             series_end: { $lte: data.series_end },
           },

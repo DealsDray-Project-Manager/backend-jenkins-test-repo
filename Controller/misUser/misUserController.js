@@ -9,6 +9,7 @@ const { badOrders } = require("../../Model/ordersModel/bad-orders-model");
 const { badDelivery } = require("../../Model/deliveryModel/bad-delivery");
 const { tempOrders } = require("../../Model/WhtUtility/tempOrder");
 const { tempDelivery } = require("../../Model/WhtUtility/tempDelivery");
+const { ctxCategory } = require("../../Model/ctxCategoryModel/category");
 const moment = require("moment");
 const elasticsearch = require("../../Elastic-search/elastic");
 /******************************************************************* */
@@ -155,6 +156,9 @@ module.exports = {
         rdl_one: 0,
         rdl_two: 0,
         readyToTransfer: 0,
+        ctxMerge: 0,
+        receiveCtx: 0,
+        ctxToStxSorting: 0,
       };
       count.orders = await orders.count({ partner_shop: location });
       count.badOrders = await badOrders.count({ partner_shop: location });
@@ -207,6 +211,24 @@ module.exports = {
         type_taxanomy: "WHT",
         sort_id: "Ready to BQC",
         cpc: location,
+      });
+      count.ctxToStxSorting = await masters.count({
+        prefix: "tray-master",
+        type_taxanomy: { $nin: ["BOT", "PMT", "MMT", "WHT"] },
+        sort_id: "Ready to Transfer to STX",
+        cpc: location,
+      });
+      count.receiveCtx = await masters.count({
+        prefix: "tray-master",
+        cpc: location,
+        sort_id: "Transferred to Sales",
+        type_taxanomy: { $nin: ["BOT", "PMT", "MMT", "WHT"] },
+      });
+      count.ctxMerge = await masters.count({
+        prefix: "tray-master",
+        cpc: location,
+        sort_id: "Audit Done Closed By Warehouse",
+        type_taxanomy: { $nin: ["BOT", "PMT", "MMT", "WHT"] },
       });
       count.readyToTransfer = await masters.count({
         prefix: "tray-master",
@@ -684,6 +706,7 @@ module.exports = {
     });
   },
   getDeliveredOrders: (location, limit, skip) => {
+    console.log(skip);
     return new Promise(async (resolve, reject) => {
       let data = await orders.aggregate([
         {
@@ -2704,7 +2727,7 @@ module.exports = {
 
       if (whtTray.length !== 0) {
         for (let x of whtTray) {
-          let count = x.items.length + itemsCount;
+          let count = x.limit - x.items.length;
           if (count >= itemsCount) {
             arr.push(x);
           }
@@ -2722,7 +2745,10 @@ module.exports = {
   mmtMergeRequestSendToWh: (sortingAgent, fromTray, toTray) => {
     return new Promise(async (resolve, reject) => {
       let whtTray = await masters.findOne({ code: fromTray });
-      if (whtTray.sort_id === "Audit Done Closed By Warehouse" && whtTray.type_taxanomy == "WHT") {
+      if (
+        whtTray.sort_id === "Audit Done Closed By Warehouse" &&
+        whtTray.type_taxanomy == "WHT"
+      ) {
         let updateFromTray = await masters.updateOne(
           { code: fromTray },
           {
@@ -2921,27 +2947,27 @@ module.exports = {
     });
   },
   /*-----------------------PICKUP MODEULE-------------------------------*/
-  pickupPageItemView: (type, skip, limit) => {
+  pickupPageItemView: (type, location) => {
     return new Promise(async (resolve, reject) => {
       let items = [];
 
       if (type == "Charge Done") {
         items = await masters.aggregate([
-          { $match: { sort_id: "Ready to BQC" } },
+          { $match: { sort_id: "Ready to BQC", cpc: location } },
           {
             $unwind: "$items",
           },
         ]);
       } else if (type == "BQC Done") {
         items = await masters.aggregate([
-          { $match: { sort_id: "Ready to Audit" } },
+          { $match: { sort_id: "Ready to Audit", cpc: location } },
           {
             $unwind: "$items",
           },
         ]);
       } else if (type == "Audit Done") {
         items = await masters.aggregate([
-          { $match: { sort_id: "Ready to RDL" } },
+          { $match: { sort_id: "Ready to RDL", cpc: location } },
           {
             $unwind: "$items",
           },
@@ -2951,27 +2977,48 @@ module.exports = {
     });
   },
   /*---------------------PICKUP SORT-------------------------------*/
-  pickUpSortBrandModel: (brand, model, type, limit, skip) => {
+  pickUpSortBrandModel: (brand, model, type, location) => {
     return new Promise(async (resolve, reject) => {
       let items, count;
 
       if (type == "Charge Done") {
         items = await masters.aggregate([
-          { $match: { sort_id: "Ready to BQC", brand: brand, model: model } },
+          {
+            $match: {
+              sort_id: "Ready to BQC",
+              brand: brand,
+              model: model,
+              cpc: location,
+            },
+          },
           {
             $unwind: "$items",
           },
         ]);
       } else if (type == "BQC Done") {
         items = await masters.aggregate([
-          { $match: { sort_id: "Ready to Audit", brand: brand, model: model } },
+          {
+            $match: {
+              sort_id: "Ready to Audit",
+              brand: brand,
+              model: model,
+              cpc: location,
+            },
+          },
           {
             $unwind: "$items",
           },
         ]);
       } else if (type == "Audit Done") {
         items = await masters.aggregate([
-          { $match: { sort_id: "Ready to RDL", brand: brand, model: model } },
+          {
+            $match: {
+              sort_id: "Ready to RDL",
+              brand: brand,
+              model: model,
+              cpc: location,
+            },
+          },
           {
             $unwind: "$items",
           },
@@ -3238,7 +3285,6 @@ module.exports = {
     });
   },
   ctxTrayTransferRequestSend: (trayData) => {
-    console.log(trayData);
     return new Promise(async (resolve, reject) => {
       for (let x of trayData.tray) {
         const sentToWarehouse = await masters.updateOne(
@@ -3255,6 +3301,111 @@ module.exports = {
       resolve({ status: 1 });
     });
   },
+  /*----------------------------SORTING CTX TO STX -------------------------------------*/
+  sortingCtxToStxStxTrayGet: (
+    location,
+    brand,
+    model,
+    fromTray,
+    itemCount,
+    status,
+    type
+  ) => {
+    console.log(type);
+    return new Promise(async (resolve, reject) => {
+      let arr = [];
+      let stxTray = [];
+      let getCtxFloat = await ctxCategory.findOne({ code: type });
+      if (getCtxFloat) {
+        let stxTrayCategory = await ctxCategory.findOne({
+          code: { $ne: type },
+          float: getCtxFloat.float,
+        });
+        if (stxTrayCategory) {
+          stxTray = await masters
+            .find({
+              $or: [
+                {
+                  prefix: "tray-master",
+                  type_taxanomy: stxTrayCategory.code,
+                  brand: brand,
+                  model: model,
+                  cpc: location,
+                  sort_id: "Open",
+                },
+                {
+                  prefix: "tray-master",
+                  type_taxanomy: stxTrayCategory.code,
+                  brand: brand,
+                  model: model,
+                  cpc: location,
+                  sort_id: "Inuse",
+                },
+              ],
+            })
+            .catch((err) => reject(err));
+        } else {
+          resolve({ status: 0 });
+        }
+        if (stxTray.length !== 0) {
+          for (let x of stxTray) {
+            if (parseInt(x.limit) > parseInt(x.items.length)) {
+              arr.push(x);
+            }
+          }
+          if (arr.length !== 0) {
+            resolve({ status: 1, tray: arr });
+          } else {
+            resolve({ status: 0 });
+          }
+        } else {
+          resolve({ status: 0 });
+        }
+      } else {
+        resolve({ status: 3 });
+      }
+    });
+  },
+  sortingCtxtoStxRequestSendToWh: (sortingAgent, fromTray, toTray) => {
+    return new Promise(async (resolve, reject) => {
+      const updateFromTray = await masters.updateOne(
+        { code: fromTray },
+        {
+          $set: {
+            sort_id: "Ctx to Stx Send for Sorting",
+            requested_date: Date.now(),
+            issued_user_name: sortingAgent,
+            to_merge: toTray,
+            from_merge: null,
+            actual_items: [],
+          },
+        }
+      );
+      if (updateFromTray.modifiedCount !== 0) {
+        const updateToTray = await masters.updateOne(
+          { code: toTray },
+          {
+            $set: {
+              sort_id: "Ctx to Stx Send for Sorting",
+              requested_date: Date.now(),
+              issued_user_name: sortingAgent,
+              from_merge: fromTray,
+              to_merge: null,
+              actual_items: [],
+            },
+          }
+        );
+        if (updateToTray.modifiedCount !== 0) {
+          resolve({ status: 1 });
+        } else {
+          resolve({ status: 0 });
+        }
+      } else {
+        resolve({ status: 0 });
+      }
+    });
+  },
+  /*--------------------------------WHT UTILITY-----------------------------------------*/
   whtutilitySearch: (oldUc) => {
     return new Promise(async (resolve, reject) => {
       let tempDeliveryData = await tempDelivery.aggregate([
@@ -3374,7 +3525,6 @@ module.exports = {
     });
   },
   whtUtilityImportOrder: (orderData) => {
-    console.log(orderData);
     return new Promise(async (resolve, reject) => {
       let arr = [];
       let locationCheck = await infra.findOne({ code: orderData.partner_shop });
@@ -3560,24 +3710,50 @@ module.exports = {
   whtUtilityImportFile: (xlsxData) => {
     return new Promise(async (resolve, reject) => {
       let count = "";
-      let arr;
 
       for (let x of arr) {
         count++;
         let uicNum = "";
 
+        // if (count.toString().length == 1) {
+        //   uicNum = "9101000000" + count;
+        // } else if (count.toString().length == 2) {
+        //   uicNum = "910100000" + count;
+        // } else if (count.toString().length == 3) {
+        //   uicNum = "91010000" + count;
+        // } else if (count.toString().length == 4) {
+        //   uicNum = "9101000" + count;
+        // } else if (count.toString().length == 5) {
+        //   uicNum = "910100" + count;
+        // } else if (count.toString().length == 6) {
+        //   uicNum = "91010" + count;
+        // }
+
+        // if (count.toString().length == 1) {
+        //   uicNum = "9203000000" + count;
+        // } else if (count.toString().length == 2) {
+        //   uicNum = "920300000" + count;
+        // } else if (count.toString().length == 3) {
+        //   uicNum = "92030000" + count;
+        // } else if (count.toString().length == 4) {
+        //   uicNum = "9203000" + count;
+        // } else if (count.toString().length == 5) {
+        //   uicNum = "920300" + count;
+        // } else if (count.toString().length == 6) {
+        //   uicNum = "92030" + count;
+        // }
         if (count.toString().length == 1) {
-          uicNum = "9203000000" + count;
+          uicNum = "9001000000" + count;
         } else if (count.toString().length == 2) {
-          uicNum = "920300000" + count;
+          uicNum = "900100000" + count;
         } else if (count.toString().length == 3) {
-          uicNum = "92030000" + count;
+          uicNum = "90010000" + count;
         } else if (count.toString().length == 4) {
-          uicNum = "9203000" + count;
+          uicNum = "9001000" + count;
         } else if (count.toString().length == 5) {
-          uicNum = "920300" + count;
+          uicNum = "900100" + count;
         } else if (count.toString().length == 6) {
-          uicNum = "92030" + count;
+          uicNum = "90010" + count;
         }
         const string = x.Model_Name;
         const firstSpaceIndex = x.Model_Name.indexOf(" ");
@@ -3586,7 +3762,7 @@ module.exports = {
 
         let orderObj = {
           order_id: x.Order_ID.toString(),
-          order_date: new Date("01/01/2022"),
+          order_date: new Date("01/01/2021"),
           partner_shop: "Gurgaon_122016",
           item_id: x.Item_ID,
           old_item_details: `${firstWord}:${remainingWords}`,
@@ -3599,7 +3775,7 @@ module.exports = {
         };
         let objDelivery = {
           order_id: x.Order_ID.toString(),
-          order_date: new Date("01/01/2022"),
+          order_date: new Date("01/01/2021"),
           partner_shop: "Gurgaon_122016",
           item_id: x.Item_ID,
 

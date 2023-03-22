@@ -19,19 +19,19 @@ router.post("/assigned-tray/:userName", async (req, res, next) => {
 });
 
 /* BQC DASHBOARD */
-router.post("/dashboard/:username",async(req,res,next)=>{
+router.post("/dashboard/:username", async (req, res, next) => {
   try {
-    const {username}=req.params
-    let data=await bqcController.dashboardCount(username)
-    if(data){
+    const { username } = req.params;
+    let data = await bqcController.dashboardCount(username);
+    if (data) {
       res.status(200).json({
-        data:data
-      })
+        data: data,
+      });
     }
   } catch (error) {
-    next(error)
+    next(error);
   }
-})
+});
 
 /* UIC CHECKING */
 router.post("/bqc-uic-checking-first-time", async (req, res, next) => {
@@ -113,7 +113,6 @@ router.post(
   "/assigned-wht-item/:trayId/:username/:status/:page",
   async (req, res, next) => {
     try {
-      console.log("calling");
       const { trayId, username, status, page } = req.params;
       let data = await bqcController.getWhtTrayitem(
         trayId,
@@ -121,7 +120,7 @@ router.post(
         status,
         page
       );
-      console.log(data);
+
       if (data.status === 1) {
         res.status(200).json({
           data: data.data,

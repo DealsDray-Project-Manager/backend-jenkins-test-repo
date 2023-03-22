@@ -264,7 +264,7 @@ module.exports = {
                 { "uic_code.code": itemData.uic },
                 {
                   $set: {
-                    tray_id: findTray.code,
+                    ctx_tray_id: findTray.code,
                     tray_type: itemData.type,
                     tray_location: "Audit",
                     audit_report: obj,

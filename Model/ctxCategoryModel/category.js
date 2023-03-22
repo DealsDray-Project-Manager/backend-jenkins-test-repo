@@ -3,10 +3,14 @@ const mongoose = require("mongoose")
 const ctxCategorySchema = mongoose.Schema({
    
     code: {
-        type: String
+        type: String,
+        index:true,
     },
     description: {
         type: String
+    },
+    category_type:{
+        type:String
     },
     float: {
         type: Number

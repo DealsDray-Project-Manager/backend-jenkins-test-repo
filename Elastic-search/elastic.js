@@ -301,6 +301,44 @@ module.exports = {
 
     return arr;
   },
+  superMisItemSearchData: async (searchInput, limit, skip,location) => {
+    let data = await client.search({
+      index: "prexo-delivery",
+      // type: '_doc', // uncomment for Elasticsearch ≤ 6
+      body: {
+        from: skip,
+        size: limit,
+        query: {
+          bool: {
+            must: [
+              {
+                multi_match: {
+                  query: searchInput,
+                  fields: ["*"]
+                }
+              },
+              {
+                match: {
+                  partner_shop: location
+                }
+              }
+            ]
+          }
+        }
+      },
+    });
+    let arr = [];
+    for (let result of data.hits.hits) {
+     
+      result.delivery_status = "Delivered";
+      result["delivery"] = result["_source"];
+
+      arr.push(result);
+    }
+   
+
+    return arr;
+  },
   //UPDATE STOCKIN STATUS
   updateUic: async (tracking_id, bag_id) => {
     let data = await client.updateByQuery({

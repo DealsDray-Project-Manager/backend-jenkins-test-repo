@@ -228,7 +228,21 @@ const deliverySchema = mongoose.Schema({
   },
   rdl_fls_one_report:{
     type:Object
+  },
+  ctx_tray_id:{
+    type:String
+  },
+  ctx_tray_transferTo_sales_date:{
+    type:Date
+  },
+  ctx_tray_receive_and_close_wh:{
+    type:Date
+  },
+  stx_tray_id:{
+    type:String
   }
+
+
 
 
 });
