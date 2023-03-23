@@ -72,6 +72,7 @@ router.post("/transactionScreen/:trayId/:username", async (req, res, next) => {
   try {
     const { trayId, username } = req.params;
     let data = await auditController.getTransactionData(trayId, username);
+    console.log(data);
     if (data.status == 1) {
       res.status(200).json({
         data: data.tray,

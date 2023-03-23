@@ -177,9 +177,19 @@ module.exports = {
           wht_tray:itemData.trayId
         };
         let findTray = await masters.findOne({
-          issued_user_name: itemData.username,
-          type_taxanomy: itemData.type,
-          sort_id: "Issued to Audit",
+          $or:[
+            {
+
+              issued_user_name: itemData.username,
+              type_taxanomy: itemData.type,
+              sort_id: "Issued to Audit",
+            },
+            {
+              issued_user_name: itemData.username,
+              tray_grade: itemData.type,
+              sort_id: "Issued to Audit",
+            }
+          ]
         });
         if (findTray) {
           if (findTray.sort_id !== "Issued to Audit") {
