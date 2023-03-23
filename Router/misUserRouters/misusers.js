@@ -813,8 +813,16 @@ router.post("/ready-for-charging-wht", async (req, res, next) => {
 /* SORT TRAY BASED ON THE BRAND AND MODEL */
 router.post("/toWhtTrayForMerge", async (req, res, next) => {
   try {
-    const { location, brand, model, fromTray, itemCount, status, type } =
-      req.body;
+    const {
+      location,
+      brand,
+      model,
+      fromTray,
+      itemCount,
+      status,
+      type,
+      sortId,
+    } = req.body;
     let data = await misUserController.toWhtTrayForMerging(
       location,
       brand,
@@ -822,7 +830,8 @@ router.post("/toWhtTrayForMerge", async (req, res, next) => {
       fromTray,
       itemCount,
       status,
-      type
+      type,
+      sortId
     );
     if (data.status === 1) {
       res.status(200).json({
@@ -1448,10 +1457,10 @@ router.post("/RDLoneDoneTray", async (req, res, next) => {
 });
 /*------------------------------------CTX TRAY TRANSFER--------------------------------*/
 // GET SALES LOCATION
-router.post("/ctx/getSalesLocation", async (req, res, next) => {
+router.post("/ctx/getTransferLocation/:userCpcType", async (req, res, next) => {
   try {
-    let data = await misUserController.getSalesLocation();
-
+    const { userCpcType } = req.params;
+    let data = await misUserController.getSalesLocation(userCpcType);
     if (data) {
       res.status(200).json({
         data: data,
@@ -1500,10 +1509,9 @@ router.post("/sorting/ctxToStx/stxTray", async (req, res, next) => {
       });
     } else if (data.status === 0) {
       res.status(202).json({
-        message: `Currently no STX tray in this brand and model`,
+        message: `Currently no STX tray in this brand and model or Grade`,
       });
-    }
-    else if(data.status == 3){
+    } else if (data.status == 3) {
       res.status(202).json({
         message: `${type} Not found in category`,
       });

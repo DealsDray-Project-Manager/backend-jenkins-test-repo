@@ -8,7 +8,7 @@ const { products } = require("../../Model/productModel/product");
 const { admin } = require("../../Model/adminModel/admins");
 const { usersHistory } = require("../../Model/users-history-model/model");
 const { delivery } = require("../../Model/deliveryModel/delivery");
-const { ctxCategory } = require("../../Model/ctxCategoryModel/category");
+const { trayCategory } = require("../../Model/tray-category/tray-category");
 const {
   mastersEditHistory,
 } = require("../../Model/masterHistoryModel/mastersHistory");
@@ -70,13 +70,13 @@ module.exports = {
       count.warehouse = await infra.count({ type_taxanomy: "Warehouse" });
       count.brand = await brands.count({});
       count.products = await products.count({});
-      count.ctxCategory = await ctxCategory.count({});
+      count.ctxCategory = await trayCategory.count({});
       count.tray = await masters.count({ prefix: "tray-master" });
       count.bag = await masters.count({ prefix: "bag-master" });
       count.readyForTransferSales = await masters.count({
         prefix: "tray-master",
         sort_id: "Audit Done Closed By Warehouse",
-        type_taxanomy: { $nin: ["BOT", "PMT", "MMT", "WHT"] },
+        type_taxanomy: { $nin: ["BOT", "PMT", "MMT", "WHT","ST"] },
       });
       count.readyForRdl = await masters.count({
         sort_id: "Audit Done Closed By Warehouse",
@@ -94,16 +94,20 @@ module.exports = {
         sort_id: "Ready to BQC",
       });
       let countBqc = 0;
-      for (let x of readyForBqcTray) {
-        let today = new Date(Date.now());
-
-        if (
-          new Date(x.closed_time_bot) <=
-          new Date(today.setDate(today.getDate() - 4))
-        ) {
-          countBqc++;
-        }
+      if (readyForBqcTray.length == 0) {
         count.readyForChargingBqc = countBqc;
+      } else {
+        for (let x of readyForBqcTray) {
+          let today = new Date(Date.now());
+
+          if (
+            new Date(x.closed_time_bot) <=
+            new Date(today.setDate(today.getDate() - 4))
+          ) {
+            countBqc++;
+          }
+          count.readyForChargingBqc = countBqc;
+        }
       }
 
       count.removeInvalidItem = await masters.count({
@@ -889,7 +893,7 @@ module.exports = {
   },
   ctxCategoryLimit: (trayType, currentCount) => {
     return new Promise(async (resolve, reject) => {
-      let data = await ctxCategory.findOne({
+      let data = await trayCategory.findOne({
         code: trayType,
         series_end: { $gte: currentCount },
       });
@@ -914,27 +918,43 @@ module.exports = {
       let cpc = [];
       let trayLimit = [];
       let category = [];
+      let grade = [];
 
       for (let i = 0; i < trayData.length; i++) {
-        let trayID = trayData[i].tray_id.split(
-          `${trayData[i].tray_category}`
+        let trayID = trayData[i]?.tray_id?.split(
+          `${trayData[i]?.tray_category}`
         )[1];
+        if (
+          trayData[i]?.tray_category ==
+          "CT" ||
+          trayData[i]?.tray_category == "ST"
+        ) {
+          trayID = trayData[i]?.tray_id?.split(`${trayData[i]?.tray_grade}`)[1];
+        }
         if (
           trayData[i].tray_category !== "BOT" &&
           trayData[i].tray_category !== "PMT" &&
           trayData[i].tray_category !== "MMT" &&
           trayData[i].tray_category !== "WHT"
         ) {
-          let checkCategory = await ctxCategory.findOne({
-            code: trayData[i].tray_category,
-          });
-          if (checkCategory == null) {
+          if (
+            trayData[i].tray_category !== "CT" ||
+            trayData[i].tray_category == "ST"
+          ) {
             category.push(trayData[i].tray_category);
             err["category"] = category;
           } else {
-            if (trayID > checkCategory) {
-              tray_id.push(trayData[i].tray_id);
-              err["tray_id"] = tray_id;
+            let checkCategory = await trayCategory.findOne({
+              code: trayData[i].tray_grade,
+            });
+            if (checkCategory == null) {
+              grade.push(trayData[i].tray_grade);
+              err["grade"] = grade;
+            } else {
+              if (trayID > checkCategory.series_end) {
+                tray_id.push(trayData[i].tray_id);
+                err["tray_id"] = tray_id;
+              }
             }
           }
         }
@@ -976,7 +996,7 @@ module.exports = {
           tray_id.push(trayData[i].tray_id);
           err["tray_id"] = tray_id;
         } else {
-          let checkSereisEnd = await ctxCategory.findOne({
+          let checkSereisEnd = await trayCategory.findOne({
             code: trayData[i]?.tray_category,
           });
           if (checkSereisEnd) {
@@ -1721,7 +1741,7 @@ module.exports = {
       let data = await masters.find({
         prefix: "tray-master",
         sort_id: "Audit Done Closed By Warehouse",
-        type_taxanomy: { $nin: ["BOT", "PMT", "MMT", "WHT"] },
+        type_taxanomy: { $nin: ["BOT", "PMT", "MMT", "WHT","ST"] },
       });
       resolve(data);
     });
@@ -1960,17 +1980,15 @@ module.exports = {
   createctxcategory: (data) => {
     console.log(data);
     return new Promise(async (resolve, reject) => {
-      let checkcodeExists = await ctxCategory.findOne({
+      let checkcodeExists = await trayCategory.findOne({
         $or: [
           {
             code: data?.code,
           },
           {
-            category_type: data.category_type,
             float: data?.float,
           },
           {
-            category_type: data.category_type,
             sereis_start: { $gte: data.sereis_start },
             series_end: { $lte: data.series_end },
           },
@@ -1981,7 +1999,7 @@ module.exports = {
         resolve({ status: false });
       } else {
         data.created_at = Date.now();
-        let dataa = await ctxCategory.create(data);
+        let dataa = await trayCategory.create(data);
         if (dataa) {
           resolve({ status: true });
         }
@@ -1991,7 +2009,7 @@ module.exports = {
 
   getCtxCategorys: () => {
     return new Promise(async (resolve, reject) => {
-      let data = await ctxCategory.find();
+      let data = await trayCategory.find();
       if (data) {
         resolve(data);
       } else {
@@ -2002,11 +2020,11 @@ module.exports = {
 
   deleteCtxcategory: (code) => {
     return new Promise(async (resolve, reject) => {
-      let categorySelected = await masters.find({ type_taxanomy: code?.code });
+      let categorySelected = await masters.find({tray_grade : code?.code });
       if (categorySelected.length !== 0) {
         resolve({ status: false });
       } else {
-        let data = await ctxCategory.deleteOne({ Code: code?.code });
+        let data = await trayCategory.deleteOne({ Code: code?.code });
         if (data) {
           resolve(data);
         } else {
@@ -2018,7 +2036,7 @@ module.exports = {
 
   geteditctxcategory: (code) => {
     return new Promise(async (resolve, reject) => {
-      let data = await ctxCategory.findOne({ code: code });
+      let data = await trayCategory.findOne({ code: code });
       if (data) {
         resolve(data);
       } else {
@@ -2029,7 +2047,7 @@ module.exports = {
 
   editctxcategory: async (body) => {
     return new Promise(async (resolve, reject) => {
-      const Float = await ctxCategory.findOne({
+      const Float = await trayCategory.findOne({
         $or: [
           { float: body.float, _id: { $ne: body._id } },
           { code: body.code, _id: { $ne: body._id } },
@@ -2038,7 +2056,7 @@ module.exports = {
       if (Float) {
         resolve({ status: false });
       } else {
-        let data = await ctxCategory.findOneAndUpdate(
+        let data = await trayCategory.findOneAndUpdate(
           { _id: body?._id },
           {
             $set: {
@@ -2059,8 +2077,9 @@ module.exports = {
 
   getCtxTrayCategory: () => {
     return new Promise(async (resolve, reject) => {
-      let data = await ctxCategory.find();
+      let data = await trayCategory.find();
       if (data) {
+        trayCategory;
         resolve(data);
       } else {
         resolve();
@@ -2070,7 +2089,7 @@ module.exports = {
 
   categoryCheck: (body) => {
     return new Promise(async (resolve, reject) => {
-      let data = await masters.find({ type_taxanomy: body?.empId });
+      let data = await masters.find({ tray_grade: body?.empId });
       if (data?.length !== 0) {
         resolve({ status: true });
       } else {

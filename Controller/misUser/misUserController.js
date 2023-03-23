@@ -9,7 +9,7 @@ const { badOrders } = require("../../Model/ordersModel/bad-orders-model");
 const { badDelivery } = require("../../Model/deliveryModel/bad-delivery");
 const { tempOrders } = require("../../Model/WhtUtility/tempOrder");
 const { tempDelivery } = require("../../Model/WhtUtility/tempDelivery");
-const { ctxCategory } = require("../../Model/ctxCategoryModel/category");
+const { trayCategory } = require("../../Model/tray-category/tray-category");
 const moment = require("moment");
 const elasticsearch = require("../../Elastic-search/elastic");
 /******************************************************************* */
@@ -214,7 +214,7 @@ module.exports = {
       });
       count.ctxToStxSorting = await masters.count({
         prefix: "tray-master",
-        type_taxanomy: { $nin: ["BOT", "PMT", "MMT", "WHT"] },
+        type_taxanomy: { $nin: ["BOT", "PMT", "MMT", "WHT", "ST"] },
         sort_id: "Ready to Transfer to STX",
         cpc: location,
       });
@@ -222,19 +222,19 @@ module.exports = {
         prefix: "tray-master",
         cpc: location,
         sort_id: "Transferred to Sales",
-        type_taxanomy: { $nin: ["BOT", "PMT", "MMT", "WHT"] },
+        type_taxanomy: { $nin: ["BOT", "PMT", "MMT", "WHT", "ST"] },
       });
       count.ctxMerge = await masters.count({
         prefix: "tray-master",
         cpc: location,
         sort_id: "Audit Done Closed By Warehouse",
-        type_taxanomy: { $nin: ["BOT", "PMT", "MMT", "WHT"] },
+        type_taxanomy: { $nin: ["BOT", "PMT", "MMT", "WHT", "ST"] },
       });
       count.readyToTransfer = await masters.count({
         prefix: "tray-master",
         cpc: location,
         sort_id: "Ready to Transfer to Sales",
-        type_taxanomy: { $nin: ["BOT", "PMT", "MMT", "WHT"] },
+        type_taxanomy: { $nin: ["BOT", "PMT", "MMT", "WHT", "ST"] },
       });
       count.audit = await masters.count({
         prefix: "tray-master",
@@ -2518,23 +2518,27 @@ module.exports = {
     fromTray,
     itemCount,
     status,
-    type
+    type,
+    sortId
   ) => {
     return new Promise(async (resolve, reject) => {
       let arr = [];
       let whtTray;
       if (type == "WHT") {
-        whtTray = await masters
-          .find({
-            prefix: "tray-master",
-            type_taxanomy: "WHT",
-            brand: brand,
-            model: model,
-            cpc: location,
-            sort_id: "Audit Done Closed By Warehouse",
-            code: { $ne: fromTray },
-          })
-          .catch((err) => reject(err));
+        let getFromtState=await masters.findOne({code:fromTray})
+        if(getFromtState){
+          whtTray = await masters
+            .find({
+              prefix: "tray-master",
+              type_taxanomy: "WHT",
+              brand: brand,
+              model: model,
+              cpc: location,
+              sort_id: getFromtState.sort_id,
+              code: { $ne: fromTray },
+            })
+            .catch((err) => reject(err));
+        }
       } else {
         whtTray = await masters
           .find({
@@ -2543,7 +2547,7 @@ module.exports = {
             brand: brand,
             model: model,
             cpc: location,
-            sort_id: "Audit Done Closed By Warehouse",
+            sort_id: sortId,
             code: { $ne: fromTray },
           })
           .catch((err) => reject(err));
@@ -3278,10 +3282,15 @@ module.exports = {
       }
     });
   },
-  getSalesLocation: () => {
+  getSalesLocation: (cpcType) => {
     return new Promise(async (resolve, reject) => {
-      let locationGet = await infra.find({ location_type: "Sales" });
-      resolve(locationGet);
+      if (cpcType == "Sales") {
+        let locationGet = await infra.find({ location_type: "Processing" });
+        resolve(locationGet);
+      } else {
+        let locationGet = await infra.find({ location_type: "Sales" });
+        resolve(locationGet);
+      }
     });
   },
   ctxTrayTransferRequestSend: (trayData) => {
@@ -3311,42 +3320,37 @@ module.exports = {
     status,
     type
   ) => {
-    console.log(type);
     return new Promise(async (resolve, reject) => {
       let arr = [];
       let stxTray = [];
-      let getCtxFloat = await ctxCategory.findOne({ code: type });
-      if (getCtxFloat) {
-        let stxTrayCategory = await ctxCategory.findOne({
-          code: { $ne: type },
-          float: getCtxFloat.float,
-        });
-        if (stxTrayCategory) {
-          stxTray = await masters
-            .find({
-              $or: [
-                {
-                  prefix: "tray-master",
-                  type_taxanomy: stxTrayCategory.code,
-                  brand: brand,
-                  model: model,
-                  cpc: location,
-                  sort_id: "Open",
-                },
-                {
-                  prefix: "tray-master",
-                  type_taxanomy: stxTrayCategory.code,
-                  brand: brand,
-                  model: model,
-                  cpc: location,
-                  sort_id: "Inuse",
-                },
-              ],
-            })
-            .catch((err) => reject(err));
-        } else {
-          resolve({ status: 0 });
-        }
+      let getCtxGrade = await trayCategory.findOne({ code: type });
+      if (getCtxGrade) {
+        stxTray = await masters
+          .find({
+            $or: [
+              {
+                prefix: "tray-master",
+                type_taxanomy: "ST",
+                brand: brand,
+                model: model,
+                tray_grade: getCtxGrade.code,
+                cpc: location,
+                sort_id: "Open",
+              },
+              {
+                prefix: "tray-master",
+                type_taxanomy: "ST",
+                brand: brand,
+                model: model,
+                $expr: { $ne: [{ $size: "$items" }, { $toInt: "$limit" }] },
+                tray_grade: getCtxGrade.code,
+                cpc: location,
+                sort_id: "Inuse",
+              },
+            ],
+          })
+          .catch((err) => reject(err));
+
         if (stxTray.length !== 0) {
           for (let x of stxTray) {
             if (parseInt(x.limit) > parseInt(x.items.length)) {

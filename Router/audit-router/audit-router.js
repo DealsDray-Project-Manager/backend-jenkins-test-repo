@@ -162,7 +162,14 @@ router.post("/traySegrigation", async (req, res, next) => {
         status: 4,
         trayId: data.trayId,
       });
-    } else {
+    } else if (data.status == 7) {
+      res.status(202).json({
+        message: `Item Already Added`,
+        status: 4,
+      
+      });
+    } 
+     else {
       res.status(202).json({
         message: "Failed",
         status: 3,

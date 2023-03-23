@@ -992,7 +992,7 @@ router.post("/getAudit/:bagId", async (req, res, next) => {
 /*--------------------------------CREATE BAG-----------------------------------*/
 router.post("/createMasters", async (req, res, next) => {
   try {
-    const { type_taxanomy, cpc } = req.body;
+    const { type_taxanomy, cpc,tray_grade } = req.body;
     let data = await superAdminController.createMasters(req.body);
     if (data) {
       if (req.body.prefix == "bag-master") {
@@ -1038,8 +1038,9 @@ router.post("/createMasters", async (req, res, next) => {
                 obj.MMT = obj.MMT + 1;
               } else if (type_taxanomy == "WHT") {
                 obj.WHT = obj.WHT + 1;
-              } else {
-                obj[type_taxanomy] = obj[type_taxanomy] + 1;
+              }
+               else {
+                obj[tray_grade] = obj[tray_grade] + 1;
               }
               //  else if (type_taxanomy == "CTA") {
               //   obj.CTA = obj.CTA + 1;
@@ -1395,62 +1396,6 @@ router.post("/viewCategory", async (req, res, next) => {
     next(error);
   }
 });
-
-/****************************************************************************************************** */
-
-/*-----------------------------EXTRA ONE--------------------------------------*/
-router.post("/update-cpc", async (req, res, next) => {
-  try {
-    let data = await superAdminController.updateCPCExtra();
-    if (data) {
-      res.status(200).json({
-        message: "Successfully updated",
-      });
-    } else {
-      res.status(202).json({
-        message: "Failed",
-      });
-    }
-  } catch (error) {
-    next(error);
-  }
-});
-
-router.post("/update-wht-trayId", async (req, res, next) => {
-  try {
-    let data = await superAdminController.updateWhtTrayId();
-    if (data) {
-      res.status(200).json({
-        message: "Successfully updated",
-      });
-    } else {
-      res.status(202).json({
-        message: "Failed",
-      });
-    }
-  } catch (error) {
-    next(error);
-  }
-});
-
-/*---------------------------part of 2700 records------------------------------------------------*/
-router.post("/part-records-import", async (req, res, next) => {
-  try {
-    let data = await superAdminController.getUpdateRecord();
-    if (data) {
-      res.status(200).json({
-        message: "done",
-      });
-    } else {
-      res.status(202).json({
-        message: "Failed",
-      });
-    }
-  } catch (error) {
-    next(error);
-  }
-});
-
 router.post("/addcategory", async (req, res, next) => {
   try {
     const { code, sereis_start } = req.body;
@@ -1553,20 +1498,6 @@ router.get("/getCtxTrayCategory", async (req, res) => {
     next(error);
   }
 });
-
-router.post("/categoryCheck", async (req, res, next) => {
-  try {
-    let user = await superAdminController.categoryCheck(req.body);
-    if (user?.status == true) {
-      res.status(200).json({ Exist: true });
-    } else {
-      res.status(202).json({ Exist: false });
-    }
-  } catch (error) {
-    next(error);
-  }
-});
-
 router.post("/getCtxCategorys", async (req, res, next) => {
   try {
     let data = await superAdminController.getCtxCategorys();
@@ -1579,22 +1510,6 @@ router.post("/getCtxCategorys", async (req, res, next) => {
     next(error);
   }
 });
-
-router.post("/deleteCtxcategory", async (req, res, next) => {
-  try {
-    let data = await superAdminController.deleteCtxcategory(req.body);
-    if (data.acknowledged == true) {
-      res.status(200).json(data);
-    } else if (data.status == false) {
-      res.status(202).json({ error: "you can't delete this category " });
-    } else {
-      res.status(202).json({ error: "you can't delete this category " });
-    }
-  } catch (error) {
-    next(error);
-  }
-});
-
 router.post("/categoryCheck", async (req, res, next) => {
   try {
     let user = await superAdminController.categoryCheck(req.body);
@@ -1632,6 +1547,61 @@ router.post("/extra/reAuditTray", async (req, res, next) => {
     if (data) {
       res.status(200).json({
         message: "Successfully Done",
+      });
+    } else {
+      res.status(202).json({
+        message: "Failed",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
+/****************************************************************************************************** */
+
+/*-----------------------------EXTRA ONE--------------------------------------*/
+router.post("/update-cpc", async (req, res, next) => {
+  try {
+    let data = await superAdminController.updateCPCExtra();
+    if (data) {
+      res.status(200).json({
+        message: "Successfully updated",
+      });
+    } else {
+      res.status(202).json({
+        message: "Failed",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.post("/update-wht-trayId", async (req, res, next) => {
+  try {
+    let data = await superAdminController.updateWhtTrayId();
+    if (data) {
+      res.status(200).json({
+        message: "Successfully updated",
+      });
+    } else {
+      res.status(202).json({
+        message: "Failed",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
+/*---------------------------part of 2700 records------------------------------------------------*/
+router.post("/part-records-import", async (req, res, next) => {
+  try {
+    let data = await superAdminController.getUpdateRecord();
+    if (data) {
+      res.status(200).json({
+        message: "done",
       });
     } else {
       res.status(202).json({

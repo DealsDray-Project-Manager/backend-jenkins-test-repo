@@ -436,6 +436,7 @@ router.post("/trayCloseRequest/:location", async (req, res, next) => {
 
 router.post("/inuse-mmt-pmt/:location/:type", async (req, res, next) => {
   try {
+    console.log("working");
     const { location, type } = req.params;
     let data = await warehouseInController.getInuseMmtPmt(location, type);
     if (data) {
@@ -781,27 +782,34 @@ router.post("/wht-tray/:status/:location", async (req, res, next) => {
 });
 
 /*--------------------------FIND WHT TRAY ITEM--------------------------*/
-router.post("/getWhtTrayItem/:trayId/:sortId", async (req, res, next) => {
-  try {
-    const { trayId, sortId } = req.params;
-    let data = await warehouseInController.getWhtTrayitem(trayId, sortId);
-    if (data.status == 1) {
-      res.status(200).json({
-        data: data.data,
-      });
-    } else if (data.status == 2) {
-      res.status(202).json({
-        message: "Details not found",
-      });
-    } else if (data.status == 3) {
-      res.status(202).json({
-        message: `${trayId} - present at ${data.data.sort_id}`,
-      });
+router.post(
+  "/getWhtTrayItem/:trayId/:sortId/:location",
+  async (req, res, next) => {
+    try {
+      const { trayId, sortId, location } = req.params;
+      let data = await warehouseInController.getWhtTrayitem(
+        trayId,
+        sortId,
+        location
+      );
+      if (data.status == 1) {
+        res.status(200).json({
+          data: data.data,
+        });
+      } else if (data.status == 2) {
+        res.status(202).json({
+          message: "Details not found",
+        });
+      } else if (data.status == 3) {
+        res.status(202).json({
+          message: `${trayId} - present at ${data.data.sort_id}`,
+        });
+      }
+    } catch (error) {
+      next(error);
     }
-  } catch (error) {
-    next(error);
   }
-});
+);
 
 /*--------------------------SEND WHT TRAY TO MIS CHARGING APPROVE--------------------------*/
 
@@ -1962,6 +1970,7 @@ router.post("/oneTrayAssigToAudit", async (req, res, next) => {
 router.post("/ctxTray/:type/:location", async (req, res, next) => {
   try {
     const { type, location } = req.params;
+    console.log(req.params);
     const trayData = await warehouseInController.ctxTray(type, location);
     if (trayData.status == 1) {
       res.status(200).json({
@@ -2327,7 +2336,7 @@ router.post("/ctx/transferRequest/approve", async (req, res, next) => {
     const data = await warehouseInController.ctxTrayTransferApprove(req.body);
     if (data.status == 1) {
       res.status(200).json({
-        message: `Successfully Transfer to ${sales_location} -Sales `,
+        message: `Successfully Transfer to ${sales_location}`,
       });
     } else if (data.status == 3) {
       res.status(200).json({
@@ -2335,11 +2344,11 @@ router.post("/ctx/transferRequest/approve", async (req, res, next) => {
       });
     } else if (data.status == 4) {
       res.status(200).json({
-        message: `Successfully Closed and Ready to Pricing`,
+        message: `Successfully Closed`,
       });
     } else if (data.status == 5) {
       res.status(200).json({
-        message: `Successfully Closed and Not Ready to Pricing`,
+        message: `Successfully Closed `,
       });
     } else {
       res.status(202).json({
@@ -2351,15 +2360,64 @@ router.post("/ctx/transferRequest/approve", async (req, res, next) => {
   }
 });
 /*---------------------------------CTX TO STX-------------------------*/
-// return from sorting 
-router.post("/returnFromsorting/ctxToStx/tray/:location", async (req, res, next) => {
+// return from sorting
+router.post(
+  "/returnFromsorting/ctxToStx/tray/:location",
+  async (req, res, next) => {
+    try {
+      let data = await warehouseInController.sortingCtxToStxTray(
+        req.params.location
+      );
+      if (data) {
+        res.status(200).json({
+          data: data,
+        });
+      }
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+// SORTING DONE TRAY CLOSE
+router.post(
+  "/sorting/returnFromSortingCtxStx/close",
+  async (req, res, next) => {
+    try {
+      console.log(req.body);
+      let data = await warehouseInController.sortingDoneCtxStxClose(req.body);
+      console.log(data);
+      if (data.status == 1) {
+        res.status(200).json({
+          message: "Successfully Closed and Ready for Pricing",
+        });
+      } else if (data.status == 2) {
+        res.status(200).json({
+          message: "Successfully Closed and Ready to Transfer to Processing",
+        });
+      } else if (data.status == 3) {
+        res.status(200).json({
+          message: "Successfully Closed",
+        });
+      } else {
+        res.status(202).json({
+          message: "Failed....",
+        });
+      }
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+/*-------------------------------------------STX-TRAY-------------------------------------------*/
+// VIEW TRAY
+router.post("/stxTray/:type/:location", async (req, res, next) => {
   try {
-    let data = await warehouseInController.sortingCtxToStxTray(
-      req.params.location
-    );
-    if (data) {
+    const { type, location } = req.params;
+    const trayData = await warehouseInController.stxTray(type, location);
+    if (trayData.status == 1) {
       res.status(200).json({
-        data: data,
+        data: trayData.tray,
+        message: "Success",
       });
     }
   } catch (error) {
@@ -2367,4 +2425,4 @@ router.post("/returnFromsorting/ctxToStx/tray/:location", async (req, res, next)
   }
 });
 
-module.exports = router
+module.exports = router;
