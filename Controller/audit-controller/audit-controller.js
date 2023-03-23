@@ -153,22 +153,21 @@ module.exports = {
   },
   traySegrigation: (itemData) => {
     return new Promise(async (resolve, reject) => {
-      // let checkAlreadyAdded = await masters.findOne({
-      //   $or: [
-      //     {
-      //       type_taxanomy: "WHT",
-      //       prefix: "tray-master",
-      //       "actual_items.uic": itemData.uic,
-      //     },
-      //     {
-      //       type_taxanomy: "WHT",
-      //       prefix: "tray-master",
-      //       "temp_array.uic": itemData.uic,
-      //     },
-      //   ],
-      // });
-      // if(checkAlreadyAdded == null){
-
+      let checkAlreadyAdded = await masters.findOne({
+        $or: [
+          {
+            type_taxanomy: "WHT",
+            prefix: "tray-master",
+            "actual_items.uic": itemData.uic,
+          },
+          {
+            type_taxanomy: "WHT",
+            prefix: "tray-master",
+            "temp_array.uic": itemData.uic,
+          },
+        ],
+      });
+      if(checkAlreadyAdded == null){
         let obj = {
           grade: itemData.grade,
           stage: itemData.stage,
@@ -301,10 +300,10 @@ module.exports = {
         } else {
           resolve({ status: 4 });
         }
-      // }
-      // else{
-      //   resolve({status:7})
-      // }
+      }
+      else{
+        resolve({status:7})
+      }
     });
   },
   trayClose: (trayId) => {
