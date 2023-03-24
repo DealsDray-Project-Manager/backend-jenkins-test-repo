@@ -117,9 +117,9 @@ const mastersSchema = mongoose.Schema({
   recommend_location: {
     type: String,
   },
-  tray_grade:{
-    type:String
-  }
+  tray_grade: {
+    type: String,
+  },
 });
 const masters = mongoose.model("masters", mastersSchema);
 module.exports = {

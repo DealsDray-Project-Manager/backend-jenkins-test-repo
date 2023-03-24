@@ -2876,7 +2876,7 @@ module.exports = {
             }
             resolve({ status: 1 });
           }
-        } else {
+        } else if (tray.type_taxanomy == "WHT") {
           let data = await masters.findOneAndUpdate(
             { code: trayData.trayId },
             {
@@ -3843,7 +3843,10 @@ module.exports = {
         resolve({ status: 4 });
       } else if (checkId?.brand !== brand || checkId?.model !== model) {
         resolve({ status: 5 });
-      } else if (checkId.tray_grade == trayType) {
+      } else if (
+        checkId.tray_grade == trayType &&
+        checkId.type_taxanomy == "CT"
+      ) {
         if (checkId.sort_id == "Open") {
           resolve({ status: 1 });
         } else {
@@ -3964,17 +3967,19 @@ module.exports = {
       if (whtTray) {
         if (whtTray?.model == data.model && whtTray.brand == data.brand) {
           if (data) {
-            if (data.type_taxanomy == trayType) {
+            if (data.tray_grade == trayType) {
               if (data.sort_id === "Open") {
                 let checkUserStatus = await masters.findOne({
                   $or: [
                     {
-                      type_taxanomy: trayType,
+                      tray_grade: trayType,
+                      type_taxanomy: "CT",
                       issued_user_name: username,
                       sort_id: "Issued to Audit",
                     },
                     {
-                      type_taxanomy: trayType,
+                      tray_grade: trayType,
+                      type_taxanomy: "CT",
                       issued_user_name: username,
                       sort_id: "Audit Done",
                     },
@@ -4280,14 +4285,14 @@ module.exports = {
               prefix: "tray-master",
               cpc: location,
               sort_id: "Transferred to Sales",
-              to_merge: { $ne: null },
+
               type_taxanomy: { $nin: ["BOT", "PMT", "MMT", "WHT"] },
             },
             {
               prefix: "tray-master",
               cpc: location,
               sort_id: "Transferred to Processing",
-              to_merge: { $ne: null },
+
               type_taxanomy: { $nin: ["BOT", "PMT", "MMT", "WHT"] },
             },
           ],
