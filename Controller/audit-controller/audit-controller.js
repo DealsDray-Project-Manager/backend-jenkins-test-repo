@@ -126,6 +126,7 @@ module.exports = {
               bqc_software_report: 1,
               bot_report: 1,
               charging_done_date: 1,
+              audit_report:1,
             }
           );
           if (uicExists) {
@@ -135,6 +136,7 @@ module.exports = {
               });
               obj.delivery = uicExists;
               obj.order = getOrder;
+              obj.checkIntray=checkIntray
 
               resolve({ status: 1, data: obj });
             } else {
@@ -151,137 +153,166 @@ module.exports = {
   },
   traySegrigation: (itemData) => {
     return new Promise(async (resolve, reject) => {
-      let obj = {
-        grade: itemData.grade,
-        stage: itemData.stage,
-        reason: itemData.reason,
-        description: itemData.description,
-        orgGrade: itemData.orgGrade,
-        wht_tray:itemData.trayId
-      };
-      let findTray = await masters.findOne({
-        issued_user_name: itemData.username,
-        type_taxanomy: itemData.type,
-        sort_id: "Issued to Audit",
+      let checkAlreadyAdded = await masters.findOne({
+        $or: [
+          {
+            type_taxanomy: "WHT",
+            prefix: "tray-master",
+            "actual_items.uic": itemData.uic,
+          },
+          {
+            type_taxanomy: "WHT",
+            prefix: "tray-master",
+            "temp_array.uic": itemData.uic,
+          },
+        ],
       });
-      if (findTray) {
-        if (findTray.sort_id !== "Issued to Audit") {
-          resolve({ status: 6, trayId: findTray.code });
-        } else if (findTray.type_taxanomy == "WHT") {
-          let item = await masters.findOne(
+      if(checkAlreadyAdded == null){
+        let obj = {
+          grade: itemData.grade,
+          stage: itemData.stage,
+          reason: itemData.reason,
+          description: itemData.description,
+          orgGrade: itemData.orgGrade,
+          wht_tray:itemData.trayId
+        };
+        let findTray = await masters.findOne({
+          $or:[
             {
-              code: itemData.trayId,
-              "items.uic": itemData.uic,
-            },
-            {
-              _id: 0,
-              items: {
-                $elemMatch: { uic: itemData.uic },
-              },
-            }
-          );
-          const updateReport = await masters.updateOne(
-            {
-              code: itemData.trayId,
-              "items.uic": itemData.uic,
-            },
-            {
-              $set: {
-                "items.$.audit_report": obj,
-              },
-            }
-          );
-          if (item) {
-            item.items[0].audit_report = obj;
 
-            let updateOther = await masters.updateOne(
-              { code: findTray.code },
-              {
-                $push: {
-                  temp_array: item.items[0],
-                },
-              }
-            );
-            if (updateOther) {
-              let update = await delivery.findOneAndUpdate(
-                { "uic_code.code": itemData.uic },
-                {
-                  $set: {
-                    wht_tray: findTray.code,
-                    tray_location:"Audit",
-                    tray_type: itemData.type,
-                    audit_report: obj,
-                  },
-                },
-                { 
-                  new: true, 
-                  projection: { _id: 0 } 
-                }
-              );
-              let elasticSearchUpdate=await Elasticsearch.uicCodeGen(update)
-              resolve({ status: 1, trayId: findTray.code });
-            }
-          } else {
-            resolve({ status: 5 });
-          }
-        } else if (findTray?.items?.length === findTray?.limit) {
-          resolve({ status: 2, trayId: findTray.code });
-        } else {
-          let item = await masters.findOne(
-            {
-              code: itemData.trayId,
-              "items.uic": itemData.uic,
+              issued_user_name: itemData.username,
+              type_taxanomy: itemData.type,
+              sort_id: "Issued to Audit",
             },
             {
-              _id: 0,
-              items: {
-                $elemMatch: { uic: itemData.uic },
-              },
+              issued_user_name: itemData.username,
+              tray_grade: itemData.type,
+              sort_id: "Issued to Audit",
             }
-          );
-          if (item) {
-            item.items[0].audit_report = obj;
-            let updateWht = await masters.updateOne(
-              { code: itemData.trayId },
+          ]
+        });
+        if (findTray) {
+          if (findTray.sort_id !== "Issued to Audit") {
+            resolve({ status: 6, trayId: findTray.code });
+          } else if (findTray.type_taxanomy == "WHT") {
+            let item = await masters.findOne(
               {
-                $push: {
-                  actual_items: item.items[0],
+                code: itemData.trayId,
+                "items.uic": itemData.uic,
+              },
+              {
+                _id: 0,
+                items: {
+                  $elemMatch: { uic: itemData.uic },
                 },
               }
             );
-            let updateOther = await masters.updateOne(
-              { code: findTray.code },
+            const updateReport = await masters.updateOne(
               {
-                $push: {
-                  items: item.items[0],
+                code: itemData.trayId,
+                "items.uic": itemData.uic,
+              },
+              {
+                $set: {
+                  "items.$.audit_report": obj,
                 },
               }
             );
-            if (updateOther) {
-              let update = await delivery.findOneAndUpdate(
-                { "uic_code.code": itemData.uic },
+            if (item) {
+              item.items[0].audit_report = obj;
+  
+              let updateOther = await masters.updateOne(
+                { code: findTray.code },
                 {
-                  $set: {
-                    tray_id: findTray.code,
-                    tray_type: itemData.type,
-                    tray_location: "Audit",
-                    audit_report: obj,
+                  $push: {
+                    temp_array: item.items[0],
                   },
-                },
-                { 
-                  new: true, 
-                  projection: { _id: 0 } 
                 }
               );
-              let updateElasticSearch=await Elasticsearch.uicCodeGen(update)
-              resolve({ status: 1, trayId: findTray.code });
+              if (updateOther) {
+                let update = await delivery.findOneAndUpdate(
+                  { "uic_code.code": itemData.uic },
+                  {
+                    $set: {
+                      wht_tray: findTray.code,
+                      tray_location:"Audit",
+                      tray_type: itemData.type,
+                      audit_report: obj,
+                    },
+                  },
+                  { 
+                    new: true, 
+                    projection: { _id: 0 } 
+                  }
+                );
+                let elasticSearchUpdate=await Elasticsearch.uicCodeGen(update)
+                resolve({ status: 1, trayId: findTray.code });
+              }
+            } else {
+              resolve({ status: 5 });
             }
+          } else if (findTray?.items?.length === findTray?.limit) {
+            resolve({ status: 2, trayId: findTray.code });
           } else {
-            resolve({ status: 5 });
+            let item = await masters.findOne(
+              {
+                code: itemData.trayId,
+                "items.uic": itemData.uic,
+              },
+              {
+                _id: 0,
+                items: {
+                  $elemMatch: { uic: itemData.uic },
+                },
+              }
+            );
+            if (item) {
+              item.items[0].audit_report = obj;
+              let updateWht = await masters.updateOne(
+                { code: itemData.trayId },
+                {
+                  $push: {
+                    actual_items: item.items[0],
+                  },
+                }
+              );
+              let updateOther = await masters.updateOne(
+                { code: findTray.code },
+                {
+                  $push: {
+                    items: item.items[0],
+                  },
+                }
+              );
+              if (updateOther) {
+                let update = await delivery.findOneAndUpdate(
+                  { "uic_code.code": itemData.uic },
+                  {
+                    $set: {
+                      ctx_tray_id: findTray.code,
+                      tray_type: itemData.type,
+                      tray_location: "Audit",
+                      audit_report: obj,
+                    },
+                  },
+                  { 
+                    new: true, 
+                    projection: { _id: 0 } 
+                  }
+                );
+                let updateElasticSearch=await Elasticsearch.uicCodeGen(update)
+                resolve({ status: 1, trayId: findTray.code });
+              }
+            } else {
+              resolve({ status: 5 });
+            }
           }
+        } else {
+          resolve({ status: 4 });
         }
-      } else {
-        resolve({ status: 4 });
+      }
+      else{
+        resolve({status:7})
       }
     });
   },
