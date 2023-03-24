@@ -72,6 +72,7 @@ router.post("/transactionScreen/:trayId/:username", async (req, res, next) => {
   try {
     const { trayId, username } = req.params;
     let data = await auditController.getTransactionData(trayId, username);
+    console.log(data);
     if (data.status == 1) {
       res.status(200).json({
         data: data.tray,
@@ -162,7 +163,14 @@ router.post("/traySegrigation", async (req, res, next) => {
         status: 4,
         trayId: data.trayId,
       });
-    } else {
+    } else if (data.status == 7) {
+      res.status(202).json({
+        message: `Item Already Added`,
+        status: 4,
+      
+      });
+    } 
+     else {
       res.status(202).json({
         message: "Failed",
         status: 3,

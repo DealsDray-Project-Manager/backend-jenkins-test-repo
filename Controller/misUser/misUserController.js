@@ -9,6 +9,7 @@ const { badOrders } = require("../../Model/ordersModel/bad-orders-model");
 const { badDelivery } = require("../../Model/deliveryModel/bad-delivery");
 const { tempOrders } = require("../../Model/WhtUtility/tempOrder");
 const { tempDelivery } = require("../../Model/WhtUtility/tempDelivery");
+const { trayCategory } = require("../../Model/tray-category/tray-category");
 const moment = require("moment");
 const elasticsearch = require("../../Elastic-search/elastic");
 /******************************************************************* */
@@ -152,9 +153,14 @@ module.exports = {
         whtMerge: 0,
         mmtMerge: 0,
         trackItem: 0,
+        rdl_one: 0,
+        rdl_two: 0,
+        readyToTransfer: 0,
+        ctxMerge: 0,
+        receiveCtx: 0,
+        ctxToStxSorting: 0,
       };
       count.orders = await orders.count({ partner_shop: location });
-
       count.badOrders = await badOrders.count({ partner_shop: location });
       count.delivered = await orders.count({
         partner_shop: location,
@@ -206,6 +212,30 @@ module.exports = {
         sort_id: "Ready to BQC",
         cpc: location,
       });
+      count.ctxToStxSorting = await masters.count({
+        prefix: "tray-master",
+        type_taxanomy: { $nin: ["BOT", "PMT", "MMT", "WHT", "ST"] },
+        sort_id: "Ready to Transfer to STX",
+        cpc: location,
+      });
+      count.receiveCtx = await masters.count({
+        prefix: "tray-master",
+        cpc: location,
+        sort_id: "Transferred to Sales",
+        type_taxanomy: { $nin: ["BOT", "PMT", "MMT", "WHT", "ST"] },
+      });
+      count.ctxMerge = await masters.count({
+        prefix: "tray-master",
+        cpc: location,
+        sort_id: "Audit Done Closed By Warehouse",
+        type_taxanomy: { $nin: ["BOT", "PMT", "MMT", "WHT", "ST"] },
+      });
+      count.readyToTransfer = await masters.count({
+        prefix: "tray-master",
+        cpc: location,
+        sort_id: "Ready to Transfer to Sales",
+        type_taxanomy: { $nin: ["BOT", "PMT", "MMT", "WHT", "ST"] },
+      });
       count.audit = await masters.count({
         prefix: "tray-master",
         type_taxanomy: "WHT",
@@ -216,6 +246,12 @@ module.exports = {
         prefix: "tray-master",
         type_taxanomy: "WHT",
         sort_id: "Ready to RDL",
+        cpc: location,
+      });
+      count.rdl_two = await masters.count({
+        prefix: "tray-master",
+        type_taxanomy: "WHT",
+        sort_id: "Ready to RDL-Repair",
         cpc: location,
       });
       count.botToWht = await masters.count({
@@ -670,6 +706,7 @@ module.exports = {
     });
   },
   getDeliveredOrders: (location, limit, skip) => {
+    console.log(skip);
     return new Promise(async (resolve, reject) => {
       let data = await orders.aggregate([
         {
@@ -2480,33 +2517,37 @@ module.exports = {
     model,
     fromTray,
     itemCount,
-    status
+    status,
+    type,
+    sortId
   ) => {
     return new Promise(async (resolve, reject) => {
       let arr = [];
       let whtTray;
-      if (status == "Audit Done Closed By Warehouse") {
-        whtTray = await masters
-          .find({
-            prefix: "tray-master",
-            type_taxanomy: "WHT",
-            brand: brand,
-            model: model,
-            cpc: location,
-            sort_id: "Audit Done Closed By Warehouse",
-            code: { $ne: fromTray },
-          })
-          .catch((err) => reject(err));
+      if (type == "WHT") {
+        let getFromtState=await masters.findOne({code:fromTray})
+        if(getFromtState){
+          whtTray = await masters
+            .find({
+              prefix: "tray-master",
+              type_taxanomy: "WHT",
+              brand: brand,
+              model: model,
+              cpc: location,
+              sort_id: getFromtState.sort_id,
+              code: { $ne: fromTray },
+            })
+            .catch((err) => reject(err));
+        }
       } else {
         whtTray = await masters
           .find({
             prefix: "tray-master",
-            type_taxanomy: "WHT",
+            type_taxanomy: type,
             brand: brand,
             model: model,
             cpc: location,
-            items: { $ne: [] },
-            sort_id: "Inuse",
+            sort_id: sortId,
             code: { $ne: fromTray },
           })
           .catch((err) => reject(err));
@@ -2690,7 +2731,7 @@ module.exports = {
 
       if (whtTray.length !== 0) {
         for (let x of whtTray) {
-          let count = x.items.length + itemsCount;
+          let count = x.limit - x.items.length;
           if (count >= itemsCount) {
             arr.push(x);
           }
@@ -2708,7 +2749,10 @@ module.exports = {
   mmtMergeRequestSendToWh: (sortingAgent, fromTray, toTray) => {
     return new Promise(async (resolve, reject) => {
       let whtTray = await masters.findOne({ code: fromTray });
-      if (whtTray.sort_id === "Audit Done Closed By Warehouse") {
+      if (
+        whtTray.sort_id === "Audit Done Closed By Warehouse" &&
+        whtTray.type_taxanomy == "WHT"
+      ) {
         let updateFromTray = await masters.updateOne(
           { code: fromTray },
           {
@@ -2810,7 +2854,6 @@ module.exports = {
       }
     });
   },
-
   imeiSearchOrder: (value) => {
     return new Promise(async (resolve, reject) => {
       firstChar = value.charAt(0);
@@ -2878,7 +2921,6 @@ module.exports = {
         ]);
 
         if (orderItems.length == 0) {
-          // let orderItems = await orders.find({ imei: `'${value}` })
           orderItems = await orders.aggregate([
             {
               $match: {
@@ -2909,27 +2951,27 @@ module.exports = {
     });
   },
   /*-----------------------PICKUP MODEULE-------------------------------*/
-  pickupPageItemView: (type, skip, limit) => {
+  pickupPageItemView: (type, location) => {
     return new Promise(async (resolve, reject) => {
       let items = [];
 
       if (type == "Charge Done") {
         items = await masters.aggregate([
-          { $match: { sort_id: "Ready to BQC" } },
+          { $match: { sort_id: "Ready to BQC", cpc: location } },
           {
             $unwind: "$items",
           },
         ]);
       } else if (type == "BQC Done") {
         items = await masters.aggregate([
-          { $match: { sort_id: "Ready to Audit" } },
+          { $match: { sort_id: "Ready to Audit", cpc: location } },
           {
             $unwind: "$items",
           },
         ]);
       } else if (type == "Audit Done") {
         items = await masters.aggregate([
-          { $match: { sort_id: "Ready to RDL" } },
+          { $match: { sort_id: "Ready to RDL", cpc: location } },
           {
             $unwind: "$items",
           },
@@ -2939,27 +2981,48 @@ module.exports = {
     });
   },
   /*---------------------PICKUP SORT-------------------------------*/
-  pickUpSortBrandModel: (brand, model, type, limit, skip) => {
+  pickUpSortBrandModel: (brand, model, type, location) => {
     return new Promise(async (resolve, reject) => {
       let items, count;
 
       if (type == "Charge Done") {
         items = await masters.aggregate([
-          { $match: { sort_id: "Ready to BQC", brand: brand, model: model } },
+          {
+            $match: {
+              sort_id: "Ready to BQC",
+              brand: brand,
+              model: model,
+              cpc: location,
+            },
+          },
           {
             $unwind: "$items",
           },
         ]);
       } else if (type == "BQC Done") {
         items = await masters.aggregate([
-          { $match: { sort_id: "Ready to Audit", brand: brand, model: model } },
+          {
+            $match: {
+              sort_id: "Ready to Audit",
+              brand: brand,
+              model: model,
+              cpc: location,
+            },
+          },
           {
             $unwind: "$items",
           },
         ]);
       } else if (type == "Audit Done") {
         items = await masters.aggregate([
-          { $match: { sort_id: "Ready to RDL", brand: brand, model: model } },
+          {
+            $match: {
+              sort_id: "Ready to RDL",
+              brand: brand,
+              model: model,
+              cpc: location,
+            },
+          },
           {
             $unwind: "$items",
           },
@@ -3162,6 +3225,191 @@ module.exports = {
       }
     });
   },
+  getAuditDone: () => {
+    return new Promise(async (resolve, reject) => {
+      let data = await masters.find({
+        sort_id: "Ready to RDL",
+        type_taxanomy: "WHT",
+      });
+      if (data) {
+        resolve(data);
+      }
+    });
+  },
+  assignToAgentRequestToWhRdlFls: (tray, user_name) => {
+    return new Promise(async (resolve, reject) => {
+      let sendtoRdlMis;
+      for (let x of tray) {
+        sendtoRdlMis = await masters.findOneAndUpdate(
+          { code: x },
+          {
+            $set: {
+              sort_id: "Send for RDL-FLS",
+              actual_items: [],
+              issued_user_name: user_name,
+              from_merge: null,
+              to_merge: null,
+              requested_date: Date.now(),
+            },
+          }
+        );
+      }
+      if (sendtoRdlMis) {
+        resolve({ status: true });
+      } else {
+        resolve({ status: false });
+      }
+    });
+  },
+  getRdlFlsUser: (userType, location) => {
+    return new Promise(async (resolve, reject) => {
+      let data = await user
+        .find({ user_type: userType, status: "Active", cpc: location })
+        .sort({ user_name: 1 });
+      if (data) {
+        resolve(data);
+      }
+    });
+  },
+  getRdlDonetray: () => {
+    return new Promise(async (resolve, reject) => {
+      let data = await masters.find({
+        sort_id: "Ready to RDL-Repair",
+        type_taxanomy: "WHT",
+      });
+      if (data) {
+        resolve(data);
+      }
+    });
+  },
+  getSalesLocation: (cpcType) => {
+    return new Promise(async (resolve, reject) => {
+      if (cpcType == "Sales") {
+        let locationGet = await infra.find({ location_type: "Processing" });
+        resolve(locationGet);
+      } else {
+        let locationGet = await infra.find({ location_type: "Sales" });
+        resolve(locationGet);
+      }
+    });
+  },
+  ctxTrayTransferRequestSend: (trayData) => {
+    return new Promise(async (resolve, reject) => {
+      for (let x of trayData.tray) {
+        const sentToWarehouse = await masters.updateOne(
+          { code: x },
+          {
+            $set: {
+              sort_id: trayData.sort_id,
+              requested_date: Date.now(),
+              recommend_location: trayData.sales,
+            },
+          }
+        );
+      }
+      resolve({ status: 1 });
+    });
+  },
+  /*----------------------------SORTING CTX TO STX -------------------------------------*/
+  sortingCtxToStxStxTrayGet: (
+    location,
+    brand,
+    model,
+    fromTray,
+    itemCount,
+    status,
+    type
+  ) => {
+    return new Promise(async (resolve, reject) => {
+      let arr = [];
+      let stxTray = [];
+      let getCtxGrade = await trayCategory.findOne({ code: type });
+      if (getCtxGrade) {
+        stxTray = await masters
+          .find({
+            $or: [
+              {
+                prefix: "tray-master",
+                type_taxanomy: "ST",
+                brand: brand,
+                model: model,
+                tray_grade: getCtxGrade.code,
+                cpc: location,
+                sort_id: "Open",
+              },
+              {
+                prefix: "tray-master",
+                type_taxanomy: "ST",
+                brand: brand,
+                model: model,
+                $expr: { $ne: [{ $size: "$items" }, { $toInt: "$limit" }] },
+                tray_grade: getCtxGrade.code,
+                cpc: location,
+                sort_id: "Inuse",
+              },
+            ],
+          })
+          .catch((err) => reject(err));
+
+        if (stxTray.length !== 0) {
+          for (let x of stxTray) {
+            if (parseInt(x.limit) > parseInt(x.items.length)) {
+              arr.push(x);
+            }
+          }
+          if (arr.length !== 0) {
+            resolve({ status: 1, tray: arr });
+          } else {
+            resolve({ status: 0 });
+          }
+        } else {
+          resolve({ status: 0 });
+        }
+      } else {
+        resolve({ status: 3 });
+      }
+    });
+  },
+  sortingCtxtoStxRequestSendToWh: (sortingAgent, fromTray, toTray) => {
+    return new Promise(async (resolve, reject) => {
+      const updateFromTray = await masters.updateOne(
+        { code: fromTray },
+        {
+          $set: {
+            sort_id: "Ctx to Stx Send for Sorting",
+            requested_date: Date.now(),
+            issued_user_name: sortingAgent,
+            to_merge: toTray,
+            from_merge: null,
+            actual_items: [],
+          },
+        }
+      );
+      if (updateFromTray.modifiedCount !== 0) {
+        const updateToTray = await masters.updateOne(
+          { code: toTray },
+          {
+            $set: {
+              sort_id: "Ctx to Stx Send for Sorting",
+              requested_date: Date.now(),
+              issued_user_name: sortingAgent,
+              from_merge: fromTray,
+              to_merge: null,
+              actual_items: [],
+            },
+          }
+        );
+        if (updateToTray.modifiedCount !== 0) {
+          resolve({ status: 1 });
+        } else {
+          resolve({ status: 0 });
+        }
+      } else {
+        resolve({ status: 0 });
+      }
+    });
+  },
+  /*--------------------------------WHT UTILITY-----------------------------------------*/
   whtutilitySearch: (oldUc) => {
     return new Promise(async (resolve, reject) => {
       let tempDeliveryData = await tempDelivery.aggregate([
@@ -3237,14 +3485,14 @@ module.exports = {
       let tray = await masters.find({
         $or: [
           {
-            $expr: { $ne: [ { $size: "$items" }, { $toInt: "$limit" } ] },
+            $expr: { $ne: [{ $size: "$items" }, { $toInt: "$limit" }] },
             cpc: location,
             prefix: "tray-master",
             sort_id: "Open",
             type_taxanomy: "BOT",
           },
           {
-            $expr: { $ne: [ { $size: "$items" }, { $toInt: "$limit" } ] },
+            $expr: { $ne: [{ $size: "$items" }, { $toInt: "$limit" }] },
             cpc: location,
             prefix: "tray-master",
             sort_id: "Wht-utility-work",
@@ -3264,7 +3512,7 @@ module.exports = {
   whtUtilityGetBotTrayInuse: () => {
     return new Promise(async (resolve, reject) => {
       let data = await masters.find({
-        $or:[
+        $or: [
           {
             prefix: "tray-master",
             sort_id: "Wht-utility-work",
@@ -3272,17 +3520,15 @@ module.exports = {
           },
           {
             prefix: "tray-master",
-            sort_id:"Wht-utility Resticker Done",
+            sort_id: "Wht-utility Resticker Done",
             type_taxanomy: "BOT",
-          }
-        ]
-       
+          },
+        ],
       });
       resolve(data);
     });
   },
   whtUtilityImportOrder: (orderData) => {
-    console.log(orderData);
     return new Promise(async (resolve, reject) => {
       let arr = [];
       let locationCheck = await infra.findOne({ code: orderData.partner_shop });
@@ -3310,7 +3556,7 @@ module.exports = {
       }
     });
   },
-  whtUtilityBotTrayGetOne: (trayId,status) => {
+  whtUtilityBotTrayGetOne: (trayId, status) => {
     return new Promise(async (resolve, reject) => {
       let data = await masters.findOne({ code: trayId });
       if (data) {
@@ -3371,21 +3617,23 @@ module.exports = {
       }
     });
   },
-  whtUtilityRestickerSave:(trayId)=>{
-      return new Promise(async(resolve,reject)=>{
-        let data=await masters.updateOne({code:trayId},{
-          $set:{
-            sort_id:"Wht-utility Resticker Done",
-            actual_items:[]
-          }
-        })
-        if(data.modifiedCount !== 0){
-          resolve({status:1})
+  whtUtilityRestickerSave: (trayId) => {
+    return new Promise(async (resolve, reject) => {
+      let data = await masters.updateOne(
+        { code: trayId },
+        {
+          $set: {
+            sort_id: "Wht-utility Resticker Done",
+            actual_items: [],
+          },
         }
-        else{
-          resolve({status:0})
-        }
-      })
+      );
+      if (data.modifiedCount !== 0) {
+        resolve({ status: 1 });
+      } else {
+        resolve({ status: 0 });
+      }
+    });
   },
   whtutilityAddDelivery: (deliveryData) => {
     return new Promise(async (resolve, reject) => {
@@ -3466,25 +3714,50 @@ module.exports = {
   whtUtilityImportFile: (xlsxData) => {
     return new Promise(async (resolve, reject) => {
       let count = "";
-    
-      
-    
+
       for (let x of arr) {
         count++;
         let uicNum = "";
 
+        // if (count.toString().length == 1) {
+        //   uicNum = "9101000000" + count;
+        // } else if (count.toString().length == 2) {
+        //   uicNum = "910100000" + count;
+        // } else if (count.toString().length == 3) {
+        //   uicNum = "91010000" + count;
+        // } else if (count.toString().length == 4) {
+        //   uicNum = "9101000" + count;
+        // } else if (count.toString().length == 5) {
+        //   uicNum = "910100" + count;
+        // } else if (count.toString().length == 6) {
+        //   uicNum = "91010" + count;
+        // }
+
+        // if (count.toString().length == 1) {
+        //   uicNum = "9203000000" + count;
+        // } else if (count.toString().length == 2) {
+        //   uicNum = "920300000" + count;
+        // } else if (count.toString().length == 3) {
+        //   uicNum = "92030000" + count;
+        // } else if (count.toString().length == 4) {
+        //   uicNum = "9203000" + count;
+        // } else if (count.toString().length == 5) {
+        //   uicNum = "920300" + count;
+        // } else if (count.toString().length == 6) {
+        //   uicNum = "92030" + count;
+        // }
         if (count.toString().length == 1) {
-          uicNum = "9203000000" + count;
+          uicNum = "9001000000" + count;
         } else if (count.toString().length == 2) {
-          uicNum = "920300000" + count;
+          uicNum = "900100000" + count;
         } else if (count.toString().length == 3) {
-          uicNum = "92030000" + count;
+          uicNum = "90010000" + count;
         } else if (count.toString().length == 4) {
-          uicNum = "9203000" + count;
+          uicNum = "9001000" + count;
         } else if (count.toString().length == 5) {
-          uicNum = "920300" + count;
+          uicNum = "900100" + count;
         } else if (count.toString().length == 6) {
-          uicNum = "92030" + count;
+          uicNum = "90010" + count;
         }
         const string = x.Model_Name;
         const firstSpaceIndex = x.Model_Name.indexOf(" ");
@@ -3493,7 +3766,7 @@ module.exports = {
 
         let orderObj = {
           order_id: x.Order_ID.toString(),
-          order_date: new Date("01/01/2022"),
+          order_date: new Date("01/01/2021"),
           partner_shop: "Gurgaon_122016",
           item_id: x.Item_ID,
           old_item_details: `${firstWord}:${remainingWords}`,
@@ -3506,7 +3779,7 @@ module.exports = {
         };
         let objDelivery = {
           order_id: x.Order_ID.toString(),
-          order_date: new Date("01/01/2022"),
+          order_date: new Date("01/01/2021"),
           partner_shop: "Gurgaon_122016",
           item_id: x.Item_ID,
 

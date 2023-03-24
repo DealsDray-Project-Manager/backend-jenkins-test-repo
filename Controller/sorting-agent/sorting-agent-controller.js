@@ -359,6 +359,26 @@ module.exports = {
             let updateElasticSearch = await Elasticsearch.uicCodeGen(
               updateDelivery
             );
+          } else if (
+            mmtTrayData.trayType !== "MMT" &&
+            mmtTrayData.trayType !== "WHT"
+          ) {
+            let updateDelivery = await delivery.findOneAndUpdate(
+              { tracking_id: mmtTrayData.item.tracking_id },
+              {
+                $set: {
+                  tray_location: "Sales-Sorting",
+                  stx_tray_id: mmtTrayData.toTray,
+                },
+              },
+              {
+                new: true,
+                projection: { _id: 0 },
+              }
+            );
+            let updateElasticSearch = await Elasticsearch.uicCodeGen(
+              updateDelivery
+            );
           } else {
             let updateDelivery = await delivery.findOneAndUpdate(
               { tracking_id: mmtTrayData.item.awbn_number },
@@ -373,6 +393,7 @@ module.exports = {
                 projection: { _id: 0 },
               }
             );
+
             let updateElasticSearch = await Elasticsearch.uicCodeGen(
               updateDelivery
             );
@@ -421,7 +442,39 @@ module.exports = {
         } else {
           resolve({ status: 0 });
         }
-      } else {
+      }
+      else if(finedTray.sort_id == "Issued to Sorting for Ctx to Stx"){
+        let fromtray = await masters.updateOne(
+          { code: trayData.fromTray },
+          {
+            $set: {
+              sort_id: "Ctx to Stx Sorting Done",
+              closed_time_sorting_agent: Date.now(),
+              actual_items: [],
+            },
+          }
+        );
+        if (fromtray.modifiedCount !== 0) {
+          let updateToTray = await masters.updateOne(
+            { code: trayData.toTray },
+            {
+              $set: {
+                sort_id: "Ctx to Stx Sorting Done",
+                closed_time_sorting_agent: Date.now(),
+                actual_items: [],
+              },
+            }
+          );
+          if (updateToTray.modifiedCount !== 0) {
+            resolve({ status: 1 });
+          } else {
+            resolve({ status: 0 });
+          }
+        } else {
+          resolve({ status: 0 });
+        }
+      }
+       else {
         let fromtray = await masters.updateOne(
           { code: trayData.fromTray },
           {
@@ -665,6 +718,18 @@ module.exports = {
       } else {
         resolve({ status: 0 });
       }
+    });
+  },
+  /*------------------------------CTX TO STX SORTING 0---------------------------------*/
+  sortingGetAssignedCtxTray: (user_name) => {
+    console.log(user_name);
+    return new Promise(async (resolve, reject) => {
+      let data = await masters.find({
+        issued_user_name: user_name,
+        sort_id: "Issued to Sorting for Ctx to Stx",
+        to_merge: { $ne: null },
+      });
+      resolve(data);
     });
   },
 };

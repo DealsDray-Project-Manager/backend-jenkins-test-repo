@@ -4,7 +4,7 @@ const router = express.Router();
 // user controller
 const misUserController = require("../../Controller/misUser/misUserController");
 // Multer
-const upload = require("../../Utils/multer");
+const Elasticsearch = require("../../Elastic-search/elastic");
 /*******************************************************************************************************************/
 /********************************************ORDERS*****************************************************************/
 /* Bulk Orders Validation */
@@ -131,12 +131,7 @@ router.post("/getOrdersCount/:location", async (req, res, next) => {
 router.post("/getOrders/:location/:page/:size", async (req, res, next) => {
   try {
     let { location, page, size } = req.params;
-    if (!page) {
-      page = 1;
-    }
-    if (!size) {
-      size = 10;
-    }
+
     page++;
     const limit = parseInt(size);
     const skip = (page - 1) * size;
@@ -174,15 +169,12 @@ router.post(
   async (req, res, next) => {
     try {
       let { location, page, size } = req.params;
-      if (!page) {
-        page = 1;
-      }
-      if (!size) {
-        size = 10;
-      }
+
       page++;
+
       const limit = parseInt(size);
       const skip = (page - 1) * size;
+
       let data = await misUserController.getDeliveredOrders(
         location,
         limit,
@@ -316,12 +308,7 @@ router.post("/getDeliveryCount/:location", async (req, res, next) => {
 router.post("/getAllDelivery/:location/:page/:size", async (req, res, next) => {
   try {
     let { location, page, size } = req.params;
-    if (!page) {
-      page = 1;
-    }
-    if (!size) {
-      size = 10;
-    }
+
     page++;
     const limit = parseInt(size);
     const skip = (page - 1) * size;
@@ -371,12 +358,17 @@ router.post("/searchDelivery", async (req, res, next) => {
 /* SEARCH TRACK ITEM DATA */
 router.post("/search-mis-track-item", async (req, res, next) => {
   try {
-    const { type, searchData, location } = req.body;
-    let data = await misUserController.searchMisTrackItem(
-      type,
+    let { searchData, location, rowsPerPage, page } = req.body;
+    page++;
+    const limit = parseInt(rowsPerPage);
+    const skip = (page - 1) * rowsPerPage;
+    let data = await Elasticsearch.superMisItemSearchData(
       searchData,
+      limit,
+      skip,
       location
     );
+    console.log(data);
     if (data.length !== 0) {
       res.status(200).json({
         data: data,
@@ -431,12 +423,7 @@ router.get("/dashboard", async (req, res, next) => {
 router.post("/uicPageData/:location/:page/:size", async (req, res, next) => {
   try {
     let { location, page, size } = req.params;
-    if (!page) {
-      page = 1;
-    }
-    if (!size) {
-      size = 10;
-    }
+
     page++;
     const limit = parseInt(size);
     const skip = (page - 1) * size;
@@ -826,14 +813,25 @@ router.post("/ready-for-charging-wht", async (req, res, next) => {
 /* SORT TRAY BASED ON THE BRAND AND MODEL */
 router.post("/toWhtTrayForMerge", async (req, res, next) => {
   try {
-    const { location, brand, model, fromTray, itemCount, status } = req.body;
+    const {
+      location,
+      brand,
+      model,
+      fromTray,
+      itemCount,
+      status,
+      type,
+      sortId,
+    } = req.body;
     let data = await misUserController.toWhtTrayForMerging(
       location,
       brand,
       model,
       fromTray,
       itemCount,
-      status
+      status,
+      type,
+      sortId
     );
     if (data.status === 1) {
       res.status(200).json({
@@ -841,7 +839,7 @@ router.post("/toWhtTrayForMerge", async (req, res, next) => {
       });
     } else if (data.status === 0) {
       res.status(202).json({
-        message: "Currently no wht tray in this brand and model",
+        message: `Currently no ${type} tray in this brand and model`,
       });
     }
   } catch (error) {
@@ -1082,11 +1080,11 @@ router.post("/TrayMergeRequestSend", async (req, res, next) => {
 // });
 /*------------------------------------PICKUP MODULE-----------------------------------------------*/
 //GET ITEM BASED ON THE TABS
-router.post("/pickup/items/:type", async (req, res, next) => {
+router.post("/pickup/items/:type/:location", async (req, res, next) => {
   try {
-    let { type, page, size } = req.params;
+    let { type, page, location } = req.params;
 
-    const data = await misUserController.pickupPageItemView(type);
+    const data = await misUserController.pickupPageItemView(type, location);
 
     if (data.items.length !== 0) {
       res.status(200).json({
@@ -1104,26 +1102,34 @@ router.post("/pickup/items/:type", async (req, res, next) => {
   }
 });
 // SORT ITEM BASED ON THE BRAND AND MODEL
-router.post("/pickup/sortItem/:brand/:model/:type", async (req, res, next) => {
-  try {
-    let { brand, model, type, page, size } = req.params;
-    let data = await misUserController.pickUpSortBrandModel(brand, model, type);
+router.post(
+  "/pickup/sortItem/:brand/:model/:type/:location",
+  async (req, res, next) => {
+    try {
+      let { brand, model, type, location } = req.params;
+      let data = await misUserController.pickUpSortBrandModel(
+        brand,
+        model,
+        type,
+        location
+      );
 
-    if (data.items.length !== 0) {
-      res.status(200).json({
-        data: data.items,
-      });
-    } else {
-      res.status(202).json({
-        data: data.items,
+      if (data.items.length !== 0) {
+        res.status(200).json({
+          data: data.items,
+        });
+      } else {
+        res.status(202).json({
+          data: data.items,
 
-        message: "No records found",
-      });
+          message: "No records found",
+        });
+      }
+    } catch (error) {
+      next(error);
     }
-  } catch (error) {
-    next(error);
   }
-});
+);
 // UIC SEARCH
 router.post("/pickup/uicSearch/:uic/:type", async (req, res, next) => {
   try {
@@ -1200,12 +1206,13 @@ router.post("/whtUtility/importFile", async (req, res, next) => {
     next(error);
   }
 });
+
 //GET DATA for wht utility
 router.post("/whtutility/search/:oldUic", async (req, res, next) => {
   try {
     const { oldUic } = req.params;
     let data = await misUserController.whtutilitySearch(oldUic);
-  
+
     if (data.status == 1) {
       res.status(200).json({
         tempOrder: data.tempOrderData,
@@ -1248,7 +1255,7 @@ router.post("/whtUtility/bagAndBotTray/:location", async (req, res, next) => {
   try {
     const { location } = req.params;
     let data = await misUserController.whtUtilityBagAndBot(location);
-    console.log(data);
+
     if (data) {
       res.status(200).json({
         tray: data.tray,
@@ -1294,33 +1301,39 @@ router.post("/whtUtility/addDelivery", async (req, res, next) => {
   }
 });
 //BOT TRAY CLOSE PAGE
-router.post("/whtUtility/botTray/closePage/:trayId/:status", async (req, res, next) => {
-  try {
-    const { trayId ,status} = req.params;
-    let data = await misUserController.whtUtilityBotTrayGetOne(trayId,status);
-    if (data.status == 1) {
-      res.status(200).json({
-        data: data.tray,
-      });
-    } else if (data.status == 2) {
-      res.status(202).json({
-        message: "Tray is not exists",
-      });
-    } else if (data.status == 3) {
-      res.status(202).json({
-        message: "You can't access this data",
-      });
+router.post(
+  "/whtUtility/botTray/closePage/:trayId/:status",
+  async (req, res, next) => {
+    try {
+      const { trayId, status } = req.params;
+      let data = await misUserController.whtUtilityBotTrayGetOne(
+        trayId,
+        status
+      );
+      if (data.status == 1) {
+        res.status(200).json({
+          data: data.tray,
+        });
+      } else if (data.status == 2) {
+        res.status(202).json({
+          message: "Tray is not exists",
+        });
+      } else if (data.status == 3) {
+        res.status(202).json({
+          message: "You can't access this data",
+        });
+      }
+    } catch (error) {
+      next(error);
     }
-  } catch (error) {
-    next(error);
   }
-});
+);
 //OLD UIC SCAN FOR BOT TRAY CLOSE
 router.post("/whtUtility/botTray/oldUic", async (req, res, next) => {
   try {
     const { trayId, uic } = req.body;
     let data = await misUserController.checkUicFroWhtUtility(trayId, uic);
-    console.log(data);
+
     if (data.status == 1) {
       res.status(202).json({
         message: "UIC Does Not Exists",
@@ -1354,22 +1367,179 @@ router.post("/whtUtility/botTray/oldUic", async (req, res, next) => {
   }
 });
 // WHT UTILITY OLD UIC TO NEW UIC SAVE
-router.post("/whtUtility/resticker/save/:trayId",async(req,res,next)=>{
+router.post("/whtUtility/resticker/save/:trayId", async (req, res, next) => {
   try {
-    const {trayId}=req.params
-    let data=await misUserController.whtUtilityRestickerSave(trayId)
-    if(data.status == 1){
+    const { trayId } = req.params;
+    let data = await misUserController.whtUtilityRestickerSave(trayId);
+    if (data.status == 1) {
       res.status(200).json({
-        message:"Data Saved"
-      })
-    }
-    else{
+        message: "Data Saved",
+      });
+    } else {
       res.status(202).json({
-        message:"Failed Please tray again..."
-      })
+        message: "Failed Please tray again...",
+      });
     }
   } catch (error) {
-    next(error)
+    next(error);
   }
-}) 
+});
+router.post("/auditDoneWht", async (req, res, next) => {
+  try {
+    let data = await misUserController.getAuditDone();
+    if (data) {
+      res.status(200).json({
+        data: data,
+      });
+    } else {
+      res.status(202).json();
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.post(
+  "/assignToAgent/rdl-fls/sentToWarehouse",
+  async (req, res, next) => {
+    try {
+      const { tray, user_name } = req.body;
+      let data = await misUserController.assignToAgentRequestToWhRdlFls(
+        tray,
+        user_name
+      );
+      if (data.status == true) {
+        res.status(200).json({
+          message: "Request sent to Warehouse",
+        });
+      } else {
+        res.status(202).json({
+          message: "Request failed please try again...",
+        });
+      }
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
+router.post(
+  "/assignToAgent/rdl-fls/users/:user_type/:location",
+  async (req, res, next) => {
+    try {
+      let data = await misUserController.getRdlFlsUser(
+        req.params.user_type,
+        req.params.location
+      );
+      if (data) {
+        res.status(200).json({
+          data: data,
+        });
+      }
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+router.post("/RDLoneDoneTray", async (req, res, next) => {
+  try {
+    let data = await misUserController.getRdlDonetray();
+    if (data) {
+      res.status(200).json({
+        data: data,
+      });
+    } else {
+      res.status(202).json();
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+/*------------------------------------CTX TRAY TRANSFER--------------------------------*/
+// GET SALES LOCATION
+router.post("/ctx/getTransferLocation/:userCpcType", async (req, res, next) => {
+  try {
+    const { userCpcType } = req.params;
+    let data = await misUserController.getSalesLocation(userCpcType);
+    if (data) {
+      res.status(200).json({
+        data: data,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+//ctx tray transfer request sent to warehouse
+router.post("/ctx/transferRequestSend", async (req, res, next) => {
+  try {
+    const data = await misUserController.ctxTrayTransferRequestSend(req.body);
+    if (data.status == 1) {
+      res.status(200).json({
+        message: "Request Sent to Warehouse",
+      });
+    } else if (data.status == 2) {
+      res.status(202).json({
+        message: "Failed Please try again...",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+/*----------------------------------------CTX TO STX TRANSFER----------------------------------------------*/
+// GET STX TRAY
+router.post("/sorting/ctxToStx/stxTray", async (req, res, next) => {
+  try {
+    console.log(req.body);
+    const { location, brand, model, fromTray, itemCount, status, type } =
+      req.body;
+    let data = await misUserController.sortingCtxToStxStxTrayGet(
+      location,
+      brand,
+      model,
+      fromTray,
+      itemCount,
+      status,
+      type
+    );
+    if (data.status === 1) {
+      res.status(200).json({
+        data: data.tray,
+      });
+    } else if (data.status === 0) {
+      res.status(202).json({
+        message: `Currently no STX tray in this brand and model or Grade`,
+      });
+    } else if (data.status == 3) {
+      res.status(202).json({
+        message: `${type} Not found in category`,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+//CTX AND STX TRAY SEND TO WAREHOUSE FOR SORTING APPOROVEL
+router.post("/sorting/ctxToStx/request/sendToWh", async (req, res, next) => {
+  try {
+    const { sort_agent, fromTray, toTray } = req.body;
+    let data = await misUserController.sortingCtxtoStxRequestSendToWh(
+      sort_agent,
+      fromTray,
+      toTray
+    );
+    if (data.status === 1) {
+      res.status(200).json({
+        message: "Request Successfully Sent to Warehouse",
+      });
+    } else {
+      res.status(202).json({
+        message: "Failed Please tray again..",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
 module.exports = router;
