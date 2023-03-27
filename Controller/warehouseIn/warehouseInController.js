@@ -48,6 +48,7 @@ module.exports = {
         allCtxTray: 0,
         ctxTransferRequest: 0,
         ctxReceiveRequest: 0,
+        allStxtray: 0,
       };
       count.bagIssueRequest = await masters.count({
         $or: [
@@ -118,10 +119,20 @@ module.exports = {
         cpc: location,
       });
       count.ctxReceiveRequest = await masters.count({
-        prefix: "tray-master",
-        type_taxanomy: { $nin: ["BOT", "PMT", "MMT", "WHT"] },
-        sort_id: "Received From Processing",
-        cpc: location,
+        $or: [
+          {
+            prefix: "tray-master",
+            type_taxanomy: { $nin: ["BOT", "PMT", "MMT", "WHT"] },
+            sort_id: "Received From Processing",
+            cpc: location,
+          },
+          {
+            prefix: "tray-master",
+            cpc: location,
+            sort_id: "Received From Sales",
+            type_taxanomy: { $nin: ["BOT", "PMT", "MMT", "WHT"] },
+          },
+        ],
       });
       count.ctxTransferRequest = await masters.count({
         prefix: "tray-master",
@@ -237,6 +248,11 @@ module.exports = {
         prefix: "tray-master",
         cpc: location,
         type_taxanomy: { $nin: ["BOT", "PMT", "MMT", "WHT", "ST"] },
+      });
+      count.allStxtray = await masters.count({
+        prefix: "tray-master",
+        cpc: location,
+        type_taxanomy: "AT",
       });
       count.returnFromBqc = await masters.count({
         $or: [
@@ -3579,6 +3595,20 @@ module.exports = {
           } else {
             resolve({ status: 0 });
           }
+        } else if (type == "ST") {
+          data = await masters.findOneAndUpdate(
+            { code: toTray },
+            {
+              $set: {
+                sort_id: "Inuse",
+                actual_items: [],
+                issued_user_name: null,
+                from_merge: null,
+                to_merge: null,
+                closed_time_wharehouse: Date.now(),
+              },
+            }
+          );
         } else {
           data = await masters.findOneAndUpdate(
             { code: toTray },
@@ -3756,6 +3786,11 @@ module.exports = {
             { issued_user_name: username, sort_id: "Merging Done" },
             {
               issued_user_name: username,
+              sort_id: "Issued to Sorting for Ctx to Stx",
+            },
+            { issued_user_name: username, sort_id: "Ctx to Stx Sorting Done" },
+            {
+              issued_user_name: username,
               sort_id: "Issued to Sorting for Pickup",
               to_tray_for_pickup: { $ne: null },
             },
@@ -3908,10 +3943,10 @@ module.exports = {
   getAssignedTrayForAudit: (username, brand, model) => {
     return new Promise(async (resolve, reject) => {
       let obj = {
-        CTA: "",
-        CTB: "",
-        CTC: "",
-        CTD: "",
+        A: "",
+        B: "",
+        C: "",
+        D: "",
       };
       let data = await masters.find({
         type_taxanomy: { $ne: "WHT" },
@@ -3922,9 +3957,10 @@ module.exports = {
       if (data.length != 0) {
         for (let x of data) {
           if (x.brand == brand && x.model == model) {
-            obj[x.type_taxanomy] = x.code;
+            obj[x.tray_grade] = x.code;
           }
         }
+        console.log(obj);
         resolve(obj);
       } else {
         resolve(obj);
