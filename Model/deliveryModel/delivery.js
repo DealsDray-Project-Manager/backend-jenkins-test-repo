@@ -205,46 +205,42 @@ const deliverySchema = mongoose.Schema({
   issued_to_rdl_fls_one_date: {
     type: Date,
   },
-    pickup_request_sent_to_wh_date:{
-      type:Date
-    },
-  audit_done_close:{
-    type:Date
+  pickup_request_sent_to_wh_date: {
+    type: Date,
   },
-  rdl_fls_one_user_name:{
-    type:String
+  audit_done_close: {
+    type: Date,
   },
-  rdl_fls_issued_date:{
-    type:Date
+  rdl_fls_one_user_name: {
+    type: String,
   },
-  rdl_fls_closed_date:{
-    type:Date
+  rdl_fls_issued_date: {
+    type: Date,
   },
-  rdl_fls_done_recieved_date:{
-    type:Date
+  rdl_fls_closed_date: {
+    type: Date,
   },
-  rdl_fls_done_closed_wh:{
-    type:Date
+  rdl_fls_done_recieved_date: {
+    type: Date,
   },
-  rdl_fls_one_report:{
-    type:Object
+  rdl_fls_done_closed_wh: {
+    type: Date,
   },
-  ctx_tray_id:{
-    type:String
+  rdl_fls_one_report: {
+    type: Object,
   },
-  ctx_tray_transferTo_sales_date:{
-    type:Date
+  ctx_tray_id: {
+    type: String,
   },
-  ctx_tray_receive_and_close_wh:{
-    type:Date
+  ctx_tray_transferTo_sales_date: {
+    type: Date,
   },
-  stx_tray_id:{
-    type:String
-  }
-
-
-
-
+  ctx_tray_receive_and_close_wh: {
+    type: Date,
+  },
+  stx_tray_id: {
+    type: String,
+  },
 });
 
 const delivery = mongoose.model("delivery", deliverySchema);

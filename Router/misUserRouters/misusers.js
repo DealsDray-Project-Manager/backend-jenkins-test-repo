@@ -822,6 +822,7 @@ router.post("/toWhtTrayForMerge", async (req, res, next) => {
       status,
       type,
       sortId,
+      grade
     } = req.body;
     let data = await misUserController.toWhtTrayForMerging(
       location,
@@ -831,7 +832,8 @@ router.post("/toWhtTrayForMerge", async (req, res, next) => {
       itemCount,
       status,
       type,
-      sortId
+      sortId,
+      grade
     );
     if (data.status === 1) {
       res.status(200).json({

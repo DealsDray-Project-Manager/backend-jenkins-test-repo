@@ -159,6 +159,7 @@ module.exports = {
         ctxMerge: 0,
         receiveCtx: 0,
         ctxToStxSorting: 0,
+        stxMerge: 0,
       };
       count.orders = await orders.count({ partner_shop: location });
       count.badOrders = await badOrders.count({ partner_shop: location });
@@ -219,10 +220,21 @@ module.exports = {
         cpc: location,
       });
       count.receiveCtx = await masters.count({
-        prefix: "tray-master",
-        cpc: location,
-        sort_id: "Transferred to Sales",
-        type_taxanomy: { $nin: ["BOT", "PMT", "MMT", "WHT", "ST"] },
+        $or: [
+          {
+            prefix: "tray-master",
+            cpc: location,
+            sort_id: "Transferred to Sales",
+            type_taxanomy: { $nin: ["BOT", "PMT", "MMT", "WHT", "ST"] },
+          },
+          {
+            prefix: "tray-master",
+            cpc: location,
+            sort_id: "Transferred to Processing",
+
+            type_taxanomy: { $nin: ["BOT", "PMT", "MMT", "WHT"] },
+          },
+        ],
       });
       count.ctxMerge = await masters.count({
         prefix: "tray-master",
@@ -230,11 +242,27 @@ module.exports = {
         sort_id: "Audit Done Closed By Warehouse",
         type_taxanomy: { $nin: ["BOT", "PMT", "MMT", "WHT", "ST"] },
       });
-      count.readyToTransfer = await masters.count({
+      count.stxMerge = await masters.count({
         prefix: "tray-master",
         cpc: location,
-        sort_id: "Ready to Transfer to Sales",
-        type_taxanomy: { $nin: ["BOT", "PMT", "MMT", "WHT", "ST"] },
+        sort_id: "Inuse",
+        type_taxanomy: "ST",
+      });
+      count.readyToTransfer = await masters.count({
+        $or: [
+          {
+            prefix: "tray-master",
+            cpc: location,
+            sort_id: "Ready to Transfer to Sales",
+            type_taxanomy: { $nin: ["BOT", "PMT", "MMT", "WHT", "ST"] },
+          },
+          {
+            prefix: "tray-master",
+            cpc: location,
+            sort_id: "Ready to Transfer to Processing",
+            type_taxanomy: { $nin: ["BOT", "PMT", "MMT", "WHT"] },
+          },
+        ],
       });
       count.audit = await masters.count({
         prefix: "tray-master",
@@ -2519,14 +2547,15 @@ module.exports = {
     itemCount,
     status,
     type,
-    sortId
+    sortId,
+    grade
   ) => {
     return new Promise(async (resolve, reject) => {
       let arr = [];
       let whtTray;
       if (type == "WHT") {
-        let getFromtState=await masters.findOne({code:fromTray})
-        if(getFromtState){
+        let getFromtState = await masters.findOne({ code: fromTray });
+        if (getFromtState) {
           whtTray = await masters
             .find({
               prefix: "tray-master",
@@ -2539,11 +2568,26 @@ module.exports = {
             })
             .catch((err) => reject(err));
         }
-      } else {
+      }
+      else if(type == "MMT"){
         whtTray = await masters
           .find({
             prefix: "tray-master",
             type_taxanomy: type,
+            brand: brand,
+            model: model,
+            cpc: location,
+            sort_id: sortId,
+            code: { $ne: fromTray },
+          })
+          .catch((err) => reject(err));
+      }
+       else {
+        whtTray = await masters
+          .find({
+            prefix: "tray-master",
+            type_taxanomy: type,
+            tray_grade:grade,
             brand: brand,
             model: model,
             cpc: location,
