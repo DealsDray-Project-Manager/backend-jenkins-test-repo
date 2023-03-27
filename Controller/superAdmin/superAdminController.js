@@ -14,8 +14,8 @@ const {
 } = require("../../Model/masterHistoryModel/mastersHistory");
 const moment = require("moment");
 
-const IISDOMAIN = "http://prexo-v8-dev-api.dealsdray.com/user/profile/";
-const IISDOMAINPRDT = "http://prexo-v8-dev-api.dealsdray.com/product/image/";
+const IISDOMAIN = "http://prexo-v8-uat-adminapi.dealsdray.com/user/profile/";
+const IISDOMAINPRDT = "http://prexo-v8-uat-adminapi.dealsdray.com/product/image/";
 
 /************************************************************************************************** */
 
@@ -76,7 +76,7 @@ module.exports = {
       count.readyForTransferSales = await masters.count({
         prefix: "tray-master",
         sort_id: "Audit Done Closed By Warehouse",
-        type_taxanomy: { $nin: ["BOT", "PMT", "MMT", "WHT","ST"] },
+        type_taxanomy: { $nin: ["BOT", "PMT", "MMT", "WHT", "ST"] },
       });
       count.readyForRdl = await masters.count({
         sort_id: "Audit Done Closed By Warehouse",
@@ -925,8 +925,7 @@ module.exports = {
           `${trayData[i]?.tray_category}`
         )[1];
         if (
-          trayData[i]?.tray_category ==
-          "CT" ||
+          trayData[i]?.tray_category == "CT" ||
           trayData[i]?.tray_category == "ST"
         ) {
           trayID = trayData[i]?.tray_id?.split(`${trayData[i]?.tray_grade}`)[1];
@@ -1741,7 +1740,7 @@ module.exports = {
       let data = await masters.find({
         prefix: "tray-master",
         sort_id: "Audit Done Closed By Warehouse",
-        type_taxanomy: { $nin: ["BOT", "PMT", "MMT", "WHT","ST"] },
+        type_taxanomy: { $nin: ["BOT", "PMT", "MMT", "WHT", "ST"] },
       });
       resolve(data);
     });
@@ -2020,7 +2019,7 @@ module.exports = {
 
   deleteCtxcategory: (code) => {
     return new Promise(async (resolve, reject) => {
-      let categorySelected = await masters.find({tray_grade : code?.code });
+      let categorySelected = await masters.find({ tray_grade: code?.code });
       if (categorySelected.length !== 0) {
         resolve({ status: false });
       } else {

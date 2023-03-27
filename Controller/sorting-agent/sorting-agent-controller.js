@@ -22,11 +22,17 @@ module.exports = {
         merge: 0,
         pickup: 0,
         pickupToTray: 0,
+        ctxtoStxSorting:0
       };
       count.sorting = await masters.count({
         issued_user_name: username,
         type_taxanomy: "BOT",
         sort_id: "Issued to sorting agent",
+      });
+      count.ctxtoStxSorting = await masters.count({
+        issued_user_name: username,
+        sort_id: "Issued to Sorting for Ctx to Stx",
+        to_merge: { $ne: null },
       });
       count.pickup = await masters.count({
         issued_user_name: username,
@@ -360,8 +366,7 @@ module.exports = {
               updateDelivery
             );
           } else if (
-            mmtTrayData.trayType !== "MMT" &&
-            mmtTrayData.trayType !== "WHT"
+            mmtTrayData.trayType == "ST" 
           ) {
             let updateDelivery = await delivery.findOneAndUpdate(
               { tracking_id: mmtTrayData.item.tracking_id },
@@ -379,7 +384,28 @@ module.exports = {
             let updateElasticSearch = await Elasticsearch.uicCodeGen(
               updateDelivery
             );
-          } else {
+          }
+          else if (
+            mmtTrayData.trayType == "CT" 
+          ) {
+            let updateDelivery = await delivery.findOneAndUpdate(
+              { tracking_id: mmtTrayData.item.tracking_id },
+              {
+                $set: {
+                  tray_location: "Merging",
+                  ctx_tray_id: mmtTrayData.toTray,
+                },
+              },
+              {
+                new: true,
+                projection: { _id: 0 },
+              }
+            );
+            let updateElasticSearch = await Elasticsearch.uicCodeGen(
+              updateDelivery
+            );
+          }
+           else {
             let updateDelivery = await delivery.findOneAndUpdate(
               { tracking_id: mmtTrayData.item.awbn_number },
               {

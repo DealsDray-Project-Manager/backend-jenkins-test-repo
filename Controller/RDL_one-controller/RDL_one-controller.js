@@ -48,31 +48,38 @@ module.exports = {
 
   addWhtActual: (trayItemData) => {
     return new Promise(async (resolve, reject) => {
-      let checkAlreadyAdded = await masters.findOne(
-        {
-          code: trayItemData.trayId,
-          "items.uic": trayItemData.uic,
-        },
-        {
-          _id: 0,
-          items: {
-            $elemMatch: { uic: trayItemData.uic },
+      let dupEntrey=await masters.findOne({code:trayItemData.trayId,"actual_items.uic":trayItemData.uic})
+      if(dupEntrey){
+        resolve({status:3})
+      }
+      else{
+
+        let checkAlreadyAdded = await masters.findOne(
+          {
+            code: trayItemData.trayId,
+            "items.uic": trayItemData.uic,
           },
+          {
+            _id: 0,
+            items: {
+              $elemMatch: { uic: trayItemData.uic },
+            },
+          }
+        );
+        checkAlreadyAdded.items[0].rdl_fls_report = trayItemData.rdl_fls_report;
+        let data = await masters.updateOne(
+          { code: trayItemData.trayId },
+          {
+            $push: {
+              actual_items: checkAlreadyAdded.items[0],
+            },
+          }
+        );
+        if (data.matchedCount != 0) {
+          resolve({ status: 1 });
+        } else {
+          resolve({ status: 2 });
         }
-      );
-      checkAlreadyAdded.items[0].rdl_fls_report = trayItemData.rdl_fls_report;
-      let data = await masters.updateOne(
-        { code: trayItemData.trayId },
-        {
-          $push: {
-            actual_items: checkAlreadyAdded.items[0],
-          },
-        }
-      );
-      if (data.matchedCount != 0) {
-        resolve({ status: 1 });
-      } else {
-        resolve({ status: 2 });
       }
     });
   },
