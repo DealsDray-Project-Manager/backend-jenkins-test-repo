@@ -624,9 +624,11 @@ router.post("/addLocation", async (req, res, next) => {
 });
 
 /*-----------------------------INFRA--------------------------------------*/
-router.get("/getInfra/:infraId", async (req, res, next) => {
+router.post("/getInfra", async (req, res, next) => {
   try {
-    let data = await superAdminController.getInfra(req.params.infraId);
+    console.log(req.body);
+    const {empId,type}=req.body
+    let data = await superAdminController.getInfra(empId,type);
     if (data) {
       res.status(200).json({
         data: data,
@@ -677,9 +679,10 @@ router.post("/editInfra", async (req, res, next) => {
 });
 
 /*-----------------------------DELETE INFRA--------------------------------------*/
-router.post("/deleteInfra/:infraId", async (req, res, next) => {
+router.post("/deleteInfra", async (req, res, next) => {
   try {
-    let data = await superAdminController.deleteInfra(req.params.infraId);
+    const {empId,type}=req.body
+    let data = await superAdminController.deleteInfra(empId,type);
     if (data.status == 1) {
       res.status(200).json({
         message: "Successfully Deleted",
@@ -1094,9 +1097,12 @@ router.post("/getMasters", async (req, res, next) => {
 });
 
 /*-----------------------------GET ONE MASTER--------------------------------------*/
-router.get("/getOneMaster/:masterId", async (req, res, ne) => {
+router.post("/getOneMaster", async (req, res, ne) => {
   try {
-    let data = await superAdminController.getOneMaster(req.params.masterId);
+    console.log(req.body);
+    const {masterId}=req.body
+    console.log(masterId);
+    let data = await superAdminController.getOneMaster(masterId);
     if (data) {
       res.status(200).json({
         data: data,
