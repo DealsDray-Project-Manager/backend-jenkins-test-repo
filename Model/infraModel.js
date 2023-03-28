@@ -27,7 +27,7 @@ const infraSchema=mongoose.Schema({
     },
     type_taxanomy:{
         type:String,
-        default:"CPC"
+     
     },
     parent_id:{
         type:String,

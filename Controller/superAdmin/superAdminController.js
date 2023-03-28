@@ -212,6 +212,7 @@ module.exports = {
         parent_id: code,
         type_taxanomy: "Warehouse",
       });
+      
       resolve(warehouse);
     });
   },
@@ -735,9 +736,9 @@ module.exports = {
 
   /*--------------------------------GET INFRA-----------------------------------*/
 
-  getInfra: (infraId) => {
+  getInfra: (infraId,type) => {
     return new Promise(async (resolve, reject) => {
-      let data = await infra.findOne({ code: infraId });
+      let data = await infra.findOne({ code: infraId ,type_taxanomy:type});
       if (data) {
         resolve(data);
       } else {
@@ -749,6 +750,7 @@ module.exports = {
   /*--------------------------------EDIT INFRA-----------------------------------*/
 
   editInfra: (infraId) => {
+    console.log(infraId);
     return new Promise(async (resolve, reject) => {
       let data = await infra.updateOne(
         { _id: infraId._id },
@@ -777,9 +779,9 @@ module.exports = {
 
   /*--------------------------------DELETE INFRA-----------------------------------*/
 
-  deleteInfra: (infraId) => {
+  deleteInfra: (infraId,type) => {
     return new Promise(async (resolve, reject) => {
-      let checkUsed = await user.findOne({ cpc: infraId });
+      let checkUsed = await user.findOne({ cpc: infraId,type_taxanomy:type });
       if (checkUsed) {
         resolve({ status: 2 });
       } else {
@@ -806,6 +808,7 @@ module.exports = {
   getAllWarehouse: () => {
     return new Promise(async (resolve, reject) => {
       let data = await infra.find({ type_taxanomy: "Warehouse" });
+      console.log(data);
       resolve(data);
     });
   },
