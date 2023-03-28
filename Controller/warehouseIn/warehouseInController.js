@@ -4911,6 +4911,7 @@ module.exports = {
                   $set: {
                     ctx_tray_receive_and_close_wh: Date.now(),
                     tray_location: "Sales-warehouse",
+                    partner_shop:data.cpc
                   },
                 },
                 {
