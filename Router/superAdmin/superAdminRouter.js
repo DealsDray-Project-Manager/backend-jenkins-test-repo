@@ -1586,9 +1586,9 @@ router.post("/update-cpc", async (req, res, next) => {
 
 //CTX TRAY GRADE ADDIN
 
-router.post("/update-wht-trayId", async (req, res, next) => {
+router.post("/update-ctx-trayId", async (req, res, next) => {
   try {
-    let data = await superAdminController.updateWhtTrayId();
+    let data = await superAdminController.updateCtxTrayId();
     if (data) {
       res.status(200).json({
         message: "Successfully updated",

@@ -1796,11 +1796,11 @@ module.exports = {
       resolve(ordersData);
     });
   },
-  updateWhtTrayId: () => {
+  updateCtxTrayId: () => {
     return new Promise(async (resolve, reject) => {
       let Allwht = await masters.find({
         prefix: "tray-master",
-        type_taxanomy: "WHT",
+        type_taxanomy: { $nin: ["BOT", "PMT", "MMT", "WHT", "ST"] },
       });
       for (let x of Allwht) {
         if (x.items.length != 0) {
@@ -1809,25 +1809,12 @@ module.exports = {
               { tracking_id: y.tracking_id },
               {
                 $set: {
-                  wht_tray: x.code,
+                  tray_id: y.tray_id,
+                  ctx_tray_id:x.code
                 },
               }
             );
             if (updateId.modifiedCount != 0) {
-            }
-          }
-        } else if (x.actual_items.length != 0) {
-          for (let item of x.actual_items) {
-            let updateId = await delivery.updateOne(
-              { tracking_id: item.tracking_id },
-              {
-                $set: {
-                  wht_tray: x.code,
-                },
-              }
-            );
-            if (updateId.modifiedCount != 0) {
-              console.log(updateId);
             }
           }
         }
