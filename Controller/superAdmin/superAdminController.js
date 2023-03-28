@@ -21,11 +21,7 @@ const IISDOMAINPRDT = "http://prexo-v8-uat-adminapi.dealsdray.com/product/image/
 
 /* 
 
-
-
 @ SUPER ADMIN CONTROLLER FETCH DATA FROM MONGODB DATA BASE PREXO AND MAKE CHANGES ON DB 
-
-
 
 */
 
