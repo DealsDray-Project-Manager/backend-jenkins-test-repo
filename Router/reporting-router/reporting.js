@@ -40,4 +40,18 @@ router.post("/units/:location/:page/:size/:screen", async (req, res, next) => {
     next(error);
   }
 });
+//GET CLOSED STATE BAG
+router.post("/bag/closed/:location",async(req,res,next)=>{
+  try {
+    const {location}=req.params
+    const bag=await reportingAgentRouter.closedBag(location)
+    if(bag){
+      res.status(200).json({
+        data:bag
+      })
+    }
+  } catch (error) {
+    next(error)
+  }
+})
 module.exports = router;

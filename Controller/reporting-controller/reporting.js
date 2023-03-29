@@ -61,4 +61,7 @@ module.exports = {
       }
     });
   },
+  // closedBag:(location)=>{
+  //   return new Promise((resolve,))
+  // }
 };
