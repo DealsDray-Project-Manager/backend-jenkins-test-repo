@@ -14,8 +14,8 @@ const {
 } = require("../../Model/masterHistoryModel/mastersHistory");
 const moment = require("moment");
 
-const IISDOMAIN = "http://prexo-v8-uat-adminapi.dealsdray.com/user/profile/";
-const IISDOMAINPRDT = "http://prexo-v8-uat-adminapi.dealsdray.com/product/image/";
+const IISDOMAIN = "http://prexo-v8-dev-api.dealsdray.com/user/profile/";
+const IISDOMAINPRDT = "http://prexo-v8-dev-api.dealsdray.com/product/image/";
 
 /************************************************************************************************** */
 
@@ -940,7 +940,7 @@ module.exports = {
           trayData[i].tray_category !== "WHT"
         ) {
           if (
-            trayData[i].tray_category !== "CT" ||
+            trayData[i].tray_category !== "CT" &&
             trayData[i].tray_category == "ST"
           ) {
             category.push(trayData[i].tray_category);
