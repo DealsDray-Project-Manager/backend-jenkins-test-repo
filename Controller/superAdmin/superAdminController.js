@@ -10,12 +10,16 @@ const { usersHistory } = require("../../Model/users-history-model/model");
 const { delivery } = require("../../Model/deliveryModel/delivery");
 const { trayCategory } = require("../../Model/tray-category/tray-category");
 const {
+  partAndColor,
+} = require("../../Model/Part-list-and-color/part-list-and-color");
+const {
   mastersEditHistory,
 } = require("../../Model/masterHistoryModel/mastersHistory");
 const moment = require("moment");
 
 const IISDOMAIN = "http://prexo-v8-dev-api.dealsdray.com/user/profile/";
-const IISDOMAINPRDT = "http://prexo-v8-dev-api.dealsdray.com/product/image/";
+const IISDOMAINPRDT =
+  "http://prexo-v8-dev-api.dealsdray.com/product/image/";
 
 /************************************************************************************************** */
 
@@ -73,6 +77,8 @@ module.exports = {
       count.ctxCategory = await trayCategory.count({});
       count.tray = await masters.count({ prefix: "tray-master" });
       count.bag = await masters.count({ prefix: "bag-master" });
+      count.partList = await partAndColor.count({ type:"part-list"});
+      count.colorList = await partAndColor.count({ type:"color-list"});
       count.readyForTransferSales = await masters.count({
         prefix: "tray-master",
         sort_id: "Audit Done Closed By Warehouse",
@@ -212,7 +218,7 @@ module.exports = {
         parent_id: code,
         type_taxanomy: "Warehouse",
       });
-      
+
       resolve(warehouse);
     });
   },
@@ -736,9 +742,9 @@ module.exports = {
 
   /*--------------------------------GET INFRA-----------------------------------*/
 
-  getInfra: (infraId,type) => {
+  getInfra: (infraId, type) => {
     return new Promise(async (resolve, reject) => {
-      let data = await infra.findOne({ code: infraId ,type_taxanomy:type});
+      let data = await infra.findOne({ code: infraId, type_taxanomy: type });
       if (data) {
         resolve(data);
       } else {
@@ -779,9 +785,9 @@ module.exports = {
 
   /*--------------------------------DELETE INFRA-----------------------------------*/
 
-  deleteInfra: (infraId,type) => {
+  deleteInfra: (infraId, type) => {
     return new Promise(async (resolve, reject) => {
-      let checkUsed = await user.findOne({ cpc: infraId,type_taxanomy:type });
+      let checkUsed = await user.findOne({ cpc: infraId, type_taxanomy: type });
       if (checkUsed) {
         resolve({ status: 2 });
       } else {
@@ -941,7 +947,7 @@ module.exports = {
         ) {
           if (
             trayData[i].tray_category !== "CT" &&
-            trayData[i].tray_category == "ST"
+            trayData[i].tray_category !== "ST"
           ) {
             category.push(trayData[i].tray_category);
             err["category"] = category;
@@ -1008,7 +1014,6 @@ module.exports = {
             }
           }
         }
-
         // if (trayID > 1999 && trayData[i].tray_category == "CTA") {
         //   tray_id.push(trayData[i].tray_id);
         //   err["tray_id"] = tray_id;
@@ -1090,6 +1095,7 @@ module.exports = {
           }
         }
       }
+      console.log(err);
       if (Object.keys(err).length === 0) {
         resolve({ status: true });
       } else {
@@ -1777,23 +1783,57 @@ module.exports = {
 
   /*--------------------------------EXTRA CHANGES-----------------------------------*/
 
-  updateCPCExtra: () => {
+  addGrade: () => {
     return new Promise(async (resolve, reject) => {
-      let ordersData = await orders.find();
-      for (let x of ordersData) {
-        let checkDelivery = await delivery.findOne({ order_id: x.order_id });
-        if (checkDelivery) {
-          let updateStatus = await orders.updateOne(
-            { order_id: x.order_id },
+      let ctxOld = await masters.find({
+        type_taxanomy: { $nin: ["BOT", "PMT", "MMT", "WHT", "ST", "CT"] },
+        prefix: "tray-master",
+      });
+      for (let x of ctxOld) {
+        let data;
+        if (x.type_taxanomy == "CTA") {
+          data = await masters.updateOne(
+            { code: x.code },
             {
               $set: {
-                delivery_status: "Delivered",
+                type_taxanomy: "CT",
+                tray_grade: "A",
+              },
+            }
+          );
+        } else if (x.type_taxanomy == "CTB") {
+          data = await masters.updateOne(
+            { code: x.code },
+            {
+              $set: {
+                type_taxanomy: "CT",
+                tray_grade: "B",
+              },
+            }
+          );
+        } else if (x.type_taxanomy == "CTC") {
+          data = await masters.updateOne(
+            { code: x.code },
+            {
+              $set: {
+                type_taxanomy: "CT",
+                tray_grade: "C",
+              },
+            }
+          );
+        } else if (x.type_taxanomy == "CTD") {
+          data = await masters.updateOne(
+            { code: x.code },
+            {
+              $set: {
+                type_taxanomy: "CT",
+                tray_grade: "D",
               },
             }
           );
         }
       }
-      resolve(ordersData);
+      resolve(ctxOld);
     });
   },
   updateCtxTrayId: () => {
@@ -1810,7 +1850,7 @@ module.exports = {
               {
                 $set: {
                   tray_id: y.tray_id,
-                  ctx_tray_id:x.code
+                  ctx_tray_id: x.code,
                 },
               }
             );
@@ -2083,6 +2123,92 @@ module.exports = {
         resolve({ status: true });
       } else {
         resolve({ status: false });
+      }
+    });
+  },
+  createPartOrColor: (dataOfPartOrColor) => {
+    return new Promise(async (resolve, reject) => {
+      let checkDup = await partAndColor.findOne({
+        name: dataOfPartOrColor.name,
+        type: dataOfPartOrColor.type,
+      });
+      if (checkDup) {
+        resolve({ status: 2 });
+      } else {
+        dataOfPartOrColor.created_at = Date.now();
+        const data = await partAndColor.create(dataOfPartOrColor);
+        if (data) {
+          resolve({ status: 1 });
+        } else {
+          resolve({ status: 3 });
+        }
+      }
+    });
+  },
+  viewColorOrPart: (type) => {
+    return new Promise(async (resolve, reject) => {
+      const data = await partAndColor.find({ type: type });
+      console.log(data);
+      resolve(data);
+    });
+  },
+  viewOneData: (id, type) => {
+    return new Promise(async (resolve, reject) => {
+      let findData = await partAndColor.findOne({ _id: id });
+      if (findData) {
+        if (type == "part-list") {
+          let checkUsed = await delivery.findOne({
+            $or: [
+              { "rdl_fls_one_report.part_list_1": findData.name },
+              { "rdl_fls_one_report.part_list_2": findData.name },
+              { "rdl_fls_one_report.part_list_3": findData.name },
+              { "rdl_fls_one_report.part_list_4": findData.name },
+              { "rdl_fls_one_report.part_list_5": findData.name },
+            ],
+          });
+          if (checkUsed) {
+            resolve({ status: 3 });
+          } else {
+            resolve({ status: 1, masterData: findData });
+          }
+        } else {
+          let checkUsed = await delivery.findOne({
+            "rdl_fls_one_report.color": findData.name,
+          });
+          if (checkUsed) {
+            resolve({ status: 3 });
+          } else {
+            resolve({ status: 1, masterData: findData });
+          }
+        }
+      }
+    });
+  },
+  editPartOrColor: (dataOfPartorColor) => {
+    return new Promise(async (resolve, reject) => {
+      let updateData = await partAndColor.updateOne(
+        { _id: dataOfPartorColor._id },
+        {
+          $set: {
+            name: dataOfPartorColor.name,
+            description: dataOfPartorColor.description,
+          },
+        }
+      );
+      if (updateData.modifiedCount !== 0) {
+        resolve({ status: 1 });
+      } else {
+        resolve({ status: 0 });
+      }
+    });
+  },
+  deletePartOrColor: (id) => {
+    return new Promise(async (resolve, reject) => {
+      let deleteData = await partAndColor.deleteOne({ _id: id });
+      if (deleteData.deletedCount !== 0) {
+        resolve({ status: 1 });
+      } else {
+        resolve({ status: 2 });
       }
     });
   },

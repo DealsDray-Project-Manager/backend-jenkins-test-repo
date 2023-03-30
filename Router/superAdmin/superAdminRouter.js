@@ -627,8 +627,8 @@ router.post("/addLocation", async (req, res, next) => {
 router.post("/getInfra", async (req, res, next) => {
   try {
     console.log(req.body);
-    const {empId,type}=req.body
-    let data = await superAdminController.getInfra(empId,type);
+    const { empId, type } = req.body;
+    let data = await superAdminController.getInfra(empId, type);
     if (data) {
       res.status(200).json({
         data: data,
@@ -681,8 +681,8 @@ router.post("/editInfra", async (req, res, next) => {
 /*-----------------------------DELETE INFRA--------------------------------------*/
 router.post("/deleteInfra", async (req, res, next) => {
   try {
-    const {empId,type}=req.body
-    let data = await superAdminController.deleteInfra(empId,type);
+    const { empId, type } = req.body;
+    let data = await superAdminController.deleteInfra(empId, type);
     if (data.status == 1) {
       res.status(200).json({
         message: "Successfully Deleted",
@@ -738,6 +738,7 @@ router.post("/bulkValidationBag", async (req, res, next) => {
 /*-----------------------------TRAY ID GENERATION--------------------------------------*/
 router.post("/trayIdGenrate", async (req, res, next) => {
   try {
+    console.log(req.body);
     const { type } = req.body;
     let obj;
     fs.readFile(
@@ -995,7 +996,7 @@ router.post("/getAudit/:bagId", async (req, res, next) => {
 /*--------------------------------CREATE BAG-----------------------------------*/
 router.post("/createMasters", async (req, res, next) => {
   try {
-    const { type_taxanomy, cpc,tray_grade } = req.body;
+    const { type_taxanomy, cpc, tray_grade } = req.body;
     let data = await superAdminController.createMasters(req.body);
     if (data) {
       if (req.body.prefix == "bag-master") {
@@ -1041,8 +1042,7 @@ router.post("/createMasters", async (req, res, next) => {
                 obj.MMT = obj.MMT + 1;
               } else if (type_taxanomy == "WHT") {
                 obj.WHT = obj.WHT + 1;
-              }
-               else {
+              } else {
                 obj[tray_grade] = obj[tray_grade] + 1;
               }
               //  else if (type_taxanomy == "CTA") {
@@ -1100,7 +1100,7 @@ router.post("/getMasters", async (req, res, next) => {
 router.post("/getOneMaster", async (req, res, ne) => {
   try {
     console.log(req.body);
-    const {masterId}=req.body
+    const { masterId } = req.body;
     console.log(masterId);
     let data = await superAdminController.getOneMaster(masterId);
     if (data) {
@@ -1414,8 +1414,8 @@ router.post("/addcategory", async (req, res, next) => {
           if (err) {
           } else {
             obj = JSON.parse(datafile);
-            obj[code] = sereis_start;
-
+            obj["CT:" + code] = sereis_start;
+            obj["ST:" + code] = sereis_start;
             json = JSON.stringify(obj);
             fs.writeFile(
               "myjsonfile.json",
@@ -1528,7 +1528,101 @@ router.post("/categoryCheck", async (req, res, next) => {
     next(error);
   }
 });
-
+/*-------------------------------------------MASTER FOR PART AND COLOR--------------------------------------------*/
+//create
+router.post("/partAndColor/create", async (req, res, next) => {
+  try {
+    const data = await superAdminController.createPartOrColor(req.body);
+    if (data.status == 1) {
+      res.status(200).json({
+        message: "Successfully Added",
+      });
+    } else if (data.status == 2) {
+      res.status(202).json({
+        message: "Already Created",
+      });
+    } else {
+      res.status(202).json({
+        message: "Failed Please Tray again...",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+//VIEW
+router.post("/partAndColor/view/:type", async (req, res, next) => {
+  try {
+    const { type } = req.params;
+    const data = await superAdminController.viewColorOrPart(type);
+    console.log(data);
+    if (data) {
+      res.status(200).json({
+        data: data,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+// get one data only for edit or delete
+router.post("/partAndColor/oneData/:id/:type", async (req, res, next) => {
+  try {
+    const { id, type } = req.params;
+    const data = await superAdminController.viewOneData(id, type);
+    console.log(data);
+    if (data.status == 1) {
+      res.status(200).json({
+        data: data.masterData,
+      });
+    } else if (data.status == 3) {
+      res.status(202).json({
+        message: "Data Already used for process",
+      });
+    } else {
+      res.status(202).json({
+        message: "No Data found",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+// EDIT PART or color
+router.post("/partAndColor/edit", async (req, res, next) => {
+  try {
+    const data = await superAdminController.editPartOrColor(req.body);
+    if (data.status == 1) {
+      res.status(200).json({
+        message: "Successfully Updated",
+      });
+    } else {
+      res.status(202).json({
+        message: "Updation Failed",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+// EDIT PART or color
+router.post("/partAndColor/delete/:id", async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const data = await superAdminController.deletePartOrColor(id);
+    if (data.status == 1) {
+      res.status(200).json({
+        message: "Successfully Deleted",
+      });
+    } else {
+      res.status(202).json({
+        message: "Deletion Failed",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
 /***********************************************EXTRA QUREY SECTION*********************************************************** */
 router.post("/user/addCpcType", async (req, res, next) => {
   try {
@@ -1567,9 +1661,9 @@ router.post("/extra/reAuditTray", async (req, res, next) => {
 /****************************************************************************************************** */
 
 /*-----------------------------EXTRA ONE--------------------------------------*/
-router.post("/update-cpc", async (req, res, next) => {
+router.post("/tray/addGrade", async (req, res, next) => {
   try {
-    let data = await superAdminController.updateCPCExtra();
+    let data = await superAdminController.addGrade();
     if (data) {
       res.status(200).json({
         message: "Successfully updated",

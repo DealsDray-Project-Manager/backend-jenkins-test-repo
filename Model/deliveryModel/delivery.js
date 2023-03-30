@@ -235,6 +235,9 @@ const deliverySchema = mongoose.Schema({
   ctx_tray_transferTo_sales_date: {
     type: Date,
   },
+  ctx_tray_receive: {
+    type: Date,
+  },
   ctx_tray_receive_and_close_wh: {
     type: Date,
   },

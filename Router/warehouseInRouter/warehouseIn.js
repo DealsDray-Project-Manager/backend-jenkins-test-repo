@@ -2340,7 +2340,7 @@ router.post("/ctx/transferRequest/approve", async (req, res, next) => {
       });
     } else if (data.status == 3) {
       res.status(200).json({
-        message: `Successfully Received and Sent to Warehouse`,
+        message: `Successfully Accepted and Sent to Warehouse`,
       });
     } else if (data.status == 4) {
       res.status(200).json({
@@ -2353,6 +2353,27 @@ router.post("/ctx/transferRequest/approve", async (req, res, next) => {
     } else {
       res.status(202).json({
         message: "Failed Please tray again...",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+router.post("/ctx-transfer/receive", async (req, res, next) => {
+  try {
+    let data = await warehouseInController.ctxTransferReceive(req.body);
+    if (data.status == 1) {
+      res.status(200).json({
+        message: "Successfully Received",
+      });
+    }
+    if (data.status == 3) {
+      res.status(202).json({
+        message: "Please Enter Valid Count",
+      });
+    } else {
+      res.status(202).json({
+        message: "Failed",
       });
     }
   } catch (error) {
