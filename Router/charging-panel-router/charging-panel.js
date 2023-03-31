@@ -20,19 +20,19 @@ router.post("/assigned-tray/:userName", async (req, res, next) => {
 });
 
 /* DASHBOARD CHARGING */
-router.post("/dashboard/:username",async(req,res,next)=>{
+router.post("/dashboard/:username", async (req, res, next) => {
   try {
-    const {username}=req.params
-    let data=await chargingController.dashboardCount(username)
-    if(data){
+    const { username } = req.params;
+    let data = await chargingController.dashboardCount(username);
+    if (data) {
       res.status(200).json({
-        data:data
-      })
+        data: data,
+      });
     }
   } catch (error) {
-    next(error)
+    next(error);
   }
-})
+});
 
 /* VIEW TRAY ITEM DETAIL */
 router.post("/view-tray-details/:trayId", async (req, res, next) => {
@@ -69,17 +69,17 @@ router.post("/charge-in", async (req, res, next) => {
   }
 });
 /* CHARGING DONE */
-router.post("/charging-done",async(req,res,next)=>{
+router.post("/charging-done", async (req, res, next) => {
   try {
-    let data=await chargingController.chargeDone(req.body)
-    if(data){
+    let data = await chargingController.chargeDone(req.body);
+    if (data) {
       res.status(200).json({
-        message:"Successfully Sent to Warehouse"
-      })
+        message: "Successfully Sent to Warehouse",
+      });
     }
   } catch (error) {
-    next(error)
+    next(error);
   }
-})
+});
 /************************************************************************************************************** */
 module.exports = router;

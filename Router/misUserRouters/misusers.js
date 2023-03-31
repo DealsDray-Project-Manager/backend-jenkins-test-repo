@@ -368,7 +368,6 @@ router.post("/search-mis-track-item", async (req, res, next) => {
       skip,
       location
     );
-    console.log(data);
     if (data.length !== 0) {
       res.status(200).json({
         data: data,
@@ -822,7 +821,7 @@ router.post("/toWhtTrayForMerge", async (req, res, next) => {
       status,
       type,
       sortId,
-      grade
+      grade,
     } = req.body;
     let data = await misUserController.toWhtTrayForMerging(
       location,
@@ -1493,7 +1492,6 @@ router.post("/ctx/transferRequestSend", async (req, res, next) => {
 // GET STX TRAY
 router.post("/sorting/ctxToStx/stxTray", async (req, res, next) => {
   try {
-    console.log(req.body);
     const { location, brand, model, fromTray, itemCount, status, type } =
       req.body;
     let data = await misUserController.sortingCtxToStxStxTrayGet(

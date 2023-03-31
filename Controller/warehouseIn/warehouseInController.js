@@ -49,6 +49,8 @@ module.exports = {
         ctxTransferRequest: 0,
         ctxReceiveRequest: 0,
         allStxtray: 0,
+        ctxToStxSortRequest: 0,
+        sortingDoneCtxToStx: 0,
       };
       count.bagIssueRequest = await masters.count({
         $or: [
@@ -58,6 +60,20 @@ module.exports = {
           },
           {
             sort_id: "Ready For Issue",
+            cpc: location,
+          },
+        ],
+      });
+      count.sortingDoneCtxToStx = await masters.count({
+        $or: [
+          {
+            prefix: "tray-master",
+            sort_id: "Ctx to Stx Sorting Done",
+            cpc: location,
+          },
+          {
+            prefix: "tray-master",
+            sort_id: "Received From Sorting Agent After Ctx to Stx",
             cpc: location,
           },
         ],
@@ -118,13 +134,32 @@ module.exports = {
         sort_id: "Ready to Audit",
         cpc: location,
       });
+      count.ctxToStxSortRequest = await masters.count({
+        prefix: "tray-master",
+        cpc: location,
+        sort_id: "Ctx to Stx Send for Sorting",
+        to_merge: { $ne: null },
+        type_taxanomy: { $nin: ["BOT", "PMT", "MMT", "WHT"] },
+      });
       count.ctxReceiveRequest = await masters.count({
         $or: [
           {
             prefix: "tray-master",
             type_taxanomy: { $nin: ["BOT", "PMT", "MMT", "WHT"] },
-            sort_id: "Received From Processing",
+            sort_id: "Accepted From Processing",
             cpc: location,
+          },
+          {
+            prefix: "tray-master",
+            cpc: location,
+            sort_id: "Accepted From Sales",
+            type_taxanomy: { $nin: ["BOT", "PMT", "MMT", "WHT"] },
+          },
+          {
+            prefix: "tray-master",
+            cpc: location,
+            sort_id: "Received From Processing",
+            type_taxanomy: { $nin: ["BOT", "PMT", "MMT", "WHT"] },
           },
           {
             prefix: "tray-master",
@@ -136,7 +171,7 @@ module.exports = {
       });
       count.ctxTransferRequest = await masters.count({
         prefix: "tray-master",
-        sort_id: "Sales Transfer Request sent to Warehouse",
+        sort_id: "Transfer Request sent to Warehouse",
         type_taxanomy: { $nin: ["BOT", "PMT", "MMT", "WHT", "ST"] },
         cpc: location,
       });
@@ -292,7 +327,7 @@ module.exports = {
           {
             prefix: "tray-master",
             type_taxanomy: "WHT",
-            sort_id: "Closed By RDL-FLS",
+            sort_id: "Closed by RDL-FLS",
             cpc: location,
           },
           {
@@ -372,7 +407,6 @@ module.exports = {
         ],
       });
       if (count) {
-        console.log(count);
         resolve(count);
       }
     });
@@ -3960,7 +3994,6 @@ module.exports = {
             obj[x.tray_grade] = x.code;
           }
         }
-        console.log(obj);
         resolve(obj);
       } else {
         resolve(obj);
@@ -4278,7 +4311,6 @@ module.exports = {
     });
   },
   ctxTray: (type, location) => {
-    console.log(type);
     return new Promise(async (reslove, reject) => {
       if (type == "all") {
         let tray = await masters.find({
@@ -4356,9 +4388,21 @@ module.exports = {
         if (tray) {
           reslove({ status: 1, tray: tray });
         }
-      } else if (type === "Received From Processing") {
+      } else if (type === "Accepted From Processing") {
         let tray = await masters.find({
           $or: [
+            {
+              prefix: "tray-master",
+              type_taxanomy: { $nin: ["BOT", "PMT", "MMT", "WHT"] },
+              sort_id: "Accepted From Processing",
+              cpc: location,
+            },
+            {
+              prefix: "tray-master",
+              cpc: location,
+              sort_id: "Accepted From Sales",
+              type_taxanomy: { $nin: ["BOT", "PMT", "MMT", "WHT"] },
+            },
             {
               prefix: "tray-master",
               cpc: location,
@@ -4911,7 +4955,7 @@ module.exports = {
                   $set: {
                     ctx_tray_receive_and_close_wh: Date.now(),
                     tray_location: "Sales-warehouse",
-                    partner_shop:data.cpc
+                    partner_shop: data.cpc,
                   },
                 },
                 {
@@ -4986,6 +5030,82 @@ module.exports = {
         } else {
           resolve({ status: 0 });
         }
+      }
+    });
+  },
+  ctxTransferReceive: (trayData) => {
+    return new Promise(async (resolve, reject) => {
+      let tray = await masters.findOne({ code: trayData.trayId });
+      let data;
+      if (tray?.items?.length == trayData.counts) {
+        if (tray.sort_id == "Accepted From Processing") {
+          data = await masters.findOneAndUpdate(
+            { code: trayData.trayId },
+            {
+              $set: {
+                sort_id: "Received From Processing",
+              },
+            }
+          );
+        } else {
+          data = await masters.findOneAndUpdate(
+            { code: trayData.trayId },
+            {
+              $set: {
+                sort_id: "Received From Sales",
+              },
+            }
+          );
+        }
+        if (data) {
+          if (tray.sort_id == "Accepted From Processing") {
+            for (let i = 0; i < data.actual_items.length; i++) {
+              let deliveryTrack = await delivery.findOneAndUpdate(
+                { tracking_id: data.actual_items[i].tracking_id },
+                {
+                  $set: {
+                    tray_status: "Received From Processing",
+                    ctx_tray_receive: Date.now(),
+                    tray_location: "Sales-warehouse",
+                  },
+                },
+                {
+                  new: true,
+                  projection: { _id: 0 },
+                }
+              );
+              let updateElasticSearch = await elasticsearch.uicCodeGen(
+                deliveryTrack
+              );
+            }
+            resolve({ status: 1 });
+          } else {
+            for (let i = 0; i < data.actual_items.length; i++) {
+              let deliveryTrack = await delivery.findOneAndUpdate(
+                { tracking_id: data.actual_items[i].tracking_id },
+                {
+                  $set: {
+                    tray_status: "Received From Sales",
+                    ctx_tray_receive: Date.now(),
+                    tray_location: "Processing-warehouse",
+                  },
+                },
+                {
+                  new: true,
+                  projection: { _id: 0 },
+                }
+              );
+              let updateElasticSearch = await elasticsearch.uicCodeGen(
+                deliveryTrack
+              );
+            }
+            resolve({ status: 1 });
+          }
+        } else {
+          resolve({ status: 2 });
+        }
+      } else {
+        resolve({ status: 3 });
       }
     });
   },

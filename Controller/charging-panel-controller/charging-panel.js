@@ -7,7 +7,7 @@ const { user } = require("../../Model/userModel");
 const { masters } = require("../../Model/mastersModel");
 const { badOrders } = require("../../Model/ordersModel/bad-orders-model");
 const { badDelivery } = require("../../Model/deliveryModel/bad-delivery");
-const Elasticsearch =require("../../Elastic-search/elastic")
+const Elasticsearch = require("../../Elastic-search/elastic");
 /********************************************************************************** */
 
 module.exports = {
@@ -96,12 +96,14 @@ module.exports = {
                 tray_location: "Charging",
               },
             },
-            { 
-              new: true, 
-              projection: { _id: 0 } 
+            {
+              new: true,
+              projection: { _id: 0 },
             }
           );
-          let updateElasticSearch=await Elasticsearch.uicCodeGen(deliveryUpdate)
+          let updateElasticSearch = await Elasticsearch.uicCodeGen(
+            deliveryUpdate
+          );
         }
         resolve(data);
       } else {
@@ -152,12 +154,14 @@ module.exports = {
                 charging: x.charging,
               },
             },
-            { 
-              new: true, 
-              projection: { _id: 0 } 
+            {
+              new: true,
+              projection: { _id: 0 },
             }
           );
-          let elasticSearchUpdate=await Elasticsearch.uicCodeGen(deliveryUpdate)
+          let elasticSearchUpdate = await Elasticsearch.uicCodeGen(
+            deliveryUpdate
+          );
         }
         resolve(data);
       } else {
