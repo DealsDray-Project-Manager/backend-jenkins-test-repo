@@ -12,12 +12,12 @@ const client = new Client({
 // CREATE INDEXING
 module.exports = {
   creatIndex: async () => {
-    const result = await client.indices.create({ index: "prexo-delivery" });
+    const result = await client.indices.create({ index: "prexo-delivery-v8" });
     console.log(result);
   },
   mappings: async () => {
     let data = await client.indices.putMapping({
-      index: "prexo-delivery",
+      index: "prexo-delivery-v8",
       body: {
         properties: {
           tracking_id: {
@@ -249,7 +249,7 @@ module.exports = {
       if (checkOrder) {
         x.delivery_status = "Delivered";
         let bulk = await client.index({
-          index: "prexo-delivery",
+          index: "prexo-delivery-v8",
           //if you need to customise "_id" otherwise elastic will create this
           body: x,
         });
@@ -265,7 +265,7 @@ module.exports = {
       x.created_at = Date.now();
       x.delivery_status = "Delivered";
       let bulk = await client.index({
-        index: "prexo-delivery",
+        index: "prexo-delivery-v8",
         //if you need to customise "_id" otherwise elastic will create this
         body: x,
       });
@@ -275,7 +275,7 @@ module.exports = {
   },
   superAdminTrackItemSearchData: async (searchInput, from, size) => {
     let data = await client.search({
-      index: "prexo-delivery",
+      index: "prexo-delivery-v8",
       // type: '_doc', // uncomment for Elasticsearch ≤ 6
       body: {
         from: from,
@@ -302,7 +302,7 @@ module.exports = {
   },
   superMisItemSearchData: async (searchInput, limit, skip, location) => {
     let data = await client.search({
-      index: "prexo-delivery",
+      index: "prexo-delivery-v8",
       // type: '_doc', // uncomment for Elasticsearch ≤ 6
       body: {
         from: skip,
@@ -339,7 +339,7 @@ module.exports = {
   //UPDATE STOCKIN STATUS
   updateUic: async (tracking_id, bag_id) => {
     let data = await client.updateByQuery({
-      index: "prexo-delivery",
+      index: "prexo-delivery-v8",
       refresh: true,
       body: {
         script: {
@@ -362,7 +362,7 @@ module.exports = {
   //CLOSE BAG
   closeBagAfterItemPuted: async (tracking_id) => {
     let data = await client.updateByQuery({
-      index: "prexo-delivery",
+      index: "prexo-delivery-v8",
       refresh: true,
       body: {
         script: {
@@ -384,7 +384,7 @@ module.exports = {
   },
   uicCodeGen: async (deliveryData) => {
     let deleteDoc = await client.deleteByQuery({
-      index: "prexo-delivery",
+      index: "prexo-delivery-v8",
       body: {
         query: {
           match: {
@@ -394,7 +394,7 @@ module.exports = {
       },
     });
     let bulk = await client.index({
-      index: "prexo-delivery",
+      index: "prexo-delivery-v8",
       //if you need to customise "_id" otherwise elastic will create this
       body: deliveryData,
     });
