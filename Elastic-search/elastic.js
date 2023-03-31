@@ -237,6 +237,7 @@ module.exports = {
           rdl_fls_done_closed_wh: {
             type: "date",
           },
+          
         },
       },
     });
@@ -300,7 +301,7 @@ module.exports = {
 
     return arr;
   },
-  superMisItemSearchData: async (searchInput, limit, skip, location) => {
+  superMisItemSearchData: async (searchInput, limit, skip,location) => {
     let data = await client.search({
       index: "prexo-delivery",
       // type: '_doc', // uncomment for Elasticsearch ≤ 6
@@ -313,26 +314,28 @@ module.exports = {
               {
                 multi_match: {
                   query: searchInput,
-                  fields: ["*"],
-                },
+                  fields: ["*"]
+                }
               },
               {
                 match: {
-                  partner_shop: location,
-                },
-              },
-            ],
-          },
-        },
+                  partner_shop: location
+                }
+              }
+            ]
+          }
+        }
       },
     });
     let arr = [];
     for (let result of data.hits.hits) {
+     
       result.delivery_status = "Delivered";
       result["delivery"] = result["_source"];
 
       arr.push(result);
     }
+   
 
     return arr;
   },
@@ -383,21 +386,24 @@ module.exports = {
     return data;
   },
   uicCodeGen: async (deliveryData) => {
-    let deleteDoc = await client.deleteByQuery({
-      index: "prexo-delivery",
-      body: {
-        query: {
-          match: {
-            tracking_id: deliveryData.tracking_id,
-          },
-        },
-      },
-    });
+   let deleteDoc =await client.deleteByQuery({
+    index: "prexo-delivery",
+    body: {
+      query: {
+        match: {
+          tracking_id: deliveryData.tracking_id,
+        }
+      }
+    }
+   })
     let bulk = await client.index({
       index: "prexo-delivery",
       //if you need to customise "_id" otherwise elastic will create this
       body: deliveryData,
     });
     console.log(bulk);
-  },
+  }
+  
+  
+  
 };

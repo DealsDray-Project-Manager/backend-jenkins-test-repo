@@ -1,5 +1,5 @@
 const { delivery } = require("../../Model/deliveryModel/delivery");
-const {orders}=require("../../Model/ordersModel/ordersModel")
+const { orders } = require("../../Model/ordersModel/ordersModel");
 /*--------------------------------------------------------------*/
 
 /************************************************** */
@@ -46,11 +46,14 @@ module.exports = {
           .find({ partner_shop: location, ctx_tray_id: { $exists: false } })
           .limit(limit)
           .skip(skip);
-        const forCount = await delivery.count({ partner_shop: location });
+        const forCount = await delivery.count({
+          partner_shop: location,
+          ctx_tray_id: { $exists: false },
+        });
         resolve({ units: units, forCount: forCount });
       } else {
         const units = await delivery
-          .find({ partner_shop: location })
+          .find({ partner_shop: location,ctx_tray_id: { $exists: true } })
           .limit(limit)
           .skip(skip);
         const forCount = await delivery.count({
