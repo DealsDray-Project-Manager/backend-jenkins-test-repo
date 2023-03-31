@@ -3,7 +3,7 @@ const mongoose = require("mongoose");
 const productSchema = mongoose.Schema({
   vendor_sku_id: {
     type: String,
-    index:true
+    index: true,
   },
   brand_name: {
     type: String,

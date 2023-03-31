@@ -60,16 +60,15 @@ const tempDeliverySchema = mongoose.Schema({
   download_time: {
     type: Date,
   },
-  old_uic:{
-    type:String
+  old_uic: {
+    type: String,
   },
-  type:{
-    type:String
-  }
-
+  type: {
+    type: String,
+  },
 });
 
 const tempDelivery = mongoose.model("tempDelivery", tempDeliverySchema);
 module.exports = {
-    tempDelivery: tempDelivery,
+  tempDelivery: tempDelivery,
 };

@@ -2,7 +2,7 @@ const { delivery } = require("../../Model/deliveryModel/delivery");
 const { masters } = require("../../Model/mastersModel");
 const { orders } = require("../../Model/ordersModel/ordersModel");
 var mongoose = require("mongoose");
-const Elasticsearch=require("../../Elastic-search/elastic")
+const Elasticsearch = require("../../Elastic-search/elastic");
 /****************************************************************************** */
 module.exports = {
   getAssignedBagData: (userData) => {
@@ -34,26 +34,26 @@ module.exports = {
       }
     });
   },
-  dashboardCount:(username)=>{
-   return new Promise(async(resolve,reject)=>{
-    let count={
-      bag:0,
-      tray:0,
-    }
-    count.bag=await masters.count({
-      issued_user_name: username,
-      sort_id: "Issued",
-      prefix: "bag-master",
+  dashboardCount: (username) => {
+    return new Promise(async (resolve, reject) => {
+      let count = {
+        bag: 0,
+        tray: 0,
+      };
+      count.bag = await masters.count({
+        issued_user_name: username,
+        sort_id: "Issued",
+        prefix: "bag-master",
+      });
+      count.tray = await masters.count({
+        prefix: "tray-master",
+        issued_user_name: username,
+        sort_id: "Issued",
+      });
+      if (count) {
+        resolve(count);
+      }
     });
-    count.tray= await  masters.count({
-      prefix: "tray-master",
-      issued_user_name: username,
-      sort_id: "Issued",
-    });
-    if(count){
-      resolve(count)
-    }
-   })
   },
   closeBags: (bagData) => {
     return new Promise(async (resolve, reject) => {
@@ -67,8 +67,8 @@ module.exports = {
           },
         }
       );
-      let bag=await masters.findOne({code:bagData.bagId})
-      if(bag){
+      let bag = await masters.findOne({ code: bagData.bagId });
+      if (bag) {
         for (let x of bag.items) {
           let deliveryTrack = await delivery.findOneAndUpdate(
             { tracking_id: x.awbn_number },
@@ -76,16 +76,17 @@ module.exports = {
               $set: {
                 tray_closed_by_bot: Date.now(),
                 tray_status: "Closed By Bot",
-                bot_report:x.bot_e
-
+                bot_report: x.bot_e,
               },
             },
-            { 
-              new: true, 
-              projection: { _id: 0 } 
+            {
+              new: true,
+              projection: { _id: 0 },
             }
           );
-          let updateElasticSearch=await Elasticsearch.uicCodeGen(deliveryTrack)
+          let updateElasticSearch = await Elasticsearch.uicCodeGen(
+            deliveryTrack
+          );
         }
       }
       if (close.modifiedCount !== 0) {
@@ -168,16 +169,16 @@ module.exports = {
   traySegrigation: (trayData) => {
     trayData.added_time = Date.now();
     trayData._id = mongoose.Types.ObjectId();
-    let obj={
+    let obj = {
       stickerOne: trayData.stickerOne,
       stickerTwo: trayData.stickerTwo,
       stickerThree: trayData.stickerThree,
       stickerFour: trayData.stickerFour,
       body_damage: trayData.body_damage,
-      body_damage_des:trayData.body_damage_des,
-      model_brand:trayData.model_brand,
-    }
-    trayData.bot_eval_result=obj
+      body_damage_des: trayData.body_damage_des,
+      model_brand: trayData.model_brand,
+    };
+    trayData.bot_eval_result = obj;
     return new Promise(async (resolve, reject) => {
       let checkItemAddedOrNot = await masters.findOne({
         code: trayData.tray_id,
@@ -206,15 +207,17 @@ module.exports = {
                 tray_status: res.sort_id,
                 tray_type: res.type_taxanomy,
                 tray_location: "Bag Opening",
-                bot_report:obj,
+                bot_report: obj,
               },
             },
-            { 
-              new: true, 
-              projection: { _id: 0 } 
+            {
+              new: true,
+              projection: { _id: 0 },
             }
           );
-          let elasticsearchupdate=await Elasticsearch.uicCodeGen(updateDelivery)
+          let elasticsearchupdate = await Elasticsearch.uicCodeGen(
+            updateDelivery
+          );
           resolve({ status: 1 });
         } else {
           resolve({ status: 2 });
@@ -285,12 +288,14 @@ module.exports = {
                   tray_status: "Closed By Bot",
                 },
               },
-              { 
-                new: true, 
-                projection: { _id: 0 } 
+              {
+                new: true,
+                projection: { _id: 0 },
               }
             );
-            let updateElasticSearch=await Elasticsearch.uicCodeGen(this.deleteTrayItem)
+            let updateElasticSearch = await Elasticsearch.uicCodeGen(
+              this.deleteTrayItem
+            );
           }
           resolve({ status: 1 });
         } else {

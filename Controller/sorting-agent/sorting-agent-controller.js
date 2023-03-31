@@ -22,7 +22,7 @@ module.exports = {
         merge: 0,
         pickup: 0,
         pickupToTray: 0,
-        ctxtoStxSorting:0
+        ctxtoStxSorting: 0,
       };
       count.sorting = await masters.count({
         issued_user_name: username,
@@ -365,9 +365,7 @@ module.exports = {
             let updateElasticSearch = await Elasticsearch.uicCodeGen(
               updateDelivery
             );
-          } else if (
-            mmtTrayData.trayType == "ST" 
-          ) {
+          } else if (mmtTrayData.trayType == "ST") {
             let updateDelivery = await delivery.findOneAndUpdate(
               { tracking_id: mmtTrayData.item.tracking_id },
               {
@@ -384,10 +382,7 @@ module.exports = {
             let updateElasticSearch = await Elasticsearch.uicCodeGen(
               updateDelivery
             );
-          }
-          else if (
-            mmtTrayData.trayType == "CT" 
-          ) {
+          } else if (mmtTrayData.trayType == "CT") {
             let updateDelivery = await delivery.findOneAndUpdate(
               { tracking_id: mmtTrayData.item.tracking_id },
               {
@@ -404,8 +399,7 @@ module.exports = {
             let updateElasticSearch = await Elasticsearch.uicCodeGen(
               updateDelivery
             );
-          }
-           else {
+          } else {
             let updateDelivery = await delivery.findOneAndUpdate(
               { tracking_id: mmtTrayData.item.awbn_number },
               {
@@ -468,8 +462,7 @@ module.exports = {
         } else {
           resolve({ status: 0 });
         }
-      }
-      else if(finedTray.sort_id == "Issued to Sorting for Ctx to Stx"){
+      } else if (finedTray.sort_id == "Issued to Sorting for Ctx to Stx") {
         let fromtray = await masters.updateOne(
           { code: trayData.fromTray },
           {
@@ -499,8 +492,7 @@ module.exports = {
         } else {
           resolve({ status: 0 });
         }
-      }
-       else {
+      } else {
         let fromtray = await masters.updateOne(
           { code: trayData.fromTray },
           {
