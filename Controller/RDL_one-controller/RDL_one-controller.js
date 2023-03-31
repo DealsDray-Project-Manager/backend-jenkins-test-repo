@@ -5,7 +5,6 @@ const Elasticsearch = require("../../Elastic-search/elastic");
 
 module.exports = {
   getAssignedTray: (username) => {
-  
     return new Promise(async (resolve, reject) => {
       let data = await masters.find({
         $or: [{ issued_user_name: username, sort_id: "Issued to RDL-FLS" }],
@@ -48,12 +47,13 @@ module.exports = {
 
   addWhtActual: (trayItemData) => {
     return new Promise(async (resolve, reject) => {
-      let dupEntrey=await masters.findOne({code:trayItemData.trayId,"actual_items.uic":trayItemData.uic})
-      if(dupEntrey){
-        resolve({status:3})
-      }
-      else{
-
+      let dupEntrey = await masters.findOne({
+        code: trayItemData.trayId,
+        "actual_items.uic": trayItemData.uic,
+      });
+      if (dupEntrey) {
+        resolve({ status: 3 });
+      } else {
         let checkAlreadyAdded = await masters.findOne(
           {
             code: trayItemData.trayId,
@@ -112,7 +112,7 @@ module.exports = {
                 rdl_fls_one_user_name: dataSwitch?.issued_user_name,
                 rdl_fls_closed_date: Date.now(),
                 rdl_fls_one_report: x?.rdl_fls_report,
-                location:"Warehouse"
+                location: "Warehouse",
               },
             },
             {

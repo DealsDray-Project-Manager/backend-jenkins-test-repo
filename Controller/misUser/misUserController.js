@@ -734,7 +734,6 @@ module.exports = {
     });
   },
   getDeliveredOrders: (location, limit, skip) => {
-    console.log(skip);
     return new Promise(async (resolve, reject) => {
       let data = await orders.aggregate([
         {
@@ -2568,8 +2567,7 @@ module.exports = {
             })
             .catch((err) => reject(err));
         }
-      }
-      else if(type == "MMT"){
+      } else if (type == "MMT") {
         whtTray = await masters
           .find({
             prefix: "tray-master",
@@ -2581,13 +2579,12 @@ module.exports = {
             code: { $ne: fromTray },
           })
           .catch((err) => reject(err));
-      }
-       else {
+      } else {
         whtTray = await masters
           .find({
             prefix: "tray-master",
             type_taxanomy: type,
-            tray_grade:grade,
+            tray_grade: grade,
             brand: brand,
             model: model,
             cpc: location,

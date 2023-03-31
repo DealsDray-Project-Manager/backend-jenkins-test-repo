@@ -436,7 +436,6 @@ router.post("/trayCloseRequest/:location", async (req, res, next) => {
 
 router.post("/inuse-mmt-pmt/:location/:type", async (req, res, next) => {
   try {
-    console.log("working");
     const { location, type } = req.params;
     let data = await warehouseInController.getInuseMmtPmt(location, type);
     if (data) {
@@ -1970,7 +1969,6 @@ router.post("/oneTrayAssigToAudit", async (req, res, next) => {
 router.post("/ctxTray/:type/:location", async (req, res, next) => {
   try {
     const { type, location } = req.params;
-    console.log(req.params);
     const trayData = await warehouseInController.ctxTray(type, location);
     if (trayData.status == 1) {
       res.status(200).json({
@@ -2404,9 +2402,7 @@ router.post(
   "/sorting/returnFromSortingCtxStx/close",
   async (req, res, next) => {
     try {
-      console.log(req.body);
       let data = await warehouseInController.sortingDoneCtxStxClose(req.body);
-      console.log(data);
       if (data.status == 1) {
         res.status(200).json({
           message: "Successfully Closed and Ready for Pricing",

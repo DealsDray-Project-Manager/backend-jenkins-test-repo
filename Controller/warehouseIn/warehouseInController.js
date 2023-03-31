@@ -407,7 +407,6 @@ module.exports = {
         ],
       });
       if (count) {
-        console.log(count);
         resolve(count);
       }
     });
@@ -3995,7 +3994,6 @@ module.exports = {
             obj[x.tray_grade] = x.code;
           }
         }
-        console.log(obj);
         resolve(obj);
       } else {
         resolve(obj);
@@ -4313,7 +4311,6 @@ module.exports = {
     });
   },
   ctxTray: (type, location) => {
-    console.log(type);
     return new Promise(async (reslove, reject) => {
       if (type == "all") {
         let tray = await masters.find({

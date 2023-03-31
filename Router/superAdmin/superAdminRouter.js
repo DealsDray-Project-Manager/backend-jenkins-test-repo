@@ -626,7 +626,6 @@ router.post("/addLocation", async (req, res, next) => {
 /*-----------------------------INFRA--------------------------------------*/
 router.post("/getInfra", async (req, res, next) => {
   try {
-    console.log(req.body);
     const { empId, type } = req.body;
     let data = await superAdminController.getInfra(empId, type);
     if (data) {
@@ -738,8 +737,7 @@ router.post("/bulkValidationBag", async (req, res, next) => {
 /*-----------------------------TRAY ID GENERATION--------------------------------------*/
 router.post("/trayIdGenrate", async (req, res, next) => {
   try {
-    console.log(req.body);
-    const { type } = req.body;
+    const { type, type_taxanomy } = req.body;
     let obj;
     fs.readFile(
       "myjsonfile.json",
@@ -789,7 +787,7 @@ router.post("/trayIdGenrate", async (req, res, next) => {
           } else {
             let checkLimit = await superAdminController.ctxCategoryLimit(
               type,
-              obj[type]
+              obj[type_taxanomy + type]
             );
             if (checkLimit.status == 2) {
               res.status(202).json({
@@ -797,7 +795,7 @@ router.post("/trayIdGenrate", async (req, res, next) => {
               });
             } else {
               res.status(200).json({
-                data: obj[type],
+                data: obj[type_taxanomy + type],
               });
             }
           }
@@ -1033,7 +1031,6 @@ router.post("/createMasters", async (req, res, next) => {
             if (err) {
             } else {
               obj = JSON.parse(datafile);
-
               if (type_taxanomy == "BOT") {
                 obj.BOT = obj.BOT + 1;
               } else if (type_taxanomy == "PMT") {
@@ -1043,7 +1040,8 @@ router.post("/createMasters", async (req, res, next) => {
               } else if (type_taxanomy == "WHT") {
                 obj.WHT = obj.WHT + 1;
               } else {
-                obj[tray_grade] = obj[tray_grade] + 1;
+                obj[type_taxanomy + tray_grade] =
+                  obj[type_taxanomy + tray_grade] + 1;
               }
               //  else if (type_taxanomy == "CTA") {
               //   obj.CTA = obj.CTA + 1;
@@ -1099,9 +1097,7 @@ router.post("/getMasters", async (req, res, next) => {
 /*-----------------------------GET ONE MASTER--------------------------------------*/
 router.post("/getOneMaster", async (req, res, ne) => {
   try {
-    console.log(req.body);
     const { masterId } = req.body;
-    console.log(masterId);
     let data = await superAdminController.getOneMaster(masterId);
     if (data) {
       res.status(200).json({
@@ -1414,8 +1410,8 @@ router.post("/addcategory", async (req, res, next) => {
           if (err) {
           } else {
             obj = JSON.parse(datafile);
-            obj["CT:" + code] = sereis_start;
-            obj["ST:" + code] = sereis_start;
+            obj["CT" + code] = sereis_start;
+            obj["ST" + code] = sereis_start;
             json = JSON.stringify(obj);
             fs.writeFile(
               "myjsonfile.json",
@@ -1555,7 +1551,6 @@ router.post("/partAndColor/view/:type", async (req, res, next) => {
   try {
     const { type } = req.params;
     const data = await superAdminController.viewColorOrPart(type);
-    console.log(data);
     if (data) {
       res.status(200).json({
         data: data,
@@ -1570,7 +1565,6 @@ router.post("/partAndColor/oneData/:id/:type", async (req, res, next) => {
   try {
     const { id, type } = req.params;
     const data = await superAdminController.viewOneData(id, type);
-    console.log(data);
     if (data.status == 1) {
       res.status(200).json({
         data: data.masterData,

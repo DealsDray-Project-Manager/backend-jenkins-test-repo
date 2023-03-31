@@ -1,7 +1,7 @@
 const { delivery } = require("../../Model/deliveryModel/delivery");
 const { masters } = require("../../Model/mastersModel");
 const { orders } = require("../../Model/ordersModel/ordersModel");
-const Elasticsearch =require("../../Elastic-search/elastic")
+const Elasticsearch = require("../../Elastic-search/elastic");
 module.exports = {
   getAssigendOtherTray: (username) => {
     return new Promise(async (resolve, reject) => {
@@ -82,7 +82,7 @@ module.exports = {
             },
           ],
         });
-      
+
         resolve({ status: 1, tray: obj });
       } else {
         resolve({ status: 2 });
@@ -126,7 +126,7 @@ module.exports = {
               bqc_software_report: 1,
               bot_report: 1,
               charging_done_date: 1,
-              audit_report:1,
+              audit_report: 1,
             }
           );
           if (uicExists) {
@@ -136,7 +136,7 @@ module.exports = {
               });
               obj.delivery = uicExists;
               obj.order = getOrder;
-              obj.checkIntray=checkIntray
+              obj.checkIntray = checkIntray;
 
               resolve({ status: 1, data: obj });
             } else {
@@ -167,19 +167,18 @@ module.exports = {
           },
         ],
       });
-      if(checkAlreadyAdded == null){
+      if (checkAlreadyAdded == null) {
         let obj = {
           grade: itemData.grade,
           stage: itemData.stage,
           reason: itemData.reason,
           description: itemData.description,
           orgGrade: itemData.orgGrade,
-          wht_tray:itemData.trayId
+          wht_tray: itemData.trayId,
         };
         let findTray = await masters.findOne({
-          $or:[
+          $or: [
             {
-
               issued_user_name: itemData.username,
               type_taxanomy: itemData.type,
               sort_id: "Issued to Audit",
@@ -188,8 +187,8 @@ module.exports = {
               issued_user_name: itemData.username,
               tray_grade: itemData.type,
               sort_id: "Issued to Audit",
-            }
-          ]
+            },
+          ],
         });
         if (findTray) {
           if (findTray.sort_id !== "Issued to Audit") {
@@ -220,7 +219,7 @@ module.exports = {
             );
             if (item) {
               item.items[0].audit_report = obj;
-  
+
               let updateOther = await masters.updateOne(
                 { code: findTray.code },
                 {
@@ -235,17 +234,19 @@ module.exports = {
                   {
                     $set: {
                       wht_tray: findTray.code,
-                      tray_location:"Audit",
+                      tray_location: "Audit",
                       tray_type: itemData.type,
                       audit_report: obj,
                     },
                   },
-                  { 
-                    new: true, 
-                    projection: { _id: 0 } 
+                  {
+                    new: true,
+                    projection: { _id: 0 },
                   }
                 );
-                let elasticSearchUpdate=await Elasticsearch.uicCodeGen(update)
+                let elasticSearchUpdate = await Elasticsearch.uicCodeGen(
+                  update
+                );
                 resolve({ status: 1, trayId: findTray.code });
               }
             } else {
@@ -295,12 +296,14 @@ module.exports = {
                       audit_report: obj,
                     },
                   },
-                  { 
-                    new: true, 
-                    projection: { _id: 0 } 
+                  {
+                    new: true,
+                    projection: { _id: 0 },
                   }
                 );
-                let updateElasticSearch=await Elasticsearch.uicCodeGen(update)
+                let updateElasticSearch = await Elasticsearch.uicCodeGen(
+                  update
+                );
                 resolve({ status: 1, trayId: findTray.code });
               }
             } else {
@@ -310,9 +313,8 @@ module.exports = {
         } else {
           resolve({ status: 4 });
         }
-      }
-      else{
-        resolve({status:7})
+      } else {
+        resolve({ status: 7 });
       }
     });
   },
@@ -356,12 +358,14 @@ module.exports = {
                 tray_status: "Audit Done",
               },
             },
-            { 
-              new: true, 
-              projection: { _id: 0 } 
+            {
+              new: true,
+              projection: { _id: 0 },
             }
           );
-          let updateElasticSearch= await Elasticsearch.uicCodeGen(updateDelivery)
+          let updateElasticSearch = await Elasticsearch.uicCodeGen(
+            updateDelivery
+          );
         }
         resolve(data);
       } else {

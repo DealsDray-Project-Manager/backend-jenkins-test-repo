@@ -53,10 +53,10 @@ const tempOrdersSchema = mongoose.Schema({
   delivery_date: {
     type: Date,
   },
-  vedor_name:{
-    type:String
+  vedor_name: {
+    type: String,
   },
-  
+
   delivery_status: {
     type: String,
     default: "Pending",
@@ -64,12 +64,12 @@ const tempOrdersSchema = mongoose.Schema({
   created_at: {
     type: Date,
   },
-  type:{
-    type:String
-  }
+  type: {
+    type: String,
+  },
 });
 
 const tempOrders = mongoose.model("tempOrders", tempOrdersSchema);
 module.exports = {
-    tempOrders: tempOrders,
+  tempOrders: tempOrders,
 };

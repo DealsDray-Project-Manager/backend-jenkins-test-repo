@@ -17,9 +17,9 @@ const {
 } = require("../../Model/masterHistoryModel/mastersHistory");
 const moment = require("moment");
 
-const IISDOMAIN = "http://prexo-v8-dev-api.dealsdray.com/user/profile/";
+const IISDOMAIN = "http://prexo-v8-uat-adminapi.dealsdray.com/user/profile/";
 const IISDOMAINPRDT =
-  "http://prexo-v8-dev-api.dealsdray.com/product/image/";
+  "http://prexo-v8-uat-adminapi.dealsdray.com/product/image/";
 
 /************************************************************************************************** */
 
@@ -77,8 +77,8 @@ module.exports = {
       count.ctxCategory = await trayCategory.count({});
       count.tray = await masters.count({ prefix: "tray-master" });
       count.bag = await masters.count({ prefix: "bag-master" });
-      count.partList = await partAndColor.count({ type:"part-list"});
-      count.colorList = await partAndColor.count({ type:"color-list"});
+      count.partList = await partAndColor.count({ type: "part-list" });
+      count.colorList = await partAndColor.count({ type: "color-list" });
       count.readyForTransferSales = await masters.count({
         prefix: "tray-master",
         sort_id: "Audit Done Closed By Warehouse",
@@ -565,7 +565,6 @@ module.exports = {
       if (Object.keys(err).length === 0) {
         resolve({ status: true });
       } else {
-        console.log(err);
         resolve({ status: false, err: err });
       }
     });
@@ -756,7 +755,6 @@ module.exports = {
   /*--------------------------------EDIT INFRA-----------------------------------*/
 
   editInfra: (infraId) => {
-    console.log(infraId);
     return new Promise(async (resolve, reject) => {
       let data = await infra.updateOne(
         { _id: infraId._id },
@@ -814,7 +812,6 @@ module.exports = {
   getAllWarehouse: () => {
     return new Promise(async (resolve, reject) => {
       let data = await infra.find({ type_taxanomy: "Warehouse" });
-      console.log(data);
       resolve(data);
     });
   },
@@ -937,7 +934,9 @@ module.exports = {
           trayData[i]?.tray_category == "CT" ||
           trayData[i]?.tray_category == "ST"
         ) {
-          trayID = trayData[i]?.tray_id?.split(`${trayData[i]?.tray_grade}`)[1];
+          trayID = trayData[i]?.tray_id?.split(
+            `${trayData[i]?.tray_category + trayData[i]?.tray_grade}`
+          )[1];
         }
         if (
           trayData[i].tray_category !== "BOT" &&
@@ -1095,7 +1094,6 @@ module.exports = {
           }
         }
       }
-      console.log(err);
       if (Object.keys(err).length === 0) {
         resolve({ status: true });
       } else {
@@ -2007,7 +2005,6 @@ module.exports = {
     });
   },
   createctxcategory: (data) => {
-    console.log(data);
     return new Promise(async (resolve, reject) => {
       let checkcodeExists = await trayCategory.findOne({
         $or: [
@@ -2148,7 +2145,6 @@ module.exports = {
   viewColorOrPart: (type) => {
     return new Promise(async (resolve, reject) => {
       const data = await partAndColor.find({ type: type });
-      console.log(data);
       resolve(data);
     });
   },
