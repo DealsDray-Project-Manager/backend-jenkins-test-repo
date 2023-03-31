@@ -20,19 +20,15 @@ router.get("/otp/send", async (req, res, next) => {
         // Store the otp to Database
         let storeOtp = await userController.userOtpStore(user._id, otpRes.otp);
         if (storeOtp) {
-          res
-            .status(200)
-            .json({
-              status: 1,
-              data: { message: "OTP send to your email", userId: user._id },
-            });
+          res.status(200).json({
+            status: 1,
+            data: { message: "OTP send to your email", userId: user._id },
+          });
         } else {
-          res
-            .status(501)
-            .json({
-              status: 0,
-              data: { message: "Can't send otp please try again" },
-            });
+          res.status(501).json({
+            status: 0,
+            data: { message: "Can't send otp please try again" },
+          });
         }
       }
     } else {
