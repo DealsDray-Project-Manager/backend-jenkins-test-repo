@@ -398,11 +398,47 @@ module.exports = {
             prefix: "tray-master",
             sort_id: "Merging Done",
             items: { $ne: [] },
+            type_taxanomy: "MMT",
           },
           {
+            cpc: location,
+            prefix: "tray-master",
+            sort_id: "Merging Done",
+            type_taxanomy: { $nin: ["MMT", "WHT"] },
+          },
+          {
+            cpc: location,
+            prefix: "tray-master",
+            sort_id: "Merging Done",
+            type_taxanomy: "WHT",
+          },
+          {
+            cpc: location,
             refix: "tray-master",
             sort_id: "Received From Merging",
             items: { $ne: [] },
+          },
+          {
+            cpc: location,
+            refix: "tray-master",
+            sort_id: "Received From Merging",
+            type_taxanomy: { $nin: ["MMT", "WHT"] },
+          },
+          {
+            cpc: location,
+            refix: "tray-master",
+            sort_id: "Received From Merging",
+            type_taxanomy: "WHT",
+          },
+          {
+            cpc: location,
+            refix: "tray-master",
+            sort_id: "Audit Done Return from Merging",
+          },
+          {
+            cpc: location,
+            refix: "tray-master",
+            sort_id: "Audit Done Received From Merging",
           },
         ],
       });

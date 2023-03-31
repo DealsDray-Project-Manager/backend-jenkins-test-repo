@@ -3759,7 +3759,6 @@ module.exports = {
       for (let x of arr) {
         count++;
         let uicNum = "";
-
         // if (count.toString().length == 1) {
         //   uicNum = "9101000000" + count;
         // } else if (count.toString().length == 2) {
