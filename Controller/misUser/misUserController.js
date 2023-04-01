@@ -3754,11 +3754,31 @@ module.exports = {
   },
   whtUtilityImportFile: (xlsxData) => {
     return new Promise(async (resolve, reject) => {
-      let count = "";
-
+      // let tempDeliveryData=await tempDelivery.find({})
+      // let first=0
+      // let second=0
+      // let third=0
+      
+      // for(let x of tempDeliveryData){
+      //   console.log(x);
+      //   if (x.uic_code.code.slice(0, 4) === "9101") {
+      //     first++
+      //   } else if(x.uic_code.code.slice(0, 4) === "9203") {
+      //     second++
+      //   }
+      //   else if(x.uic_code.code.slice(0, 4) === "9001") {
+      //     third++
+      //   }
+      // }
+      // console.log("first-",first)
+      // console.log("second-",second)
+      // console.log("third-",third)
+      let count = 6192;
+      
       for (let x of arr) {
         count++;
         let uicNum = "";
+
         // if (count.toString().length == 1) {
         //   uicNum = "9101000000" + count;
         // } else if (count.toString().length == 2) {
@@ -3786,18 +3806,33 @@ module.exports = {
         // } else if (count.toString().length == 6) {
         //   uicNum = "92030" + count;
         // }
+
+        // if (count.toString().length == 1) {
+        //   uicNum = "9001000000" + count;
+        // } else if (count.toString().length == 2) {
+        //   uicNum = "900100000" + count;
+        // } else if (count.toString().length == 3) {
+        //   uicNum = "90010000" + count;
+        // } else if (count.toString().length == 4) {
+        //   uicNum = "9001000" + count;
+        // } else if (count.toString().length == 5) {
+        //   uicNum = "900100" + count;
+        // } else if (count.toString().length == 6) {
+        //   uicNum = "90010" + count;
+        // }
+
         if (count.toString().length == 1) {
-          uicNum = "9001000000" + count;
+          uicNum = "9203000000" + count;
         } else if (count.toString().length == 2) {
-          uicNum = "900100000" + count;
+          uicNum = "920300000" + count;
         } else if (count.toString().length == 3) {
-          uicNum = "90010000" + count;
+          uicNum = "92030000" + count;
         } else if (count.toString().length == 4) {
-          uicNum = "9001000" + count;
+          uicNum = "9203000" + count;
         } else if (count.toString().length == 5) {
-          uicNum = "900100" + count;
+          uicNum = "920300" + count;
         } else if (count.toString().length == 6) {
-          uicNum = "90010" + count;
+          uicNum = "92030" + count;
         }
         const string = x.Model_Name;
         const firstSpaceIndex = x.Model_Name.indexOf(" ");
@@ -3839,9 +3874,7 @@ module.exports = {
         let dataImportDelivery = await tempDelivery.create(objDelivery);
       }
       resolve({ status: 1 });
-      // let obj={
-      // }
-      // let data=await
+    
     });
   },
 };
