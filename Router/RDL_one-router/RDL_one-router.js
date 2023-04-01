@@ -2,10 +2,11 @@ const express = require("express");
 const router = express.Router();
 // user controller
 const RDL_0neController = require("../../Controller/RDL_one-controller/RDL_one-controller");
-/*******************************************************************************************************************/
-/***************************TRAY***************************************************** */
-/* GET ASSIGNED TRAY */
+/***************************************************************************************/
 
+/***************************TRAY***************************************************** */
+
+/* GET ASSIGNED TRAY */
 router.post("/assigned-tray/:userName", async (req, res, next) => {
   try {
     let data = await RDL_0neController.getAssignedTray(req.params.userName);
@@ -91,5 +92,6 @@ router.post("/rdl-fls/closeRdlFlsWhtTray", async (req, res, next) => {
     next(error);
   }
 });
+
 /************************************************************************************************************** */
 module.exports = router;
