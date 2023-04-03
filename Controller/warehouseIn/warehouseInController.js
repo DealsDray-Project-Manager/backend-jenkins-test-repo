@@ -622,7 +622,7 @@ module.exports = {
           },
         }
       );
-      if (data.status !== "Duplicate" || data.status !== "Invalid") {
+      if (data.status !== "Duplicate" && data.status !== "Invalid") {
         let updateElastic = await elasticsearch.updateUic(
           data.awbn_number,
           data.bag_id
@@ -1914,7 +1914,10 @@ module.exports = {
               prefix: "tray-master",
               type_taxanomy: "WHT",
               sort_id: "Inuse",
-              items: { $ne: [] },
+              items: {
+                $ne: [],
+                $exists: true
+              }
             },
             {
               cpc: location,

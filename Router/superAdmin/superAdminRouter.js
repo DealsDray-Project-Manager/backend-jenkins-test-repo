@@ -594,6 +594,7 @@ router.post("/get-product-model/:brandName", async (req, res, next) => {
     let data = await superAdminController.getBrandBasedPrdouct(
       req.params.brandName
     );
+ 
     if (data) {
       res.status(200).json({
         data: data,
@@ -794,6 +795,7 @@ router.post("/trayIdGenrate", async (req, res, next) => {
                 message: `${type}-tray limit exceeded`,
               });
             } else {
+              console.log(obj[type_taxanomy + type]);
               res.status(200).json({
                 data: obj[type_taxanomy + type],
               });

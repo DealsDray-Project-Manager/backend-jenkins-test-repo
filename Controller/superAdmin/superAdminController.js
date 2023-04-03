@@ -17,9 +17,9 @@ const {
 } = require("../../Model/masterHistoryModel/mastersHistory");
 const moment = require("moment");
 
-const IISDOMAIN = "http://prexo-v8-uat-adminapi.dealsdray.com/user/profile/";
+const IISDOMAIN = "http://prexo-v8-1-dev-api.dealsdray.com/user/profile/";
 const IISDOMAINPRDT =
-  "http://prexo-v8-uat-adminapi.dealsdray.com/product/image/";
+  "http://prexo-v8-1-dev-api.dealsdray.com/product/image/";
 
 /************************************************************************************************** */
 
@@ -89,7 +89,10 @@ module.exports = {
         type_taxanomy: "WHT",
         prefix: "tray-master",
         sort_id: "Inuse",
-        items: { $ne: [] },
+        items: {
+          $ne: [],
+          $exists: true
+        }
       });
       let readyForBqcTray = await masters.find({
         prefix: "tray-master",

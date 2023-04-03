@@ -1,6 +1,7 @@
 const { delivery } = require("../../Model/deliveryModel/delivery");
 const { masters } = require("../../Model/mastersModel");
 const { orders } = require("../../Model/ordersModel/ordersModel");
+const { products } = require("../../Model/productModel/product");
 /*--------------------------------------------------------------*/
 
 /************************************************** */
@@ -26,6 +27,12 @@ module.exports = {
         readyToBqc: 0,
         readyToAudit: 0,
         readyToRdlFls: 0,
+        InCharging: 0,
+        inBqc: 0,
+        inAudit: 0,
+        inMergingWht: 0,
+        inMergingMmt: 0,
+        inRdlFls: 0,
       };
       count.allOrders = await orders.count({ partner_shop: location });
       count.notDeliveredOrders = await orders.count({
@@ -36,6 +43,7 @@ module.exports = {
         partner_shop: location,
         delivery_status: "Delivered",
       });
+
       count.processingUnits = await delivery.count({
         partner_shop: location,
         ctx_tray_id: { $exists: false },
@@ -108,6 +116,42 @@ module.exports = {
         prefix: "tray-master",
         sort_id: "Ready to RDL",
       });
+      count.inMergingMmt = await masters.count({
+        cpc: location,
+        type_taxanomy: "MMT",
+        prefix: "tray-master",
+        sort_id: "Issued to Merging",
+      });
+      count.inMergingWht = await masters.count({
+        cpc: location,
+        type_taxanomy: "WHT",
+        prefix: "tray-master",
+        sort_id: "Issued to Merging",
+      });
+      count.InCharging = await masters.count({
+        cpc: location,
+        type_taxanomy: "WHT",
+        prefix: "tray-master",
+        sort_id: "Issued to Charging",
+      });
+      count.inAudit = await masters.count({
+        cpc: location,
+        type_taxanomy: "WHT",
+        prefix: "tray-master",
+        sort_id: "Issued to Audit",
+      });
+      count.inBqc = await masters.count({
+        cpc: location,
+        type_taxanomy: "WHT",
+        prefix: "tray-master",
+        sort_id: "Issued to Bqc",
+      });
+      count.inRdlFls = await masters.count({
+        cpc: location,
+        type_taxanomy: "WHT",
+        prefix: "tray-master",
+        sort_id: "Issued to RDL-FLS",
+      });
       count.readyToMerge = await masters.count({
         $or: [
           {
@@ -115,7 +159,10 @@ module.exports = {
             prefix: "tray-master",
             type_taxanomy: "WHT",
             sort_id: "Inuse",
-            items: { $ne: [] },
+            items: {
+              $ne: [],
+              $exists: true,
+            },
           },
           {
             cpc: location,
@@ -168,7 +215,7 @@ module.exports = {
   },
   trayBasedOnStatus: (location, sortId, trayType) => {
     return new Promise(async (resolve, reject) => {
-      if (trayType == "PMT" || trayType == "MMT" && sortId == "Open") {
+      if (trayType == "PMT" || (trayType == "MMT" && sortId == "Open")) {
         const tray = await masters.find({
           cpc: location,
           type_taxanomy: trayType,
@@ -185,6 +232,19 @@ module.exports = {
         });
         resolve(tray);
       }
+    });
+  },
+  deliveredItemFilter: (brand, model, location) => {
+    return new Promise(async (resolve, reject) => {
+      const getProduct = await products.findOne({
+        brand_name: brand,
+        model_name: model,
+      });
+      const getDelivery = await delivery.findOne({
+        item_id: getProduct.vendor_sku_id,
+        cpc: location,
+      });
+      resolve(getDelivery);
     });
   },
 };

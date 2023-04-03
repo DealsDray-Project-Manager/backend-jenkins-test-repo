@@ -72,4 +72,18 @@ router.post("/tray/:sortId/:trayType/:location", async (req, res, next) => {
     next(error);
   }
 });
+// DELIVERY PAGE SORTING 
+router.post("/delivered/item",async(req,red,next)=>{
+  try {
+    const {brand,model,location}=req.body
+    const filterData=await reportingAgentRouter.deliveredItemFilter(brand,model)
+    if(filterData){
+      res.status(200).json({
+        data:filterData.data
+      })
+    }
+  } catch (error) {
+    next(error)
+  }
+})
 module.exports = router;

@@ -289,10 +289,24 @@ module.exports = {
         cpc: location,
       });
       count.whtMerge = await masters.count({
-        prefix: "tray-master",
-        type_taxanomy: "WHT",
-        sort_id: "Inuse",
-        cpc: location,
+        $or: [
+          {
+            cpc: location,
+            prefix: "tray-master",
+            type_taxanomy: "WHT",
+            sort_id: "Inuse",
+            items: {
+              $ne: [],
+              $exists: true
+            }
+          },
+          {
+            cpc: location,
+            prefix: "tray-master",
+            type_taxanomy: "WHT",
+            sort_id: "Audit Done Closed By Warehouse",
+          },
+        ],
       });
       count.mmtMerge = await masters.count({
         cpc: location,
