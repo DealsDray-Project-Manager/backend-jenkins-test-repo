@@ -168,7 +168,7 @@ module.exports = {
   },
   trayBasedOnStatus: (location, sortId, trayType) => {
     return new Promise(async (resolve, reject) => {
-      if (trayType == "PMT" || trayType == "MMT") {
+      if (trayType == "PMT" || trayType == "MMT" && sortId == "Open") {
         const tray = await masters.find({
           cpc: location,
           type_taxanomy: trayType,
