@@ -3727,32 +3727,39 @@ module.exports = {
           uic: deliveryData.utilty?.uic_code.code,
           old_uic: deliveryData.utilty.old_uic,
         };
-        let importOrder = await delivery.create(deliveryData.utilty);
-        let updateOrder = await orders.updateOne(
-          { order_id: deliveryData.utilty.order_id },
-          {
-            $set: {
-              delivery_status: "Delivered",
+        let checkDup=await delivery.findOne({order_id:deliveryData.utilty.order_id})
+        if(checkDup){
+             resolve({status:5})
+        }
+        else{
+          
+          let importOrder = await delivery.create(deliveryData.utilty);
+          let updateOrder = await orders.updateOne(
+            { order_id: deliveryData.utilty.order_id },
+            {
+              $set: {
+                delivery_status: "Delivered",
+              },
+            }
+          );
+          let addToTray = await masters.updateOne(
+            {
+              code: deliveryData.extra.tray_id,
             },
+            {
+              $push: {
+                items: obj,
+              },
+              $set: {
+                sort_id: "Wht-utility-work",
+              },
+            }
+          );
+          if (importOrder) {
+            resolve({ status: 1 });
+          } else {
+            resolve({ status: 3 });
           }
-        );
-        let addToTray = await masters.updateOne(
-          {
-            code: deliveryData.extra.tray_id,
-          },
-          {
-            $push: {
-              items: obj,
-            },
-            $set: {
-              sort_id: "Wht-utility-work",
-            },
-          }
-        );
-        if (importOrder) {
-          resolve({ status: 1 });
-        } else {
-          resolve({ status: 3 });
         }
       } else {
         resolve({ status: 2, arr: arr });
