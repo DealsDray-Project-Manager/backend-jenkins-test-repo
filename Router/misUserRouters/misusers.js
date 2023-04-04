@@ -1242,6 +1242,11 @@ router.post("/whtutility/importOrder", async (req, res, next) => {
       res.status(202).json({
         message: `${data.arr} - not exists`,
       });
+    }
+    else if (data.status == 4) {
+      res.status(202).json({
+        message: `Already Added`,
+      });
     } else {
       res.status(200).json({
         message: "Failed please try again",

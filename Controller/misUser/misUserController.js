@@ -3585,12 +3585,19 @@ module.exports = {
         );
       }
       if (arr.length == 0) {
-        orderData.created_at = Date.now();
-        let importOrder = await orders.create(orderData);
-        if (importOrder) {
-          resolve({ status: 1 });
+        let checkAlreadyImport = await orders.findOne({
+          order_id: orderData.order_id,
+        });
+        if (checkAlreadyImport) {
+          resolve({ status: 4 });
         } else {
-          resolve({ status: 3 });
+          orderData.created_at = Date.now();
+          let importOrder = await orders.create(orderData);
+          if (importOrder) {
+            resolve({ status: 1 });
+          } else {
+            resolve({ status: 3 });
+          }
         }
       } else {
         resolve({ status: 2, arr: arr });
@@ -3758,7 +3765,7 @@ module.exports = {
       // let first=0
       // let second=0
       // let third=0
-      
+
       // for(let x of tempDeliveryData){
       //   console.log(x);
       //   if (x.uic_code.code.slice(0, 4) === "9101") {
@@ -3774,7 +3781,7 @@ module.exports = {
       // console.log("second-",second)
       // console.log("third-",third)
       let count = 6192;
-      
+
       for (let x of arr) {
         count++;
         let uicNum = "";
@@ -3874,7 +3881,6 @@ module.exports = {
         let dataImportDelivery = await tempDelivery.create(objDelivery);
       }
       resolve({ status: 1 });
-    
     });
   },
 };
