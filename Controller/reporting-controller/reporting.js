@@ -302,4 +302,10 @@ module.exports = {
       }
     });
   },
+  allOrderlastOrderDate:(location)=>{
+    return new Promise(async(resolve,reject)=>{
+      let lasteOrderDate=await orders.findOne({partner_shop:location,order_date:-1})
+      console.log(lasteOrderDate);
+    })
+  }
 };
