@@ -234,17 +234,72 @@ module.exports = {
       }
     });
   },
-  deliveredItemFilter: (brand, model, location) => {
+  getDeliveryForReport: (location, limit, skip) => {
     return new Promise(async (resolve, reject) => {
-      const getProduct = await products.findOne({
-        brand_name: brand,
-        model_name: model,
+      const deliveryData = await delivery
+        .find({
+          partner_shop: location,
+        })
+        .skip(skip)
+        .limit(limit);
+      const count = await delivery.count({
+        partner_shop: location,
       });
-      const getDelivery = await delivery.findOne({
-        item_id: getProduct.vendor_sku_id,
-        cpc: location,
-      });
-      resolve(getDelivery);
+      resolve({ deliveryData: deliveryData, count: count });
+    });
+  },
+  deliveredItemFilter: (
+    brand,
+    model,
+    location,
+    fromDate,
+    toDate,
+    limit,
+    skip
+  ) => {
+    return new Promise(async (resolve, reject) => {
+      try {
+        let getDelivery;
+        if (brand == undefined && model == undefined) {
+          const fromDateISO = new Date(fromDate).toISOString();
+          const toDateISO = new Date(toDate).toISOString();
+          getDelivery = await delivery
+            .find({
+              partner_shop: location,
+              delivery_date: { $gte: fromDateISO, $lte: toDateISO },
+            })
+            .skip(skip)
+            .limit(limit);
+        } else if (fromDate == undefined && toDate == undefined) {
+          const getProduct = await products.findOne({
+            brand_name: brand,
+            model_name: model,
+          });
+          console.log(getProduct.vendor_sku_id);
+          getDelivery = await delivery.find({
+            item_id: getProduct.vendor_sku_id,
+            cpc: location,
+          }) .skip(skip)
+          .limit(limit);;
+        } else {
+          const fromDateISO = new Date(fromDate).toISOString();
+          const toDateISO = new Date(toDate).toISOString();
+          const getProduct = await products.findOne({
+            brand_name: brand,
+            model_name: model,
+          });
+          getDelivery = await delivery.find({
+            item_id: getProduct.vendor_sku_id,
+            cpc: location,
+            delivery_date: { $gte: fromDateISO, $lte: toDateISO },
+          }) .skip(skip)
+          .limit(limit);;
+        }
+        console.log(getDelivery.length);
+        resolve(getDelivery);
+      } catch (err) {
+        reject(err);
+      }
     });
   },
 };

@@ -767,7 +767,6 @@ module.exports = {
         {
           $unwind: "$delivery",
         },
-
         {
           $skip: skip,
         },

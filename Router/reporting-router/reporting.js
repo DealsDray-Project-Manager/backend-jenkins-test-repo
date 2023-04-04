@@ -72,18 +72,73 @@ router.post("/tray/:sortId/:trayType/:location", async (req, res, next) => {
     next(error);
   }
 });
-// DELIVERY PAGE SORTING 
-router.post("/delivered/item",async(req,red,next)=>{
+router.post("/getDelivery/:location/:page/:size", async (req, res, next) => {
   try {
-    const {brand,model,location}=req.body
-    const filterData=await reportingAgentRouter.deliveredItemFilter(brand,model)
-    if(filterData){
+    let { location, page, size } = req.params;
+
+    page++;
+
+    const limit = parseInt(size);
+    const skip = (page - 1) * size;
+
+    let data = await reportingAgentRouter.getDeliveryForReport(
+      location,
+      limit,
+      skip
+    );
+    if (data) {
       res.status(200).json({
-        data:filterData.data
-      })
+        data: data.deliveryData,
+        count: data.count,
+      });
     }
   } catch (error) {
-    next(error)
+    next(error);
   }
-})
+});
+// DELIVERY PAGE SORTING
+router.post("/delivered/item/filter", async (req, res, next) => {
+  try {
+    console.log(req.body);
+    let { brand, model, location, fromDate, toDate, page, size } = req.body;
+    page++;
+
+    const limit = parseInt(size);
+    const skip = (page - 1) * size;
+    const filterData = await reportingAgentRouter.deliveredItemFilter(
+      brand,
+      model,
+      location,
+      fromDate,
+      toDate,
+      limit,
+      skip
+    );
+    if (filterData.length !== 0) {
+      res.status(200).json({
+        data: filterData,
+      });
+    } else {
+      res.status(202).json({
+        data: filterData,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+// find last order date
+router.post("/order/lastOrderDate/:location", async (req, res, next) => {
+  try {
+    const { location } = req.params;
+    const data = await reportingAgentRouter.allOrderlastOrderDate(location);
+    if (data) {
+      res.status(200).json({
+        data: data,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
 module.exports = router;

@@ -4329,7 +4329,6 @@ module.exports = {
         })
         .limit(10);
       let arr = [];
-
       if (data.length !== 0) {
         for (let x of data) {
           let obj = {
@@ -4340,7 +4339,6 @@ module.exports = {
             sales_bin_desctiption: x.sales_bin_desctiption,
             wht_tray: x.wht_tray,
           };
-
           arr.push(obj);
         }
         reslove({ status: 1, item: arr });
