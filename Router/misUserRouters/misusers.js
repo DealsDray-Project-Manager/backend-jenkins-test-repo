@@ -1242,6 +1242,10 @@ router.post("/whtutility/importOrder", async (req, res, next) => {
       res.status(202).json({
         message: `${data.arr} - not exists`,
       });
+    } else if (data.status == 4) {
+      res.status(202).json({
+        message: `Already Added`,
+      });
     } else {
       res.status(200).json({
         message: "Failed please try again",
@@ -1291,6 +1295,10 @@ router.post("/whtUtility/addDelivery", async (req, res, next) => {
     } else if (data.status == 2) {
       res.status(202).json({
         message: `${data.arr} - not exists`,
+      });
+    } else if (data.status == 5) {
+      res.status(202).json({
+        message: `Already Added`,
       });
     } else {
       res.status(202).json({

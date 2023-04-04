@@ -1692,9 +1692,9 @@ router.post("/update-ctx-trayId", async (req, res, next) => {
 });
 
 /*---------------------------part of 2700 records------------------------------------------------*/
-router.post("/part-records-import", async (req, res, next) => {
+router.post("/extra/CtxRelease", async (req, res, next) => {
   try {
-    let data = await superAdminController.getUpdateRecord();
+    let data = await superAdminController.extraCtxRelease();
     if (data) {
       res.status(200).json({
         message: "done",
