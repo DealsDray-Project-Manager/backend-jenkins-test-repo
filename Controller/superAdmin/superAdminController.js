@@ -18,7 +18,7 @@ const {
 const moment = require("moment");
 
 const IISDOMAIN = "http://prexo-v8-dev-api.dealsdray.com/user/profile/";
-const IISDOMAINPRDT ="http://prexo-v8-dev-api.dealsdray.com/product/image/";
+const IISDOMAINPRDT = "http://prexo-v8-dev-api.dealsdray.com/product/image/";
 
 /************************************************************************************************** */
 
@@ -1861,49 +1861,57 @@ module.exports = {
       }
     });
   },
-  getUpdateRecord: () => {
+  extraCtxRelease: () => {
     return new Promise(async (resolve, reject) => {
-      let tray = await masters.find({
+      console.log(new Date("01-04-2023"));
+      let getCtx = await masters.find({
         prefix: "tray-master",
-        closed_time_bot: { $exists: true },
-        sort_id: { $ne: "Open" },
+        type_taxanomy: "CT",
+        sort_id: "Audit Done Closed By Warehouse",
       });
-      for (let x of tray) {
-        if (x.items.length !== 0) {
+
+      for (let x of getCtx) {
+        if (
+          x.code !== "CTC3051" &&
+          x.code !== "CTC3052" &&
+          x.code !== "CTC3053" &&
+          x.code !== "CTC3054" &&
+          x.code !== "CTC3055"
+        ) {
           for (let y of x.items) {
-            let obj;
-            if (x.type_taxanomy == "BOT") {
-              obj = {
-                stickerOne: y?.stickerOne,
-                stickerTwo: y?.stickerTwo,
-                stickerThree: y?.stickerThree,
-                stickerFour: y?.stickerFour,
-                body_damage: y?.body_damage,
-                body_damage_des: y?.body_damage_des,
-                model_brand: y?.model_brand,
-              };
-              let updateDelivery = await delivery.updateOne(
-                { tracking_id: y.tracking_id },
-                {
-                  $set: {
-                    bot_report: obj,
-                  },
-                }
-              );
-            } else {
-              let updateDelivery = await delivery.updateOne(
-                { tracking_id: y.tracking_id },
-                {
-                  $set: {
-                    bot_report: y?.bot_eval_result,
-                  },
-                }
-              );
-            }
+            let updateDelivery = await delivery.findOneAndUpdate(
+              { tracking_id: y.tracking_id },
+              {
+                $set: {
+                  tray_location: "Warehouse",
+                  sales_bin_status: "Sales Bin",
+                  sales_bin_date: Date.now(),
+                  sales_bin_grade: x.tray_grade,
+                  sales_bin_wh_agent_name: "From Bakend",
+                  sales_bin_desctiption: "From Bakend",
+                },
+              }
+            );
           }
+          let updateRetuTray = await masters.updateOne(
+            {
+              code: x.code,
+            },
+            {
+              $set: {
+                sort_id: "Open",
+                actual_items: [],
+                temp_array: [],
+                items: [],
+                issued_user_name: null,
+                from_merge: null,
+                to_merge: null,
+              },
+            }
+          );
         }
       }
-      resolve({ status: "Done" });
+      resolve({ status: true });
     });
   },
   extraReAudit: () => {

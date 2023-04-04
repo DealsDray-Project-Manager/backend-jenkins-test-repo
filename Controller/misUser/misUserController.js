@@ -3585,12 +3585,19 @@ module.exports = {
         );
       }
       if (arr.length == 0) {
-        orderData.created_at = Date.now();
-        let importOrder = await orders.create(orderData);
-        if (importOrder) {
-          resolve({ status: 1 });
+        let checkAlreadyImport = await orders.findOne({
+          order_id: orderData.order_id,
+        });
+        if (checkAlreadyImport) {
+          resolve({ status: 4 });
         } else {
-          resolve({ status: 3 });
+          orderData.created_at = Date.now();
+          let importOrder = await orders.create(orderData);
+          if (importOrder) {
+            resolve({ status: 1 });
+          } else {
+            resolve({ status: 3 });
+          }
         }
       } else {
         resolve({ status: 2, arr: arr });
@@ -3720,32 +3727,39 @@ module.exports = {
           uic: deliveryData.utilty?.uic_code.code,
           old_uic: deliveryData.utilty.old_uic,
         };
-        let importOrder = await delivery.create(deliveryData.utilty);
-        let updateOrder = await orders.updateOne(
-          { order_id: deliveryData.utilty.order_id },
-          {
-            $set: {
-              delivery_status: "Delivered",
+        let checkDup=await delivery.findOne({order_id:deliveryData.utilty.order_id})
+        if(checkDup){
+             resolve({status:5})
+        }
+        else{
+          
+          let importOrder = await delivery.create(deliveryData.utilty);
+          let updateOrder = await orders.updateOne(
+            { order_id: deliveryData.utilty.order_id },
+            {
+              $set: {
+                delivery_status: "Delivered",
+              },
+            }
+          );
+          let addToTray = await masters.updateOne(
+            {
+              code: deliveryData.extra.tray_id,
             },
+            {
+              $push: {
+                items: obj,
+              },
+              $set: {
+                sort_id: "Wht-utility-work",
+              },
+            }
+          );
+          if (importOrder) {
+            resolve({ status: 1 });
+          } else {
+            resolve({ status: 3 });
           }
-        );
-        let addToTray = await masters.updateOne(
-          {
-            code: deliveryData.extra.tray_id,
-          },
-          {
-            $push: {
-              items: obj,
-            },
-            $set: {
-              sort_id: "Wht-utility-work",
-            },
-          }
-        );
-        if (importOrder) {
-          resolve({ status: 1 });
-        } else {
-          resolve({ status: 3 });
         }
       } else {
         resolve({ status: 2, arr: arr });
@@ -3758,7 +3772,7 @@ module.exports = {
       // let first=0
       // let second=0
       // let third=0
-      
+
       // for(let x of tempDeliveryData){
       //   console.log(x);
       //   if (x.uic_code.code.slice(0, 4) === "9101") {
@@ -3774,7 +3788,7 @@ module.exports = {
       // console.log("second-",second)
       // console.log("third-",third)
       let count = 6192;
-      
+
       for (let x of arr) {
         count++;
         let uicNum = "";
@@ -3874,7 +3888,6 @@ module.exports = {
         let dataImportDelivery = await tempDelivery.create(objDelivery);
       }
       resolve({ status: 1 });
-    
     });
   },
 };
