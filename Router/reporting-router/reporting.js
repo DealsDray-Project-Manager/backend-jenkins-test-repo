@@ -127,6 +127,35 @@ router.post("/delivered/item/filter", async (req, res, next) => {
     next(error);
   }
 });
+// GET ALL ORDERS ORDER DATE WISE
+router.post(
+  "/getOrders/orderDateWise/:location/:page/:size",
+  async (req, res, next) => {
+    try {
+      let { location, page, size } = req.params;
+      page++;
+      const limit = parseInt(size);
+      const skip = (page - 1) * size;
+      let data = await reportingAgentRouter.getOrdersOrderDateWaise(
+        location,
+        limit,
+        skip
+      );
+      if (data) {
+        res.status(200).json({
+          data: data,
+          message: "Success",
+        });
+      } else {
+        res.status(404).json({
+          message: "Orders Get Failed",
+        });
+      }
+    } catch (error) {
+      next(error);
+    }
+  }
+);
 // find last order date
 router.post("/order/lastOrderDate/:location", async (req, res, next) => {
   try {

@@ -276,11 +276,13 @@ module.exports = {
             model_name: model,
           });
           console.log(getProduct.vendor_sku_id);
-          getDelivery = await delivery.find({
-            item_id: getProduct.vendor_sku_id,
-            cpc: location,
-          }) .skip(skip)
-          .limit(limit);;
+          getDelivery = await delivery
+            .find({
+              item_id: getProduct.vendor_sku_id,
+              cpc: location,
+            })
+            .skip(skip)
+            .limit(limit);
         } else {
           const fromDateISO = new Date(fromDate).toISOString();
           const toDateISO = new Date(toDate).toISOString();
@@ -288,12 +290,14 @@ module.exports = {
             brand_name: brand,
             model_name: model,
           });
-          getDelivery = await delivery.find({
-            item_id: getProduct.vendor_sku_id,
-            cpc: location,
-            delivery_date: { $gte: fromDateISO, $lte: toDateISO },
-          }) .skip(skip)
-          .limit(limit);;
+          getDelivery = await delivery
+            .find({
+              item_id: getProduct.vendor_sku_id,
+              cpc: location,
+              delivery_date: { $gte: fromDateISO, $lte: toDateISO },
+            })
+            .skip(skip)
+            .limit(limit);
         }
         console.log(getDelivery.length);
         resolve(getDelivery);
@@ -302,10 +306,42 @@ module.exports = {
       }
     });
   },
-  allOrderlastOrderDate:(location)=>{
-    return new Promise(async(resolve,reject)=>{
-      let lasteOrderDate=await orders.findOne({partner_shop:location,order_date:-1})
+  getOrdersOrderDateWaise: (location,limit, skip) => {
+    return new Promise(async (resolve, reject) => {
+      let allOrders = await orders.aggregate([
+        { $match: { partner_shop: location } },
+        {
+          $lookup: {
+            from: "products",
+            localField: `item_id`,
+            foreignField: "vendor_sku_id",
+            as: "products",
+          },
+        },
+        { $sort: { order_date: -1 } },
+        {
+          $skip: skip,
+        },
+        {
+          $limit: limit,
+        },
+      ]);
+      if (allOrders) {
+        resolve(allOrders);
+      }
+    });
+  },
+  allOrderlastOrderDate: (location) => {
+    console.log(location);
+    return new Promise(async (resolve, reject) => {
+      let lasteOrderDate = await orders
+        .find({
+          partner_shop: location,
+        })
+        .sort({ order_date: -1 })
+        .limit(1);
       console.log(lasteOrderDate);
-    })
-  }
+      resolve(lasteOrderDate);
+    });
+  },
 };
