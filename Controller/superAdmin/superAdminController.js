@@ -17,18 +17,15 @@ const {
 } = require("../../Model/masterHistoryModel/mastersHistory");
 const moment = require("moment");
 
-const IISDOMAIN = "http://prexo-v8-dev-api.dealsdray.com/user/profile/";
-const IISDOMAINPRDT = "http://prexo-v8-dev-api.dealsdray.com/product/image/";
+const IISDOMAIN = "http://prexo-v8-1-uat-adminapi.dealsdray.com/user/profile/";
+const IISDOMAINPRDT =
+  "http://prexo-v8-1-uat-adminapi.dealsdray.com/product/image/";
 
 /************************************************************************************************** */
 
 /* 
 
-
-
 @ SUPER ADMIN CONTROLLER FETCH DATA FROM MONGODB DATA BASE PREXO AND MAKE CHANGES ON DB 
-
-
 
 */
 
@@ -92,7 +89,10 @@ module.exports = {
         type_taxanomy: "WHT",
         prefix: "tray-master",
         sort_id: "Inuse",
-        items: { $ne: [] },
+        items: {
+          $ne: [],
+          $exists: true,
+        },
       });
       let readyForBqcTray = await masters.find({
         prefix: "tray-master",
@@ -1914,6 +1914,92 @@ module.exports = {
       resolve({ status: true });
     });
   },
+  categoryDelivery: () => {
+    return new Promise(async (resolve, reject) => {
+      const allDelivery = await delivery.find();
+      for (let x of allDelivery) {
+        let orderMatch = await orders.findOne({ order_id: x.order_id });
+        if (orderMatch) {
+          let updateDelivery = await delivery.updateOne(
+            { order_id: x.order_id },
+            {
+              $set: {
+                temp_delivery_status: "Delivered",
+              },
+            }
+          );
+        } else {
+          let updateDelivery = await delivery.updateOne(
+            { order_id: x.order_id },
+            {
+              $set: {
+                temp_delivery_status: "Pending",
+              },
+            }
+          );
+        }
+      }
+      resolve(allDelivery);
+    });
+  },
+  extraBugFixForLocation: () => {
+    return new Promise(async (resolve, reject) => {
+      let data = await masters.find({
+        prefix: "tray-master",
+        sort_id: { $ne: "Open" },
+      });
+      for (let x of data) {
+        if (x.type_taxanomy == "WHT") {
+          for (let y of x.items) {
+            let findOrder = await masters.findOne({ order_id: y.order_id });
+            let deliveryUpdate = await delivery.updateOne(
+              {
+                order_id: y.order_id,
+              },
+              {
+                $set: {
+                  wht_tray: x.code,
+                  tray_type: "WHT",
+                  order_date: findOrder.order_date,
+                  partner_shop: x.cpc,
+                },
+              }
+            );
+          }
+        } else {
+          for (let y of x.items) {
+            let findOrder = await masters.findOne({ order_id: y.order_id });
+            let deliveryUpdate = await delivery.updateOne(
+              {
+                order_id: y.order_id,
+              },
+              {
+                $set: {
+                  partner_shop: x.cpc,
+                  order_date: findOrder.order_date,
+                },
+              }
+            );
+          }
+        }
+      }
+      let allOrders = await orders.find();
+      for (let x of allOrders) {
+        let udpateDelivery = await delivery.updateOne(
+          {
+            order_id: x.order_id,
+          },
+          {
+            $set: {
+              order_date: x.order_date,
+            },
+          }
+        );
+      }
+      resolve(data);
+    });
+  },
+
   extraReAudit: () => {
     return new Promise(async (resolve, reject) => {
       let arr = [

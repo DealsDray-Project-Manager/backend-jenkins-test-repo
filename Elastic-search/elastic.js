@@ -12,12 +12,12 @@ const client = new Client({
 // CREATE INDEXING
 module.exports = {
   creatIndex: async () => {
-    const result = await client.indices.create({ index: "prexo-delivery-v8" });
+    const result = await client.indices.create({ index: "prexo-delivery" });
     console.log(result);
   },
   mappings: async () => {
     let data = await client.indices.putMapping({
-      index: "prexo-delivery-v8",
+      index: "prexo-delivery",
       body: {
         properties: {
           tracking_id: {
@@ -248,8 +248,9 @@ module.exports = {
       const checkOrder = await orders.findOne({ order_id: x.order_id });
       if (checkOrder) {
         x.delivery_status = "Delivered";
+        x.order_date = checkOrder?.order_date;
         let bulk = await client.index({
-          index: "prexo-delivery-v8",
+          index: "prexo-delivery",
           //if you need to customise "_id" otherwise elastic will create this
           body: x,
         });
@@ -265,7 +266,7 @@ module.exports = {
       x.created_at = Date.now();
       x.delivery_status = "Delivered";
       let bulk = await client.index({
-        index: "prexo-delivery-v8",
+        index: "prexo-delivery",
         //if you need to customise "_id" otherwise elastic will create this
         body: x,
       });
@@ -275,7 +276,7 @@ module.exports = {
   },
   superAdminTrackItemSearchData: async (searchInput, from, size) => {
     let data = await client.search({
-      index: "prexo-delivery-v8",
+      index: "prexo-delivery",
       // type: '_doc', // uncomment for Elasticsearch ≤ 6
       body: {
         from: from,
@@ -287,8 +288,11 @@ module.exports = {
           },
         },
       },
+      track_total_hits: true,
     });
     let arr = [];
+    let count = data?.hits?.total?.value;
+
     for (let result of data.hits.hits) {
       console.log(result["_source"].delivery_status);
       result.delivery_status = "Delivered";
@@ -298,11 +302,83 @@ module.exports = {
     }
     console.log(arr);
 
-    return arr;
+    return { searchResult: arr, count: count };
   },
-  superMisItemSearchData: async (searchInput, limit, skip, location) => {
+  superMisItemSearchData: async (searchInput, limit, skip, location, type) => {
+    let count = 0;
     let data = await client.search({
-      index: "prexo-delivery-v8",
+      index: "prexo-delivery",
+      // type: '_doc', // uncomment for Elasticsearch ≤ 6
+      body: {
+        from: skip,
+        size: limit,
+        query: {
+          bool: {
+            must: [
+              {
+                multi_match: {
+                  query: searchInput,
+                  fields: ["*"],
+                },
+              },
+              {
+                match: {
+                  partner_shop: location,
+                },
+              },
+            ],
+          },
+        },
+        track_total_hits: true,
+      },
+    });
+    count = data?.hits?.total?.value;
+    let arr1 = [];
+    if (type !== "only-limited-data") {
+      let dataForDownload = await client.search({
+        index: "prexo-delivery",
+        size: 10000,
+        // type: '_doc', // uncomment for Elasticsearch ≤ 6
+        body: {
+          query: {
+            bool: {
+              must: [
+                {
+                  multi_match: {
+                    query: searchInput,
+                    fields: ["*"],
+                  },
+                },
+                {
+                  match: {
+                    partner_shop: location,
+                  },
+                },
+              ],
+            },
+          },
+        },
+        track_total_hits: true,
+      });
+      for (let result of dataForDownload.hits.hits) {
+        result.delivery_status = "Delivered";
+        result["delivery"] = result["_source"];
+        arr1.push(result);
+      }
+    }
+    let arr = [];
+    for (let result of data.hits.hits) {
+      result.delivery_status = "Delivered";
+      result["delivery"] = result["_source"];
+
+      arr.push(result);
+    }
+
+    return { limitedResult: arr, allMatchedResult: arr1, count: count };
+  },
+  searchDataOfDeliveryReporting: async (searchInput, limit, skip, location) => {
+    let data = await client.search({
+      index: "prexo-delivery",
       // type: '_doc', // uncomment for Elasticsearch ≤ 6
       body: {
         from: skip,
@@ -325,21 +401,54 @@ module.exports = {
           },
         },
       },
+      track_total_hits: true,
     });
-    let arr = [];
-    for (let result of data.hits.hits) {
-      result.delivery_status = "Delivered";
-      result["delivery"] = result["_source"];
-
-      arr.push(result);
+    let dataForDownload = await client.search({
+      index: "prexo-delivery",
+      size: 10000,
+      // type: '_doc', // uncomment for Elasticsearch ≤ 6
+      body: {
+        query: {
+          bool: {
+            must: [
+              {
+                multi_match: {
+                  query: searchInput,
+                  fields: ["*"],
+                },
+              },
+              {
+                match: {
+                  partner_shop: location,
+                },
+              },
+            ],
+          },
+        },
+      },
+      track_total_hits: true,
+    });
+    let arr1 = [];
+    for (let result of dataForDownload.hits.hits) {
+      arr1.push(result["_source"]);
     }
 
-    return arr;
+    let arr = [];
+    let count = data?.hits?.total?.value;
+
+    for (let result of data.hits.hits) {
+      console.log(result["_source"]);
+
+      arr.push(result["_source"]);
+    }
+
+    return { searchResult: arr, count: count, dataForDownload: arr1 };
   },
+
   //UPDATE STOCKIN STATUS
   updateUic: async (tracking_id, bag_id) => {
     let data = await client.updateByQuery({
-      index: "prexo-delivery-v8",
+      index: "prexo-delivery",
       refresh: true,
       body: {
         script: {
@@ -362,7 +471,7 @@ module.exports = {
   //CLOSE BAG
   closeBagAfterItemPuted: async (tracking_id) => {
     let data = await client.updateByQuery({
-      index: "prexo-delivery-v8",
+      index: "prexo-delivery",
       refresh: true,
       body: {
         script: {
@@ -383,21 +492,32 @@ module.exports = {
     return data;
   },
   uicCodeGen: async (deliveryData) => {
-    let deleteDoc = await client.deleteByQuery({
-      index: "prexo-delivery-v8",
-      body: {
-        query: {
-          match: {
-            tracking_id: deliveryData.tracking_id,
+    try {
+      let deleteDoc = await client.deleteByQuery({
+        index: "prexo-delivery",
+        body: {
+          query: {
+            match: {
+              tracking_id: deliveryData.tracking_id,
+            },
           },
         },
-      },
-    });
-    let bulk = await client.index({
-      index: "prexo-delivery-v8",
-      //if you need to customise "_id" otherwise elastic will create this
-      body: deliveryData,
-    });
-    console.log(bulk);
+        conflicts: "proceed",
+        refresh: true,
+      });
+      let bulk = await client.index({
+        index: "prexo-delivery",
+        //if you need to customise "_id" otherwise elastic will create this
+        body: deliveryData,
+      });
+      console.log(bulk);
+    } catch (error) {
+      if (error.meta.statusCode === 409) {
+        console.error("Version conflict:", error.body.error);
+        // Handle version conflict error here
+      } else {
+        console.error("An error occurred:", error);
+      }
+    }
   },
 };

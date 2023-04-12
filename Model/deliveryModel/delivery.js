@@ -244,6 +244,10 @@ const deliverySchema = mongoose.Schema({
   stx_tray_id: {
     type: String,
   },
+  temp_delivery_status:{
+    type:String
+  }
+
 });
 
 const delivery = mongoose.model("delivery", deliverySchema);
