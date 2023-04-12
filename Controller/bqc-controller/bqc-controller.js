@@ -226,56 +226,61 @@ module.exports = {
     return new Promise(async (resolve, reject) => {
       let getTray = await masters.findOne({ code: trayData.trayId });
       if (getTray) {
-        Array.prototype.push.apply(getTray.items, getTray.temp_array);
-        let data = await masters.findOneAndUpdate(
-          { code: trayData.trayId },
-          {
-            $set: {
-              sort_id: "BQC Done",
-              closed_time_bot: Date.now(),
-              description: trayData.description,
-              actual_items: getTray.items,
-              temp_array: [],
-              items: [],
+        if (getTray.sort_id !== "BQC Done") {
+          Array.prototype.push.apply(getTray.items, getTray.temp_array);
+          let data = await masters.findOneAndUpdate(
+            { code: trayData.trayId },
+            {
+              $set: {
+                sort_id: "BQC Done",
+                closed_time_bot: Date.now(),
+                description: trayData.description,
+                actual_items: getTray.items,
+                temp_array: [],
+                items: [],
+              },
             },
-          },
-          { new: true }
-        );
-        if (data) {
-          for (let x of data.actual_items) {
-            if (x.bqc_report == undefined) {
-              let obj = {
-                bqc_status: x.bqc_status,
-              };
-              x["bqc_report"] = obj;
-            } else {
-              x.bqc_report.bqc_status = x.bqc_status;
-            }
-            let deliveryUpdate = await delivery.findOneAndUpdate(
-              {
-                tracking_id: x.tracking_id,
-              },
-              {
-                $set: {
-                  bqc_out_date: Date.now(),
-                  tray_status: "BQC Done",
-                  tray_location: "BQC",
-                  bqc_report: x.bqc_report,
-                },
-              },
-              {
-                new: true,
-                projection: { _id: 0 },
+            { new: true }
+          );
+          if (data) {
+            for (let x of data.actual_items) {
+              if (x.bqc_report == undefined) {
+                let obj = {
+                  bqc_status: x.bqc_status,
+                };
+                x["bqc_report"] = obj;
+              } else {
+                x.bqc_report.bqc_status = x.bqc_status;
               }
-            );
+              let deliveryUpdate = await delivery.findOneAndUpdate(
+                {
+                  tracking_id: x.tracking_id,
+                },
+                {
+                  $set: {
+                    bqc_out_date: Date.now(),
+                    tray_status: "BQC Done",
+                    tray_location: "BQC",
+                    bqc_report: x.bqc_report,
+                  },
+                },
+                {
+                  new: true,
+                  projection: { _id: 0 },
+                }
+              );
 
-            let updateElasticSearch = await Elasticsearch.uicCodeGen(
-              deliveryUpdate
-            );
+              let updateElasticSearch = await Elasticsearch.uicCodeGen(
+                deliveryUpdate
+              );
+            }
+            resolve(data);
+          } else {
+            resolve();
           }
-          resolve(data);
-        } else {
-          resolve();
+        }
+        else{
+          resolve()
         }
       } else {
         resolve();

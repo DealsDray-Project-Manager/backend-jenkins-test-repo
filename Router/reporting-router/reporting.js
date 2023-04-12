@@ -2,6 +2,7 @@
 const express = require("express");
 const router = express.Router();
 const reportingAgentRouter = require("../../Controller/reporting-controller/reporting");
+const Elasticsearch = require("../../Elastic-search/elastic");
 /*-----------------------------ROUTERS------------------------------------*/
 //DASHBOARD
 router.post("/dashboard/:location", async (req, res, next) => {
@@ -30,8 +31,13 @@ router.post("/units/:location/:page/:size/:screen", async (req, res, next) => {
       skip,
       screen
     );
-    if (unitsData) {
+    if (unitsData.units.length !== 0) {
       res.status(200).json({
+        data: unitsData.units,
+        count: unitsData.forCount,
+      });
+    } else {
+      res.status(202).json({
         data: unitsData.units,
         count: unitsData.forCount,
       });
@@ -100,7 +106,8 @@ router.post("/getDelivery/:location/:page/:size", async (req, res, next) => {
 router.post("/delivered/item/filter", async (req, res, next) => {
   try {
     console.log(req.body);
-    let { brand, model, location, fromDate, toDate, page, size } = req.body;
+    let { brand, model, location, fromDate, toDate, page, size, totalCount } =
+      req.body;
     page++;
 
     const limit = parseInt(size);
@@ -112,15 +119,53 @@ router.post("/delivered/item/filter", async (req, res, next) => {
       fromDate,
       toDate,
       limit,
-      skip
+      skip,
+      totalCount
     );
-    if (filterData.length !== 0) {
+    if (filterData.getDelivery.length !== 0) {
       res.status(200).json({
-        data: filterData,
+        data: filterData.getDelivery,
+        avgPrice: filterData.avgPrice,
+        count:filterData.count
       });
     } else {
       res.status(202).json({
-        data: filterData,
+        data: filterData.getDelivery,
+        avgPrice: filterData.avgPrice,
+        count:filterData.count
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+// filter for month wise purchise report
+router.post("/monthWiseReport/item/filter", async (req, res, next) => {
+  try {
+    console.log(req.body);
+    let { location, fromDate, toDate, page, size,type } = req.body;
+    page++;
+    const limit = parseInt(size);
+    const skip = (page - 1) * size;
+    const filterData = await reportingAgentRouter.monthWiseReportItemFilter(
+      location,
+      fromDate,
+      toDate,
+      limit,
+      skip,
+      type
+    );
+    if (filterData.monthWiseReport.length !== 0) {
+      res.status(200).json({
+        data: filterData.monthWiseReport,
+        forXlsx:filterData.forXlsxDownload,
+        count:filterData.getCount
+      });
+    } else {
+      res.status(202).json({
+        data: filterData.monthWiseReport,
+        forXlsx:filterData.forXlsxDownload,
+        count:filterData.getCount
       });
     }
   } catch (error) {
@@ -164,6 +209,151 @@ router.post("/order/lastOrderDate/:location", async (req, res, next) => {
     if (data) {
       res.status(200).json({
         data: data,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+//find delivered orders
+router.post(
+  "/getDeliveredOrders/:location/:page/:size",
+  async (req, res, next) => {
+    try {
+      let { location, page, size } = req.params;
+      page++;
+      const limit = parseInt(size);
+      const skip = (page - 1) * size;
+      let data = await reportingAgentRouter.getDeliveredOrders(
+        location,
+        limit,
+        skip
+      );
+      if (data) {
+        res.status(200).json({
+          data: data.data,
+          count: data.count,
+        });
+      }
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+// not delivered orders
+router.post(
+  "/notDeliveredOrders/:location/:page/:size",
+  async (req, res, next) => {
+    try {
+      let { location, page, size } = req.params;
+      if (!page) {
+        page = 1;
+      }
+      if (!size) {
+        size = 10;
+      }
+      page++;
+      const limit = parseInt(size);
+      const skip = (page - 1) * size;
+      let data = await reportingAgentRouter.notDeliveredOrders(
+        location,
+        limit,
+        skip
+      );
+      if (data) {
+        res.status(200).json({
+          data: data.data,
+          count: data.count,
+        });
+      }
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+router.post("/search-delivery-item", async (req, res, next) => {
+  try {
+    let { searchData, location, rowsPerPage, page } = req.body;
+    page++;
+    const limit = parseInt(rowsPerPage);
+    const skip = (page - 1) * rowsPerPage;
+    let data = await Elasticsearch.searchDataOfDeliveryReporting(
+      searchData,
+      limit,
+      skip,
+      location
+    );
+    console.log(data.dataForDownload);
+    if (data.searchResult.length !== 0) {
+      res.status(200).json({
+        data: data.searchResult,
+        count:data.count,
+        allMatchedResult:data.dataForDownload
+      });
+    } else {
+      res.status(202).json({
+        data: data.searchResult,
+        count:data.count,
+        allMatchedResult:data.dataForDownload
+
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+router.post("/search/processing", async (req, res, next) => {
+  try {
+    let { type, searchData, location, rowsPerPage, page } = req.body;
+    page++;
+    const limit = parseInt(rowsPerPage);
+    const skip = (page - 1) * rowsPerPage;
+    let data = await reportingAgentRouter.searchProcessing(
+      type,
+      searchData,
+      location,
+      limit,
+      skip
+    );
+    console.log(data);
+    if (data.deliveryData.length !== 0) {
+      res.status(200).json({
+        data: data.deliveryData,
+        count: data.count,
+      });
+    } else {
+      res.status(202).json({
+        data: data.deliveryData,
+        count: 0,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+router.post("/search/sales", async (req, res, next) => {
+  try {
+    let { type, searchData, location, rowsPerPage, page } = req.body;
+    page++;
+    const limit = parseInt(rowsPerPage);
+    const skip = (page - 1) * rowsPerPage;
+    let data = await reportingAgentRouter.SearchSales(
+      type,
+      searchData,
+      location,
+      limit,
+      skip
+    );
+    console.log(data);
+    if (data.deliveryData.length !== 0) {
+      res.status(200).json({
+        data: data.deliveryData,
+        count: data.count,
+      });
+    } else {
+      res.status(202).json({
+        data: data.deliveryData,
+        count: 0,
       });
     }
   } catch (error) {

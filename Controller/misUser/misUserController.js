@@ -171,7 +171,10 @@ module.exports = {
         partner_shop: location,
         delivery_status: "Pending",
       });
-      count.delivery = await delivery.count({ partner_shop: location });
+      count.delivery = await delivery.count({
+        partner_shop: location,
+        temp_delivery_status: {$ne:'Pending'},
+      });
       count.badDelivery = await badDelivery.count({ partner_shop: location });
       count.uicGented = await delivery.count({
         partner_shop: location,
@@ -297,8 +300,8 @@ module.exports = {
             sort_id: "Inuse",
             items: {
               $ne: [],
-              $exists: true
-            }
+              $exists: true,
+            },
           },
           {
             cpc: location,
@@ -362,18 +365,29 @@ module.exports = {
       }
     });
   },
-  getBadOrders: (location) => {
+  getBadOrders: (location, limit, skip) => {
     return new Promise(async (resolve, reject) => {
-      let data = await badOrders
+      let badOrdersData = await badOrders
+        .find({ partner_shop: location }, { _id: 0, __v: 0 })
+        .sort({ _id: -1 })
+        .limit(limit)
+        .skip(skip);
+      const count = await badOrders.count({ partner_shop: location });
+      const dataForDownload = await badOrders
         .find({ partner_shop: location }, { _id: 0, __v: 0 })
         .sort({ _id: -1 });
 
-      if (data) {
-        resolve(data);
+      if (badOrdersData) {
+        resolve({
+          badOrdersData: badOrdersData,
+          count: count,
+          dataForDownload: dataForDownload,
+        });
       }
     });
   },
-  searchOrders: (searchType, value, location) => {
+  searchOrders: (searchType, value, location, limit, skip) => {
+    console.log(limit);
     return new Promise(async (resolve, reject) => {
       let allOrders;
       if (searchType == "order_id") {
@@ -381,6 +395,7 @@ module.exports = {
           {
             $match: {
               partner_shop: location,
+              order_status: "NEW",
               order_id: { $regex: "^" + value + ".*", $options: "i" },
             },
           },
@@ -393,7 +408,10 @@ module.exports = {
             },
           },
           {
-            $limit: 50,
+            $facet: {
+              results: [{ $skip: skip }, { $limit: limit }],
+              count: [{ $count: "count" }],
+            },
           },
         ]);
       } else if (searchType == "tracking_id") {
@@ -401,6 +419,7 @@ module.exports = {
           {
             $match: {
               partner_shop: location,
+              order_status: "NEW",
               tracking_id: { $regex: ".*" + value + ".*", $options: "i" },
             },
           },
@@ -413,13 +432,17 @@ module.exports = {
             },
           },
           {
-            $limit: 50,
+            $facet: {
+              results: [{ $skip: skip }, { $limit: limit }],
+              count: [{ $count: "count" }],
+            },
           },
         ]);
       } else if (searchType == "imei") {
         allOrders = await orders.aggregate([
           {
             $match: {
+              order_status: "NEW",
               imei: { $regex: ".*" + value + ".*", $options: "i" },
               partner_shop: location,
             },
@@ -433,7 +456,10 @@ module.exports = {
             },
           },
           {
-            $limit: 50,
+            $facet: {
+              results: [{ $skip: skip }, { $limit: limit }],
+              count: [{ $count: "count" }],
+            },
           },
         ]);
       } else if (searchType == "order_status") {
@@ -441,6 +467,7 @@ module.exports = {
           {
             $match: {
               partner_shop: location,
+              order_status: "NEW",
               delivery_status: { $regex: "^" + value + ".*", $options: "i" },
             },
           },
@@ -453,7 +480,10 @@ module.exports = {
             },
           },
           {
-            $limit: 50,
+            $facet: {
+              results: [{ $skip: skip }, { $limit: limit }],
+              count: [{ $count: "count" }],
+            },
           },
         ]);
       } else if (searchType == "order_date") {
@@ -467,6 +497,7 @@ module.exports = {
           {
             $match: {
               partner_shop: location,
+              order_status: "NEW",
               order_date: { $regex: "^" + value + ".*", $options: "i" },
             },
           },
@@ -479,7 +510,10 @@ module.exports = {
             },
           },
           {
-            $limit: 50,
+            $facet: {
+              results: [{ $skip: skip }, { $limit: limit }],
+              count: [{ $count: "count" }],
+            },
           },
         ]);
       } else if (searchType == "item_id") {
@@ -487,6 +521,7 @@ module.exports = {
           {
             $match: {
               partner_shop: location,
+              order_status: "NEW",
               item_id: { $regex: "^" + value + ".*", $options: "i" },
             },
           },
@@ -499,7 +534,10 @@ module.exports = {
             },
           },
           {
-            $limit: 50,
+            $facet: {
+              results: [{ $skip: skip }, { $limit: limit }],
+              count: [{ $count: "count" }],
+            },
           },
         ]);
       } else if (searchType == "old_item_details") {
@@ -507,6 +545,7 @@ module.exports = {
           {
             $match: {
               partner_shop: location,
+              order_status: "NEW",
               old_item_details: { $regex: ".*" + value + ".*", $options: "i" },
             },
           },
@@ -519,23 +558,32 @@ module.exports = {
             },
           },
           {
-            $limit: 50,
+            $facet: {
+              results: [{ $skip: skip }, { $limit: limit }],
+              count: [{ $count: "count" }],
+            },
           },
         ]);
       }
 
       if (allOrders) {
-        resolve(allOrders);
+        console.log(allOrders);
+        const count = allOrders[0]?.count[0]?.count;
+        const orders = allOrders[0]?.results;
+        resolve({ count: count, orders: orders });
       }
     });
   },
   getOrdersCount: (location) => {
     return new Promise(async (resolve, reject) => {
-      let data = await orders.count({ partner_shop: location });
+      let data = await orders.count({
+        partner_shop: location,
+        order_status: "NEW",
+      });
       resolve(data);
     });
   },
-  badOrdersSearch: (searchType, value, location) => {
+  badOrdersSearch: (searchType, value, location, limit, skip) => {
     return new Promise(async (resolve, reject) => {
       let allOrders;
       if (searchType == "order_id") {
@@ -555,7 +603,10 @@ module.exports = {
             },
           },
           {
-            $limit: 50,
+            $facet: {
+              results: [{ $skip: skip }, { $limit: limit }],
+              count: [{ $count: "count" }],
+            },
           },
           {
             $project: { _id: 0, __v: 0 },
@@ -578,7 +629,10 @@ module.exports = {
             },
           },
           {
-            $limit: 50,
+            $facet: {
+              results: [{ $skip: skip }, { $limit: limit }],
+              count: [{ $count: "count" }],
+            },
           },
           {
             $project: { _id: 0, __v: 0 },
@@ -601,14 +655,14 @@ module.exports = {
             },
           },
           {
-            $limit: 50,
+            $facet: {
+              results: [{ $skip: skip }, { $limit: limit }],
+              count: [{ $count: "count" }],
+            },
           },
           {
             $project: { _id: 0, __v: 0 },
           },
-          // {
-          //     $unwind: "$products"
-          // }
         ]);
       } else if (searchType == "order_status") {
         allOrders = await badOrders.aggregate([
@@ -627,7 +681,10 @@ module.exports = {
             },
           },
           {
-            $limit: 50,
+            $facet: {
+              results: [{ $skip: skip }, { $limit: limit }],
+              count: [{ $count: "count" }],
+            },
           },
           {
             $project: { _id: 0, __v: 0 },
@@ -656,7 +713,10 @@ module.exports = {
             },
           },
           {
-            $limit: 50,
+            $facet: {
+              results: [{ $skip: skip }, { $limit: limit }],
+              count: [{ $count: "count" }],
+            },
           },
           {
             $project: { _id: 0, __v: 0 },
@@ -680,7 +740,10 @@ module.exports = {
             },
           },
           {
-            $limit: 50,
+            $facet: {
+              results: [{ $skip: skip }, { $limit: limit }],
+              count: [{ $count: "count" }],
+            },
           },
           {
             $project: { _id: 0, __v: 0 },
@@ -703,7 +766,10 @@ module.exports = {
             },
           },
           {
-            $limit: 50,
+            $facet: {
+              results: [{ $skip: skip }, { $limit: limit }],
+              count: [{ $count: "count" }],
+            },
           },
           {
             $project: { _id: 0, __v: 0 },
@@ -726,7 +792,10 @@ module.exports = {
             },
           },
           {
-            $limit: 50,
+            $facet: {
+              results: [{ $skip: skip }, { $limit: limit }],
+              count: [{ $count: "count" }],
+            },
           },
           {
             $project: { _id: 0, __v: 0 },
@@ -734,7 +803,9 @@ module.exports = {
         ]);
       }
       if (allOrders) {
-        resolve(allOrders);
+        const count = allOrders[0]?.count[0]?.count;
+        const orders = allOrders[0]?.results;
+        resolve({ count: count, orders: orders });
       }
     });
   },
@@ -778,6 +849,11 @@ module.exports = {
         partner_shop: location,
         delivery_status: "Delivered",
       });
+      let check = await orders.find({
+        partner_shop: location,
+        delivery_status: "Delivered",
+      });
+
       resolve({ data: data, count: count });
     });
   },
@@ -811,7 +887,8 @@ module.exports = {
       resolve({ data: data, count: count });
     });
   },
-  searchUicPageAll: (searchType, value, location, uic_status) => {
+  searchUicPageAll: (searchType, value, location, uic_status, limit, skip) => {
+    console.log(limit);
     return new Promise(async (resolve, reject) => {
       let allOrders;
       if (searchType == "order_id") {
@@ -834,6 +911,12 @@ module.exports = {
           {
             $unwind: "$order",
           },
+          {
+            $facet: {
+              results: [{ $skip: skip }, { $limit: limit }],
+              count: [{ $count: "count" }],
+            },
+          },
         ]);
       } else if (searchType == "tracking_id") {
         allOrders = await delivery.aggregate([
@@ -854,6 +937,12 @@ module.exports = {
           },
           {
             $unwind: "$order",
+          },
+          {
+            $facet: {
+              results: [{ $skip: skip }, { $limit: limit }],
+              count: [{ $count: "count" }],
+            },
           },
         ]);
       } else if (searchType == "imei") {
@@ -876,6 +965,12 @@ module.exports = {
           {
             $unwind: "$order",
           },
+          {
+            $facet: {
+              results: [{ $skip: skip }, { $limit: limit }],
+              count: [{ $count: "count" }],
+            },
+          },
         ]);
       } else if (searchType == "order_status") {
         allOrders = await delivery.aggregate([
@@ -896,6 +991,12 @@ module.exports = {
           },
           {
             $unwind: "$order",
+          },
+          {
+            $facet: {
+              results: [{ $skip: skip }, { $limit: limit }],
+              count: [{ $count: "count" }],
+            },
           },
         ]);
       } else if (searchType == "order_date") {
@@ -921,6 +1022,12 @@ module.exports = {
           {
             $unwind: "$order",
           },
+          {
+            $facet: {
+              results: [{ $skip: skip }, { $limit: limit }],
+              count: [{ $count: "count" }],
+            },
+          },
         ]);
       } else if (searchType == "order_timestamp") {
         value = moment(value, "DD-MM-YYYY HH:mm").toDate();
@@ -943,6 +1050,12 @@ module.exports = {
           {
             $unwind: "$order",
           },
+          {
+            $facet: {
+              results: [{ $skip: skip }, { $limit: limit }],
+              count: [{ $count: "count" }],
+            },
+          },
         ]);
       } else if (searchType == "item_id") {
         allOrders = await delivery.aggregate([
@@ -963,6 +1076,12 @@ module.exports = {
           },
           {
             $unwind: "$order",
+          },
+          {
+            $facet: {
+              results: [{ $skip: skip }, { $limit: limit }],
+              count: [{ $count: "count" }],
+            },
           },
         ]);
       } else if (searchType == "uic") {
@@ -985,6 +1104,12 @@ module.exports = {
           {
             $unwind: "$order",
           },
+          {
+            $facet: {
+              results: [{ $skip: skip }, { $limit: limit }],
+              count: [{ $count: "count" }],
+            },
+          },
         ]);
       } else if (searchType == "old_item_details") {
         allOrders = await badOrders.aggregate([
@@ -1006,15 +1131,23 @@ module.exports = {
           {
             $unwind: "$order",
           },
+          {
+            $facet: {
+              results: [{ $skip: skip }, { $limit: limit }],
+              count: [{ $count: "count" }],
+            },
+          },
         ]);
       }
 
       if (allOrders) {
-        resolve(allOrders);
+        const count = allOrders[0]?.count[0]?.count;
+        const orders = allOrders[0]?.results;
+        resolve({ count: count, orders: orders });
       }
     });
   },
-  searchUicPageAllPage: (searchType, value, location) => {
+  searchUicPageAllPage: (searchType, value, location, limit, skip) => {
     return new Promise(async (resolve, reject) => {
       let allOrders;
       if (searchType == "order_id") {
@@ -1036,6 +1169,12 @@ module.exports = {
           {
             $unwind: "$order",
           },
+          {
+            $facet: {
+              results: [{ $skip: skip }, { $limit: limit }],
+              count: [{ $count: "count" }],
+            },
+          },
         ]);
       } else if (searchType == "tracking_id") {
         allOrders = await delivery.aggregate([
@@ -1055,6 +1194,12 @@ module.exports = {
           },
           {
             $unwind: "$order",
+          },
+          {
+            $facet: {
+              results: [{ $skip: skip }, { $limit: limit }],
+              count: [{ $count: "count" }],
+            },
           },
         ]);
       } else if (searchType == "imei") {
@@ -1076,6 +1221,12 @@ module.exports = {
           {
             $unwind: "$order",
           },
+          {
+            $facet: {
+              results: [{ $skip: skip }, { $limit: limit }],
+              count: [{ $count: "count" }],
+            },
+          },
         ]);
       } else if (searchType == "order_status") {
         allOrders = await delivery.aggregate([
@@ -1095,6 +1246,12 @@ module.exports = {
           },
           {
             $unwind: "$order",
+          },
+          {
+            $facet: {
+              results: [{ $skip: skip }, { $limit: limit }],
+              count: [{ $count: "count" }],
+            },
           },
         ]);
       } else if (searchType == "order_date") {
@@ -1119,6 +1276,12 @@ module.exports = {
           {
             $unwind: "$order",
           },
+          {
+            $facet: {
+              results: [{ $skip: skip }, { $limit: limit }],
+              count: [{ $count: "count" }],
+            },
+          },
         ]);
       } else if (searchType == "order_timestamp") {
         value = moment(value, "DD-MM-YYYY HH:mm").toDate();
@@ -1140,6 +1303,12 @@ module.exports = {
           {
             $unwind: "$order",
           },
+          {
+            $facet: {
+              results: [{ $skip: skip }, { $limit: limit }],
+              count: [{ $count: "count" }],
+            },
+          },
         ]);
       } else if (searchType == "item_id") {
         allOrders = await delivery.aggregate([
@@ -1159,6 +1328,12 @@ module.exports = {
           },
           {
             $unwind: "$order",
+          },
+          {
+            $facet: {
+              results: [{ $skip: skip }, { $limit: limit }],
+              count: [{ $count: "count" }],
+            },
           },
         ]);
       } else if (searchType == "uic") {
@@ -1180,6 +1355,12 @@ module.exports = {
           {
             $unwind: "$order",
           },
+          {
+            $facet: {
+              results: [{ $skip: skip }, { $limit: limit }],
+              count: [{ $count: "count" }],
+            },
+          },
         ]);
       } else if (searchType == "old_item_details") {
         allOrders = await badOrders.aggregate([
@@ -1200,11 +1381,20 @@ module.exports = {
           {
             $unwind: "$order",
           },
+          {
+            $facet: {
+              results: [{ $skip: skip }, { $limit: limit }],
+              count: [{ $count: "count" }],
+            },
+          },
         ]);
       }
 
       if (allOrders) {
-        resolve(allOrders);
+        console.log(allOrders);
+        const count = allOrders[0]?.count[0]?.count;
+        const orders = allOrders[0]?.results;
+        resolve({ count: count, orders: orders });
       }
     });
   },
@@ -1213,18 +1403,21 @@ module.exports = {
       let data = await orders
         .find({
           partner_shop: location,
+          order_status: "NEW",
           delivery_status: "Pending",
         })
         .limit(limit)
         .skip(skip);
       let count = await orders.count({
         partner_shop: location,
+        order_status: "NEW",
         delivery_status: "Pending",
       });
       resolve({ data: data, count: count });
     });
   },
-  searchDeliveredOrders: (searchType, value, location) => {
+  searchDeliveredOrders: (searchType, value, location, status, limit, skip) => {
+    console.log(searchType);
     return new Promise(async (resolve, reject) => {
       let allOrders;
       if (searchType == "order_id") {
@@ -1233,9 +1426,10 @@ module.exports = {
             $match: {
               order_id: { $regex: "^" + value + ".*", $options: "i" },
               partner_shop: location,
-              delivery_status: "Delivered",
+              delivery_status: status,
             },
           },
+
           {
             $lookup: {
               from: "deliveries",
@@ -1245,7 +1439,10 @@ module.exports = {
             },
           },
           {
-            $unwind: "$delivery",
+            $facet: {
+              results: [{ $skip: skip }, { $limit: limit }],
+              count: [{ $count: "count" }],
+            },
           },
         ]);
       } else if (searchType == "tracking_id") {
@@ -1253,9 +1450,10 @@ module.exports = {
           {
             $match: {
               partner_shop: location,
-              delivery_status: "Delivered",
+              delivery_status: status,
             },
           },
+
           {
             $lookup: {
               from: "deliveries",
@@ -1277,16 +1475,21 @@ module.exports = {
               },
             },
           },
+         
         ]);
+        const count = 1;
+        const orders = allOrders;
+        resolve({ count: count, orders: orders });
       } else if (searchType == "imei") {
         allOrders = await orders.aggregate([
           {
             $match: {
               imei: { $regex: ".*" + value + ".*", $options: "i" },
               partner_shop: location,
-              delivery_status: "Delivered",
+              delivery_status: status,
             },
           },
+
           {
             $lookup: {
               from: "deliveries",
@@ -1295,9 +1498,14 @@ module.exports = {
               as: "delivery",
             },
           },
+          
           {
-            $unwind: "$delivery",
+            $facet: {
+              results: [{ $skip: skip }, { $limit: limit }],
+              count: [{ $count: "count" }],
+            },
           },
+          
         ]);
       } else if (searchType == "order_date") {
         value = value.split("/");
@@ -1308,9 +1516,10 @@ module.exports = {
             $match: {
               partner_shop: location,
               order_date: { $regex: ".*" + value + ".*", $options: "i" },
-              delivery_status: "Delivered",
+              delivery_status: status,
             },
           },
+
           {
             $lookup: {
               from: "deliveries",
@@ -1321,6 +1530,12 @@ module.exports = {
           },
           {
             $unwind: "$delivery",
+          },
+          {
+            $facet: {
+              results: [{ $skip: skip }, { $limit: limit }],
+              count: [{ $count: "count" }],
+            },
           },
         ]);
       } else if (searchType == "item_id") {
@@ -1329,9 +1544,10 @@ module.exports = {
             $match: {
               partner_shop: location,
               item_id: { $regex: "^" + value + ".*", $options: "i" },
-              delivery_status: "Delivered",
+              delivery_status: status,
             },
           },
+
           {
             $lookup: {
               from: "deliveries",
@@ -1340,13 +1556,20 @@ module.exports = {
               as: "delivery",
             },
           },
+         
           {
-            $unwind: "$delivery",
+            $facet: {
+              results: [{ $skip: skip }, { $limit: limit }],
+              count: [{ $count: "count" }],
+            },
           },
         ]);
       }
       if (allOrders) {
-        resolve(allOrders);
+        console.log(allOrders);
+        const count = allOrders[0]?.count[0]?.count;
+        const orders = allOrders[0]?.results;
+        resolve({ count: count, orders: orders });
       }
     });
   },
@@ -1503,7 +1726,11 @@ module.exports = {
   },
   getDeliveryCount: (location) => {
     return new Promise(async (resolve, reject) => {
-      let data = await delivery.count({ partner_shop: location });
+      console.log(location);
+      let data = await delivery.count({
+        partner_shop: location,
+        temp_delivery_status: {$ne:'Pending'},
+      });
       if (data) {
         resolve(data);
       }
@@ -1551,18 +1778,20 @@ module.exports = {
       resolve(allDeliveryData);
     });
   },
-  getBadDelivery: (location) => {
+  getBadDelivery: (location, limit, skip) => {
     return new Promise(async (resolve, reject) => {
-      let data = await badDelivery
+      let badDeliverydata = await badDelivery
         .find({ partner_shop: location }, { _id: 0, __v: 0 })
+        .limit(limit)
+        .skip(skip)
         .sort({ _id: -1 });
-
-      if (data) {
-        resolve(data);
+      let count = await badDelivery.count({ partner_shop: location });
+      if (badDeliverydata) {
+        resolve({ badDeliverydata: badDeliverydata, count: count });
       }
     });
   },
-  searchDeliveryData: (searchType, value, location) => {
+  searchDeliveryData: (searchType, value, location, limit, skip) => {
     return new Promise(async (resolve, reject) => {
       let allOrders;
       if (searchType == "order_id") {
@@ -1600,7 +1829,10 @@ module.exports = {
             },
           },
           {
-            $limit: 50,
+            $facet: {
+              results: [{ $skip: skip }, { $limit: limit }],
+              count: [{ $count: "count" }],
+            },
           },
         ]);
       } else if (searchType == "tracking_id") {
@@ -1637,7 +1869,10 @@ module.exports = {
             },
           },
           {
-            $limit: 50,
+            $facet: {
+              results: [{ $skip: skip }, { $limit: limit }],
+              count: [{ $count: "count" }],
+            },
           },
         ]);
       } else if (searchType == "imei") {
@@ -1674,7 +1909,10 @@ module.exports = {
             },
           },
           {
-            $limit: 50,
+            $facet: {
+              results: [{ $skip: skip }, { $limit: limit }],
+              count: [{ $count: "count" }],
+            },
           },
         ]);
       } else if (searchType == "uic_status") {
@@ -1711,7 +1949,10 @@ module.exports = {
             },
           },
           {
-            $limit: 50,
+            $facet: {
+              results: [{ $skip: skip }, { $limit: limit }],
+              count: [{ $count: "count" }],
+            },
           },
         ]);
       } else if (searchType == "item_id") {
@@ -1748,12 +1989,18 @@ module.exports = {
             },
           },
           {
-            $limit: 50,
+            $facet: {
+              results: [{ $skip: skip }, { $limit: limit }],
+              count: [{ $count: "count" }],
+            },
           },
         ]);
       }
       if (allOrders) {
-        resolve(allOrders);
+        console.log(allOrders);
+        const count = allOrders[0]?.count[0]?.count;
+        const deliveryData = allOrders[0]?.results;
+        resolve({ count: count, deliveryData: deliveryData });
       }
     });
   },
@@ -3598,12 +3845,19 @@ module.exports = {
         );
       }
       if (arr.length == 0) {
-        orderData.created_at = Date.now();
-        let importOrder = await orders.create(orderData);
-        if (importOrder) {
-          resolve({ status: 1 });
+        let checkAlreadyImport = await orders.findOne({
+          order_id: orderData.order_id,
+        });
+        if (checkAlreadyImport) {
+          resolve({ status: 4 });
         } else {
-          resolve({ status: 3 });
+          orderData.created_at = Date.now();
+          let importOrder = await orders.create(orderData);
+          if (importOrder) {
+            resolve({ status: 1 });
+          } else {
+            resolve({ status: 3 });
+          }
         }
       } else {
         resolve({ status: 2, arr: arr });
@@ -3733,32 +3987,39 @@ module.exports = {
           uic: deliveryData.utilty?.uic_code.code,
           old_uic: deliveryData.utilty.old_uic,
         };
-        let importOrder = await delivery.create(deliveryData.utilty);
-        let updateOrder = await orders.updateOne(
-          { order_id: deliveryData.utilty.order_id },
-          {
-            $set: {
-              delivery_status: "Delivered",
-            },
-          }
-        );
-        let addToTray = await masters.updateOne(
-          {
-            code: deliveryData.extra.tray_id,
-          },
-          {
-            $push: {
-              items: obj,
-            },
-            $set: {
-              sort_id: "Wht-utility-work",
-            },
-          }
-        );
-        if (importOrder) {
-          resolve({ status: 1 });
+        let checkDup = await delivery.findOne({
+          order_id: deliveryData.utilty.order_id,
+        });
+        if (checkDup) {
+          resolve({ status: 5 });
         } else {
-          resolve({ status: 3 });
+          let importOrder = await delivery.create(deliveryData.utilty);
+          let updateOrder = await orders.updateOne(
+            { order_id: deliveryData.utilty.order_id },
+            {
+              $set: {
+                delivery_status: "Delivered",
+              },
+            }
+          );
+          let addToTray = await masters.updateOne(
+            {
+              code: deliveryData.extra.tray_id,
+            },
+            {
+              $push: {
+                items: obj,
+              },
+              $set: {
+                sort_id: "Wht-utility-work",
+              },
+            }
+          );
+          if (importOrder) {
+            resolve({ status: 1 });
+          } else {
+            resolve({ status: 3 });
+          }
         }
       } else {
         resolve({ status: 2, arr: arr });
@@ -3771,7 +4032,7 @@ module.exports = {
       // let first=0
       // let second=0
       // let third=0
-      
+
       // for(let x of tempDeliveryData){
       //   console.log(x);
       //   if (x.uic_code.code.slice(0, 4) === "9101") {
@@ -3787,7 +4048,7 @@ module.exports = {
       // console.log("second-",second)
       // console.log("third-",third)
       let count = 6192;
-      
+
       for (let x of arr) {
         count++;
         let uicNum = "";
@@ -3887,7 +4148,6 @@ module.exports = {
         let dataImportDelivery = await tempDelivery.create(objDelivery);
       }
       resolve({ status: 1 });
-    
     });
   },
 };

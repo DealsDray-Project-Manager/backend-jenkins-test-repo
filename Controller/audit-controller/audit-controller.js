@@ -347,7 +347,7 @@ module.exports = {
           }
         );
       }
-      if (data.type_taxanomy == "WHT") {
+      if (data.type_taxanomy !== "WHT") {
         for (let x of data.items) {
           let updateDelivery = await delivery.findOneAndUpdate(
             { tracking_id: x.tracking_id },

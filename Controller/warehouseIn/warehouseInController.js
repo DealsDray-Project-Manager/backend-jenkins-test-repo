@@ -1916,8 +1916,8 @@ module.exports = {
               sort_id: "Inuse",
               items: {
                 $ne: [],
-                $exists: true
-              }
+                $exists: true,
+              },
             },
             {
               cpc: location,
@@ -1972,7 +1972,16 @@ module.exports = {
         } else {
           resolve({ data: data, status: 2 });
         }
-      } else if (sortId === "Send for charging") {
+      }
+      else if(sortId == "super-admin"){
+        let data = await masters.findOne({ code: trayId });
+        if (data) {
+          resolve({ data: data, status: 1 });
+        } else {
+          resolve({ data: data, status: 2 });
+        }
+      }
+       else if (sortId === "Send for charging") {
         let data = await masters.findOne({ code: trayId, cpc: location });
         if (data) {
           if (
@@ -2323,6 +2332,7 @@ module.exports = {
               description: trayData.description,
               sort_id: "Issued to RDL-FLS",
               requested_date: Date.now(),
+              assigned_date: Date.now(),
               temp_array: [],
             },
           }
@@ -2597,6 +2607,7 @@ module.exports = {
             $set: {
               description: trayData.description,
               sort_id: "Ready to Audit",
+              closed_time_wharehouse: Date.now(),
               issued_user_name: null,
               actual_items: [],
             },
@@ -2635,6 +2646,7 @@ module.exports = {
             $set: {
               description: trayData.description,
               sort_id: "Ready to BQC",
+              closed_time_wharehouse: Date.now(),
               issued_user_name: null,
               actual_items: [],
             },
@@ -2683,6 +2695,7 @@ module.exports = {
           {
             $set: {
               sort_id: "Ready to RDL",
+              closed_time_wharehouse: Date.now(),
               actual_items: [],
               issued_user_name: null,
               from_merge: null,
@@ -3112,6 +3125,7 @@ module.exports = {
           {
             $set: {
               sort_id: "Closed",
+              closed_time_wharehouse: Date.now(),
               actual_items: [],
               issued_user_name: null,
             },
@@ -3145,6 +3159,7 @@ module.exports = {
           {
             $set: {
               sort_id: "Inuse",
+              closed_time_wharehouse: Date.now(),
               actual_items: [],
               issued_user_name: null,
             },
@@ -4322,6 +4337,7 @@ module.exports = {
     return new Promise(async (reslove, reject) => {
       let data = await delivery
         .find({
+          sales_bin_status: "Sales Bin",
           "uic_code.code": {
             $regex: ".*" + uic + ".*",
             $options: "i",
@@ -4626,6 +4642,7 @@ module.exports = {
             {
               $set: {
                 sort_id: "Ready to BQC",
+                closed_time_wharehouse: Date.now(),
                 issued_user_name: null,
                 actual_items: [],
                 temp_array: [],
@@ -4641,6 +4658,7 @@ module.exports = {
               $set: {
                 sort_id: "Ready to Audit",
                 issued_user_name: null,
+                closed_time_wharehouse: Date.now(),
                 actual_items: [],
                 temp_array: [],
                 pickup_type: null,
@@ -4668,6 +4686,7 @@ module.exports = {
             {
               $set: {
                 sort_id: "Ready to RDL",
+                closed_time_wharehouse: Date.now(),
                 issued_user_name: null,
                 actual_items: [],
                 temp_array: [],
@@ -4917,6 +4936,7 @@ module.exports = {
             description: trayData.description,
             temp_array: [],
             sort_id: "Ready to RDL-Repair",
+            closed_time_wharehouse: Date.now(),
             assigned_date: Date.now(),
           },
         }
@@ -5190,6 +5210,26 @@ module.exports = {
           } else {
             resolve({ status: 0 });
           }
+        } else if (trayData.itemCount == "0") {
+          dataUpdate = await masters.findOneAndUpdate(
+            { code: trayData.trayId },
+            {
+              $set: {
+                issued_user_name: null,
+                actual_items: [],
+                temp_array: [],
+                from_merge: null,
+                to_merge: null,
+                sort_id: "Open",
+                description: trayData.description,
+              },
+            }
+          );
+          if (dataUpdate) {
+            resolve({ status: 3 });
+          } else {
+            resolve({ status: 0 });
+          }
         } else {
           dataUpdate = await masters.findOneAndUpdate(
             { code: trayData.trayId },
@@ -5201,6 +5241,7 @@ module.exports = {
                 from_merge: null,
                 to_merge: null,
                 sort_id: "Inuse",
+                closed_time_wharehouse: Date.now(),
                 description: trayData.description,
               },
             }

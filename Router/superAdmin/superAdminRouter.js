@@ -1201,13 +1201,15 @@ router.post("/search-admin-track-item", async (req, res, next) => {
     //   searchData,
     //   location
     // );
-    if (data.length != 0) {
+    if (data.searchResult.length != 0) {
       res.status(200).json({
-        data: data,
+        data: data.searchResult,
+        count:data.count
       });
     } else {
       res.status(202).json({
-        data: data,
+        data: data.searchResult,
+        count:data.count
       });
     }
   } catch (error) {
@@ -1694,9 +1696,41 @@ router.post("/update-ctx-trayId", async (req, res, next) => {
 });
 
 /*---------------------------part of 2700 records------------------------------------------------*/
-router.post("/part-records-import", async (req, res, next) => {
+router.post("/extra/CtxRelease", async (req, res, next) => {
   try {
-    let data = await superAdminController.getUpdateRecord();
+    let data = await superAdminController.extraCtxRelease();
+    if (data) {
+      res.status(200).json({
+        message: "done",
+      });
+    } else {
+      res.status(202).json({
+        message: "Failed",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+router.post("/extra/categoryDelivery", async (req, res, next) => {
+  try {
+    let data = await superAdminController.categoryDelivery();
+    if (data) {
+      res.status(200).json({
+        message: "done",
+      });
+    } else {
+      res.status(202).json({
+        message: "Failed",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+router.post("/extra/bugFix", async (req, res, next) => {
+  try {
+    let data = await superAdminController.extraBugFixForLocation();
     if (data) {
       res.status(200).json({
         message: "done",

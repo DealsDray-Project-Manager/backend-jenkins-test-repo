@@ -172,6 +172,10 @@ router.post("/bqc-done", async (req, res, next) => {
       res.status(200).json({
         message: "Successfully Send to Warehouse",
       });
+    } else {
+      res.status(202).json({
+        message: "Already Closed",
+      });
     }
   } catch (error) {
     next(error);
