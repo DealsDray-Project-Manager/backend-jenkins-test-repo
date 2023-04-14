@@ -1505,10 +1505,11 @@ router.post(
   "/assignToAgent/rdl-fls/sentToWarehouse",
   async (req, res, next) => {
     try {
-      const { tray, user_name } = req.body;
+      const { tray, user_name,sortId } = req.body;
       let data = await misUserController.assignToAgentRequestToWhRdlFls(
         tray,
-        user_name
+        user_name,
+        sortId
       );
       if (data.status == true) {
         res.status(200).json({
@@ -1529,6 +1530,7 @@ router.post(
   "/assignToAgent/rdl-fls/users/:user_type/:location",
   async (req, res, next) => {
     try {
+      console.log(req.params);
       let data = await misUserController.getRdlFlsUser(
         req.params.user_type,
         req.params.location

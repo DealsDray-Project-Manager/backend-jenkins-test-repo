@@ -3537,7 +3537,8 @@ module.exports = {
       }
     });
   },
-  assignToAgentRequestToWhRdlFls: (tray, user_name) => {
+  assignToAgentRequestToWhRdlFls: (tray, user_name,sortId) => {
+    console.log(sortId);
     return new Promise(async (resolve, reject) => {
       let sendtoRdlMis;
       for (let x of tray) {
@@ -3545,7 +3546,7 @@ module.exports = {
           { code: x },
           {
             $set: {
-              sort_id: "Send for RDL-FLS",
+              sort_id: sortId,
               actual_items: [],
               issued_user_name: user_name,
               from_merge: null,

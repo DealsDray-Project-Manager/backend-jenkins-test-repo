@@ -1,7 +1,10 @@
 const { delivery } = require("../../Model/deliveryModel/delivery");
 const { masters } = require("../../Model/mastersModel");
 const { orders } = require("../../Model/ordersModel/ordersModel");
+const { products } = require("../../Model/productModel/product");
+
 const Elasticsearch = require("../../Elastic-search/elastic");
+
 module.exports = {
   getAssigendOtherTray: (username) => {
     return new Promise(async (resolve, reject) => {
@@ -125,6 +128,7 @@ module.exports = {
               bqc_done_close: 1,
               bqc_software_report: 1,
               bot_report: 1,
+              item_id:1,
               charging_done_date: 1,
               audit_report: 1,
             }
@@ -134,9 +138,11 @@ module.exports = {
               let getOrder = await orders.findOne({
                 order_id: uicExists.order_id,
               });
+              let muicFind=await products.findOne({vendor_sku_id:uicExists.item_id})
               obj.delivery = uicExists;
               obj.order = getOrder;
               obj.checkIntray = checkIntray;
+              obj.muic=muicFind.muic
 
               resolve({ status: 1, data: obj });
             } else {

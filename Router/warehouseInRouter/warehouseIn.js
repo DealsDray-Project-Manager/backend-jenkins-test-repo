@@ -2142,6 +2142,28 @@ router.post("/checkRdl-flsUserStatus/:username", async (req, res, next) => {
     next(error);
   }
 });
+//CHECK RDL-2 USER FREE OR NOT
+router.post("/checkRdl-2/status/:username", async (req, res, next) => {
+  try {
+    const { username } = req.params;
+    let data = await warehouseInController.checkRdl2UserStatus(username);
+    if (data.status === 1) {
+      res.status(200).json({
+        data: "User is free",
+      });
+    } else if (data.status === 2) {
+      res.status(202).json({
+        data: "Agent already have a lot",
+      });
+    } else if (data.status === 3) {
+      res.status(202).json({
+        data: "User not active",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
 router.post(
   "/request-for-RDL-fls/:status/:location",
   async (req, res, next) => {

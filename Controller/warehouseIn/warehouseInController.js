@@ -44,6 +44,7 @@ module.exports = {
         pickupRequest: 0,
         returnFromPickup: 0,
         rdlFlsRequest: 0,
+        rdl2Request:0,
         returnFromRdlFls: 0,
         allCtxTray: 0,
         ctxTransferRequest: 0,
@@ -320,6 +321,12 @@ module.exports = {
         prefix: "tray-master",
         type_taxanomy: "WHT",
         sort_id: "Send for RDL-FLS",
+        cpc: location,
+      });
+      count.rdl2Request = await masters.count({
+        prefix: "tray-master",
+        type_taxanomy: "WHT",
+        sort_id: "Send for RDL-2",
         cpc: location,
       });
       count.returnFromRdlFls = await masters.count({
@@ -2323,7 +2330,8 @@ module.exports = {
             );
           }
         }
-      } else if (trayData.sortId == "Send for RDL-FLS") {
+      } 
+      else if (trayData.sortId == "Send for RDL-FLS") {
         data = await masters.findOneAndUpdate(
           { code: trayData.trayId },
           {
@@ -2363,7 +2371,49 @@ module.exports = {
             }
           }
         }
-      } else {
+      }
+      else if (trayData.sortId == "Send for RDL-2") {
+        data = await masters.findOneAndUpdate(
+          { code: trayData.trayId },
+          {
+            $set: {
+              actual_items: [],
+              description: trayData.description,
+              sort_id: "Issued to RDL-2",
+              requested_date: Date.now(),
+              assigned_date: Date.now(),
+              temp_array: [],
+            },
+          }
+        );
+        if (data) {
+          for (let x of data.items) {
+            let deliveryUpdate = await delivery.findOneAndUpdate(
+              { tracking_id: x.tracking_id },
+              {
+                $set: {
+                  rdl_fls_one_user_name: data?.issued_user_name,
+                  rdl_fls_issued_date: Date.now(),
+                  tray_location: "RDL-2",
+                },
+              },
+              {
+                new: true,
+                projection: { _id: 0 },
+              }
+            );
+            let updateElasticSearch = await elasticsearch.uicCodeGen(
+              deliveryUpdate
+            );
+            if (deliveryUpdate) {
+              resolve(data);
+            } else {
+              resolve();
+            }
+          }
+        }
+      }
+       else {
         data = await masters.findOneAndUpdate(
           { code: trayData.trayId },
           {
@@ -4712,6 +4762,27 @@ module.exports = {
           $or: [
             { issued_user_name: username, sort_id: "Issued to RDL-FLS" },
             { issued_user_name: username, sort_id: "Closed By RDL-FLS" },
+          ],
+        });
+
+        if (data) {
+          resolve({ status: 2 });
+        } else {
+          resolve({ status: 1 });
+        }
+      } else {
+        resolve({ status: 3 });
+      }
+    });
+  },
+  checkRdl2UserStatus:(username)=>{
+    return new Promise(async (resolve, reject) => {
+      let userActive = await user.findOne({ user_name: username });
+      if (userActive.status == "Active") {
+        let data = await masters.findOne({
+          $or: [
+            { issued_user_name: username, sort_id: "Issued to RDL-2" },
+            { issued_user_name: username, sort_id: "Closed By RDL-2" },
           ],
         });
 

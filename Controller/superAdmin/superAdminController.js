@@ -2221,6 +2221,7 @@ module.exports = {
       let checkDup = await partAndColor.findOne({
         name: dataOfPartOrColor.name,
         type: dataOfPartOrColor.type,
+        muic: dataOfPartOrColor.muic,
       });
       if (checkDup) {
         resolve({ status: 2 });
@@ -2238,6 +2239,31 @@ module.exports = {
   viewColorOrPart: (type) => {
     return new Promise(async (resolve, reject) => {
       const data = await partAndColor.find({ type: type });
+      resolve(data);
+    });
+  },
+  getMuic: () => {
+    return new Promise(async (resolve, reject) => {
+      const muicData = await products.find({}, { muic: 1 }).sort({ muic: 1 });
+      resolve(muicData);
+    });
+  },
+  getColorAccordingMuic: (muic, page) => {
+    return new Promise(async (resolve, reject) => {
+      const colorData = await partAndColor.find({
+        muic: muic,
+        type: "color-list",
+      });
+      resolve(colorData);
+    });
+  },
+  partListMuicColor: (muic, color) => {
+    return new Promise(async (resolve, reject) => {
+      const data = await partAndColor.find({
+        type: "part-list",
+        muic: muic,
+        color: color,
+      });
       resolve(data);
     });
   },
@@ -2274,13 +2300,16 @@ module.exports = {
     });
   },
   editPartOrColor: (dataOfPartorColor) => {
+    console.log(dataOfPartorColor);
     return new Promise(async (resolve, reject) => {
       let updateData = await partAndColor.updateOne(
         { _id: dataOfPartorColor._id },
         {
           $set: {
             name: dataOfPartorColor.name,
+            muic: dataOfPartorColor.muic,
             description: dataOfPartorColor.description,
+            color: dataOfPartorColor?.color,
           },
         }
       );
@@ -2324,6 +2353,29 @@ module.exports = {
       } else {
         resolve({ status: 0 });
       }
+    });
+  },
+  extraPartidAdd: () => {
+    return new Promise(async (resolve, reject) => {
+      const allPart = await partAndColor.find({ type: "part-list" });
+      let str = "DP000000";
+      for (let x of allPart) {
+        let num = parseInt(str.substring(2)) + 1;
+
+        let updatedStr = str.substring(0, 2) + num.toString().padStart(6, "0");
+        str = updatedStr;
+
+        console.log(str);
+        const updateid = await partAndColor.updateOne(
+          { type: "part-list", name: x.name },
+          {
+            $set: {
+              part_code: str,
+            },
+          }
+        );
+      }
+      resolve(str);
     });
   },
 };
