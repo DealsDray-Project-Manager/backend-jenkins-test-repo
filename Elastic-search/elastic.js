@@ -12,12 +12,12 @@ const client = new Client({
 // CREATE INDEXING
 module.exports = {
   creatIndex: async () => {
-    const result = await client.indices.create({ index: "prexo-delivery" });
+    const result = await client.indices.create({ index: "prexo-delivery-8-2" });
     console.log(result);
   },
   mappings: async () => {
     let data = await client.indices.putMapping({
-      index: "prexo-delivery",
+      index: "prexo-delivery-8-2",
       body: {
         properties: {
           tracking_id: {
@@ -250,7 +250,7 @@ module.exports = {
         x.delivery_status = "Delivered";
         x.order_date = checkOrder?.order_date;
         let bulk = await client.index({
-          index: "prexo-delivery",
+          index: "prexo-delivery-8-2",
           //if you need to customise "_id" otherwise elastic will create this
           body: x,
         });
@@ -266,7 +266,7 @@ module.exports = {
       x.created_at = Date.now();
       x.delivery_status = "Delivered";
       let bulk = await client.index({
-        index: "prexo-delivery",
+        index: "prexo-delivery-8-2",
         //if you need to customise "_id" otherwise elastic will create this
         body: x,
       });
@@ -276,7 +276,7 @@ module.exports = {
   },
   superAdminTrackItemSearchData: async (searchInput, from, size) => {
     let data = await client.search({
-      index: "prexo-delivery",
+      index: "prexo-delivery-8-2",
       // type: '_doc', // uncomment for Elasticsearch ≤ 6
       body: {
         from: from,
@@ -307,7 +307,7 @@ module.exports = {
   superMisItemSearchData: async (searchInput, limit, skip, location, type) => {
     let count = 0;
     let data = await client.search({
-      index: "prexo-delivery",
+      index: "prexo-delivery-8-2",
       // type: '_doc', // uncomment for Elasticsearch ≤ 6
       body: {
         from: skip,
@@ -336,7 +336,7 @@ module.exports = {
     let arr1 = [];
     if (type !== "only-limited-data") {
       let dataForDownload = await client.search({
-        index: "prexo-delivery",
+        index: "prexo-delivery-8-2",
         size: 10000,
         // type: '_doc', // uncomment for Elasticsearch ≤ 6
         body: {
@@ -378,7 +378,7 @@ module.exports = {
   },
   searchDataOfDeliveryReporting: async (searchInput, limit, skip, location) => {
     let data = await client.search({
-      index: "prexo-delivery",
+      index: "prexo-delivery-8-2",
       // type: '_doc', // uncomment for Elasticsearch ≤ 6
       body: {
         from: skip,
@@ -404,7 +404,7 @@ module.exports = {
       track_total_hits: true,
     });
     let dataForDownload = await client.search({
-      index: "prexo-delivery",
+      index: "prexo-delivery-8-2",
       size: 10000,
       // type: '_doc', // uncomment for Elasticsearch ≤ 6
       body: {
@@ -448,7 +448,7 @@ module.exports = {
   //UPDATE STOCKIN STATUS
   updateUic: async (tracking_id, bag_id) => {
     let data = await client.updateByQuery({
-      index: "prexo-delivery",
+      index: "prexo-delivery-8-2",
       refresh: true,
       body: {
         script: {
@@ -471,7 +471,7 @@ module.exports = {
   //CLOSE BAG
   closeBagAfterItemPuted: async (tracking_id) => {
     let data = await client.updateByQuery({
-      index: "prexo-delivery",
+      index: "prexo-delivery-8-2",
       refresh: true,
       body: {
         script: {
@@ -494,7 +494,7 @@ module.exports = {
   uicCodeGen: async (deliveryData) => {
     try {
       let deleteDoc = await client.deleteByQuery({
-        index: "prexo-delivery",
+        index: "prexo-delivery-8-2",
         body: {
           query: {
             match: {
@@ -506,7 +506,7 @@ module.exports = {
         refresh: true,
       });
       let bulk = await client.index({
-        index: "prexo-delivery",
+        index: "prexo-delivery-8-2",
         //if you need to customise "_id" otherwise elastic will create this
         body: deliveryData,
       });

@@ -1,7 +1,10 @@
 const { delivery } = require("../../Model/deliveryModel/delivery");
 const { masters } = require("../../Model/mastersModel");
 const { orders } = require("../../Model/ordersModel/ordersModel");
+const { products } = require("../../Model/productModel/product");
+
 const Elasticsearch = require("../../Elastic-search/elastic");
+
 module.exports = {
   getAssigendOtherTray: (username) => {
     return new Promise(async (resolve, reject) => {
@@ -125,8 +128,13 @@ module.exports = {
               bqc_done_close: 1,
               bqc_software_report: 1,
               bot_report: 1,
+              item_id:1,
               charging_done_date: 1,
               audit_report: 1,
+              agent_name:1,
+              agent_name_bqc:1,
+              bqc_out_date:1,
+              tray_closed_by_bot:1
             }
           );
           if (uicExists) {
@@ -134,9 +142,11 @@ module.exports = {
               let getOrder = await orders.findOne({
                 order_id: uicExists.order_id,
               });
+              let muicFind=await products.findOne({vendor_sku_id:uicExists.item_id})
               obj.delivery = uicExists;
               obj.order = getOrder;
               obj.checkIntray = checkIntray;
+              obj.muic=muicFind.muic
 
               resolve({ status: 1, data: obj });
             } else {
@@ -235,6 +245,7 @@ module.exports = {
                     $set: {
                       wht_tray: findTray.code,
                       tray_location: "Audit",
+                    
                       tray_type: itemData.type,
                       audit_report: obj,
                     },
@@ -347,7 +358,7 @@ module.exports = {
           }
         );
       }
-      if (data.type_taxanomy !== "WHT") {
+    
         for (let x of data.items) {
           let updateDelivery = await delivery.findOneAndUpdate(
             { tracking_id: x.tracking_id },
@@ -368,9 +379,7 @@ module.exports = {
           );
         }
         resolve(data);
-      } else {
-        resolve(data);
-      }
+     
     });
   },
 };

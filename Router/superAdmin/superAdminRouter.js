@@ -594,7 +594,7 @@ router.post("/get-product-model/:brandName", async (req, res, next) => {
     let data = await superAdminController.getBrandBasedPrdouct(
       req.params.brandName
     );
- 
+
     if (data) {
       res.status(200).json({
         data: data,
@@ -1204,12 +1204,12 @@ router.post("/search-admin-track-item", async (req, res, next) => {
     if (data.searchResult.length != 0) {
       res.status(200).json({
         data: data.searchResult,
-        count:data.count
+        count: data.count,
       });
     } else {
       res.status(202).json({
         data: data.searchResult,
-        count:data.count
+        count: data.count,
       });
     }
   } catch (error) {
@@ -1455,9 +1455,10 @@ router.post("/getCtxCategorys", async (req, res, next) => {
   }
 });
 
-router.post("/deleteCtxcategory", async (req, res, next) => {
+router.post("/deleteCtxcategory/:code", async (req, res, next) => {
   try {
-    let data = await superAdminController.deleteCtxcategory(req.body);
+    const { code } = req.params;
+    let data = await superAdminController.deleteCtxcategory(code);
     if (data.acknowledged == true) {
       res.status(200).json(data);
     } else if (data.status == false) {
@@ -1532,8 +1533,36 @@ router.post("/categoryCheck", async (req, res, next) => {
 //create
 router.post("/partAndColor/create", async (req, res, next) => {
   try {
+    const { type } = req.body;
     const data = await superAdminController.createPartOrColor(req.body);
+
     if (data.status == 1) {
+      if (type == "part-list") {
+        fs.readFile(
+          "myjsonfile.json",
+          "utf8",
+          function readFileCallback(err, datafile) {
+            if (err) {
+            } else {
+              obj = JSON.parse(datafile);
+              let num = parseInt(obj.PARTID.substring(2)) + 1;
+              let updatedStr =
+                obj.PARTID.substring(0, 2) + num.toString().padStart(6, "0");
+              obj.PARTID = updatedStr;
+              json = JSON.stringify(obj);
+              fs.writeFile(
+                "myjsonfile.json",
+                json,
+                "utf8",
+                function readFileCallback(err, data) {
+                  if (err) {
+                  }
+                }
+              );
+            }
+          }
+        );
+      }
       res.status(200).json({
         message: "Successfully Added",
       });
@@ -1564,6 +1593,71 @@ router.post("/partAndColor/view/:type", async (req, res, next) => {
     next(error);
   }
 });
+// GET ALPEHBATICALLY SORT MUIC
+router.post("/muic/view", async (req, res, next) => {
+  try {
+    const data = await superAdminController.getMuic();
+
+    if (data) {
+      res.status(200).json({
+        data: data,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+// PART ID GEN
+router.post("/partList/idGen", async (req, res, next) => {
+  try {
+    let obj;
+    fs.readFile(
+      "myjsonfile.json",
+      "utf8",
+      async function readFileCallback(err, data) {
+        if (err) {
+        } else {
+          obj = JSON.parse(data);
+
+          res.status(200).json({
+            data: obj.PARTID,
+          });
+        }
+      }
+    );
+  } catch (error) {
+    next(error);
+  }
+});
+router.post("/muic/listColor/:muic", async (req, res, next) => {
+  try {
+    const { muic } = req.params;
+    const data = await superAdminController.getColorAccordingMuic(muic);
+    console.log(data);
+    if (data) {
+      res.status(200).json({
+        data: data,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+// GET PART LIST BASED ON THE MUIC AND COLOR
+router.post("/partlist/muic", async (req, res, next) => {
+  try {
+    const { muic, color } = req.body;
+    const data = await superAdminController.partListMuicColor(muic, color);
+    console.log(data);
+    if (data) {
+      res.status(200).json({
+        data: data,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
 // get one data only for edit or delete
 router.post("/partAndColor/oneData/:id/:type", async (req, res, next) => {
   try {
@@ -1573,9 +1667,13 @@ router.post("/partAndColor/oneData/:id/:type", async (req, res, next) => {
       res.status(200).json({
         data: data.masterData,
       });
+    } else if (data.status == 3 && type == "part-list") {
+      res.status(202).json({
+        message: "This Part Already used for process",
+      });
     } else if (data.status == 3) {
       res.status(202).json({
-        message: "Data Already used for process",
+        message: "This Color Already used for process",
       });
     } else {
       res.status(202).json({
@@ -1712,6 +1810,7 @@ router.post("/extra/CtxRelease", async (req, res, next) => {
     next(error);
   }
 });
+
 router.post("/extra/categoryDelivery", async (req, res, next) => {
   try {
     let data = await superAdminController.categoryDelivery();
@@ -1744,4 +1843,22 @@ router.post("/extra/bugFix", async (req, res, next) => {
     next(error);
   }
 });
+// PART ID GEN FROM BACKEND ONLY
+router.post("/extra/partid/add", async (req, res, next) => {
+  try {
+    let data = await superAdminController.extraPartidAdd();
+    if (data) {
+      res.status(200).json({
+        message: "done",
+      });
+    } else {
+      res.status(202).json({
+        message: "Failed",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
 module.exports = router;

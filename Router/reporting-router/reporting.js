@@ -126,13 +126,15 @@ router.post("/delivered/item/filter", async (req, res, next) => {
       res.status(200).json({
         data: filterData.getDelivery,
         avgPrice: filterData.avgPrice,
-        count:filterData.count
+        count: filterData.count,
+        forXlsxDownload: filterData.forXlsxDownload,
       });
     } else {
       res.status(202).json({
         data: filterData.getDelivery,
         avgPrice: filterData.avgPrice,
-        count:filterData.count
+        count: filterData.count,
+        forXlsxDownload: filterData.forXlsxDownload,
       });
     }
   } catch (error) {
@@ -143,7 +145,7 @@ router.post("/delivered/item/filter", async (req, res, next) => {
 router.post("/monthWiseReport/item/filter", async (req, res, next) => {
   try {
     console.log(req.body);
-    let { location, fromDate, toDate, page, size,type } = req.body;
+    let { location, fromDate, toDate, page, size, type } = req.body;
     page++;
     const limit = parseInt(size);
     const skip = (page - 1) * size;
@@ -158,14 +160,14 @@ router.post("/monthWiseReport/item/filter", async (req, res, next) => {
     if (filterData.monthWiseReport.length !== 0) {
       res.status(200).json({
         data: filterData.monthWiseReport,
-        forXlsx:filterData.forXlsxDownload,
-        count:filterData.getCount
+        forXlsx: filterData.forXlsxDownload,
+        count: filterData.getCount,
       });
     } else {
       res.status(202).json({
         data: filterData.monthWiseReport,
-        forXlsx:filterData.forXlsxDownload,
-        count:filterData.getCount
+        forXlsx: filterData.forXlsxDownload,
+        count: filterData.getCount,
       });
     }
   } catch (error) {
@@ -287,15 +289,14 @@ router.post("/search-delivery-item", async (req, res, next) => {
     if (data.searchResult.length !== 0) {
       res.status(200).json({
         data: data.searchResult,
-        count:data.count,
-        allMatchedResult:data.dataForDownload
+        count: data.count,
+        allMatchedResult: data.dataForDownload,
       });
     } else {
       res.status(202).json({
         data: data.searchResult,
-        count:data.count,
-        allMatchedResult:data.dataForDownload
-
+        count: data.count,
+        allMatchedResult: data.dataForDownload,
       });
     }
   } catch (error) {

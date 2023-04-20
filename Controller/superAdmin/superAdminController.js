@@ -16,6 +16,7 @@ const {
   mastersEditHistory,
 } = require("../../Model/masterHistoryModel/mastersHistory");
 const moment = require("moment");
+const elasticsearch = require("../../Elastic-search/elastic");
 
 const IISDOMAIN = "http://prexo-v8-1-uat-adminapi.dealsdray.com/user/profile/";
 const IISDOMAINPRDT =
@@ -1604,7 +1605,7 @@ module.exports = {
     return new Promise(async (resolve, reject) => {
       let flag = false;
       for (let x of trayId) {
-        let updateWht = await masters.updateOne(
+        let updateWht = await masters.findOneAndUpdate(
           { code: x },
           {
             $set: {
@@ -1614,8 +1615,27 @@ module.exports = {
             },
           }
         );
-        if (updateWht.modifiedCount == 0) {
+        if (updateWht == null) {
           flag = true;
+        } else {
+          for (let x of updateWht?.items) {
+            let deliveryTrack = await delivery.findOneAndUpdate(
+              { tracking_id: x.tracking_id },
+              {
+                $set: {
+                  tray_status: status,
+                  tray_location: "Warehouse",
+                },
+              },
+              {
+                new: true,
+                projection: { _id: 0 },
+              }
+            );
+            let updateElasticSearch = await elasticsearch.uicCodeGen(
+              deliveryTrack
+            );
+          }
         }
       }
       if (flag === false) {
@@ -1677,7 +1697,7 @@ module.exports = {
         }
       );
       if (uicExists) {
-        if (uicExists.bqc_done_close !== undefined) {
+        if (uicExists.bqc_software_report !== undefined) {
           let getOrder = await orders.findOne({ order_id: uicExists.order_id });
           obj.delivery = uicExists;
           obj.order = getOrder;
@@ -1769,6 +1789,24 @@ module.exports = {
             },
           }
         );
+        for (let x of sendtoRdlMis?.items) {
+          let deliveryTrack = await delivery.findOneAndUpdate(
+            { tracking_id: x.tracking_id },
+            {
+              $set: {
+                tray_status: type,
+                tray_location: "Warehouse",
+              },
+            },
+            {
+              new: true,
+              projection: { _id: 0 },
+            }
+          );
+          let updateElasticSearch = await elasticsearch.uicCodeGen(
+            deliveryTrack
+          );
+        }
       }
       if (sendtoRdlMis) {
         resolve({ status: true });
@@ -2139,11 +2177,11 @@ module.exports = {
 
   deleteCtxcategory: (code) => {
     return new Promise(async (resolve, reject) => {
-      let categorySelected = await masters.find({ tray_grade: code?.code });
-      if (categorySelected.length !== 0) {
+      let categorySelected = await masters.findOne({ tray_grade: code });
+      if (categorySelected) {
         resolve({ status: false });
       } else {
-        let data = await trayCategory.deleteOne({ Code: code?.code });
+        let data = await trayCategory.deleteOne({ code: code });
         if (data) {
           resolve(data);
         } else {
@@ -2221,6 +2259,7 @@ module.exports = {
       let checkDup = await partAndColor.findOne({
         name: dataOfPartOrColor.name,
         type: dataOfPartOrColor.type,
+        // muic: dataOfPartOrColor.muic,
       });
       if (checkDup) {
         resolve({ status: 2 });
@@ -2238,6 +2277,31 @@ module.exports = {
   viewColorOrPart: (type) => {
     return new Promise(async (resolve, reject) => {
       const data = await partAndColor.find({ type: type });
+      resolve(data);
+    });
+  },
+  getMuic: () => {
+    return new Promise(async (resolve, reject) => {
+      const muicData = await products.find({}, { muic: 1 }).sort({ muic: 1 });
+      resolve(muicData);
+    });
+  },
+  getColorAccordingMuic: (muic, page) => {
+    return new Promise(async (resolve, reject) => {
+      const colorData = await partAndColor.find({
+        muic: muic,
+        type: "color-list",
+      });
+      resolve(colorData);
+    });
+  },
+  partListMuicColor: (muic, color) => {
+    return new Promise(async (resolve, reject) => {
+      const data = await partAndColor.find({
+        type: "part-list",
+        muic: muic,
+        color: color,
+      });
       resolve(data);
     });
   },
@@ -2274,13 +2338,16 @@ module.exports = {
     });
   },
   editPartOrColor: (dataOfPartorColor) => {
+    console.log(dataOfPartorColor);
     return new Promise(async (resolve, reject) => {
       let updateData = await partAndColor.updateOne(
         { _id: dataOfPartorColor._id },
         {
           $set: {
             name: dataOfPartorColor.name,
+            muic: dataOfPartorColor.muic,
             description: dataOfPartorColor.description,
+            color: dataOfPartorColor?.color,
           },
         }
       );
@@ -2324,6 +2391,29 @@ module.exports = {
       } else {
         resolve({ status: 0 });
       }
+    });
+  },
+  extraPartidAdd: () => {
+    return new Promise(async (resolve, reject) => {
+      const allPart = await partAndColor.find({ type: "part-list" });
+      let str = "DP000000";
+      for (let x of allPart) {
+        let num = parseInt(str.substring(2)) + 1;
+
+        let updatedStr = str.substring(0, 2) + num.toString().padStart(6, "0");
+        str = updatedStr;
+
+        console.log(str);
+        const updateid = await partAndColor.updateOne(
+          { type: "part-list", name: x.name },
+          {
+            $set: {
+              part_code: str,
+            },
+          }
+        );
+      }
+      resolve(str);
     });
   },
 };
