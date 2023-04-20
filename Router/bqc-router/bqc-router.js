@@ -63,6 +63,7 @@ router.post("/bqc-uic-checking-first-time", async (req, res, next) => {
 /* ADD DEVICE IN AND DEVICE NOT IN */
 router.post("/add-wht-item", async (req, res, next) => {
   try {
+    console.log(req.body);
     let data = await bqcController.addWhtitem(req.body);
     if (data.status == 1) {
       res.status(200).json({

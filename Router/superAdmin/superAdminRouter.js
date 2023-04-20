@@ -1455,9 +1455,10 @@ router.post("/getCtxCategorys", async (req, res, next) => {
   }
 });
 
-router.post("/deleteCtxcategory", async (req, res, next) => {
+router.post("/deleteCtxcategory/:code", async (req, res, next) => {
   try {
-    let data = await superAdminController.deleteCtxcategory(req.body);
+    const { code } = req.params;
+    let data = await superAdminController.deleteCtxcategory(code);
     if (data.acknowledged == true) {
       res.status(200).json(data);
     } else if (data.status == false) {

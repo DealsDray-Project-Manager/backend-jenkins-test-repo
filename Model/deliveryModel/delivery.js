@@ -208,6 +208,10 @@ const deliverySchema = mongoose.Schema({
   pickup_request_sent_to_wh_date: {
     type: Date,
   },
+
+  issued_to_agent_for_pickup: {
+    type: Date,
+  },
   audit_done_close: {
     type: Date,
   },

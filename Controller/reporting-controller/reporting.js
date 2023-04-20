@@ -54,7 +54,7 @@ module.exports = {
       count.notDeliveredXxTray = await masters.count({
         cpc: location,
         prefix: "tray-master",
-        sort_id: {$nin:["Open","No Status"]},
+        sort_id: { $nin: ["Open", "No Status"] },
       });
 
       count.notDeliveredOrdersLastOrderDate = await orders
@@ -74,7 +74,8 @@ module.exports = {
           $match: {
             cpc: location,
             prefix: "tray-master",
-            sort_id:{$nin:["Open","No Status"]},
+            sort_id: { $nin: ["Open", "No Status"] },
+            items: { $exists: true, $type: "array" }
           },
         },
         {
@@ -221,12 +222,14 @@ module.exports = {
                 type_taxanomy: "CT",
                 prefix: "tray-master",
                 sort_id: "Transfer Request sent to Warehouse",
+                items: { $exists: true, $type: "array" }
               },
               {
                 cpc: location,
                 type_taxanomy: "CT",
                 prefix: "tray-master",
                 sort_id: "Transferred to Sales",
+                items: { $exists: true, $type: "array" }
               },
             ],
           },
@@ -256,6 +259,7 @@ module.exports = {
             sort_id: "Ready to Transfer to Sales",
             prefix: "tray-master",
             type_taxanomy: "CT",
+            items: { $exists: true, $type: "array" }
           },
         },
         {
@@ -278,11 +282,13 @@ module.exports = {
                 cpc: location,
                 sort_id: "Closed",
                 prefix: "bag-master",
+                items: { $exists: true, $type: "array" }
               },
               {
                 cpc: location,
                 sort_id: "Pre-closure",
                 prefix: "bag-master",
+                items: { $exists: true, $type: "array" }
               },
             ],
           },
@@ -312,6 +318,7 @@ module.exports = {
             type_taxanomy: "BOT",
             prefix: "tray-master",
             sort_id: "Closed By Warehouse",
+            items: { $exists: true, $type: "array" }
           },
         },
         {
@@ -370,6 +377,7 @@ module.exports = {
             type_taxanomy: "MMT",
             prefix: "tray-master",
             sort_id: { $ne: "Open" },
+            items: { $exists: true, $type: "array" }
           },
         },
         {
@@ -427,6 +435,7 @@ module.exports = {
             type_taxanomy: "PMT",
             prefix: "tray-master",
             sort_id: { $ne: "Open" },
+            items: { $exists: true, $type: "array" }
           },
         },
         {
@@ -512,6 +521,7 @@ module.exports = {
             type_taxanomy: "WHT",
             prefix: "tray-master",
             sort_id: "Recharging",
+            items: { $exists: true, $type: "array" }
           },
         },
         {
@@ -566,6 +576,7 @@ module.exports = {
             type_taxanomy: "WHT",
             prefix: "tray-master",
             sort_id: "Ready to BQC",
+            items: { $exists: true, $type: "array" }
           },
         },
         {
@@ -593,6 +604,7 @@ module.exports = {
             type_taxanomy: "WHT",
             prefix: "tray-master",
             sort_id: "Ready to Audit",
+            items: { $exists: true, $type: "array" }
           },
         },
         {
@@ -620,6 +632,7 @@ module.exports = {
             type_taxanomy: "WHT",
             prefix: "tray-master",
             sort_id: "Ready to RDL",
+            items: { $exists: true, $type: "array" }
           },
         },
         {
@@ -647,6 +660,7 @@ module.exports = {
             type_taxanomy: "MMT",
             prefix: "tray-master",
             sort_id: "Issued to Merging",
+            items: { $exists: true, $type: "array" }
           },
         },
         {
@@ -692,18 +706,60 @@ module.exports = {
         },
       ]);
       count.inMergingWht = await masters.count({
-        cpc: location,
-        type_taxanomy: "WHT",
-        prefix: "tray-master",
-        sort_id: "Issued to Merging",
+        $or: [
+          {
+            cpc: location,
+            to_merge: { $ne: null },
+            type_taxanomy: {$ne:"MMT"},
+            sort_id: "Issued to Merging",
+          },
+          {
+            cpc: location,
+            to_merge: { $ne: null },
+            sort_id: "Audit Done Issued to Merging",
+          },
+          {
+            cpc: location,
+            to_merge: { $ne: null },
+            sort_id: "Ready to RDL-Repair Issued to Merging",
+          },
+          {
+            cpc: location,
+            to_merge: { $ne: null },
+            sort_id: "Ready to BQC Issued to Merging",
+          },
+        ],
       });
       count.inMergingWhtItemCount = await masters.aggregate([
         {
           $match: {
-            cpc: location,
-            type_taxanomy: "WHT",
-            prefix: "tray-master",
-            sort_id: "Issued to Merging",
+            $or: [
+              {
+                cpc: location,
+                to_merge: { $ne: null },
+                type_taxanomy: {$ne:"MMT"},
+                sort_id: "Issued to Merging",
+                items: { $exists: true, $type: "array" }
+              },
+              {
+                cpc: location,
+                to_merge: { $ne: null },
+                sort_id: "Audit Done Issued to Merging",
+                items: { $exists: true, $type: "array" }
+              },
+              {
+                cpc: location,
+                to_merge: { $ne: null },
+                sort_id: "Ready to RDL-Repair Issued to Merging",
+                items: { $exists: true, $type: "array" }
+              },
+              {
+                cpc: location,
+                to_merge: { $ne: null },
+                sort_id: "Ready to BQC Issued to Merging",
+                items: { $exists: true, $type: "array" }
+              },
+            ],
           },
         },
         {
@@ -731,6 +787,7 @@ module.exports = {
             type_taxanomy: "WHT",
             prefix: "tray-master",
             sort_id: "Issued to Charging",
+            items: { $exists: true, $type: "array" }
           },
         },
         {
@@ -797,12 +854,14 @@ module.exports = {
                 type_taxanomy: "WHT",
                 prefix: "tray-master",
                 sort_id: "Issued to BQC",
+                items: { $exists: true, $type: "array" }
               },
               {
                 cpc: location,
                 type_taxanomy: "WHT",
                 prefix: "tray-master",
                 sort_id: "BQC work inprogress",
+                items: { $exists: true, $type: "array" }
               },
             ],
           },
@@ -864,6 +923,20 @@ module.exports = {
             type_taxanomy: "WHT",
             sort_id: "Audit Done Closed By Warehouse",
           },
+          {
+            cpc: location,
+            prefix: "tray-master",
+            type_taxanomy: "WHT",
+            $expr: { $ne: [{ $size: "$items" }, { $toInt: "$limit" }] },
+            sort_id: "Ready to RDL-Repair",
+          },
+          {
+            cpc: location,
+            prefix: "tray-master",
+            type_taxanomy: "WHT",
+            $expr: { $ne: [{ $size: "$items" }, { $toInt: "$limit" }] },
+            sort_id: "Ready to BQC",
+          },
         ],
       });
       count.readyToMergeItemCount = await masters.aggregate([
@@ -885,6 +958,20 @@ module.exports = {
                 prefix: "tray-master",
                 type_taxanomy: "WHT",
                 sort_id: "Audit Done Closed By Warehouse",
+              },
+              {
+                cpc: location,
+                prefix: "tray-master",
+                type_taxanomy: "WHT",
+                $expr: { $ne: [{ $size: "$items" }, { $toInt: "$limit" }] },
+                sort_id: "Ready to RDL-Repair",
+              },
+              {
+                cpc: location,
+                prefix: "tray-master",
+                type_taxanomy: "WHT",
+                $expr: { $ne: [{ $size: "$items" }, { $toInt: "$limit" }] },
+                sort_id: "Ready to BQC",
               },
             ],
           },
@@ -993,12 +1080,11 @@ module.exports = {
           ],
         });
         resolve(tray);
-      }
-    else  if (sortId == "For All Tray") {
+      } else if (sortId == "For All Tray") {
         const tray = await masters.find({
           cpc: location,
           prefix: "tray-master",
-          sort_id:{$nin:["Open","No Status"]},
+          sort_id: { $nin: ["Open", "No Status"] },
         });
         resolve(tray);
       } else if (sortId == "Issued to BQC") {
@@ -1015,6 +1101,34 @@ module.exports = {
               type_taxanomy: "WHT",
               prefix: "tray-master",
               sort_id: "BQC work inprogress",
+            },
+          ],
+        });
+        resolve(tray);
+      }
+      else if (sortId == "Issued to Merging" && trayType == "WHT") {
+        const tray = await masters.find({
+          $or: [
+            {
+              cpc: location,
+              to_merge: { $ne: null },
+              type_taxanomy:"WHT",
+              sort_id: "Issued to Merging",
+            },
+            {
+              cpc: location,
+              to_merge: { $ne: null },
+              sort_id: "Audit Done Issued to Merging",
+            },
+            {
+              cpc: location,
+              to_merge: { $ne: null },
+              sort_id: "Ready to RDL-Repair Issued to Merging",
+            },
+            {
+              cpc: location,
+              to_merge: { $ne: null },
+              sort_id: "Ready to BQC Issued to Merging",
             },
           ],
         });
@@ -1139,7 +1253,12 @@ module.exports = {
           avgPrice = 0;
         }
         console.log(avgPrice);
-        resolve({ getDelivery: getDelivery, avgPrice: avgPrice, count: count });
+        resolve({
+          getDelivery: getDelivery,
+          avgPrice: avgPrice,
+          count: count,
+          forXlsxDownload: dataFourAvgPrice,
+        });
       } catch (err) {
         reject(err);
       }
@@ -1163,7 +1282,7 @@ module.exports = {
         let monthWiseReport = await orders.aggregate([
           {
             $match: {
-              delivery_status:"Delivered",
+              delivery_status: "Delivered",
               partner_shop: location,
               order_date: {
                 $gte: new Date(fromDateTimestamp),
@@ -1191,7 +1310,7 @@ module.exports = {
           {
             $match: {
               partner_shop: location,
-              delivery_status:"Delivered",
+              delivery_status: "Delivered",
               order_date: {
                 $gte: new Date(fromDateTimestamp),
                 $lte: new Date(toDateTimestamp),
@@ -1208,14 +1327,13 @@ module.exports = {
           },
         ]);
         console.log(monthWiseReport.length);
-      
+
         let arrLimit = [];
         for (let x of monthWiseReport?.[0].results) {
           arrLimit.push(...x.delivery);
         }
         let arrWithoutLimit = [];
         for (let y of forXlsxDownload) {
-        
           arrWithoutLimit.push(...y.delivery);
         }
         resolve({

@@ -131,6 +131,10 @@ module.exports = {
               item_id:1,
               charging_done_date: 1,
               audit_report: 1,
+              agent_name:1,
+              agent_name_bqc:1,
+              bqc_out_date:1,
+              tray_closed_by_bot:1
             }
           );
           if (uicExists) {
@@ -241,6 +245,7 @@ module.exports = {
                     $set: {
                       wht_tray: findTray.code,
                       tray_location: "Audit",
+                    
                       tray_type: itemData.type,
                       audit_report: obj,
                     },
@@ -353,7 +358,7 @@ module.exports = {
           }
         );
       }
-      if (data.type_taxanomy !== "WHT") {
+    
         for (let x of data.items) {
           let updateDelivery = await delivery.findOneAndUpdate(
             { tracking_id: x.tracking_id },
@@ -374,9 +379,7 @@ module.exports = {
           );
         }
         resolve(data);
-      } else {
-        resolve(data);
-      }
+     
     });
   },
 };

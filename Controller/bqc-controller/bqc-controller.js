@@ -69,42 +69,58 @@ module.exports = {
   addWhtitem: (itemData) => {
     return new Promise(async (resolve, reject) => {
       if (itemData.condiation == "Device In") {
-        let data = await masters.updateOne(
-          { code: itemData.trayId },
-          {
-            $push: {
-              actual_items: itemData.item,
-            },
-            $pull: {
-              items: {
-                uic: itemData.item.uic,
-              },
-            },
-          }
-        );
-        if (data.matchedCount != 0) {
-          resolve({ status: 1 });
+        let checkItem = await masters.findOne({
+          code: itemData.trayId,
+          "actual_items.uic": itemData.item.uic,
+        });
+        if (checkItem) {
+          resolve({ status: 3 });
         } else {
-          resolve({ status: 2 });
+          let data = await masters.updateOne(
+            { code: itemData.trayId },
+            {
+              $push: {
+                actual_items: itemData.item,
+              },
+              $pull: {
+                items: {
+                  uic: itemData.item.uic,
+                },
+              },
+            }
+          );
+          if (data.matchedCount != 0) {
+            resolve({ status: 1 });
+          } else {
+            resolve({ status: 2 });
+          }
         }
       } else {
-        let data = await masters.updateOne(
-          { code: itemData.trayId },
-          {
-            $push: {
-              temp_array: itemData.item,
-            },
-            $pull: {
-              items: {
-                uic: itemData.item.uic,
-              },
-            },
-          }
-        );
-        if (data.matchedCount != 0) {
-          resolve({ status: 1 });
+        let checkItem = await masters.findOne({
+          code: itemData.trayId,
+          "temp_array.uic": itemData.item.uic,
+        });
+        if (checkItem) {
+          resolve({ status: 3 });
         } else {
-          resolve({ status: 2 });
+          let data = await masters.updateOne(
+            { code: itemData.trayId },
+            {
+              $push: {
+                temp_array: itemData.item,
+              },
+              $pull: {
+                items: {
+                  uic: itemData.item.uic,
+                },
+              },
+            }
+          );
+          if (data.matchedCount != 0) {
+            resolve({ status: 1 });
+          } else {
+            resolve({ status: 2 });
+          }
         }
       }
     });
@@ -278,9 +294,8 @@ module.exports = {
           } else {
             resolve();
           }
-        }
-        else{
-          resolve()
+        } else {
+          resolve();
         }
       } else {
         resolve();

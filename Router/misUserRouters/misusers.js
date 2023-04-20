@@ -1179,15 +1179,15 @@ router.post("/pickup/items/:type/:location", async (req, res, next) => {
     let { type, page, location } = req.params;
 
     const data = await misUserController.pickupPageItemView(type, location);
-
     if (data.items.length !== 0) {
       res.status(200).json({
         data: data.items,
+        type:type,
       });
     } else {
       res.status(202).json({
         data: data.items,
-
+        type:type,
         message: "No data found",
       });
     }
