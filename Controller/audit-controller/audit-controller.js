@@ -244,9 +244,9 @@ module.exports = {
                     projection: { _id: 0 },
                   }
                 );
-                let elasticSearchUpdate = await Elasticsearch.uicCodeGen(
-                  update
-                );
+                // let elasticSearchUpdate = await Elasticsearch.uicCodeGen(
+                //   update
+                // );
                 resolve({ status: 1, trayId: findTray.code });
               }
             } else {
@@ -301,9 +301,9 @@ module.exports = {
                     projection: { _id: 0 },
                   }
                 );
-                let updateElasticSearch = await Elasticsearch.uicCodeGen(
-                  update
-                );
+                // let updateElasticSearch = await Elasticsearch.uicCodeGen(
+                //   update
+                // );
                 resolve({ status: 1, trayId: findTray.code });
               }
             } else {
@@ -363,9 +363,9 @@ module.exports = {
               projection: { _id: 0 },
             }
           );
-          let updateElasticSearch = await Elasticsearch.uicCodeGen(
-            updateDelivery
-          );
+          // let updateElasticSearch = await Elasticsearch.uicCodeGen(
+          //   updateDelivery
+          // );
         }
         resolve(data);
       } else {

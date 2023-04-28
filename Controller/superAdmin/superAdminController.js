@@ -17,8 +17,8 @@ const {
 } = require("../../Model/masterHistoryModel/mastersHistory");
 const moment = require("moment");
 
-const IISDOMAIN = "http://prexo-v8-dev-api.dealsdray.com/user/profile/";
-const IISDOMAINPRDT = "http://prexo-v8-dev-api.dealsdray.com/product/image/";
+const IISDOMAIN = "http://prexo-v8-adminapi.dealsdray.com/user/profile/";
+const IISDOMAINPRDT = "http://prexo-v8-adminapi.dealsdray.com/product/image/";
 
 /************************************************************************************************** */
 
@@ -2238,6 +2238,30 @@ module.exports = {
       } else {
         resolve({ status: 0 });
       }
+    });
+  },
+  extraRdlOneReport: () => {
+    return new Promise(async (resolve, reject) => {
+      let getTray = await masters.find({ sort_id: "Issued to RDL-FLS" });
+      for (let x of getTray) {
+        for (let y of x.actual_items) {
+          console.log(y.rdl_fls_report);
+          let deliveryUpdate = await delivery.findOneAndUpdate(
+            { tracking_id: y.tracking_id },
+            {
+              $set: {
+                rdl_fls_one_user_name: x?.issued_user_name,
+                rdl_fls_one_report: y?.rdl_fls_report,
+              },
+            },
+            {
+              new: true,
+              projection: { _id: 0 },
+            }
+          );
+        }
+      }
+      resolve(getTray);
     });
   },
 };

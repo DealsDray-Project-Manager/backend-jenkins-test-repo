@@ -203,7 +203,7 @@ module.exports = {
               projection: { _id: 0 },
             }
           );
-          let updateElastic = await Elasticsearch.uicCodeGen(updateDelivery);
+          // let updateElastic = await Elasticsearch.uicCodeGen(updateDelivery);
           if (updateDelivery) {
             resolve({ status: 3 });
           }
@@ -362,9 +362,9 @@ module.exports = {
                 projection: { _id: 0 },
               }
             );
-            let updateElasticSearch = await Elasticsearch.uicCodeGen(
-              updateDelivery
-            );
+            // let updateElasticSearch = await Elasticsearch.uicCodeGen(
+            //   updateDelivery
+            // );
           } else if (mmtTrayData.trayType == "ST") {
             let updateDelivery = await delivery.findOneAndUpdate(
               { tracking_id: mmtTrayData.item.tracking_id },
@@ -379,9 +379,9 @@ module.exports = {
                 projection: { _id: 0 },
               }
             );
-            let updateElasticSearch = await Elasticsearch.uicCodeGen(
-              updateDelivery
-            );
+            // let updateElasticSearch = await Elasticsearch.uicCodeGen(
+            //   updateDelivery
+            // );
           } else if (mmtTrayData.trayType == "CT") {
             let updateDelivery = await delivery.findOneAndUpdate(
               { tracking_id: mmtTrayData.item.tracking_id },
@@ -396,9 +396,9 @@ module.exports = {
                 projection: { _id: 0 },
               }
             );
-            let updateElasticSearch = await Elasticsearch.uicCodeGen(
-              updateDelivery
-            );
+            // let updateElasticSearch = await Elasticsearch.uicCodeGen(
+            //   updateDelivery
+            // );
           } else {
             let updateDelivery = await delivery.findOneAndUpdate(
               { tracking_id: mmtTrayData.item.awbn_number },
@@ -414,9 +414,9 @@ module.exports = {
               }
             );
 
-            let updateElasticSearch = await Elasticsearch.uicCodeGen(
-              updateDelivery
-            );
+            // let updateElasticSearch = await Elasticsearch.uicCodeGen(
+            //   updateDelivery
+            // );
           }
           if (fromTrayItemRemove.modifiedCount !== 0) {
             resolve({ status: 1 });
@@ -667,9 +667,9 @@ module.exports = {
             projection: { _id: 0 },
           }
         );
-        let updateElasticSearch = await Elasticsearch.uicCodeGen(
-          updateDelivery
-        );
+        // let updateElasticSearch = await Elasticsearch.uicCodeGen(
+        //   updateDelivery
+        // );
 
         if (updateDelivery.modifiedCount !== 0) {
           resolve({ status: 1 });
