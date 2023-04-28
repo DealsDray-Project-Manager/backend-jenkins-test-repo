@@ -408,7 +408,6 @@ module.exports = {
     });
   },
   searchOrders: (searchType, value, location, limit, skip) => {
-    console.log(limit);
     return new Promise(async (resolve, reject) => {
       let allOrders;
       if (searchType == "order_id") {
@@ -588,7 +587,6 @@ module.exports = {
       }
 
       if (allOrders) {
-        console.log(allOrders);
         const count = allOrders[0]?.count[0]?.count;
         const orders = allOrders[0]?.results;
         resolve({ count: count, orders: orders });
@@ -909,7 +907,6 @@ module.exports = {
     });
   },
   searchUicPageAll: (searchType, value, location, uic_status, limit, skip) => {
-    console.log(limit);
     return new Promise(async (resolve, reject) => {
       let allOrders;
       if (searchType == "order_id") {
@@ -1412,7 +1409,6 @@ module.exports = {
       }
 
       if (allOrders) {
-        console.log(allOrders);
         const count = allOrders[0]?.count[0]?.count;
         const orders = allOrders[0]?.results;
         resolve({ count: count, orders: orders });
@@ -1438,7 +1434,6 @@ module.exports = {
     });
   },
   searchDeliveredOrders: (searchType, value, location, status, limit, skip) => {
-    console.log(searchType);
     return new Promise(async (resolve, reject) => {
       let allOrders;
       if (searchType == "order_id") {
@@ -1585,7 +1580,6 @@ module.exports = {
         ]);
       }
       if (allOrders) {
-        console.log(allOrders);
         const count = allOrders[0]?.count[0]?.count;
         const orders = allOrders[0]?.results;
         resolve({ count: count, orders: orders });
@@ -1745,7 +1739,6 @@ module.exports = {
   },
   getDeliveryCount: (location) => {
     return new Promise(async (resolve, reject) => {
-      console.log(location);
       let data = await delivery.count({
         partner_shop: location,
         temp_delivery_status: { $ne: "Pending" },
@@ -2016,7 +2009,6 @@ module.exports = {
         ]);
       }
       if (allOrders) {
-        console.log(allOrders);
         const count = allOrders[0]?.count[0]?.count;
         const deliveryData = allOrders[0]?.results;
         resolve({ count: count, deliveryData: deliveryData });
@@ -3141,8 +3133,7 @@ module.exports = {
         } else {
           resolve({ status: 0 });
         }
-      }
-      else if (
+      } else if (
         whtTray.sort_id === "Ready to Audit" &&
         whtTray.type_taxanomy == "WHT"
       ) {
@@ -3637,6 +3628,7 @@ module.exports = {
                 sort_id: "Pickup Request sent to Warehouse",
                 issued_user_name: itemData.user_name,
                 pickup_type: itemData.value,
+                pickup_next_stage: itemData.nextStage,
               },
               $push: {
                 temp_array: x,
@@ -3688,7 +3680,6 @@ module.exports = {
     });
   },
   assignToAgentRequestToWhRdlFls: (tray, user_name, sortId) => {
-    console.log(sortId);
     return new Promise(async (resolve, reject) => {
       let sendtoRdlMis;
       for (let x of tray) {

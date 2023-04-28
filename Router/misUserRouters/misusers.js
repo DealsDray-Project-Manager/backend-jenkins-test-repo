@@ -96,7 +96,6 @@ router.post("/ordersSearch", async (req, res, next) => {
       limit,
       skip
     );
-    console.log(data);
     if (data.orders.length !== 0) {
       res.status(200).json({
         data: data.orders,
@@ -333,7 +332,6 @@ router.post("/importDelivery", async (req, res, next) => {
 /* Get Delivery */
 router.post("/getDeliveryCount/:location", async (req, res, next) => {
   try {
-    console.log("working");
     let data = await misUserController.getDeliveryCount(req.params.location);
     if (data) {
       res.status(200).json({
@@ -399,7 +397,6 @@ router.post("/searchDelivery", async (req, res, next) => {
       limit,
       skip
     );
-    console.log(data);
     if (data.deliveryData.length !== 0) {
       res.status(200).json({
         data: data.deliveryData,
@@ -429,8 +426,6 @@ router.post("/search-mis-track-item", async (req, res, next) => {
       location,
       type
     );
-    console.log(data.limitedResult.length);
-    console.log(data.allMatchedResult.length);
     if (data.limitedResult.length !== 0) {
       res.status(200).json({
         data: data.limitedResult,
@@ -513,7 +508,6 @@ router.post("/searchUicPage", async (req, res, next) => {
     page++;
     const limit = parseInt(rowsPerPage);
     const skip = (page - 1) * rowsPerPage;
-    console.log(limit);
     let data = await misUserController.searchUicPageAll(
       type,
       searchData,
@@ -544,7 +538,6 @@ router.post("/searchUicPageAllPage", async (req, res, next) => {
     page++;
     const limit = parseInt(rowsPerPage);
     const skip = (page - 1) * rowsPerPage;
-    console.log(limit);
     let data = await misUserController.searchUicPageAllPage(
       type,
       searchData,
@@ -1182,12 +1175,12 @@ router.post("/pickup/items/:type/:location", async (req, res, next) => {
     if (data.items.length !== 0) {
       res.status(200).json({
         data: data.items,
-        type:type,
+        type: type,
       });
     } else {
       res.status(202).json({
         data: data.items,
-        type:type,
+        type: type,
         message: "No data found",
       });
     }
@@ -1505,7 +1498,7 @@ router.post(
   "/assignToAgent/rdl-fls/sentToWarehouse",
   async (req, res, next) => {
     try {
-      const { tray, user_name,sortId } = req.body;
+      const { tray, user_name, sortId } = req.body;
       let data = await misUserController.assignToAgentRequestToWhRdlFls(
         tray,
         user_name,
@@ -1530,7 +1523,6 @@ router.post(
   "/assignToAgent/rdl-fls/users/:user_type/:location",
   async (req, res, next) => {
     try {
-      console.log(req.params);
       let data = await misUserController.getRdlFlsUser(
         req.params.user_type,
         req.params.location

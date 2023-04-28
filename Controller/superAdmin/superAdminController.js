@@ -1901,7 +1901,6 @@ module.exports = {
   },
   extraCtxRelease: () => {
     return new Promise(async (resolve, reject) => {
-      console.log(new Date("01-04-2023"));
       let getCtx = await masters.find({
         prefix: "tray-master",
         type_taxanomy: "CT",
@@ -2030,6 +2029,7 @@ module.exports = {
           {
             $set: {
               order_date: x.order_date,
+              old_item_details: x.old_item_details,
             },
           }
         );
@@ -2338,7 +2338,6 @@ module.exports = {
     });
   },
   editPartOrColor: (dataOfPartorColor) => {
-    console.log(dataOfPartorColor);
     return new Promise(async (resolve, reject) => {
       let updateData = await partAndColor.updateOne(
         { _id: dataOfPartorColor._id },
@@ -2403,7 +2402,6 @@ module.exports = {
         let updatedStr = str.substring(0, 2) + num.toString().padStart(6, "0");
         str = updatedStr;
 
-        console.log(str);
         const updateid = await partAndColor.updateOne(
           { type: "part-list", name: x.name },
           {

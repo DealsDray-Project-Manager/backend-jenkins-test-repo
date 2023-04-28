@@ -795,7 +795,6 @@ router.post("/trayIdGenrate", async (req, res, next) => {
                 message: `${type}-tray limit exceeded`,
               });
             } else {
-              console.log(obj[type_taxanomy + type]);
               res.status(200).json({
                 data: obj[type_taxanomy + type],
               });
@@ -1633,7 +1632,6 @@ router.post("/muic/listColor/:muic", async (req, res, next) => {
   try {
     const { muic } = req.params;
     const data = await superAdminController.getColorAccordingMuic(muic);
-    console.log(data);
     if (data) {
       res.status(200).json({
         data: data,
