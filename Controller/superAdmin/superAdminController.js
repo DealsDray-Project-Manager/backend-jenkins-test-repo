@@ -2261,6 +2261,8 @@ module.exports = {
           );
         }
       }
+
+      
       resolve(getTray);
     });
   },
