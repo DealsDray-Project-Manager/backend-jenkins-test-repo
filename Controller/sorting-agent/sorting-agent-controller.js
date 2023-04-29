@@ -450,7 +450,6 @@ module.exports = {
                   projection: { _id: 0 },
                 }
               );
-
               let updateElasticSearch = await Elasticsearch.uicCodeGen(
                 updateDelivery
               );
