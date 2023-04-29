@@ -101,9 +101,9 @@ module.exports = {
               projection: { _id: 0 },
             }
           );
-          let updateElasticSearch = await Elasticsearch.uicCodeGen(
-            deliveryUpdate
-          );
+          // let updateElasticSearch = await Elasticsearch.uicCodeGen(
+          //   deliveryUpdate
+          // );
         }
         resolve(data);
       } else {
@@ -159,9 +159,9 @@ module.exports = {
               projection: { _id: 0 },
             }
           );
-          let elasticSearchUpdate = await Elasticsearch.uicCodeGen(
-            deliveryUpdate
-          );
+          // let elasticSearchUpdate = await Elasticsearch.uicCodeGen(
+          //   deliveryUpdate
+          // );
         }
         resolve(data);
       } else {

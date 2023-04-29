@@ -2557,4 +2557,30 @@ module.exports = {
       resolve(gettray);
     });
   },
+  extraRdlOneReport: () => {
+    return new Promise(async (resolve, reject) => {
+      let getTray = await masters.find({ sort_id: "Issued to RDL-FLS" });
+      for (let x of getTray) {
+        for (let y of x.actual_items) {
+          console.log(y.rdl_fls_report);
+          let deliveryUpdate = await delivery.findOneAndUpdate(
+            { tracking_id: y.tracking_id },
+            {
+              $set: {
+                rdl_fls_one_user_name: x?.issued_user_name,
+                rdl_fls_one_report: y?.rdl_fls_report,
+              },
+            },
+            {
+              new: true,
+              projection: { _id: 0 },
+            }
+          );
+        }
+      }
+
+      
+      resolve(getTray);
+    });
+  },
 };

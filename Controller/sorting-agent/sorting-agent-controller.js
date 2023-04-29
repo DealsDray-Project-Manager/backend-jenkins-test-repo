@@ -218,7 +218,7 @@ module.exports = {
               projection: { _id: 0 },
             }
           );
-          let updateElastic = await Elasticsearch.uicCodeGen(updateDelivery);
+          // let updateElastic = await Elasticsearch.uicCodeGen(updateDelivery);
           if (updateDelivery) {
             resolve({ status: 3 });
           }

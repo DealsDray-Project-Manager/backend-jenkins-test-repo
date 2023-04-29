@@ -16,6 +16,7 @@ module.exports = {
       }
     });
   },
+
   dashboardCount: (username) => {
     return new Promise(async (resolve, reject) => {
       let count = {
@@ -228,9 +229,9 @@ module.exports = {
               projection: { _id: 0 },
             }
           );
-          let updateElasticSearch = await Elasticsearch.uicCodeGen(
-            deliveryUpdate
-          );
+          // let updateElasticSearch = await Elasticsearch.uicCodeGen(
+          //   deliveryUpdate
+          // );
         }
         resolve(data);
       } else {
@@ -286,20 +287,18 @@ module.exports = {
                 }
               );
 
-              let updateElasticSearch = await Elasticsearch.uicCodeGen(
-                deliveryUpdate
-              );
-            }
-            resolve(data);
-          } else {
-            resolve();
+            // let updateElasticSearch = await Elasticsearch.uicCodeGen(
+            //   deliveryUpdate
+            // );
           }
+          resolve(data);
         } else {
           resolve();
         }
       } else {
         resolve();
       }
-    });
-  },
+    }
+    })
+  }
 };

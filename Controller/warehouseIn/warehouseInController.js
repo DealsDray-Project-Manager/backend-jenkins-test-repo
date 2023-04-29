@@ -834,7 +834,7 @@ module.exports = {
                 projection: { _id: 0 },
               }
             );
-            let updateElastic = await elasticsearch.uicCodeGen(updateDelivery);
+            // let updateElastic = await elasticsearch.uicCodeGen(updateDelivery);
           }
           for (let i = 0; i < issueData.try.length; i++) {
             let assignTray = await masters.updateOne(
@@ -1190,9 +1190,9 @@ module.exports = {
                   projection: { _id: 0 },
                 }
               );
-              let updateElasticSearch = await elasticsearch.uicCodeGen(
-                deliveryTrack
-              );
+              // let updateElasticSearch = await elasticsearch.uicCodeGen(
+              //   deliveryTrack
+              // );
             }
             resolve({ status: 1 });
           } else {
@@ -1228,9 +1228,9 @@ module.exports = {
                     projection: { _id: 0 },
                   }
                 );
-                let updateElasticSearch = await elasticsearch.uicCodeGen(
-                  deliveryTrack
-                );
+                // let updateElasticSearch = await elasticsearch.uicCodeGen(
+                //   deliveryTrack
+                // );
               }
               resolve({ status: 1 });
             } else {
@@ -1356,9 +1356,9 @@ module.exports = {
                     projection: { _id: 0 },
                   }
                 );
-                let updateElasticSearch = await elasticsearch.uicCodeGen(
-                  deliveryTrack
-                );
+                // let updateElasticSearch = await elasticsearch.uicCodeGen(
+                //   deliveryTrack
+                // );
               }
               resolve({ status: 1 });
             } else {
@@ -1395,9 +1395,9 @@ module.exports = {
                   projection: { _id: 0 },
                 }
               );
-              let updateElasticSearch = await elasticsearch.uicCodeGen(
-                deliveryTrack
-              );
+              // let updateElasticSearch = await elasticsearch.uicCodeGen(
+              //   deliveryTrack
+              // );
             }
             resolve({ status: 1 });
           } else {
@@ -1518,7 +1518,7 @@ module.exports = {
               projection: { _id: 0 },
             }
           );
-          let updateElastic = await elasticsearch.uicCodeGen(deliveryTrack);
+          // let updateElastic = await elasticsearch.uicCodeGen(deliveryTrack);
         }
         resolve(data);
       } else {
@@ -2451,9 +2451,9 @@ module.exports = {
                 projection: { _id: 0 },
               }
             );
-            let updateElasticSearch = await elasticsearch.uicCodeGen(
-              deliveryUpdate
-            );
+            // let updateElasticSearch = await elasticsearch.uicCodeGen(
+            //   deliveryUpdate
+            // );
           }
         }
       } else if (trayData.sortId == "Send for Recharging") {
@@ -2486,9 +2486,9 @@ module.exports = {
                 projection: { _id: 0 },
               }
             );
-            let updateElasticSearch = await elasticsearch.uicCodeGen(
-              deliveryUpdate
-            );
+            // let updateElasticSearch = await elasticsearch.uicCodeGen(
+            //   deliveryUpdate
+            // );
           }
         }
       } else if (trayData.sortId == "Send for RDL-FLS") {
@@ -2522,9 +2522,9 @@ module.exports = {
                 projection: { _id: 0 },
               }
             );
-            let updateElasticSearch = await elasticsearch.uicCodeGen(
-              deliveryUpdate
-            );
+            // let updateElasticSearch = await elasticsearch.uicCodeGen(
+            //   deliveryUpdate
+            // );
             if (deliveryUpdate) {
               resolve(data);
             } else {
@@ -2603,9 +2603,9 @@ module.exports = {
               }
             );
 
-            let updateElasticSearch = await elasticsearch.uicCodeGen(
-              deliveryUpdate
-            );
+            // let updateElasticSearch = await elasticsearch.uicCodeGen(
+            //   deliveryUpdate
+            // );
           }
         }
       }
@@ -2842,9 +2842,9 @@ module.exports = {
                 projection: { _id: 0 },
               }
             );
-            let updateElasticSearch = await elasticsearch.uicCodeGen(
-              deliveryUpdate
-            );
+            // let updateElasticSearch = await elasticsearch.uicCodeGen(
+            //   deliveryUpdate
+            // );
           }
           resolve(data);
         } else {
@@ -2881,9 +2881,9 @@ module.exports = {
                 projection: { _id: 0 },
               }
             );
-            let updateElasticSearch = await elasticsearch.uicCodeGen(
-              deliveryUpdate
-            );
+            // let updateElasticSearch = await elasticsearch.uicCodeGen(
+            //   deliveryUpdate
+            // );
           }
           resolve(data);
         } else {
@@ -2978,9 +2978,9 @@ module.exports = {
               projection: { _id: 0 },
             }
           );
-          let updateElasticSearch = await elasticsearch.uicCodeGen(
-            deliveryUpdate
-          );
+          // let updateElasticSearch = await elasticsearch.uicCodeGen(
+          //   deliveryUpdate
+          // );
         }
         if (falg == true) {
           resolve({ status: 1 });
@@ -3098,9 +3098,9 @@ module.exports = {
                 projection: { _id: 0 },
               }
             );
-            let updateElasticSearch = await elasticsearch.uicCodeGen(
-              deliveryTrack
-            );
+            // let updateElasticSearch = await elasticsearch.uicCodeGen(
+            //   deliveryTrack
+            // );
           }
           resolve({ status: 1 });
         } else {
@@ -3142,9 +3142,9 @@ module.exports = {
                 projection: { _id: 0 },
               }
             );
-            let updateElasticSearch = await elasticsearch.uicCodeGen(
-              deliveryTrack
-            );
+            // let updateElasticSearch = await elasticsearch.uicCodeGen(
+            //   deliveryTrack
+            // );
           }
           resolve({ status: 1 });
         } else {
@@ -3189,9 +3189,9 @@ module.exports = {
                   projection: { _id: 0 },
                 }
               );
-              let updateElasticSearch = await elasticsearch.uicCodeGen(
-                updateDelivery
-              );
+              // let updateElasticSearch = await elasticsearch.uicCodeGen(
+              //   updateDelivery
+              // );
             }
             resolve({ status: 1 });
           }
@@ -3222,9 +3222,9 @@ module.exports = {
                   projection: { _id: 0 },
                 }
               );
-              let updateElasticSearch = await elasticsearch.uicCodeGen(
-                updateDelivery
-              );
+              // let updateElasticSearch = await elasticsearch.uicCodeGen(
+              //   updateDelivery
+              // );
             }
             resolve({ status: 1 });
           }
@@ -3323,9 +3323,9 @@ module.exports = {
                 projection: { _id: 0 },
               }
             );
-            let updateElasticSearch = await elasticsearch.uicCodeGen(
-              deliveryUpdate
-            );
+            // let updateElasticSearch = await elasticsearch.uicCodeGen(
+            //   deliveryUpdate
+            // );
           }
         }
       }
@@ -3372,9 +3372,9 @@ module.exports = {
                 projection: { _id: 0 },
               }
             );
-            let updateElasticSearch = await elasticsearch.uicCodeGen(
-              updateDelivery
-            );
+            // let updateElasticSearch = await elasticsearch.uicCodeGen(
+            //   updateDelivery
+            // );
           }
           resolve({ status: 1 });
         }
@@ -3408,9 +3408,9 @@ module.exports = {
                 projection: { _id: 0 },
               }
             );
-            let updateElasticSearch = await elasticsearch.uicCodeGen(
-              updateDelivery
-            );
+            // let updateElasticSearch = await elasticsearch.uicCodeGen(
+            //   updateDelivery
+            // );
           }
           resolve({ status: 2 });
         }
@@ -4246,7 +4246,7 @@ module.exports = {
               projection: { _id: 0 },
             }
           );
-          let updateElastic = await elasticsearch.uicCodeGen(update);
+          // let updateElastic = await elasticsearch.uicCodeGen(update);
         }
         if (type == "MMT") {
           let updateFromTray = await masters.updateOne(
@@ -4457,9 +4457,9 @@ module.exports = {
                 projection: { _id: 0 },
               }
             );
-            let updateElasticSearch = await elasticsearch.uicCodeGen(
-              updateTrack
-            );
+            // let updateElasticSearch = await elasticsearch.uicCodeGen(
+            //   updateTrack
+            // );
           }
         }
       }
@@ -5382,9 +5382,9 @@ module.exports = {
                 projection: { _id: 0 },
               }
             );
-            let elasticSearchUpdate = await elasticsearch.uicCodeGen(
-              deliveryTrack
-            );
+            // let elasticSearchUpdate = await elasticsearch.uicCodeGen(
+            //   deliveryTrack
+            // );
           }
           resolve({ status: 1 });
         } else {
@@ -5493,9 +5493,9 @@ module.exports = {
               projection: { _id: 0 },
             }
           );
-          let elasticSearchUpdate = await elasticsearch.uicCodeGen(
-            deliveryUpdate
-          );
+          // let elasticSearchUpdate = await elasticsearch.uicCodeGen(
+          //   deliveryUpdate
+          // );
         }
       }
 
@@ -5558,9 +5558,9 @@ module.exports = {
                   projection: { _id: 0 },
                 }
               );
-              let updateElasticSearch = await elasticsearch.uicCodeGen(
-                updateTrack
-              );
+              // let updateElasticSearch = await elasticsearch.uicCodeGen(
+              //   updateTrack
+              // );
             }
             resolve({ status: 4 });
           } else {
@@ -5617,9 +5617,9 @@ module.exports = {
                 projection: { _id: 0 },
               }
             );
-            let updateElasticSearch = await elasticsearch.uicCodeGen(
-              updateTrack
-            );
+            // let updateElasticSearch = await elasticsearch.uicCodeGen(
+            //   updateTrack
+            // );
           }
           resolve({ status: 1 });
         } else {
@@ -5669,9 +5669,9 @@ module.exports = {
                   projection: { _id: 0 },
                 }
               );
-              let updateElasticSearch = await elasticsearch.uicCodeGen(
-                deliveryTrack
-              );
+              // let updateElasticSearch = await elasticsearch.uicCodeGen(
+              //   deliveryTrack
+              // );
             }
             resolve({ status: 1 });
           } else {
@@ -5690,9 +5690,9 @@ module.exports = {
                   projection: { _id: 0 },
                 }
               );
-              let updateElasticSearch = await elasticsearch.uicCodeGen(
-                deliveryTrack
-              );
+              // let updateElasticSearch = await elasticsearch.uicCodeGen(
+              //   deliveryTrack
+              // );
             }
             resolve({ status: 1 });
           }

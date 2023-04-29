@@ -1808,6 +1808,23 @@ router.post("/extra/CtxRelease", async (req, res, next) => {
     next(error);
   }
 });
+// EXTRA FOR RDL-1- ISSUED TRAY 
+router.post("/extra/rdl-one/report", async (req, res, next) => {
+  try {
+    let data = await superAdminController.extraRdlOneReport();
+    if (data) {
+      res.status(200).json({
+        message: "done",
+      });
+    } else {
+      res.status(202).json({
+        message: "Failed",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
 
 router.post("/extra/categoryDelivery", async (req, res, next) => {
   try {

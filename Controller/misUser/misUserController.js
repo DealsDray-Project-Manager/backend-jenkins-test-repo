@@ -2254,7 +2254,7 @@ module.exports = {
       );
 
       if (data) {
-        let updateElastic = await elasticsearch.uicCodeGen(data);
+        // let updateElastic = await elasticsearch.uicCodeGen(data);
         resolve(data);
       } else {
         resolve();
@@ -2343,7 +2343,7 @@ module.exports = {
           projection: { _id: 0 },
         }
       );
-      let updateElasticSearch = await elasticsearch.uicCodeGen(data);
+      // let updateElasticSearch = await elasticsearch.uicCodeGen(data);
       if (data) {
         resolve({ status: true });
       } else {
