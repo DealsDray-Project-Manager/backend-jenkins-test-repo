@@ -2428,7 +2428,7 @@ module.exports = {
                 rdl_fls_one_report: y?.rdl_fls_report,
               },
             },
-            { 
+            {
               new: true,
               projection: { _id: 0 },
             }
@@ -2436,6 +2436,125 @@ module.exports = {
         }
       }
       resolve(getTray);
+    });
+  },
+  extraBqcDoneBugFix: () => {
+    return new Promise(async (resolve, reject) => {
+      let bqcDoneTray = await masters.find({ sort_id: "BQC Done" });
+      for (let x of bqcDoneTray) {
+        if (x.actual_items.length == 0) {
+          let getDelivery = [];
+          //x.code == "WHT1564"
+          if (x.code == "WHT1141") {
+            getDelivery = await delivery.find({
+              wht_tray: "WHT1141",
+              sales_bin_status: { $exists: false },
+              stx_tray_id: { $exists: false },
+            });
+          } else if (x.code == "WHT1521") {
+            getDelivery = await delivery.find({
+              wht_tray: x.code,
+              sales_bin_status: { $exists: false },
+            });
+          } else {
+            getDelivery = await delivery.find({ wht_tray: x.code });
+          }
+          let findMuic = await products.findOne({
+            brand_name: x.brand,
+            model_name: x.model,
+          });
+          // x.code == "WHT1501" || x.code == "WHT1521" ||  x.code == "WHT1564" || x.code == "WHT1593" || x.code == "WHT1190"
+          if (x.code == "WHT1141") {
+            for (let y of getDelivery) {
+              let obj = {
+                tracking_id: y.tracking_id,
+                bot_agent: y.agent_name,
+                tray_id: y.tray_id,
+                uic: y.uic_code.code,
+                imei: y.imei,
+                muic: findMuic.muic,
+                brand_name: x.brand,
+                model_name: x.model,
+                order_id: y.order_id,
+                order_date: y.order_date,
+                status: "Valid",
+                bot_eval_result: y.bot_report,
+                charging: y.charging,
+              };
+              let addToTray = await masters.findOneAndUpdate(
+                { code: x.code },
+                {
+                  $push: {
+                    actual_items: obj,
+                  },
+                }
+              );
+              console.log(addToTray);
+            }
+          }
+        }
+      }
+      resolve(bqcDoneTray);
+    });
+  },
+  bqcDoneReportIssueBugFix: () => {
+    return new Promise(async (resolve, reject) => {
+      let gettray = await masters.find({
+        $or: [
+          { code: "WHT1317" },
+          { code: "WHT1599" },
+          { code: "WHT1137" },
+          { code: "WHT1232" },
+        ],
+      });
+      for (let x of gettray) {
+        if (x.code == "WHT1317") {
+          for (let y of x.items) {
+            let updateDelivery = await delivery.findOneAndUpdate(
+              { tracking_id: y.tracking_id },
+              {
+                $set: {
+                  bqc_done_close: new Date("2023-04-28T13:32:57.363+00:00"),
+                },
+              }
+            );
+          }
+        } else if (x.code == "WHT1599") {
+          for (let y of x.items) {
+            let updateDelivery = await delivery.findOneAndUpdate(
+              { tracking_id: y.tracking_id },
+              {
+                $set: {
+                  bqc_done_close: new Date("2023-04-28T06:26:14.490+00:00"),
+                },
+              }
+            );
+          }
+        } else if (x.code == "WHT1137") {
+          for (let y of x.items) {
+            let updateDelivery = await delivery.findOneAndUpdate(
+              { tracking_id: y.tracking_id },
+              {
+                $set: {
+                  bqc_done_close: new Date("2023-04-28T09:09:15.419+00:00"),
+                },
+              }
+            );
+          }
+        } else if (x.code == "WHT1232") {
+          for (let y of x.items) {
+            let updateDelivery = await delivery.findOneAndUpdate(
+              { tracking_id: y.tracking_id },
+              {
+                $set: {
+                  bqc_done_close: new Date("2023-04-27T12:43:39.965+00:00"),
+                },
+              }
+            );
+          }
+        }
+      }
+      resolve(gettray);
     });
   },
 };

@@ -1877,4 +1877,39 @@ router.post("/extra/rdl-one/report", async (req, res, next) => {
   }
 });
 
+//TO FIX BQC DONE UNITS 0 UNITS SHOWING 
+router.post("/extra/bqcDone/bugFix",async(req,res,next)=>{
+  try {
+    let data = await superAdminController.extraBqcDoneBugFix();
+    if (data) {
+      res.status(200).json({
+        message: "done",
+      });
+    } else {
+      res.status(202).json({
+        message: "Failed",
+      });
+    }
+  } catch (error) {
+    next(error)
+  }
+})
+//TO FIX BQC REPORT IS THERE BUT POP ISSUE
+router.post("/extra/bqcDoneReportIssue/bugFix",async(req,res,next)=>{
+  try {
+    let data = await superAdminController.bqcDoneReportIssueBugFix();
+    if (data) {
+      res.status(200).json({
+        message: "done",
+      });
+    } else {
+      res.status(202).json({
+        message: "Failed",
+      });
+    }
+  } catch (error) {
+    next(error)
+  }
+})
+
 module.exports = router;
