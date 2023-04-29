@@ -16,6 +16,9 @@ const deliverySchema = mongoose.Schema({
   gep_order: {
     type: String,
   },
+  old_item_details:{
+     type:String
+  },
   imei: {
     type: String,
   },

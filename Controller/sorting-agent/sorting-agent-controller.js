@@ -218,7 +218,7 @@ module.exports = {
               projection: { _id: 0 },
             }
           );
-          let updateElastic = await Elasticsearch.uicCodeGen(updateDelivery);
+          // let updateElastic = await Elasticsearch.uicCodeGen(updateDelivery);
           if (updateDelivery) {
             resolve({ status: 3 });
           }
@@ -353,12 +353,13 @@ module.exports = {
   itemShiftToMmt: (mmtTrayData) => {
     return new Promise(async (resolve, reject) => {
       let checkTrayFull = await masters.findOne({ code: mmtTrayData.toTray });
-      let checkItemAdded=await masters.findOne({ code: mmtTrayData.toTray,"items.uic":mmtTrayData.item .uic});
-      if(checkItemAdded){
-          resolve({status:4})
-      }
-      else{
-        
+      let checkItemAdded = await masters.findOne({
+        code: mmtTrayData.toTray,
+        "items.uic": mmtTrayData.item.uic,
+      });
+      if (checkItemAdded) {
+        resolve({ status: 4 });
+      } else {
         if (checkTrayFull.limit == checkTrayFull.items.length) {
           resolve({ status: 3 });
         } else {
@@ -449,7 +450,6 @@ module.exports = {
                   projection: { _id: 0 },
                 }
               );
-  
               let updateElasticSearch = await Elasticsearch.uicCodeGen(
                 updateDelivery
               );
@@ -462,7 +462,7 @@ module.exports = {
           } else {
             resolve({ status: 1 });
           }
-      }
+        }
       }
     });
   },
@@ -529,8 +529,7 @@ module.exports = {
         } else {
           resolve({ status: 0 });
         }
-      }
-      else if (finedTray.sort_id == "Ready to Audit Issued to Merging") {
+      } else if (finedTray.sort_id == "Ready to Audit Issued to Merging") {
         let fromtray = await masters.updateOne(
           { code: trayData.fromTray },
           {
@@ -744,65 +743,71 @@ module.exports = {
   },
   pickupItemTrasfer: (itemData) => {
     return new Promise(async (resolve, reject) => {
-      if (
-        itemData.item.pickup_toTray == undefined ||
-        itemData.item.pickup_toTray == "" ||
-        itemData.item.pickup_toTray == null
-      ) {
-        let updateData = await masters.updateOne(
-          { code: itemData.fromTray },
-          {
-            $push: {
-              temp_array: itemData.item,
-              actual_items: itemData.item,
-            },
+      let checkAlreadyAdded=await masters.findOne({code:itemData.fromTray,"actual_items.uic":itemData.item.uic})
+      if(checkAlreadyAdded){
+        resolve({status:3})
+      }
+      else{
+        if (
+          itemData.item.pickup_toTray == undefined ||
+          itemData.item.pickup_toTray == "" ||
+          itemData.item.pickup_toTray == null
+        ) {
+          let updateData = await masters.updateOne(
+            { code: itemData.fromTray },
+            {
+              $push: {
+                temp_array: itemData.item,
+                actual_items: itemData.item,
+              },
+            }
+          );
+          if (updateData.modifiedCount != 0) {
+            resolve({ status: 2 });
+          } else {
+            resolve({ status: 0 });
           }
-        );
-        if (updateData.modifiedCount != 0) {
-          resolve({ status: 2 });
         } else {
-          resolve({ status: 0 });
-        }
-      } else {
-        let updateData = await masters.updateOne(
-          { code: itemData.fromTray },
-          {
-            $push: {
-              actual_items: itemData.item,
+          let updateData = await masters.updateOne(
+            { code: itemData.fromTray },
+            {
+              $push: {
+                actual_items: itemData.item,
+              },
+            }
+          );
+          itemData.item.pickup_toTray = null;
+          let itemTransfer = await masters.updateOne(
+            {
+              code: itemData.toTray,
             },
-          }
-        );
-        itemData.item.pickup_toTray = null;
-        let itemTransfer = await masters.updateOne(
-          {
-            code: itemData.toTray,
-          },
-          {
-            $push: {
-              items: itemData.item,
+            {
+              $push: {
+                items: itemData.item,
+              },
+            }
+          );
+          let updateDelivery = await delivery.findOneAndUpdate(
+            { "uic_code.code": itemData.item.uic },
+            {
+              $set: {
+                wht_tray: itemData.toTray,
+              },
             },
+            {
+              new: true,
+              projection: { _id: 0 },
+            }
+          );
+          let updateElasticSearch = await Elasticsearch.uicCodeGen(
+            updateDelivery
+          );
+  
+          if (updateDelivery.modifiedCount !== 0) {
+            resolve({ status: 1 });
+          } else {
+            resolve({ status: 0 });
           }
-        );
-        let updateDelivery = await delivery.findOneAndUpdate(
-          { "uic_code.code": itemData.item.uic },
-          {
-            $set: {
-              wht_tray: itemData.toTray,
-            },
-          },
-          {
-            new: true,
-            projection: { _id: 0 },
-          }
-        );
-        let updateElasticSearch = await Elasticsearch.uicCodeGen(
-          updateDelivery
-        );
-
-        if (updateDelivery.modifiedCount !== 0) {
-          resolve({ status: 1 });
-        } else {
-          resolve({ status: 0 });
         }
       }
     });
@@ -839,9 +844,11 @@ module.exports = {
           deliveryUpdate
         );
       }
-
       if (updateFromTray) {
-        if (trayData.toTrayLength == trayData.toTrayLimit) {
+        if (
+          trayData.toTrayLength == trayData.toTrayLimit ||
+          trayData?.type == "To Tray Need To Close"
+        ) {
           let updateToTray = await masters.findOneAndUpdate(
             { code: trayData.toTray },
             {
@@ -904,7 +911,6 @@ module.exports = {
   },
   /*------------------------------CTX TO STX SORTING 0---------------------------------*/
   sortingGetAssignedCtxTray: (user_name) => {
-    console.log(user_name);
     return new Promise(async (resolve, reject) => {
       let data = await masters.find({
         issued_user_name: user_name,

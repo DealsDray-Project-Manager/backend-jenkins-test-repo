@@ -120,9 +120,9 @@ module.exports = {
               projection: { _id: 0 },
             }
           );
-          let elasticSearchUpdate = await Elasticsearch.uicCodeGen(
-            deliveryUpdate
-          );
+          // let elasticSearchUpdate = await Elasticsearch.uicCodeGen(
+          //   deliveryUpdate
+          // );
 
           if (deliveryUpdate) {
             resolve(deliveryUpdate);

@@ -114,6 +114,9 @@ const mastersSchema = mongoose.Schema({
   pickup_type: {
     type: String,
   },
+  pickup_next_stage: {
+    type: String,
+  },
   recommend_location: {
     type: String,
   },

@@ -105,7 +105,6 @@ router.post("/getDelivery/:location/:page/:size", async (req, res, next) => {
 // DELIVERY PAGE SORTING
 router.post("/delivered/item/filter", async (req, res, next) => {
   try {
-    console.log(req.body);
     let { brand, model, location, fromDate, toDate, page, size, totalCount } =
       req.body;
     page++;
@@ -144,7 +143,6 @@ router.post("/delivered/item/filter", async (req, res, next) => {
 // filter for month wise purchise report
 router.post("/monthWiseReport/item/filter", async (req, res, next) => {
   try {
-    console.log(req.body);
     let { location, fromDate, toDate, page, size, type } = req.body;
     page++;
     const limit = parseInt(size);
@@ -285,7 +283,6 @@ router.post("/search-delivery-item", async (req, res, next) => {
       skip,
       location
     );
-    console.log(data.dataForDownload);
     if (data.searchResult.length !== 0) {
       res.status(200).json({
         data: data.searchResult,
@@ -316,7 +313,6 @@ router.post("/search/processing", async (req, res, next) => {
       limit,
       skip
     );
-    console.log(data);
     if (data.deliveryData.length !== 0) {
       res.status(200).json({
         data: data.deliveryData,
@@ -345,7 +341,6 @@ router.post("/search/sales", async (req, res, next) => {
       limit,
       skip
     );
-    console.log(data);
     if (data.deliveryData.length !== 0) {
       res.status(200).json({
         data: data.deliveryData,
@@ -355,6 +350,29 @@ router.post("/search/sales", async (req, res, next) => {
       res.status(202).json({
         data: data.deliveryData,
         count: 0,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+// MONTH WISE PURCHASE SORT
+router.post("/report/sort", async (req, res, next) => {
+  try {
+    let { location, page, size, type, sortFormate } = req.body;
+    page++;
+    const limit = parseInt(size);
+    const skip = (page - 1) * size;
+    let data = await reportingAgentRouter.reportPageSort(
+      location,
+      limit,
+      skip,
+      type,
+      sortFormate
+    );
+    if (data) {
+      res.status(200).json({
+        data: data,
       });
     }
   } catch (error) {

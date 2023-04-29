@@ -281,6 +281,10 @@ router.post("/pickup/itemTransfer", async (req, res, next) => {
       res.status(200).json({
         message: `This item not move keep it in the ${fromTray} `,
       });
+    } else if (data.status == 3) {
+      res.status(200).json({
+        message: `This item  Already Added`,
+      });
     } else {
       res.status(202).json({
         message: "Item Transfer failed",
