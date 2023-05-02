@@ -18,9 +18,9 @@ const {
 const moment = require("moment");
 const elasticsearch = require("../../Elastic-search/elastic");
 
-const IISDOMAIN = "http://prexo-v8-1-uat-adminapi.dealsdray.com/user/profile/";
+const IISDOMAIN = "https://prexo-v8-2-uat-api.dealsdray.com/user/profile/";
 const IISDOMAINPRDT =
-  "http://prexo-v8-1-uat-adminapi.dealsdray.com/product/image/";
+  "https://prexo-v8-2-uat-api.dealsdray.com/product/image/";
 
 /************************************************************************************************** */
 
@@ -1625,6 +1625,7 @@ module.exports = {
                 $set: {
                   tray_status: status,
                   tray_location: "Warehouse",
+                  updated_at: Date.now(),
                 },
               },
               {
@@ -1632,9 +1633,9 @@ module.exports = {
                 projection: { _id: 0 },
               }
             );
-            let updateElasticSearch = await elasticsearch.uicCodeGen(
-              deliveryTrack
-            );
+            // let updateElasticSearch = await elasticsearch.uicCodeGen(
+            //   deliveryTrack
+            // );
           }
         }
       }
@@ -1796,6 +1797,7 @@ module.exports = {
               $set: {
                 tray_status: type,
                 tray_location: "Warehouse",
+                updated_at: Date.now(),
               },
             },
             {
@@ -1803,9 +1805,9 @@ module.exports = {
               projection: { _id: 0 },
             }
           );
-          let updateElasticSearch = await elasticsearch.uicCodeGen(
-            deliveryTrack
-          );
+          // let updateElasticSearch = await elasticsearch.uicCodeGen(
+          //   deliveryTrack
+          // );
         }
       }
       if (sendtoRdlMis) {
@@ -2337,6 +2339,19 @@ module.exports = {
       }
     });
   },
+  updateElasticSearch: () => {
+    return new Promise(async (resolve, reject) => {
+      let lastUpdateData = await delivery
+        .find({}, { _id: 0 })
+        .sort({ updated_at: -1 })
+        .limit(500);
+      console.log(lastUpdateData[0]);
+      for (let x of lastUpdateData) {
+        let update = await elasticsearch.uicCodeGen(x);
+      }
+      resolve({ status: 1 });
+    });
+  },
   editPartOrColor: (dataOfPartorColor) => {
     return new Promise(async (resolve, reject) => {
       let updateData = await partAndColor.updateOne(
@@ -2578,9 +2593,23 @@ module.exports = {
           );
         }
       }
-
-      
       resolve(getTray);
     });
   },
+  extraRdlOneUserNameAdd:()=>{
+    return new Promise(async(resolve,reject)=>{
+      let getRdlRepairTray=await masters.find({sort_id:"Ready to RDL-Repair"})
+      for(let x of getRdlRepairTray){
+        for(let y of x.items){
+          let findItem=await delivery.findOne({tracking_id:y.tracking_id})
+          let update=await masters.findOneAndUpdate({code:x.code,"items.uic":findItem.uic_code.code},{
+            $set:{
+                "items.$.rdl_fls_report.username":findItem.rdl_fls_one_user_name
+            }
+          })
+        }
+      }
+      resolve({getRdlRepairTray})
+    })
+  }
 };

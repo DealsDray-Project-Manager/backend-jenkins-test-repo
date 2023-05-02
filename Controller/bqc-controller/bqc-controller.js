@@ -222,6 +222,7 @@ module.exports = {
                 bqc_in_date: Date.now(),
                 tray_status: "BQC IN",
                 tray_location: "BQC",
+                updated_at: Date.now(),
               },
             },
             {
@@ -279,6 +280,8 @@ module.exports = {
                     tray_status: "BQC Done",
                     tray_location: "BQC",
                     bqc_report: x.bqc_report,
+                    updated_at: Date.now(),
+
                   },
                 },
                 {

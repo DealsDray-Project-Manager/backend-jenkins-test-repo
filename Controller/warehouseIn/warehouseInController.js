@@ -307,9 +307,18 @@ module.exports = {
         ],
       });
       count.sortingRequest = await masters.count({
-        sort_id: "Sorting Request Sent To Warehouse",
-        cpc: location,
-        type_taxanomy: "BOT",
+        $or: [
+          {
+            sort_id: "Sorting Request Sent To Warehouse",
+            cpc: location,
+            type_taxanomy: "BOT",
+          },
+          {
+            sort_id: "Assigned to sorting agent",
+            cpc: location,
+            type_taxanomy: "BOT",
+          },
+        ],
       });
       count.inSortingWht = await masters.count({
         prefix: "tray-master",
@@ -668,10 +677,10 @@ module.exports = {
         }
       );
       if (data.status !== "Duplicate" && data.status !== "Invalid") {
-        let updateElastic = await elasticsearch.updateUic(
-          data.awbn_number,
-          data.bag_id
-        );
+        // let updateElastic = await elasticsearch.updateUic(
+        //   data.awbn_number,
+        //   data.bag_id
+        // );
         let updateDelivery = await delivery.updateOne(
           { tracking_id: data.awbn_number },
           {
@@ -679,6 +688,7 @@ module.exports = {
               bag_id: data.bag_id,
               stockin_date: Date.now(),
               stock_in_status: data.status,
+              updated_at: Date.now(),
             },
           }
         );
@@ -731,14 +741,15 @@ module.exports = {
       );
       if (data) {
         for (let x of data.items) {
-          let updateElastic = await elasticsearch.closeBagAfterItemPuted(
-            x.awbn_number
-          );
+          // let updateElastic = await elasticsearch.closeBagAfterItemPuted(
+          //   x.awbn_number
+          // );
           let updateDelivery = await delivery.updateOne(
             { tracking_id: x.awbn_number },
             {
               $set: {
                 bag_close_date: Date.now(),
+                updated_at: Date.now(),
               },
             }
           );
@@ -827,6 +838,7 @@ module.exports = {
                 $set: {
                   assign_to_agent: Date.now(),
                   agent_name: data.issued_user_name,
+                  updated_at: Date.now(),
                 },
               },
               {
@@ -1183,6 +1195,7 @@ module.exports = {
                     tray_status: "Received From Charging",
                     tray_location: "Warehouse",
                     charging_done_received: Date.now(),
+                    updated_at: Date.now(),
                   },
                 },
                 {
@@ -1221,6 +1234,7 @@ module.exports = {
                     $set: {
                       tray_status: "Audit Done  Received From Merging",
                       tray_location: "Warehouse",
+                      updated_at: Date.now(),
                     },
                   },
                   {
@@ -1253,6 +1267,7 @@ module.exports = {
                     $set: {
                       tray_status: "Ready to Audit Received From Merging",
                       tray_location: "Warehouse",
+                      updated_at: Date.now(),
                     },
                   },
                   {
@@ -1260,9 +1275,9 @@ module.exports = {
                     projection: { _id: 0 },
                   }
                 );
-                let updateElasticSearch = await elasticsearch.uicCodeGen(
-                  deliveryTrack
-                );
+                // let updateElasticSearch = await elasticsearch.uicCodeGen(
+                //   deliveryTrack
+                // );
               }
               resolve({ status: 1 });
             } else {
@@ -1285,6 +1300,7 @@ module.exports = {
                     $set: {
                       tray_status: "Ready to BQC Received From Merging",
                       tray_location: "Warehouse",
+                      updated_at: Date.now(),
                     },
                   },
                   {
@@ -1292,9 +1308,9 @@ module.exports = {
                     projection: { _id: 0 },
                   }
                 );
-                let updateElasticSearch = await elasticsearch.uicCodeGen(
-                  deliveryTrack
-                );
+                // let updateElasticSearch = await elasticsearch.uicCodeGen(
+                //   deliveryTrack
+                // );
               }
               resolve({ status: 1 });
             } else {
@@ -1317,6 +1333,7 @@ module.exports = {
                     $set: {
                       tray_status: "Ready to RDL-Repair Received From Merging",
                       tray_location: "Warehouse",
+                      updated_at: Date.now(),
                     },
                   },
                   {
@@ -1324,9 +1341,9 @@ module.exports = {
                     projection: { _id: 0 },
                   }
                 );
-                let updateElasticSearch = await elasticsearch.uicCodeGen(
-                  deliveryTrack
-                );
+                // let updateElasticSearch = await elasticsearch.uicCodeGen(
+                //   deliveryTrack
+                // );
               }
               resolve({ status: 1 });
             } else {
@@ -1349,6 +1366,7 @@ module.exports = {
                     $set: {
                       tray_status: "Received From Merging",
                       tray_location: "Warehouse",
+                      updated_at: Date.now(),
                     },
                   },
                   {
@@ -1388,6 +1406,7 @@ module.exports = {
                     tray_status: "Received From BOT",
                     tray_location: "Warehouse",
                     bot_done_received: Date.now(),
+                    updated_at: Date.now(),
                   },
                 },
                 {
@@ -1511,6 +1530,7 @@ module.exports = {
                 warehouse_close_date: Date.now(),
                 tray_status: "Closed By Warehouse",
                 tray_location: "Warehouse",
+                updated_at: Date.now(),
               },
             },
             {
@@ -1554,6 +1574,7 @@ module.exports = {
                 tray_close_wh_date: Date.now(),
                 tray_status: "Closed By Warehouse",
                 tray_location: "Warehouse",
+                updated_at: Date.now(),
               },
             },
             {
@@ -1561,7 +1582,7 @@ module.exports = {
               projection: { _id: 0 },
             }
           );
-          let updateElastic = await elasticsearch.uicCodeGen(getItemId);
+          // let updateElastic = await elasticsearch.uicCodeGen(getItemId);
           let findProduct = await products.findOne({
             vendor_sku_id: getItemId.item_id,
           });
@@ -2444,6 +2465,7 @@ module.exports = {
                   tray_location: "BQC Agent",
                   agent_name_bqc: data.issued_user_name,
                   assign_to_agent_bqc: Date.now(),
+                  updated_at: Date.now(),
                 },
               },
               {
@@ -2479,6 +2501,7 @@ module.exports = {
                   agent_name_charging: data.issued_user_name,
                   assign_to_agent_charging: Date.now(),
                   tray_location: "Charging",
+                  updated_at: Date.now(),
                 },
               },
               {
@@ -2515,6 +2538,7 @@ module.exports = {
                   rdl_fls_one_user_name: data?.issued_user_name,
                   rdl_fls_issued_date: Date.now(),
                   tray_location: "RDL-FLS",
+                  updated_at: Date.now(),
                 },
               },
               {
@@ -2556,6 +2580,7 @@ module.exports = {
                   rdl_fls_one_user_name: data?.issued_user_name,
                   rdl_fls_issued_date: Date.now(),
                   tray_location: "RDL-2",
+                  updated_at: Date.now(),
                 },
               },
               {
@@ -2595,6 +2620,7 @@ module.exports = {
                   agent_name_charging: data.issued_user_name,
                   assign_to_agent_charging: Date.now(),
                   tray_location: "Charging",
+                  updated_at: Date.now(),
                 },
               },
               {
@@ -2835,6 +2861,7 @@ module.exports = {
                   tray_status: "Ready to Audit",
                   tray_location: "Warehouse",
                   bqc_done_close: Date.now(),
+                  updated_at: Date.now(),
                 },
               },
               {
@@ -2874,6 +2901,7 @@ module.exports = {
                   tray_status: "Ready to BQC",
                   tray_location: "Warehouse",
                   charging_done_close: Date.now(),
+                  updated_at: Date.now(),
                 },
               },
               {
@@ -2971,6 +2999,7 @@ module.exports = {
                 tray_status: stage,
                 tray_location: "Warehouse",
                 audit_done_close: Date.now(),
+                updated_at: Date.now(),
               },
             },
             {
@@ -3091,6 +3120,7 @@ module.exports = {
                   tray_status: "Received From BQC",
                   tray_location: "Warehouse",
                   bqc_done_received: Date.now(),
+                  updated_at: Date.now(),
                 },
               },
               {
@@ -3135,6 +3165,7 @@ module.exports = {
                   tray_status: "Received From Audit",
                   tray_location: "Warehouse",
                   audit_done_recieved: Date.now(),
+                  updated_at: Date.now(),
                 },
               },
               {
@@ -3182,6 +3213,7 @@ module.exports = {
                     tray_status: "Received From Sorting Agent After Ctx to Stx",
                     tray_location: "Sales-Warehouse",
                     received_from_sorting: Date.now(),
+                    updated_at: Date.now(),
                   },
                 },
                 {
@@ -3215,6 +3247,7 @@ module.exports = {
                     tray_status: "Received From Sorting",
                     tray_location: "Warehouse",
                     received_from_sorting: Date.now(),
+                    updated_at: Date.now(),
                   },
                 },
                 {
@@ -3316,6 +3349,7 @@ module.exports = {
                   tray_status: "Issued to Sorting",
                   sorting_agent_name: trayData.username,
                   handover_sorting_date: Date.now(),
+                  updated_at: Date.now(),
                 },
               },
               {
@@ -3365,6 +3399,7 @@ module.exports = {
                   tray_status: "Closed",
                   tray_location: "Warehouse",
                   closed_from_sorting: Date.now(),
+                  updated_at: Date.now(),
                 },
               },
               {
@@ -3401,6 +3436,7 @@ module.exports = {
                   tray_status: "Inuse",
                   tray_location: "Warehouse",
                   closed_from_sorting: Date.now(),
+                  updated_at: Date.now(),
                 },
               },
               {
@@ -3880,6 +3916,7 @@ module.exports = {
               $set: {
                 tray_status: "Send to Merging",
                 tray_location: "Sorting Agent",
+                updated_at: Date.now(),
               },
             },
             {
@@ -3887,9 +3924,9 @@ module.exports = {
               projection: { _id: 0 },
             }
           );
-          let updateElasticSearch = await elasticsearch.uicCodeGen(
-            deliveryUpdate
-          );
+          // let updateElasticSearch = await elasticsearch.uicCodeGen(
+          //   deliveryUpdate
+          // );
         }
         resolve({ status: 1 });
       } else {
@@ -4239,6 +4276,7 @@ module.exports = {
                 tray_close_wh_date: Date.now(),
                 tray_location: "Warehouse",
                 tray_status: stage,
+                updated_at: Date.now(),
               },
             },
             {
@@ -4450,6 +4488,7 @@ module.exports = {
                   audit_user_name: issue.issued_user_name,
                   tray_status: "Issued to Audit",
                   "bqc_report.bqc_status": y?.bqc_status,
+                  updated_at: Date.now(),
                 },
               },
               {
@@ -5017,6 +5056,7 @@ module.exports = {
                 tray_status: "Issued to Sorting for Pickup",
                 issued_to_agent_for_pickup: Date.now(),
                 tray_location: "Issued To Pickup",
+                updated_at: Date.now(),
               },
             },
             {
@@ -5024,9 +5064,9 @@ module.exports = {
               projection: { _id: 0 },
             }
           );
-          let updateElasticSearch = await elasticsearch.uicCodeGen(
-            deliveryUpdate
-          );
+          // let updateElasticSearch = await elasticsearch.uicCodeGen(
+          //   deliveryUpdate
+          // );
         }
         resolve({ status: 1 });
       } else {
@@ -5073,6 +5113,7 @@ module.exports = {
                 $set: {
                   tray_status: "Pickup Done",
                   tray_location: "Warehouse",
+                  updated_at: Date.now(),
                 },
               },
               {
@@ -5080,9 +5121,9 @@ module.exports = {
                 projection: { _id: 0 },
               }
             );
-            let updateElasticSearch = await elasticsearch.uicCodeGen(
-              deliveryUpdate
-            );
+            // let updateElasticSearch = await elasticsearch.uicCodeGen(
+            //   deliveryUpdate
+            // );
           }
           resolve({ status: 1 });
         } else {
@@ -5202,6 +5243,7 @@ module.exports = {
               $set: {
                 tray_status: status,
                 tray_location: "Warehouse",
+                updated_at: Date.now(),
               },
             },
             {
@@ -5209,9 +5251,9 @@ module.exports = {
               projection: { _id: 0 },
             }
           );
-          let updateElasticSearch = await elasticsearch.uicCodeGen(
-            deliveryTrack
-          );
+          // let updateElasticSearch = await elasticsearch.uicCodeGen(
+          //   deliveryTrack
+          // );
         }
 
         resolve({ status: 1 });
@@ -5375,6 +5417,7 @@ module.exports = {
                   tray_status: "Recevied From RDL-FLS",
                   tray_location: "Warehouse",
                   rdl_fls_done_recieved_date: Date.now(),
+                  updated_at: Date.now(),
                 },
               },
               {
@@ -5486,6 +5529,7 @@ module.exports = {
               $set: {
                 tray_status: "Ready to RDL-Repair",
                 rdl_fls_done_closed_wh: Date.now(),
+                updated_at: Date.now(),
               },
             },
             {
@@ -5551,6 +5595,7 @@ module.exports = {
                     ctx_tray_receive_and_close_wh: Date.now(),
                     tray_location: "Sales-warehouse",
                     partner_shop: data.cpc,
+                    updated_at: Date.now(),
                   },
                 },
                 {
@@ -5610,6 +5655,7 @@ module.exports = {
                   ctx_tray_transferTo_sales_date: Date.now(),
                   tray_Id: x.tray_id,
                   ctx_tray_id: trayData.trayId,
+                  updated_at: Date.now(),
                 },
               },
               {
@@ -5662,6 +5708,7 @@ module.exports = {
                     tray_status: "Received From Processing",
                     ctx_tray_receive: Date.now(),
                     tray_location: "Sales-warehouse",
+                    updated_at: Date.now(),
                   },
                 },
                 {
@@ -5683,6 +5730,7 @@ module.exports = {
                     tray_status: "Received From Sales",
                     ctx_tray_receive: Date.now(),
                     tray_location: "Processing-warehouse",
+                    updated_at: Date.now(),
                   },
                 },
                 {

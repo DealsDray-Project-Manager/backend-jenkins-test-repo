@@ -94,6 +94,7 @@ module.exports = {
                 charging_in_date: Date.now(),
                 tray_status: "Charging In",
                 tray_location: "Charging",
+                updated_at: Date.now(),
               },
             },
             {
@@ -152,6 +153,7 @@ module.exports = {
                 tray_status: "Charging Done",
                 tray_location: "Send to warehouse",
                 charging: x.charging,
+                updated_at: Date.now(),
               },
             },
             {

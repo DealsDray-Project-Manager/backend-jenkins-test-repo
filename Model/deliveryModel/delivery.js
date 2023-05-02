@@ -16,8 +16,8 @@ const deliverySchema = mongoose.Schema({
   gep_order: {
     type: String,
   },
-  old_item_details:{
-     type:String
+  old_item_details: {
+    type: String,
   },
   imei: {
     type: String,
@@ -150,6 +150,7 @@ const deliverySchema = mongoose.Schema({
   charging_done_close: {
     type: Date,
   },
+  updated_at: { type: Date, default: Date.now },
   bqc_done_close: {
     type: Date,
   },
@@ -251,10 +252,9 @@ const deliverySchema = mongoose.Schema({
   stx_tray_id: {
     type: String,
   },
-  temp_delivery_status:{
-    type:String
-  }
-
+  temp_delivery_status: {
+    type: String,
+  },
 });
 
 const delivery = mongoose.model("delivery", deliverySchema);

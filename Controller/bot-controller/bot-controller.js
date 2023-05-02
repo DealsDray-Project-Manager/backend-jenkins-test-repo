@@ -77,6 +77,8 @@ module.exports = {
                 tray_closed_by_bot: Date.now(),
                 tray_status: "Closed By Bot",
                 bot_report: x.bot_e,
+                updated_at: Date.now(),
+
               },
             },
             {
@@ -208,6 +210,7 @@ module.exports = {
                 tray_type: res.type_taxanomy,
                 tray_location: "Bag Opening",
                 bot_report: obj,
+                updated_at: Date.now(),
               },
             },
             {
@@ -286,6 +289,7 @@ module.exports = {
                 $set: {
                   tray_closed_by_bot: Date.now(),
                   tray_status: "Closed By Bot",
+                  updated_at: Date.now(),
                 },
               },
               {
