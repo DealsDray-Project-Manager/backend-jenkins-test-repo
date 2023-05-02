@@ -379,4 +379,53 @@ router.post("/report/sort", async (req, res, next) => {
     next(error);
   }
 });
+// RDL 1 DONE UNITS REPORT
+router.post("/rdlOneDone/units", async (req, res, next) => {
+  try {
+    let { location, page, rowsPerPage } = req.body;
+    page++;
+    const limit = parseInt(rowsPerPage);
+    const skip = (page - 1) * rowsPerPage;
+    let data = await reportingAgentRouter.rdlOneDoneUnits(
+      location,
+      limit,
+      skip
+    );
+    if (data) {
+      res.status(200).json({
+        data: data.units,
+        count: data.count,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+router.post("/search/rdlOneDoneUnits", async (req, res, next) => {
+  try {
+    let { searchData, location, rowsPerPage, page } = req.body;
+    page++;
+    const limit = parseInt(rowsPerPage);
+    const skip = (page - 1) * rowsPerPage;
+    let data = await Elasticsearch.searchRdlOneDoneUnits(
+      searchData,
+      limit,
+      skip,
+      location
+    );
+    if (data.searchResult.length !== 0) {
+      res.status(200).json({
+        data: data.searchResult,
+        count: data.count,
+      });
+    } else {
+      res.status(202).json({
+        data: data.searchResult,
+        count: data.count,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
 module.exports = router;

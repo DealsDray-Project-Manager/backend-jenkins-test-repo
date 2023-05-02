@@ -1195,11 +1195,6 @@ router.post("/search-admin-track-item", async (req, res, next) => {
       page,
       rowsPerPage
     );
-    // let data = await superAdminController.searchAdminTrackItem(
-    //   type,
-    //   searchData,
-    //   location
-    // );
     if (data.searchResult.length != 0) {
       res.status(200).json({
         data: data.searchResult,
@@ -1261,7 +1256,6 @@ router.post("/getInvalidItemPresentBag", async (req, res, next) => {
     next(error);
   }
 });
-
 /*-----------------------------GET BAG ITEM INVALID--------------------------------------*/
 router.post("/getBagItemInvalid/:bagId", async (req, res, next) => {
   try {
@@ -1717,6 +1711,23 @@ router.post("/partAndColor/delete/:id", async (req, res, next) => {
     next(error);
   }
 });
+// TO UPDATE ELASTICSEARCH USING BUTTON CLICK
+router.post("/update/elasticSearch", async (req, res, next) => {
+  try {
+    const data = await superAdminController.updateElasticSearch();
+    if (data.status == 1) {
+      res.status(200).json({
+        message: "Successfully Updated",
+      });
+    } else {
+      res.status(202).json({
+        message: "Updation  Failed",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
 /***********************************************EXTRA QUREY SECTION*********************************************************** */
 router.post("/user/addCpcType", async (req, res, next) => {
   try {
@@ -1773,7 +1784,6 @@ router.post("/tray/addGrade", async (req, res, next) => {
 });
 
 //CTX TRAY GRADE ADDIN
-
 router.post("/update-ctx-trayId", async (req, res, next) => {
   try {
     let data = await superAdminController.updateCtxTrayId();
@@ -1795,23 +1805,6 @@ router.post("/update-ctx-trayId", async (req, res, next) => {
 router.post("/extra/CtxRelease", async (req, res, next) => {
   try {
     let data = await superAdminController.extraCtxRelease();
-    if (data) {
-      res.status(200).json({
-        message: "done",
-      });
-    } else {
-      res.status(202).json({
-        message: "Failed",
-      });
-    }
-  } catch (error) {
-    next(error);
-  }
-});
-// EXTRA FOR RDL-1- ISSUED TRAY 
-router.post("/extra/rdl-one/report", async (req, res, next) => {
-  try {
-    let data = await superAdminController.extraRdlOneReport();
     if (data) {
       res.status(200).json({
         message: "done",
@@ -1876,7 +1869,7 @@ router.post("/extra/partid/add", async (req, res, next) => {
   }
 });
 
-// EXTRA FOR RDL-1- ISSUED TRAY 
+// EXTRA FOR RDL-1- ISSUED TRAY
 router.post("/extra/rdl-one/report", async (req, res, next) => {
   try {
     let data = await superAdminController.extraRdlOneReport();
@@ -1894,8 +1887,8 @@ router.post("/extra/rdl-one/report", async (req, res, next) => {
   }
 });
 
-//TO FIX BQC DONE UNITS 0 UNITS SHOWING 
-router.post("/extra/bqcDone/bugFix",async(req,res,next)=>{
+//TO FIX BQC DONE UNITS 0 UNITS SHOWING
+router.post("/extra/bqcDone/bugFix", async (req, res, next) => {
   try {
     let data = await superAdminController.extraBqcDoneBugFix();
     if (data) {
@@ -1908,11 +1901,11 @@ router.post("/extra/bqcDone/bugFix",async(req,res,next)=>{
       });
     }
   } catch (error) {
-    next(error)
+    next(error);
   }
-})
+});
 //TO FIX BQC REPORT IS THERE BUT POP ISSUE
-router.post("/extra/bqcDoneReportIssue/bugFix",async(req,res,next)=>{
+router.post("/extra/bqcDoneReportIssue/bugFix", async (req, res, next) => {
   try {
     let data = await superAdminController.bqcDoneReportIssueBugFix();
     if (data) {
@@ -1925,8 +1918,25 @@ router.post("/extra/bqcDoneReportIssue/bugFix",async(req,res,next)=>{
       });
     }
   } catch (error) {
-    next(error)
+    next(error);
   }
-})
+});
 
+//RDL 1 USERNAME ADD
+router.post("/extra/rdlOneUserName/bugFix", async (req, res, next) => {
+  try {
+    let data = await superAdminController.extraRdlOneUserNameAdd();
+    if (data) {
+      res.status(200).json({
+        message: "done",
+      });
+    } else {
+      res.status(202).json({
+        message: "Failed",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
 module.exports = router;

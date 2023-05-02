@@ -211,6 +211,7 @@ module.exports = {
                 wht_tray: itemData.wht_tray,
                 wht_tray_assigned_date: Date.now(),
                 tray_type: "WHT",
+                updated_at: Date.now(),
               },
             },
             {
@@ -392,6 +393,7 @@ module.exports = {
                   $set: {
                     tray_location: "Merging",
                     wht_tray: mmtTrayData.toTray,
+                    updated_at: Date.now(),
                   },
                 },
                 {
@@ -399,9 +401,9 @@ module.exports = {
                   projection: { _id: 0 },
                 }
               );
-              let updateElasticSearch = await Elasticsearch.uicCodeGen(
-                updateDelivery
-              );
+              // let updateElasticSearch = await Elasticsearch.uicCodeGen(
+              //   updateDelivery
+              // );
             } else if (mmtTrayData.trayType == "ST") {
               let updateDelivery = await delivery.findOneAndUpdate(
                 { tracking_id: mmtTrayData.item.tracking_id },
@@ -409,6 +411,7 @@ module.exports = {
                   $set: {
                     tray_location: "Sales-Sorting",
                     stx_tray_id: mmtTrayData.toTray,
+                    updated_at: Date.now(),
                   },
                 },
                 {
@@ -416,9 +419,9 @@ module.exports = {
                   projection: { _id: 0 },
                 }
               );
-              let updateElasticSearch = await Elasticsearch.uicCodeGen(
-                updateDelivery
-              );
+              // let updateElasticSearch = await Elasticsearch.uicCodeGen(
+              //   updateDelivery
+              // );
             } else if (mmtTrayData.trayType == "CT") {
               let updateDelivery = await delivery.findOneAndUpdate(
                 { tracking_id: mmtTrayData.item.tracking_id },
@@ -426,6 +429,7 @@ module.exports = {
                   $set: {
                     tray_location: "Merging",
                     ctx_tray_id: mmtTrayData.toTray,
+                    updated_at: Date.now(),
                   },
                 },
                 {
@@ -433,9 +437,9 @@ module.exports = {
                   projection: { _id: 0 },
                 }
               );
-              let updateElasticSearch = await Elasticsearch.uicCodeGen(
-                updateDelivery
-              );
+              // let updateElasticSearch = await Elasticsearch.uicCodeGen(
+              //   updateDelivery
+              // );
             } else {
               let updateDelivery = await delivery.findOneAndUpdate(
                 { tracking_id: mmtTrayData.item.awbn_number },
@@ -443,6 +447,8 @@ module.exports = {
                   $set: {
                     tray_location: "Merging",
                     tray_id: mmtTrayData.toTray,
+                    updated_at: Date.now(),
+
                   },
                 },
                 {
@@ -450,9 +456,9 @@ module.exports = {
                   projection: { _id: 0 },
                 }
               );
-              let updateElasticSearch = await Elasticsearch.uicCodeGen(
-                updateDelivery
-              );
+              // let updateElasticSearch = await Elasticsearch.uicCodeGen(
+              //   updateDelivery
+              // );
             }
             if (fromTrayItemRemove.modifiedCount !== 0) {
               resolve({ status: 1 });
@@ -792,6 +798,7 @@ module.exports = {
             {
               $set: {
                 wht_tray: itemData.toTray,
+                updated_at: Date.now(),
               },
             },
             {
@@ -799,9 +806,9 @@ module.exports = {
               projection: { _id: 0 },
             }
           );
-          let updateElasticSearch = await Elasticsearch.uicCodeGen(
-            updateDelivery
-          );
+          // let updateElasticSearch = await Elasticsearch.uicCodeGen(
+          //   updateDelivery
+          // );
   
           if (updateDelivery.modifiedCount !== 0) {
             resolve({ status: 1 });
@@ -833,6 +840,7 @@ module.exports = {
             $set: {
               tray_status: "Pickup Done Closed by Sorting Agent",
               tray_location: "Warehouse",
+              updated_at: Date.now(),
             },
           },
           {
@@ -840,9 +848,9 @@ module.exports = {
             projection: { _id: 0 },
           }
         );
-        let updateElasticSearch = await Elasticsearch.uicCodeGen(
-          deliveryUpdate
-        );
+        // let updateElasticSearch = await Elasticsearch.uicCodeGen(
+        //   deliveryUpdate
+        // );
       }
       if (updateFromTray) {
         if (
@@ -868,6 +876,7 @@ module.exports = {
                   $set: {
                     tray_status: "Pickup Done Closed by Sorting Agent",
                     tray_location: "Warehouse",
+                    updated_at: Date.now(),
                   },
                 },
                 {
@@ -875,9 +884,9 @@ module.exports = {
                   projection: { _id: 0 },
                 }
               );
-              let updateElasticSearch = await Elasticsearch.uicCodeGen(
-                deliveryUpdate
-              );
+              // let updateElasticSearch = await Elasticsearch.uicCodeGen(
+              //   deliveryUpdate
+              // );
             }
             resolve({ status: 1 });
           }

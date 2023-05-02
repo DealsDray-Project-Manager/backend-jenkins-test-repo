@@ -38,7 +38,17 @@ module.exports = {
         recharging: 0,
         ctxTransferPendingToSales: 0,
         ctxTransferToSalesInProgress: 0,
+        monthWisePurchase: 0,
+        rdlOneDoneUnits: 0,
       };
+      count.rdlOneDoneUnits = await delivery.count({
+        partner_shop: location,
+        rdl_fls_closed_date: { $exists: true },
+      });
+      count.monthWisePurchase = await delivery.count({
+        partner_shop: location,
+        temp_delivery_status: { $ne: "Pending" },
+      });
       count.allOrders = await orders.count({
         partner_shop: location,
         order_status: "NEW",
@@ -129,7 +139,6 @@ module.exports = {
           $limit: 1,
         },
       ]);
-
 
       count.readyForSale = await delivery.count({
         $or: [
@@ -1944,84 +1953,100 @@ module.exports = {
       let deliveryData = [];
       if (type == "order_id") {
         deliveryData = await delivery
-          .find({ partner_shop: location })
-          .sort({ order_id: sortFormate })
+          .find({ partner_shop: location, temp_delivery_status: { $ne: "Pending" }, })
+          .sort({ order_id: sortFormate, })
           .skip(skip)
           .limit(limit);
       } else if (type == "tracking_id") {
         deliveryData = await delivery
-          .find({ partner_shop: location })
+          .find({ partner_shop: location, temp_delivery_status: { $ne: "Pending" }, })
           .sort({ tracking_id: sortFormate })
           .skip(skip)
           .limit(limit);
       } else if (type == "model_name") {
         deliveryData = await delivery
-          .find({ partner_shop: location })
+          .find({ partner_shop: location, temp_delivery_status: { $ne: "Pending" }, })
           .sort({ old_item_details: sortFormate })
           .skip(skip)
           .limit(limit);
       } else if (type == "imei") {
         deliveryData = await delivery
-          .find({ partner_shop: location })
+          .find({ partner_shop: location, temp_delivery_status: { $ne: "Pending" }, })
           .sort({ imei: sortFormate })
           .skip(skip)
           .limit(limit);
       } else if (type == "sku_name") {
         deliveryData = await delivery
-          .find({ partner_shop: location })
+          .find({ partner_shop: location, temp_delivery_status: { $ne: "Pending" }, })
           .sort({ item_id: sortFormate })
           .skip(skip)
           .limit(limit);
       } else if (type == "bot_remark") {
         deliveryData = await delivery
-          .find({ partner_shop: location })
+          .find({ partner_shop: location, temp_delivery_status: { $ne: "Pending" }, })
           .sort({ "bot_report.body_damage_des": sortFormate })
           .skip(skip)
           .limit(limit);
       } else if (type == "type") {
         deliveryData = await delivery
-          .find({ partner_shop: location })
+          .find({ partner_shop: location, temp_delivery_status: { $ne: "Pending" }, })
           .sort({ tray_type: sortFormate })
           .skip(skip)
           .limit(limit);
       } else if (type == "uic") {
         deliveryData = await delivery
-          .find({ partner_shop: location })
+          .find({ partner_shop: location, temp_delivery_status: { $ne: "Pending" }, })
           .sort({ "uic_code.code": sortFormate })
           .skip(skip)
           .limit(limit);
       } else if (type == "price") {
         deliveryData = await delivery
-          .find({ partner_shop: location })
+          .find({ partner_shop: location, temp_delivery_status: { $ne: "Pending" }, })
           .sort({ partner_purchase_price: sortFormate })
           .skip(skip)
           .limit(limit);
       } else if (type == "order_date") {
         deliveryData = await delivery
-          .find({ partner_shop: location })
+          .find({ partner_shop: location, temp_delivery_status: { $ne: "Pending" }, })
           .sort({ order_date: sortFormate })
           .skip(skip)
           .limit(limit);
       } else if (type == "location") {
         deliveryData = await delivery
-          .find({ partner_shop: location })
+          .find({ partner_shop: location, temp_delivery_status: { $ne: "Pending" }, })
           .sort({ partner_shop: sortFormate })
           .skip(skip)
           .limit(limit);
       } else if (type == "delivery_date") {
         deliveryData = await delivery
-          .find({ partner_shop: location })
+          .find({ partner_shop: location, temp_delivery_status: { $ne: "Pending" }, })
           .sort({ delivery_date: sortFormate })
           .skip(skip)
           .limit(limit);
       } else if (type == "packet_open_date") {
         deliveryData = await delivery
-          .find({ partner_shop: location })
+          .find({ partner_shop: location, temp_delivery_status: { $ne: "Pending" }, })
           .sort({ assign_to_agent: sortFormate })
           .skip(skip)
           .limit(limit);
       }
       resolve(deliveryData);
+    });
+  },
+  rdlOneDoneUnits: (location, limit, skip) => {
+    return new Promise(async (resolve, reject) => {
+      const getUnits = await delivery
+        .find({
+          partner_shop: location,
+          rdl_fls_closed_date: { $exists: true },
+        })
+        .skip(skip)
+        .limit(limit);
+      const count = await delivery.count({
+        partner_shop: location,
+        rdl_fls_closed_date: { $exists: true },
+      });
+      resolve({ units: getUnits, count: count });
     });
   },
 };

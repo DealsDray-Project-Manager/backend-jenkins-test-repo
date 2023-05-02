@@ -2245,6 +2245,7 @@ module.exports = {
             "uic_code.user": uicData.email,
             "uic_code.created_at": Date.now(),
             uic_status: "Created",
+            updated_at: Date.now(),
           },
         },
         {
@@ -2336,6 +2337,7 @@ module.exports = {
           $set: {
             uic_status: "Printed",
             download_time: Date.now(),
+            updated_at: Date.now(),
           },
         },
         {

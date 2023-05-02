@@ -444,7 +444,45 @@ module.exports = {
 
     return { searchResult: arr, count: count, dataForDownload: arr1 };
   },
-
+  searchRdlOneDoneUnits: async (searchInput, limit, skip, location) => {
+    let data = await client.search({
+      index: "prexo-delivery-8-2",
+      // type: '_doc', // uncomment for Elasticsearch ≤ 6
+      body: {
+        from: skip,
+        size: limit,
+        query: {
+          bool: {
+            must: [
+              {
+                exists: {
+                  field: "rdl_fls_closed_date",
+                },
+              },
+              {
+                multi_match: {
+                  query: searchInput,
+                  fields: ["*"],
+                },
+              },
+              {
+                match: {
+                  partner_shop: location,
+                },
+              },
+            ],
+          },
+        },
+      },
+      track_total_hits: true,
+    });
+    let arr = [];
+    let count = data?.hits?.total?.value;
+    for (let result of data.hits.hits) {
+      arr.push(result["_source"]);
+    }
+    return { searchResult: arr, count: count };
+  },
   //UPDATE STOCKIN STATUS
   updateUic: async (tracking_id, bag_id) => {
     let data = await client.updateByQuery({
@@ -493,6 +531,7 @@ module.exports = {
   },
   uicCodeGen: async (deliveryData) => {
     try {
+      console.log("yes working");
       let deleteDoc = await client.deleteByQuery({
         index: "prexo-delivery-8-2",
         body: {
@@ -510,7 +549,6 @@ module.exports = {
         //if you need to customise "_id" otherwise elastic will create this
         body: deliveryData,
       });
-      console.log(bulk);
     } catch (error) {
       if (error.meta.statusCode === 409) {
         console.error("Version conflict:", error.body.error);
