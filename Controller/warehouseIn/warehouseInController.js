@@ -5926,4 +5926,97 @@ module.exports = {
       }
     });
   },
+  billedBinPageData: (location) => {
+    return new Promise(async (resolve, reject) => {
+      let tray = await masters.aggregate([
+        {
+          $match: {
+            $or: [
+              {
+                cpc: location,
+                type_taxanomy: "ST",
+                sort_id: "Ready to Pricing",
+              },
+              { cpc: location, type_taxanomy: "ST", sort_id: "Inuse" },
+            ],
+          },
+        },
+        {
+          $unwind: "$items",
+        },
+      ]);
+      resolve(tray);
+    });
+  },
+  itemMoviedToBillBin: (uic, trayId, username) => {
+    console.log(username);
+    return new Promise(async (resolve, reject) => {
+      let data = await masters.findOneAndUpdate(
+        {
+          code: trayId,
+        },
+        {
+          $pull: {
+            items: {
+              uic: uic,
+            },
+          },
+        },
+        { new: true }
+      );
+      let updateDelivery = await delivery.findOneAndUpdate(
+        { "uic_code.code": uic },
+        {
+          $set: {
+            item_moved_to_billed_bin_done_username: username,
+            item_moved_to_billed_bin_date: Date.now(),
+            item_moved_to_billed_bin: "Yes",
+          },
+        }
+      );
+      if (data.items.length == 0) {
+        let trayUpdate = await masters.findOneAndUpdate(
+          {
+            code: trayId,
+          },
+          {
+            $set: {
+              sort_id: "Open",
+              actual_items: [],
+              issued_user_name: null,
+              temp_array: [],
+            },
+          },
+          { new: true }
+        );
+        if (trayUpdate) {
+          resolve({ status: 1 });
+        }
+      } else if (data) {
+        resolve({ status:1 });
+      } else {
+        resolve({ status: 2 });
+      }
+    });
+  },
+  billedBinReport: (location) => {
+    return new Promise(async (resolve, reject) => {
+      let getData = await delivery.aggregate([{
+        $match:{
+          partner_shop: location,
+          item_moved_to_billed_bin: "Yes",
+
+        }
+      },{
+        $lookup: {
+          from: "products",
+          localField: `item_id`,
+          foreignField: "vendor_sku_id",
+          as: "products",
+        },
+      }
+    ]);
+      resolve(getData);
+    });
+  },
 };
