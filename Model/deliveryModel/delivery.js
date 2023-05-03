@@ -255,6 +255,16 @@ const deliverySchema = mongoose.Schema({
   temp_delivery_status: {
     type: String,
   },
+  item_moved_to_billed_bin:{
+    type:String
+  },
+  item_moved_to_billed_bin_date:{
+    type:Date
+  },
+  item_moved_to_billed_bin_done_username:{
+    type:String
+  },
+
 });
 
 const delivery = mongoose.model("delivery", deliverySchema);
