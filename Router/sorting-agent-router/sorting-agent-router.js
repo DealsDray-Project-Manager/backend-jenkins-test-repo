@@ -175,6 +175,10 @@ router.post("/itemShifteToMmtTray", async (req, res, next) => {
       res.status(202).json({
         message: "Tray is Full",
       });
+    } else if (data.status == 4) {
+      res.status(202).json({
+        message: "Item Already Added",
+      });
     } else {
       res.status(202).json({
         message: "Failed",
@@ -276,6 +280,10 @@ router.post("/pickup/itemTransfer", async (req, res, next) => {
     } else if (data.status == 2) {
       res.status(200).json({
         message: `This item not move keep it in the ${fromTray} `,
+      });
+    } else if (data.status == 3) {
+      res.status(200).json({
+        message: `This item  Already Added`,
       });
     } else {
       res.status(202).json({

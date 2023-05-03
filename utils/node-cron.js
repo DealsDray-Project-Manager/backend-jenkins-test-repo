@@ -5,6 +5,7 @@ const xmlParser = require("xml2js");
 const formatXml = require("xml-formatter");
 const csvParser = require("csv-parser");
 const { delivery } = require("../Model/deliveryModel/delivery");
+const elasticSearch = require("../Elastic-search/elastic");
 /***************************************** */
 
 exports = module.exports = () => {
@@ -87,6 +88,21 @@ exports = module.exports = () => {
 
           return accumulator;
         }, {});
+      }
+    });
+  } catch (error) {
+    console.log(error);
+  }
+  try {
+    corn.schedule("*/30 * * * *", async () => {
+      /*----------------------------------------------CSV READ-----------------------------*/
+      let lastUpdateData = await delivery
+        .find({}, { _id: 0 })
+        .sort({ updated_at: -1 })
+        .limit(500);
+      console.log(lastUpdateData[0]);
+      for (let x of lastUpdateData) {
+        let update = await elasticSearch.uicCodeGen(x);
       }
     });
   } catch (error) {

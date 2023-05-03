@@ -2142,6 +2142,28 @@ router.post("/checkRdl-flsUserStatus/:username", async (req, res, next) => {
     next(error);
   }
 });
+//CHECK RDL-2 USER FREE OR NOT
+router.post("/checkRdl-2/status/:username", async (req, res, next) => {
+  try {
+    const { username } = req.params;
+    let data = await warehouseInController.checkRdl2UserStatus(username);
+    if (data.status === 1) {
+      res.status(200).json({
+        data: "User is free",
+      });
+    } else if (data.status === 2) {
+      res.status(202).json({
+        data: "Agent already have a lot",
+      });
+    } else if (data.status === 3) {
+      res.status(202).json({
+        data: "User not active",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
 router.post(
   "/request-for-RDL-fls/:status/:location",
   async (req, res, next) => {
@@ -2441,5 +2463,54 @@ router.post("/stxTray/:type/:location", async (req, res, next) => {
     next(error);
   }
 });
+/*-------------------------------------------BILLED BIN-------------------------------------------*/
+// VIEW TRAY
+router.post("/billedBin/:location", async (req, res, next) => {
+  try {
+    const { location } = req.params;
+    const data = await warehouseInController.billedBinPageData(location);
+    if (data) {
+      res.status(200).json({
+        data: data,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+// ACTIO MOVED TO BILLED BIN
+router.post("/movedToBilledBin", async (req, res, next) => {
+  try {
+    const { uic, trayId,username } = req.body;
+    const data = await warehouseInController.itemMoviedToBillBin(uic,trayId,username);
+    if (data.status == 1) {
+      res.status(200).json({
+       message:"Item Successfully Moved to Billed Bin"
+      });
+    }
+    else{
+      res.status(202).json({
+        message:"Failed Please Tray again..."
+       });
+    }
 
+  } catch (error) {
+    next(error);
+  }
+});
+/*-----------------------------------------BILLED BIN REPORT-------------------------------*/
+
+router.post("/billedBin/report/:location", async (req, res, next) => {
+  try {
+    const { location } = req.params;
+    const data = await warehouseInController.billedBinReport(location);
+    if (data) {
+      res.status(200).json({
+        data: data,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
 module.exports = router;

@@ -105,7 +105,6 @@ router.post("/getDelivery/:location/:page/:size", async (req, res, next) => {
 // DELIVERY PAGE SORTING
 router.post("/delivered/item/filter", async (req, res, next) => {
   try {
-    console.log(req.body);
     let { brand, model, location, fromDate, toDate, page, size, totalCount } =
       req.body;
     page++;
@@ -126,13 +125,15 @@ router.post("/delivered/item/filter", async (req, res, next) => {
       res.status(200).json({
         data: filterData.getDelivery,
         avgPrice: filterData.avgPrice,
-        count:filterData.count
+        count: filterData.count,
+        forXlsxDownload: filterData.forXlsxDownload,
       });
     } else {
       res.status(202).json({
         data: filterData.getDelivery,
         avgPrice: filterData.avgPrice,
-        count:filterData.count
+        count: filterData.count,
+        forXlsxDownload: filterData.forXlsxDownload,
       });
     }
   } catch (error) {
@@ -142,8 +143,7 @@ router.post("/delivered/item/filter", async (req, res, next) => {
 // filter for month wise purchise report
 router.post("/monthWiseReport/item/filter", async (req, res, next) => {
   try {
-    console.log(req.body);
-    let { location, fromDate, toDate, page, size,type } = req.body;
+    let { location, fromDate, toDate, page, size, type } = req.body;
     page++;
     const limit = parseInt(size);
     const skip = (page - 1) * size;
@@ -158,14 +158,14 @@ router.post("/monthWiseReport/item/filter", async (req, res, next) => {
     if (filterData.monthWiseReport.length !== 0) {
       res.status(200).json({
         data: filterData.monthWiseReport,
-        forXlsx:filterData.forXlsxDownload,
-        count:filterData.getCount
+        forXlsx: filterData.forXlsxDownload,
+        count: filterData.getCount,
       });
     } else {
       res.status(202).json({
         data: filterData.monthWiseReport,
-        forXlsx:filterData.forXlsxDownload,
-        count:filterData.getCount
+        forXlsx: filterData.forXlsxDownload,
+        count: filterData.getCount,
       });
     }
   } catch (error) {
@@ -283,19 +283,17 @@ router.post("/search-delivery-item", async (req, res, next) => {
       skip,
       location
     );
-    console.log(data.dataForDownload);
     if (data.searchResult.length !== 0) {
       res.status(200).json({
         data: data.searchResult,
-        count:data.count,
-        allMatchedResult:data.dataForDownload
+        count: data.count,
+        allMatchedResult: data.dataForDownload,
       });
     } else {
       res.status(202).json({
         data: data.searchResult,
-        count:data.count,
-        allMatchedResult:data.dataForDownload
-
+        count: data.count,
+        allMatchedResult: data.dataForDownload,
       });
     }
   } catch (error) {
@@ -315,7 +313,6 @@ router.post("/search/processing", async (req, res, next) => {
       limit,
       skip
     );
-    console.log(data);
     if (data.deliveryData.length !== 0) {
       res.status(200).json({
         data: data.deliveryData,
@@ -344,7 +341,6 @@ router.post("/search/sales", async (req, res, next) => {
       limit,
       skip
     );
-    console.log(data);
     if (data.deliveryData.length !== 0) {
       res.status(200).json({
         data: data.deliveryData,
@@ -354,6 +350,78 @@ router.post("/search/sales", async (req, res, next) => {
       res.status(202).json({
         data: data.deliveryData,
         count: 0,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+// MONTH WISE PURCHASE SORT
+router.post("/report/sort", async (req, res, next) => {
+  try {
+    let { location, page, size, type, sortFormate } = req.body;
+    page++;
+    const limit = parseInt(size);
+    const skip = (page - 1) * size;
+    let data = await reportingAgentRouter.reportPageSort(
+      location,
+      limit,
+      skip,
+      type,
+      sortFormate
+    );
+    if (data) {
+      res.status(200).json({
+        data: data,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+// RDL 1 DONE UNITS REPORT
+router.post("/rdlOneDone/units", async (req, res, next) => {
+  try {
+    let { location, page, rowsPerPage } = req.body;
+    page++;
+    const limit = parseInt(rowsPerPage);
+    const skip = (page - 1) * rowsPerPage;
+    let data = await reportingAgentRouter.rdlOneDoneUnits(
+      location,
+      limit,
+      skip
+    );
+    if (data) {
+      res.status(200).json({
+        data: data.units,
+        count: data.count,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+router.post("/search/rdlOneDoneUnits", async (req, res, next) => {
+  try {
+    let { searchData, location, rowsPerPage, page } = req.body;
+    page++;
+    const limit = parseInt(rowsPerPage);
+    const skip = (page - 1) * rowsPerPage;
+    let data = await Elasticsearch.searchRdlOneDoneUnits(
+      searchData,
+      limit,
+      skip,
+      location
+    );
+    if (data.searchResult.length !== 0) {
+      res.status(200).json({
+        data: data.searchResult,
+        count: data.count,
+      });
+    } else {
+      res.status(202).json({
+        data: data.searchResult,
+        count: data.count,
       });
     }
   } catch (error) {

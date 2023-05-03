@@ -113,6 +113,7 @@ module.exports = {
                 rdl_fls_closed_date: Date.now(),
                 rdl_fls_one_report: x?.rdl_fls_report,
                 location: "Warehouse",
+                updated_at: Date.now(),
               },
             },
             {
@@ -120,9 +121,9 @@ module.exports = {
               projection: { _id: 0 },
             }
           );
-          let elasticSearchUpdate = await Elasticsearch.uicCodeGen(
-            deliveryUpdate
-          );
+          // let elasticSearchUpdate = await Elasticsearch.uicCodeGen(
+          //   deliveryUpdate
+          // );
 
           if (deliveryUpdate) {
             resolve(deliveryUpdate);

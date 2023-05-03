@@ -58,6 +58,21 @@ module.exports = {
             to_merge: { $ne: null },
             sort_id: "Audit Done Issued to Merging",
           },
+          {
+            issued_user_name: username,
+            to_merge: { $ne: null },
+            sort_id: "Ready to RDL-Repair Issued to Merging",
+          },
+          {
+            issued_user_name: username,
+            to_merge: { $ne: null },
+            sort_id: "Ready to BQC Issued to Merging",
+          },
+          {
+            issued_user_name: username,
+            to_merge: { $ne: null },
+            sort_id: "Ready to Audit Issued to Merging",
+          },
         ],
       });
       if (count) {
@@ -196,6 +211,7 @@ module.exports = {
                 wht_tray: itemData.wht_tray,
                 wht_tray_assigned_date: Date.now(),
                 tray_type: "WHT",
+                updated_at: Date.now(),
               },
             },
             {
@@ -203,7 +219,7 @@ module.exports = {
               projection: { _id: 0 },
             }
           );
-          let updateElastic = await Elasticsearch.uicCodeGen(updateDelivery);
+          // let updateElastic = await Elasticsearch.uicCodeGen(updateDelivery);
           if (updateDelivery) {
             resolve({ status: 3 });
           }
@@ -313,6 +329,21 @@ module.exports = {
             to_merge: { $ne: null },
             sort_id: "Issued to Merging",
           },
+          {
+            issued_user_name: username,
+            to_merge: { $ne: null },
+            sort_id: "Ready to BQC Issued to Merging",
+          },
+          {
+            issued_user_name: username,
+            to_merge: { $ne: null },
+            sort_id: "Ready to RDL-Repair Issued to Merging",
+          },
+          {
+            issued_user_name: username,
+            to_merge: { $ne: null },
+            sort_id: "Ready to Audit Issued to Merging",
+          },
         ],
       });
       if (data) {
@@ -323,108 +354,120 @@ module.exports = {
   itemShiftToMmt: (mmtTrayData) => {
     return new Promise(async (resolve, reject) => {
       let checkTrayFull = await masters.findOne({ code: mmtTrayData.toTray });
-      if (checkTrayFull.limit == checkTrayFull.items.length) {
-        resolve({ status: 3 });
+      let checkItemAdded = await masters.findOne({
+        code: mmtTrayData.toTray,
+        "items.uic": mmtTrayData.item.uic,
+      });
+      if (checkItemAdded) {
+        resolve({ status: 4 });
       } else {
-        let data = await masters.updateOne(
-          { code: mmtTrayData.toTray },
-          {
-            $push: {
-              items: mmtTrayData.item,
-            },
-          }
-        );
-        if (data.modifiedCount !== 0) {
-          let fromTrayItemRemove = await masters.updateOne(
-            { code: mmtTrayData.fromTray },
+        if (checkTrayFull.limit == checkTrayFull.items.length) {
+          resolve({ status: 3 });
+        } else {
+          let data = await masters.updateOne(
+            { code: mmtTrayData.toTray },
             {
-              $pull: {
-                actual_items: {
-                  uic: mmtTrayData.item.uic,
-                },
-                items: {
-                  uic: mmtTrayData.item.uic,
-                },
+              $push: {
+                items: mmtTrayData.item,
               },
             }
           );
-          if (mmtTrayData.trayType == "WHT") {
-            let updateDelivery = await delivery.findOneAndUpdate(
-              { tracking_id: mmtTrayData.item.tracking_id },
+          if (data.modifiedCount !== 0) {
+            let fromTrayItemRemove = await masters.updateOne(
+              { code: mmtTrayData.fromTray },
               {
-                $set: {
-                  tray_location: "Merging",
-                  wht_tray: mmtTrayData.toTray,
+                $pull: {
+                  actual_items: {
+                    uic: mmtTrayData.item.uic,
+                  },
+                  items: {
+                    uic: mmtTrayData.item.uic,
+                  },
                 },
-              },
-              {
-                new: true,
-                projection: { _id: 0 },
               }
             );
-            let updateElasticSearch = await Elasticsearch.uicCodeGen(
-              updateDelivery
-            );
-          } else if (mmtTrayData.trayType == "ST") {
-            let updateDelivery = await delivery.findOneAndUpdate(
-              { tracking_id: mmtTrayData.item.tracking_id },
-              {
-                $set: {
-                  tray_location: "Sales-Sorting",
-                  stx_tray_id: mmtTrayData.toTray,
+            if (mmtTrayData.trayType == "WHT") {
+              let updateDelivery = await delivery.findOneAndUpdate(
+                { tracking_id: mmtTrayData.item.tracking_id },
+                {
+                  $set: {
+                    tray_location: "Merging",
+                    wht_tray: mmtTrayData.toTray,
+                    updated_at: Date.now(),
+                  },
                 },
-              },
-              {
-                new: true,
-                projection: { _id: 0 },
-              }
-            );
-            let updateElasticSearch = await Elasticsearch.uicCodeGen(
-              updateDelivery
-            );
-          } else if (mmtTrayData.trayType == "CT") {
-            let updateDelivery = await delivery.findOneAndUpdate(
-              { tracking_id: mmtTrayData.item.tracking_id },
-              {
-                $set: {
-                  tray_location: "Merging",
-                  ctx_tray_id: mmtTrayData.toTray,
+                {
+                  new: true,
+                  projection: { _id: 0 },
+                }
+              );
+              // let updateElasticSearch = await Elasticsearch.uicCodeGen(
+              //   updateDelivery
+              // );
+            } else if (mmtTrayData.trayType == "ST") {
+              let updateDelivery = await delivery.findOneAndUpdate(
+                { tracking_id: mmtTrayData.item.tracking_id },
+                {
+                  $set: {
+                    tray_location: "Sales-Sorting",
+                    stx_tray_id: mmtTrayData.toTray,
+                    updated_at: Date.now(),
+                  },
                 },
-              },
-              {
-                new: true,
-                projection: { _id: 0 },
-              }
-            );
-            let updateElasticSearch = await Elasticsearch.uicCodeGen(
-              updateDelivery
-            );
-          } else {
-            let updateDelivery = await delivery.findOneAndUpdate(
-              { tracking_id: mmtTrayData.item.awbn_number },
-              {
-                $set: {
-                  tray_location: "Merging",
-                  tray_id: mmtTrayData.toTray,
+                {
+                  new: true,
+                  projection: { _id: 0 },
+                }
+              );
+              // let updateElasticSearch = await Elasticsearch.uicCodeGen(
+              //   updateDelivery
+              // );
+            } else if (mmtTrayData.trayType == "CT") {
+              let updateDelivery = await delivery.findOneAndUpdate(
+                { tracking_id: mmtTrayData.item.tracking_id },
+                {
+                  $set: {
+                    tray_location: "Merging",
+                    ctx_tray_id: mmtTrayData.toTray,
+                    updated_at: Date.now(),
+                  },
                 },
-              },
-              {
-                new: true,
-                projection: { _id: 0 },
-              }
-            );
+                {
+                  new: true,
+                  projection: { _id: 0 },
+                }
+              );
+              // let updateElasticSearch = await Elasticsearch.uicCodeGen(
+              //   updateDelivery
+              // );
+            } else {
+              let updateDelivery = await delivery.findOneAndUpdate(
+                { tracking_id: mmtTrayData.item.awbn_number },
+                {
+                  $set: {
+                    tray_location: "Merging",
+                    tray_id: mmtTrayData.toTray,
+                    updated_at: Date.now(),
 
-            let updateElasticSearch = await Elasticsearch.uicCodeGen(
-              updateDelivery
-            );
-          }
-          if (fromTrayItemRemove.modifiedCount !== 0) {
-            resolve({ status: 1 });
+                  },
+                },
+                {
+                  new: true,
+                  projection: { _id: 0 },
+                }
+              );
+              // let updateElasticSearch = await Elasticsearch.uicCodeGen(
+              //   updateDelivery
+              // );
+            }
+            if (fromTrayItemRemove.modifiedCount !== 0) {
+              resolve({ status: 1 });
+            } else {
+              resolve({ status: 0 });
+            }
           } else {
-            resolve({ status: 0 });
+            resolve({ status: 1 });
           }
-        } else {
-          resolve({ status: 1 });
         }
       }
     });
@@ -449,6 +492,96 @@ module.exports = {
             {
               $set: {
                 sort_id: "Audit Done Return from Merging",
+                closed_time_sorting_agent: Date.now(),
+                actual_items: [],
+              },
+            }
+          );
+          if (updateToTray.modifiedCount !== 0) {
+            resolve({ status: 1 });
+          } else {
+            resolve({ status: 0 });
+          }
+        } else {
+          resolve({ status: 0 });
+        }
+      } else if (finedTray.sort_id == "Ready to BQC Issued to Merging") {
+        let fromtray = await masters.updateOne(
+          { code: trayData.fromTray },
+          {
+            $set: {
+              sort_id: "Ready to BQC Merging Done",
+              closed_time_sorting_agent: Date.now(),
+              actual_items: [],
+            },
+          }
+        );
+        if (fromtray.modifiedCount !== 0) {
+          let updateToTray = await masters.updateOne(
+            { code: trayData.toTray },
+            {
+              $set: {
+                sort_id: "Ready to BQC Merging Done",
+                closed_time_sorting_agent: Date.now(),
+                actual_items: [],
+              },
+            }
+          );
+          if (updateToTray.modifiedCount !== 0) {
+            resolve({ status: 1 });
+          } else {
+            resolve({ status: 0 });
+          }
+        } else {
+          resolve({ status: 0 });
+        }
+      } else if (finedTray.sort_id == "Ready to Audit Issued to Merging") {
+        let fromtray = await masters.updateOne(
+          { code: trayData.fromTray },
+          {
+            $set: {
+              sort_id: "Ready to Audit Merging Done",
+              closed_time_sorting_agent: Date.now(),
+              actual_items: [],
+            },
+          }
+        );
+        if (fromtray.modifiedCount !== 0) {
+          let updateToTray = await masters.updateOne(
+            { code: trayData.toTray },
+            {
+              $set: {
+                sort_id: "Ready to Audit Merging Done",
+                closed_time_sorting_agent: Date.now(),
+                actual_items: [],
+              },
+            }
+          );
+          if (updateToTray.modifiedCount !== 0) {
+            resolve({ status: 1 });
+          } else {
+            resolve({ status: 0 });
+          }
+        } else {
+          resolve({ status: 0 });
+        }
+      } else if (finedTray.sort_id == "Ready to RDL-Repair Issued to Merging") {
+        let fromtray = await masters.updateOne(
+          { code: trayData.fromTray },
+          {
+            $set: {
+              sort_id: "Ready to RDL-Repair Merging Done",
+              closed_time_sorting_agent: Date.now(),
+              actual_items: [],
+            },
+          }
+        );
+        if (fromtray.modifiedCount !== 0) {
+          let updateToTray = await masters.updateOne(
+            { code: trayData.toTray },
+            {
+              $set: {
+                sort_id: "Ready to RDL-Repair Merging Done",
                 closed_time_sorting_agent: Date.now(),
                 actual_items: [],
               },
@@ -616,72 +749,79 @@ module.exports = {
   },
   pickupItemTrasfer: (itemData) => {
     return new Promise(async (resolve, reject) => {
-      if (
-        itemData.item.pickup_toTray == undefined ||
-        itemData.item.pickup_toTray == "" ||
-        itemData.item.pickup_toTray == null
-      ) {
-        let updateData = await masters.updateOne(
-          { code: itemData.fromTray },
-          {
-            $push: {
-              temp_array: itemData.item,
-              actual_items: itemData.item,
-            },
+      let checkAlreadyAdded=await masters.findOne({code:itemData.fromTray,"actual_items.uic":itemData.item.uic})
+      if(checkAlreadyAdded){
+        resolve({status:3})
+      }
+      else{
+        if (
+          itemData.item.pickup_toTray == undefined ||
+          itemData.item.pickup_toTray == "" ||
+          itemData.item.pickup_toTray == null
+        ) {
+          let updateData = await masters.updateOne(
+            { code: itemData.fromTray },
+            {
+              $push: {
+                temp_array: itemData.item,
+                actual_items: itemData.item,
+              },
+            }
+          );
+          if (updateData.modifiedCount != 0) {
+            resolve({ status: 2 });
+          } else {
+            resolve({ status: 0 });
           }
-        );
-        if (updateData.modifiedCount != 0) {
-          resolve({ status: 2 });
         } else {
-          resolve({ status: 0 });
-        }
-      } else {
-        let updateData = await masters.updateOne(
-          { code: itemData.fromTray },
-          {
-            $push: {
-              actual_items: itemData.item,
+          let updateData = await masters.updateOne(
+            { code: itemData.fromTray },
+            {
+              $push: {
+                actual_items: itemData.item,
+              },
+            }
+          );
+          itemData.item.pickup_toTray = null;
+          let itemTransfer = await masters.updateOne(
+            {
+              code: itemData.toTray,
             },
-          }
-        );
-        itemData.item.pickup_toTray = null;
-        let itemTransfer = await masters.updateOne(
-          {
-            code: itemData.toTray,
-          },
-          {
-            $push: {
-              items: itemData.item,
+            {
+              $push: {
+                items: itemData.item,
+              },
+            }
+          );
+          let updateDelivery = await delivery.findOneAndUpdate(
+            { "uic_code.code": itemData.item.uic },
+            {
+              $set: {
+                wht_tray: itemData.toTray,
+                updated_at: Date.now(),
+              },
             },
+            {
+              new: true,
+              projection: { _id: 0 },
+            }
+          );
+          // let updateElasticSearch = await Elasticsearch.uicCodeGen(
+          //   updateDelivery
+          // );
+  
+          if (updateDelivery.modifiedCount !== 0) {
+            resolve({ status: 1 });
+          } else {
+            resolve({ status: 0 });
           }
-        );
-        let updateDelivery = await delivery.findOneAndUpdate(
-          { "uic_code.code": itemData.item.uic },
-          {
-            $set: {
-              wht_tray: itemData.toTray,
-            },
-          },
-          {
-            new: true,
-            projection: { _id: 0 },
-          }
-        );
-        let updateElasticSearch = await Elasticsearch.uicCodeGen(
-          updateDelivery
-        );
-
-        if (updateDelivery.modifiedCount !== 0) {
-          resolve({ status: 1 });
-        } else {
-          resolve({ status: 0 });
         }
       }
     });
   },
   pickupDoneClose: (trayData) => {
     return new Promise(async (resolve, reject) => {
-      let updateFromTray = await masters.updateOne(
+      let updateFromTray = await masters.findOneAndUpdate(
         { code: trayData.fromTray },
         {
           $set: {
@@ -693,10 +833,31 @@ module.exports = {
           },
         }
       );
-
-      if (updateFromTray.modifiedCount != 0) {
-        if (trayData.toTrayLength == trayData.toTrayLimit) {
-          let updateToTray = await masters.updateOne(
+      for (let x of updateFromTray?.items) {
+        let deliveryUpdate = await delivery.findOneAndUpdate(
+          { tracking_id: x.tracking_id },
+          {
+            $set: {
+              tray_status: "Pickup Done Closed by Sorting Agent",
+              tray_location: "Warehouse",
+              updated_at: Date.now(),
+            },
+          },
+          {
+            new: true,
+            projection: { _id: 0 },
+          }
+        );
+        // let updateElasticSearch = await Elasticsearch.uicCodeGen(
+        //   deliveryUpdate
+        // );
+      }
+      if (updateFromTray) {
+        if (
+          trayData.toTrayLength == trayData.toTrayLimit ||
+          trayData?.type == "To Tray Need To Close"
+        ) {
+          let updateToTray = await masters.findOneAndUpdate(
             { code: trayData.toTray },
             {
               $set: {
@@ -707,7 +868,26 @@ module.exports = {
               },
             }
           );
-          if (updateToTray.modifiedCount !== 0) {
+          if (updateToTray) {
+            for (let x of updateToTray?.items) {
+              let deliveryUpdate = await delivery.findOneAndUpdate(
+                { tracking_id: x.tracking_id },
+                {
+                  $set: {
+                    tray_status: "Pickup Done Closed by Sorting Agent",
+                    tray_location: "Warehouse",
+                    updated_at: Date.now(),
+                  },
+                },
+                {
+                  new: true,
+                  projection: { _id: 0 },
+                }
+              );
+              // let updateElasticSearch = await Elasticsearch.uicCodeGen(
+              //   deliveryUpdate
+              // );
+            }
             resolve({ status: 1 });
           }
         } else {
@@ -740,7 +920,6 @@ module.exports = {
   },
   /*------------------------------CTX TO STX SORTING 0---------------------------------*/
   sortingGetAssignedCtxTray: (user_name) => {
-    console.log(user_name);
     return new Promise(async (resolve, reject) => {
       let data = await masters.find({
         issued_user_name: user_name,

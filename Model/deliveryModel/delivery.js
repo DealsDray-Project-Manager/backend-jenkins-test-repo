@@ -16,6 +16,9 @@ const deliverySchema = mongoose.Schema({
   gep_order: {
     type: String,
   },
+  old_item_details: {
+    type: String,
+  },
   imei: {
     type: String,
   },
@@ -147,6 +150,7 @@ const deliverySchema = mongoose.Schema({
   charging_done_close: {
     type: Date,
   },
+  updated_at: { type: Date, default: Date.now },
   bqc_done_close: {
     type: Date,
   },
@@ -208,6 +212,10 @@ const deliverySchema = mongoose.Schema({
   pickup_request_sent_to_wh_date: {
     type: Date,
   },
+
+  issued_to_agent_for_pickup: {
+    type: Date,
+  },
   audit_done_close: {
     type: Date,
   },
@@ -244,9 +252,18 @@ const deliverySchema = mongoose.Schema({
   stx_tray_id: {
     type: String,
   },
-  temp_delivery_status:{
+  temp_delivery_status: {
+    type: String,
+  },
+  item_moved_to_billed_bin:{
     type:String
-  }
+  },
+  item_moved_to_billed_bin_date:{
+    type:Date
+  },
+  item_moved_to_billed_bin_done_username:{
+    type:String
+  },
 
 });
 

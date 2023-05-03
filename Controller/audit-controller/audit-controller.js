@@ -1,7 +1,10 @@
 const { delivery } = require("../../Model/deliveryModel/delivery");
 const { masters } = require("../../Model/mastersModel");
 const { orders } = require("../../Model/ordersModel/ordersModel");
+const { products } = require("../../Model/productModel/product");
+
 const Elasticsearch = require("../../Elastic-search/elastic");
+
 module.exports = {
   getAssigendOtherTray: (username) => {
     return new Promise(async (resolve, reject) => {
@@ -125,8 +128,13 @@ module.exports = {
               bqc_done_close: 1,
               bqc_software_report: 1,
               bot_report: 1,
+              item_id:1,
               charging_done_date: 1,
               audit_report: 1,
+              agent_name:1,
+              agent_name_bqc:1,
+              bqc_out_date:1,
+              tray_closed_by_bot:1
             }
           );
           if (uicExists) {
@@ -134,9 +142,11 @@ module.exports = {
               let getOrder = await orders.findOne({
                 order_id: uicExists.order_id,
               });
+              let muicFind=await products.findOne({vendor_sku_id:uicExists.item_id})
               obj.delivery = uicExists;
               obj.order = getOrder;
               obj.checkIntray = checkIntray;
+              obj.muic=muicFind.muic
 
               resolve({ status: 1, data: obj });
             } else {
@@ -235,8 +245,10 @@ module.exports = {
                     $set: {
                       wht_tray: findTray.code,
                       tray_location: "Audit",
+                      updated_at: Date.now(),
                       tray_type: itemData.type,
                       audit_report: obj,
+                      updated_at: Date.now(),
                     },
                   },
                   {
@@ -244,9 +256,9 @@ module.exports = {
                     projection: { _id: 0 },
                   }
                 );
-                let elasticSearchUpdate = await Elasticsearch.uicCodeGen(
-                  update
-                );
+                // let elasticSearchUpdate = await Elasticsearch.uicCodeGen(
+                //   update
+                // );
                 resolve({ status: 1, trayId: findTray.code });
               }
             } else {
@@ -294,6 +306,7 @@ module.exports = {
                       tray_type: itemData.type,
                       tray_location: "Audit",
                       audit_report: obj,
+                      updated_at: Date.now(),
                     },
                   },
                   {
@@ -301,9 +314,9 @@ module.exports = {
                     projection: { _id: 0 },
                   }
                 );
-                let updateElasticSearch = await Elasticsearch.uicCodeGen(
-                  update
-                );
+                // let updateElasticSearch = await Elasticsearch.uicCodeGen(
+                //   update
+                // );
                 resolve({ status: 1, trayId: findTray.code });
               }
             } else {
@@ -347,7 +360,7 @@ module.exports = {
           }
         );
       }
-      if (data.type_taxanomy !== "WHT") {
+    
         for (let x of data.items) {
           let updateDelivery = await delivery.findOneAndUpdate(
             { tracking_id: x.tracking_id },
@@ -356,6 +369,7 @@ module.exports = {
                 audit_done_date: Date.now(),
                 tray_location: "Warehouse",
                 tray_status: "Audit Done",
+                updated_at: Date.now(),
               },
             },
             {
@@ -363,14 +377,12 @@ module.exports = {
               projection: { _id: 0 },
             }
           );
-          let updateElasticSearch = await Elasticsearch.uicCodeGen(
-            updateDelivery
-          );
+          // let updateElasticSearch = await Elasticsearch.uicCodeGen(
+          //   updateDelivery
+          // );
         }
         resolve(data);
-      } else {
-        resolve(data);
-      }
+     
     });
   },
 };

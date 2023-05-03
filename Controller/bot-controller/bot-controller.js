@@ -77,6 +77,8 @@ module.exports = {
                 tray_closed_by_bot: Date.now(),
                 tray_status: "Closed By Bot",
                 bot_report: x.bot_e,
+                updated_at: Date.now(),
+
               },
             },
             {
@@ -84,9 +86,9 @@ module.exports = {
               projection: { _id: 0 },
             }
           );
-          let updateElasticSearch = await Elasticsearch.uicCodeGen(
-            deliveryTrack
-          );
+          // let updateElasticSearch = await Elasticsearch.uicCodeGen(
+          //   deliveryTrack
+          // );
         }
       }
       if (close.modifiedCount !== 0) {
@@ -208,6 +210,7 @@ module.exports = {
                 tray_type: res.type_taxanomy,
                 tray_location: "Bag Opening",
                 bot_report: obj,
+                updated_at: Date.now(),
               },
             },
             {
@@ -215,9 +218,9 @@ module.exports = {
               projection: { _id: 0 },
             }
           );
-          let elasticsearchupdate = await Elasticsearch.uicCodeGen(
-            updateDelivery
-          );
+          // let elasticsearchupdate = await Elasticsearch.uicCodeGen(
+          //   updateDelivery
+          // );
           resolve({ status: 1 });
         } else {
           resolve({ status: 2 });
@@ -286,6 +289,7 @@ module.exports = {
                 $set: {
                   tray_closed_by_bot: Date.now(),
                   tray_status: "Closed By Bot",
+                  updated_at: Date.now(),
                 },
               },
               {
@@ -293,9 +297,9 @@ module.exports = {
                 projection: { _id: 0 },
               }
             );
-            let updateElasticSearch = await Elasticsearch.uicCodeGen(
-              this.deleteTrayItem
-            );
+            // let updateElasticSearch = await Elasticsearch.uicCodeGen(
+            //   this.deleteTrayItem
+            // );
           }
           resolve({ status: 1 });
         } else {

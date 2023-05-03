@@ -16,10 +16,11 @@ const {
   mastersEditHistory,
 } = require("../../Model/masterHistoryModel/mastersHistory");
 const moment = require("moment");
+const elasticsearch = require("../../Elastic-search/elastic");
 
-const IISDOMAIN = "http://prexo-v8-1-uat-adminapi.dealsdray.com/user/profile/";
+const IISDOMAIN = "https://prexo-v8-2-uat-api.dealsdray.com/user/profile/";
 const IISDOMAINPRDT =
-  "http://prexo-v8-1-uat-adminapi.dealsdray.com/product/image/";
+  "https://prexo-v8-2-uat-api.dealsdray.com/product/image/";
 
 /************************************************************************************************** */
 
@@ -1604,7 +1605,7 @@ module.exports = {
     return new Promise(async (resolve, reject) => {
       let flag = false;
       for (let x of trayId) {
-        let updateWht = await masters.updateOne(
+        let updateWht = await masters.findOneAndUpdate(
           { code: x },
           {
             $set: {
@@ -1614,8 +1615,28 @@ module.exports = {
             },
           }
         );
-        if (updateWht.modifiedCount == 0) {
+        if (updateWht == null) {
           flag = true;
+        } else {
+          for (let x of updateWht?.items) {
+            let deliveryTrack = await delivery.findOneAndUpdate(
+              { tracking_id: x.tracking_id },
+              {
+                $set: {
+                  tray_status: status,
+                  tray_location: "Warehouse",
+                  updated_at: Date.now(),
+                },
+              },
+              {
+                new: true,
+                projection: { _id: 0 },
+              }
+            );
+            // let updateElasticSearch = await elasticsearch.uicCodeGen(
+            //   deliveryTrack
+            // );
+          }
         }
       }
       if (flag === false) {
@@ -1677,7 +1698,7 @@ module.exports = {
         }
       );
       if (uicExists) {
-        if (uicExists.bqc_done_close !== undefined) {
+        if (uicExists.bqc_software_report !== undefined) {
           let getOrder = await orders.findOne({ order_id: uicExists.order_id });
           obj.delivery = uicExists;
           obj.order = getOrder;
@@ -1769,6 +1790,25 @@ module.exports = {
             },
           }
         );
+        for (let x of sendtoRdlMis?.items) {
+          let deliveryTrack = await delivery.findOneAndUpdate(
+            { tracking_id: x.tracking_id },
+            {
+              $set: {
+                tray_status: type,
+                tray_location: "Warehouse",
+                updated_at: Date.now(),
+              },
+            },
+            {
+              new: true,
+              projection: { _id: 0 },
+            }
+          );
+          // let updateElasticSearch = await elasticsearch.uicCodeGen(
+          //   deliveryTrack
+          // );
+        }
       }
       if (sendtoRdlMis) {
         resolve({ status: true });
@@ -1863,7 +1903,6 @@ module.exports = {
   },
   extraCtxRelease: () => {
     return new Promise(async (resolve, reject) => {
-      console.log(new Date("01-04-2023"));
       let getCtx = await masters.find({
         prefix: "tray-master",
         type_taxanomy: "CT",
@@ -1992,6 +2031,7 @@ module.exports = {
           {
             $set: {
               order_date: x.order_date,
+              old_item_details: x.old_item_details,
             },
           }
         );
@@ -2139,11 +2179,11 @@ module.exports = {
 
   deleteCtxcategory: (code) => {
     return new Promise(async (resolve, reject) => {
-      let categorySelected = await masters.find({ tray_grade: code?.code });
-      if (categorySelected.length !== 0) {
+      let categorySelected = await masters.findOne({ tray_grade: code });
+      if (categorySelected) {
         resolve({ status: false });
       } else {
-        let data = await trayCategory.deleteOne({ Code: code?.code });
+        let data = await trayCategory.deleteOne({ code: code });
         if (data) {
           resolve(data);
         } else {
@@ -2221,6 +2261,7 @@ module.exports = {
       let checkDup = await partAndColor.findOne({
         name: dataOfPartOrColor.name,
         type: dataOfPartOrColor.type,
+        // muic: dataOfPartOrColor.muic,
       });
       if (checkDup) {
         resolve({ status: 2 });
@@ -2238,6 +2279,31 @@ module.exports = {
   viewColorOrPart: (type) => {
     return new Promise(async (resolve, reject) => {
       const data = await partAndColor.find({ type: type });
+      resolve(data);
+    });
+  },
+  getMuic: () => {
+    return new Promise(async (resolve, reject) => {
+      const muicData = await products.find({}, { muic: 1 }).sort({ muic: 1 });
+      resolve(muicData);
+    });
+  },
+  getColorAccordingMuic: (muic, page) => {
+    return new Promise(async (resolve, reject) => {
+      const colorData = await partAndColor.find({
+        muic: muic,
+        type: "color-list",
+      });
+      resolve(colorData);
+    });
+  },
+  partListMuicColor: (muic, color) => {
+    return new Promise(async (resolve, reject) => {
+      const data = await partAndColor.find({
+        type: "part-list",
+        muic: muic,
+        color: color,
+      });
       resolve(data);
     });
   },
@@ -2273,6 +2339,19 @@ module.exports = {
       }
     });
   },
+  updateElasticSearch: () => {
+    return new Promise(async (resolve, reject) => {
+      let lastUpdateData = await delivery
+        .find({}, { _id: 0 })
+        .sort({ updated_at: -1 })
+        .limit(500);
+      console.log(lastUpdateData[0]);
+      for (let x of lastUpdateData) {
+        let update = await elasticsearch.uicCodeGen(x);
+      }
+      resolve({ status: 1 });
+    });
+  },
   editPartOrColor: (dataOfPartorColor) => {
     return new Promise(async (resolve, reject) => {
       let updateData = await partAndColor.updateOne(
@@ -2280,7 +2359,9 @@ module.exports = {
         {
           $set: {
             name: dataOfPartorColor.name,
+            muic: dataOfPartorColor.muic,
             description: dataOfPartorColor.description,
+            color: dataOfPartorColor?.color,
           },
         }
       );
@@ -2326,4 +2407,209 @@ module.exports = {
       }
     });
   },
+  extraPartidAdd: () => {
+    return new Promise(async (resolve, reject) => {
+      const allPart = await partAndColor.find({ type: "part-list" });
+      let str = "DP000000";
+      for (let x of allPart) {
+        let num = parseInt(str.substring(2)) + 1;
+
+        let updatedStr = str.substring(0, 2) + num.toString().padStart(6, "0");
+        str = updatedStr;
+
+        const updateid = await partAndColor.updateOne(
+          { type: "part-list", name: x.name },
+          {
+            $set: {
+              part_code: str,
+            },
+          }
+        );
+      }
+      resolve(str);
+    });
+  },
+  extraRdlOneReport: () => {
+    return new Promise(async (resolve, reject) => {
+      let getTray = await masters.find({ sort_id: "Issued to RDL-FLS" });
+      for (let x of getTray) {
+        for (let y of x.actual_items) {
+          console.log(y.rdl_fls_report);
+          let deliveryUpdate = await delivery.findOneAndUpdate(
+            { tracking_id: y.tracking_id },
+            {
+              $set: {
+                rdl_fls_one_user_name: x?.issued_user_name,
+                rdl_fls_one_report: y?.rdl_fls_report,
+              },
+            },
+            {
+              new: true,
+              projection: { _id: 0 },
+            }
+          );
+        }
+      }
+      resolve(getTray);
+    });
+  },
+  extraBqcDoneBugFix: () => {
+    return new Promise(async (resolve, reject) => {
+      let bqcDoneTray = await masters.find({ sort_id: "BQC Done" });
+      for (let x of bqcDoneTray) {
+        if (x.actual_items.length == 0) {
+          let getDelivery = [];
+          //x.code == "WHT1564"
+          if (x.code == "WHT1141") {
+            getDelivery = await delivery.find({
+              wht_tray: "WHT1141",
+              sales_bin_status: { $exists: false },
+              stx_tray_id: { $exists: false },
+            });
+          } else if (x.code == "WHT1521") {
+            getDelivery = await delivery.find({
+              wht_tray: x.code,
+              sales_bin_status: { $exists: false },
+            });
+          } else {
+            getDelivery = await delivery.find({ wht_tray: x.code });
+          }
+          let findMuic = await products.findOne({
+            brand_name: x.brand,
+            model_name: x.model,
+          });
+          // x.code == "WHT1501" || x.code == "WHT1521" ||  x.code == "WHT1564" || x.code == "WHT1593" || x.code == "WHT1190"
+          if (x.code == "WHT1141") {
+            for (let y of getDelivery) {
+              let obj = {
+                tracking_id: y.tracking_id,
+                bot_agent: y.agent_name,
+                tray_id: y.tray_id,
+                uic: y.uic_code.code,
+                imei: y.imei,
+                muic: findMuic.muic,
+                brand_name: x.brand,
+                model_name: x.model,
+                order_id: y.order_id,
+                order_date: y.order_date,
+                status: "Valid",
+                bot_eval_result: y.bot_report,
+                charging: y.charging,
+              };
+              let addToTray = await masters.findOneAndUpdate(
+                { code: x.code },
+                {
+                  $push: {
+                    actual_items: obj,
+                  },
+                }
+              );
+              console.log(addToTray);
+            }
+          }
+        }
+      }
+      resolve(bqcDoneTray);
+    });
+  },
+  bqcDoneReportIssueBugFix: () => {
+    return new Promise(async (resolve, reject) => {
+      let gettray = await masters.find({
+        $or: [
+          { code: "WHT1317" },
+          { code: "WHT1599" },
+          { code: "WHT1137" },
+          { code: "WHT1232" },
+        ],
+      });
+      for (let x of gettray) {
+        if (x.code == "WHT1317") {
+          for (let y of x.items) {
+            let updateDelivery = await delivery.findOneAndUpdate(
+              { tracking_id: y.tracking_id },
+              {
+                $set: {
+                  bqc_done_close: new Date("2023-04-28T13:32:57.363+00:00"),
+                },
+              }
+            );
+          }
+        } else if (x.code == "WHT1599") {
+          for (let y of x.items) {
+            let updateDelivery = await delivery.findOneAndUpdate(
+              { tracking_id: y.tracking_id },
+              {
+                $set: {
+                  bqc_done_close: new Date("2023-04-28T06:26:14.490+00:00"),
+                },
+              }
+            );
+          }
+        } else if (x.code == "WHT1137") {
+          for (let y of x.items) {
+            let updateDelivery = await delivery.findOneAndUpdate(
+              { tracking_id: y.tracking_id },
+              {
+                $set: {
+                  bqc_done_close: new Date("2023-04-28T09:09:15.419+00:00"),
+                },
+              }
+            );
+          }
+        } else if (x.code == "WHT1232") {
+          for (let y of x.items) {
+            let updateDelivery = await delivery.findOneAndUpdate(
+              { tracking_id: y.tracking_id },
+              {
+                $set: {
+                  bqc_done_close: new Date("2023-04-27T12:43:39.965+00:00"),
+                },
+              }
+            );
+          }
+        }
+      }
+      resolve(gettray);
+    });
+  },
+  extraRdlOneReport: () => {
+    return new Promise(async (resolve, reject) => {
+      let getTray = await masters.find({ sort_id: "Issued to RDL-FLS" });
+      for (let x of getTray) {
+        for (let y of x.actual_items) {
+          console.log(y.rdl_fls_report);
+          let deliveryUpdate = await delivery.findOneAndUpdate(
+            { tracking_id: y.tracking_id },
+            {
+              $set: {
+                rdl_fls_one_user_name: x?.issued_user_name,
+                rdl_fls_one_report: y?.rdl_fls_report,
+              },
+            },
+            {
+              new: true,
+              projection: { _id: 0 },
+            }
+          );
+        }
+      }
+      resolve(getTray);
+    });
+  },
+  extraRdlOneUserNameAdd:()=>{
+    return new Promise(async(resolve,reject)=>{
+      let getRdlRepairTray=await masters.find({sort_id:"Ready to RDL-Repair"})
+      for(let x of getRdlRepairTray){
+        for(let y of x.items){
+          let findItem=await delivery.findOne({tracking_id:y.tracking_id})
+          let update=await masters.findOneAndUpdate({code:x.code,"items.uic":findItem.uic_code.code},{
+            $set:{
+                "items.$.rdl_fls_report.username":findItem.rdl_fls_one_user_name
+            }
+          })
+        }
+      }
+      resolve({getRdlRepairTray})
+    })
+  }
 };
