@@ -531,7 +531,6 @@ module.exports = {
   },
   uicCodeGen: async (deliveryData) => {
     try {
-      console.log("yes working");
       let deleteDoc = await client.deleteByQuery({
         index: "prexo-delivery-8-2",
         body: {

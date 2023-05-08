@@ -168,9 +168,9 @@ router.get("/getCpc/", async (req, res) => {
 /*-------------------------------------WAREHOUSE DATA------------------------------*/
 router.post("/getWarehouseByLocation", async (req, res) => {
   try {
-    const { name } = req.body;
-
-    let warehouse = await superAdminController.getWarehouse(name);
+    const { name,type } = req.body;
+     console.log(req.body);
+    let warehouse = await superAdminController.getWarehouse(name,type);
     if (warehouse) {
       res.status(200).json({ data: { warehouse } });
     }
@@ -327,6 +327,7 @@ router.post("/getBrandIdHighest", async (req, res, next) => {
           obj = JSON.parse(data);
           res.status(200).json({
             data: obj.brandcount,
+            partCount:obj.PARTID
           });
         }
       }
@@ -1586,6 +1587,41 @@ router.post("/partAndColor/view/:type", async (req, res, next) => {
     next(error);
   }
 });
+// BULK VALIDATON FOR PART 
+router.post("/bulkvalidationForPart", async (req, res, next) => {
+  try {
+    const data = await superAdminController.bulkValidationForPartCheck(req.body);
+    if (data.status == true) {
+      res.status(200).json({
+        message: "Successfully Validated",
+      });
+    } else {
+      res.status(202).json({
+        data: data.err,
+        message: "Please Check Errors",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+// BULK add  PART 
+router.post("/bulkAddPart", async (req, res, next) => {
+  try {
+    const data = await superAdminController.bulkAddPart(req.body);
+    if (data.status == true) {
+      res.status(200).json({
+        message: "Successfully Added",
+      });
+    } else {
+      res.status(202).json({
+        message: "Failed Please tray again....",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
 // GET ALPEHBATICALLY SORT MUIC
 router.post("/muic/view", async (req, res, next) => {
   try {
@@ -1728,7 +1764,13 @@ router.post("/update/elasticSearch", async (req, res, next) => {
     next(error);
   }
 });
-/***********************************************EXTRA QUREY SECTION*********************************************************** */
+/***********************************************EXTRA  SECTION*********************************************************** */
+
+
+
+/****************************************************************************************************** */
+
+/*-----------------------------EXTRA API AREA--------------------------------------*/
 router.post("/user/addCpcType", async (req, res, next) => {
   try {
     let data = await superAdminController.addCpcType();
@@ -1762,10 +1804,6 @@ router.post("/extra/reAuditTray", async (req, res, next) => {
     next(error);
   }
 });
-
-/****************************************************************************************************** */
-
-/*-----------------------------EXTRA ONE--------------------------------------*/
 router.post("/tray/addGrade", async (req, res, next) => {
   try {
     let data = await superAdminController.addGrade();
@@ -1923,9 +1961,26 @@ router.post("/extra/bqcDoneReportIssue/bugFix", async (req, res, next) => {
 });
 
 //RDL 1 USERNAME ADD
-router.post("/extra/rdlOneUserName/bugFix", async (req, res, next) => {
+router.post("/extra/changeWarehouseLocation/bugFix", async (req, res, next) => {
   try {
-    let data = await superAdminController.extraRdlOneUserNameAdd();
+    let data = await superAdminController.changeWHLocation();
+    if (data) {
+      res.status(200).json({
+        message: "done",
+      });
+    } else {
+      res.status(202).json({
+        message: "Failed",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+//07052023  recomended by sumit sir by doc share 
+router.post("/extra/bugFixOfSpecTray", async (req, res, next) => {
+  try {
+    let data = await superAdminController.bugFixOfSpecOfTray();
     if (data) {
       res.status(200).json({
         message: "done",
