@@ -1939,4 +1939,38 @@ router.post("/extra/rdlOneUserName/bugFix", async (req, res, next) => {
     next(error);
   }
 });
+//ADD OTHER AUDITOR FEEDBACK
+router.post("/extra/addOtherAudtiorFeedback", async (req, res, next) => {
+  try {
+    let data = await superAdminController.addOtherAudtitorFeedBack();
+    if (data) {
+      res.status(200).json({
+        message: "done",
+      });
+    } else {
+      res.status(202).json({
+        message: "Failed",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+//ADD bot tray id from backend
+router.post("/extra/addBotTray", async (req, res, next) => {
+  try {
+    let data = await superAdminController.addBotTrayFromBackend();
+    if (data) {
+      res.status(200).json({
+        message: "done",
+      });
+    } else {
+      res.status(202).json({
+        message: "Failed",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
 module.exports = router;

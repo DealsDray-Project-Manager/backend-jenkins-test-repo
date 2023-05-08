@@ -9,6 +9,7 @@ const { admin } = require("../../Model/adminModel/admins");
 const { usersHistory } = require("../../Model/users-history-model/model");
 const { delivery } = require("../../Model/deliveryModel/delivery");
 const { trayCategory } = require("../../Model/tray-category/tray-category");
+const { audtiorFeedback } = require("../../Model/temp/auditor-feedback");
 const {
   partAndColor,
 } = require("../../Model/Part-list-and-color/part-list-and-color");
@@ -19,8 +20,7 @@ const moment = require("moment");
 const elasticsearch = require("../../Elastic-search/elastic");
 
 const IISDOMAIN = "https://prexo-v8-2-uat-api.dealsdray.com/user/profile/";
-const IISDOMAINPRDT =
-  "https://prexo-v8-2-uat-api.dealsdray.com/product/image/";
+const IISDOMAINPRDT = "https://prexo-v8-2-uat-api.dealsdray.com/product/image/";
 
 /************************************************************************************************** */
 
@@ -2596,20 +2596,132 @@ module.exports = {
       resolve(getTray);
     });
   },
-  extraRdlOneUserNameAdd:()=>{
-    return new Promise(async(resolve,reject)=>{
-      let getRdlRepairTray=await masters.find({sort_id:"Ready to RDL-Repair"})
-      for(let x of getRdlRepairTray){
-        for(let y of x.items){
-          let findItem=await delivery.findOne({tracking_id:y.tracking_id})
-          let update=await masters.findOneAndUpdate({code:x.code,"items.uic":findItem.uic_code.code},{
-            $set:{
-                "items.$.rdl_fls_report.username":findItem.rdl_fls_one_user_name
+  extraRdlOneUserNameAdd: () => {
+    return new Promise(async (resolve, reject) => {
+      let getRdlRepairTray = await masters.find({
+        sort_id: "Ready to RDL-Repair",
+      });
+      for (let x of getRdlRepairTray) {
+        for (let y of x.items) {
+          let findItem = await delivery.findOne({ tracking_id: y.tracking_id });
+          let update = await masters.findOneAndUpdate(
+            { code: x.code, "items.uic": findItem.uic_code.code },
+            {
+              $set: {
+                "items.$.rdl_fls_report.username":
+                  findItem.rdl_fls_one_user_name,
+              },
             }
-          })
+          );
         }
       }
-      resolve({getRdlRepairTray})
-    })
-  }
+      resolve({ getRdlRepairTray });
+    });
+  },
+  addOtherAudtitorFeedBack: () => {
+    return new Promise(async (resolve, reject) => {
+      const add = await audtiorFeedback.create(arr);
+      if (add) {
+        resolve(add);
+      }
+    });
+  },
+  addBotTrayFromBackend: () => {
+    return new Promise(async (resolve, reject) => {
+      let arr = [
+        "92100002330",
+        "92100002353",
+        "92100002350",
+        "92100002332",
+        "92100002796",
+        "92100002831",
+        "92100002810",
+        "92100003515",
+        "92100002465",
+        "92100003340",
+        "92100002207",
+        "92100002219",
+        "92100002214",
+        "92100002213",
+        "92100002658",
+        "92100002663",
+        "92100002680",
+        "92100002677",
+        "92100002661",
+      ];
+
+      for (let x of arr) {
+        let getDelivery = await delivery.findOne({ "uic_code.code": x });
+        console.log(getDelivery.tray_id);
+        console.log(getDelivery?.wht_tray);
+        let obj = {
+          awbn_number: getDelivery.tracking_id,
+          order_id: getDelivery.order_id,
+          order_date: getDelivery.order_date,
+          imei: getDelivery.imei,
+          status: "Valid",
+          tray_id: "B0T2001",
+          bag_id: getDelivery.bag_id,
+          user_name: getDelivery.agent_name,
+          bag_assigned_date: getDelivery.assign_to_agent,
+          uic: x,
+        };
+        let obj2 = {
+          stickerOne: "UIC Pasted On Device",
+          stickerTwo: "Device Putin Sleeve",
+          body_damage: "",
+          body_damage_des: "",
+          model_brand: "",
+        };
+        obj.bot_eval_result = obj2;
+
+        let updateTray = await masters.findOneAndUpdate(
+          { code: "BOT2001" },
+          {
+            $push: {
+              items: obj,
+            },
+
+            $set: {
+              sort_id: "Closed By Bot",
+              closed_time_bot: Date.now(),
+              actual_items: [],
+              issued_user_name: getDelivery.agent_name,
+            },
+          }
+        );
+        let updateBag = await masters.findOneAndUpdate(
+          { code: getDelivery.bag_id },
+          {
+            $push: {
+              items: obj,
+            },
+            $set: {
+              sort_id: "Closed By Bot",
+              closed_time_bot: Date.now(),
+              actual_items: [],
+              assign: "Old Assign",
+              issued_user_name: getDelivery.agent_name,
+            },
+          }
+        );
+        let updateDelivery = await delivery.findOneAndUpdate(
+          {
+            "uic_code.code": x,
+          },
+          {
+            $set: {
+              bot_report: obj2,
+              updated_at: Date.now(),
+              tray_location: "Warehouse",
+              tray_type: "BOT",
+              tray_status: "Closed By Bot",
+              tray_id: "BOT2001",
+            },
+          }
+        );
+      }
+      resolve(arr);
+    });
+  },
 };
