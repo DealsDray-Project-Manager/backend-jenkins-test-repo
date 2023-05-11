@@ -2,7 +2,7 @@ const { delivery } = require("../../Model/deliveryModel/delivery");
 const { masters } = require("../../Model/mastersModel");
 const { orders } = require("../../Model/ordersModel/ordersModel");
 const { products } = require("../../Model/productModel/product");
-
+const {audtiorFeedback}=require("../../Model/temp/auditor-feedback")
 const Elasticsearch = require("../../Elastic-search/elastic");
 
 module.exports = {
@@ -143,10 +143,13 @@ module.exports = {
                 order_id: uicExists.order_id,
               });
               let muicFind=await products.findOne({vendor_sku_id:uicExists.item_id})
+              let otherAudFeedBackData=await audtiorFeedback.findOne({uic:uicExists.uic_code.code})
+              console.log(otherAudFeedBackData);
               obj.delivery = uicExists;
               obj.order = getOrder;
               obj.checkIntray = checkIntray;
               obj.muic=muicFind.muic
+              obj.otherAudFeedBack=otherAudFeedBackData
 
               resolve({ status: 1, data: obj });
             } else {
