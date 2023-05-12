@@ -19,9 +19,8 @@ const {
 const moment = require("moment");
 const elasticsearch = require("../../Elastic-search/elastic");
 
-const IISDOMAIN = "https://prexo-v8-2-uat-api.dealsdray.com/user/profile/";
-const IISDOMAINPRDT = "https://prexo-v8-2-uat-api.dealsdray.com/product/image/";
-const IISDOMAINPRDT = "https://prexo-v8-2-uat-api.dealsdray.com/product/image/";
+const IISDOMAIN = "https://prexo-v8-3-dev-api.dealsdray.com/user/profile/";
+const IISDOMAINPRDT = "https://prexo-v8-3-dev-api.dealsdray.com/product/image/";
 
 /************************************************************************************************** */
 
@@ -2948,7 +2947,6 @@ module.exports = {
     
     });
   },
-};
   changeWHLocation: () => {
     return new Promise(async (resolve, reject) => {
       let getWarehoue = await infra.find({ type_taxanomy: "Warehouse" });
@@ -3031,8 +3029,8 @@ module.exports = {
           );
         }
       }
-      resolve(getTrayZeroUnits)
-      
+      resolve(getTrayZeroUnits) 
     })
   }
 };
+

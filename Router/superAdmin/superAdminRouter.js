@@ -168,9 +168,9 @@ router.get("/getCpc/", async (req, res) => {
 /*-------------------------------------WAREHOUSE DATA------------------------------*/
 router.post("/getWarehouseByLocation", async (req, res) => {
   try {
-    const { name,type } = req.body;
-     console.log(req.body);
-    let warehouse = await superAdminController.getWarehouse(name,type);
+    const { name, type } = req.body;
+    console.log(req.body);
+    let warehouse = await superAdminController.getWarehouse(name, type);
     if (warehouse) {
       res.status(200).json({ data: { warehouse } });
     }
@@ -327,7 +327,7 @@ router.post("/getBrandIdHighest", async (req, res, next) => {
           obj = JSON.parse(data);
           res.status(200).json({
             data: obj.brandcount,
-            partCount:obj.PARTID
+            partCount: obj.PARTID,
           });
         }
       }
@@ -1587,10 +1587,12 @@ router.post("/partAndColor/view/:type", async (req, res, next) => {
     next(error);
   }
 });
-// BULK VALIDATON FOR PART 
+// BULK VALIDATON FOR PART
 router.post("/bulkvalidationForPart", async (req, res, next) => {
   try {
-    const data = await superAdminController.bulkValidationForPartCheck(req.body);
+    const data = await superAdminController.bulkValidationForPartCheck(
+      req.body
+    );
     if (data.status == true) {
       res.status(200).json({
         message: "Successfully Validated",
@@ -1605,7 +1607,7 @@ router.post("/bulkvalidationForPart", async (req, res, next) => {
     next(error);
   }
 });
-// BULK add  PART 
+// BULK add  PART
 router.post("/bulkAddPart", async (req, res, next) => {
   try {
     const data = await superAdminController.bulkAddPart(req.body);
@@ -1765,8 +1767,6 @@ router.post("/update/elasticSearch", async (req, res, next) => {
   }
 });
 /***********************************************EXTRA  SECTION*********************************************************** */
-
-
 
 /****************************************************************************************************** */
 
@@ -1977,7 +1977,7 @@ router.post("/extra/changeWarehouseLocation/bugFix", async (req, res, next) => {
     next(error);
   }
 });
-//07052023  recomended by sumit sir by doc share 
+//07052023  recomended by sumit sir by doc share
 router.post("/extra/bugFixOfSpecTray", async (req, res, next) => {
   try {
     let data = await superAdminController.bugFixOfSpecOfTray();
