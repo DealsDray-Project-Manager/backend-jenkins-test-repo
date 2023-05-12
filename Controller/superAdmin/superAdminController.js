@@ -19,8 +19,8 @@ const {
 const moment = require("moment");
 const elasticsearch = require("../../Elastic-search/elastic");
 
-const IISDOMAIN = "https://prexo-v8-2-uat-api.dealsdray.com/user/profile/";
-const IISDOMAINPRDT = "https://prexo-v8-2-uat-api.dealsdray.com/product/image/";
+const IISDOMAIN = "https://prexo-v8-2-adminapi.dealsdray.com/user/profile/";
+const IISDOMAINPRDT = "https://prexo-v8-2-adminapi.dealsdray.com/product/image/";
 
 /************************************************************************************************** */
 
@@ -2620,6 +2620,7 @@ module.exports = {
   },
   addOtherAudtitorFeedBack: () => {
     return new Promise(async (resolve, reject) => {
+      
       const add = await audtiorFeedback.create(arr);
       if (add) {
         resolve(add);
@@ -2660,7 +2661,7 @@ module.exports = {
           order_date: getDelivery.order_date,
           imei: getDelivery.imei,
           status: "Valid",
-          tray_id: "B0T2001",
+          tray_id: "BOT2001",
           bag_id: getDelivery.bag_id,
           user_name: getDelivery.agent_name,
           bag_assigned_date: getDelivery.assign_to_agent,
