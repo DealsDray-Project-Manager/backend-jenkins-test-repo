@@ -2130,4 +2130,14 @@ module.exports = {
       }
     });
   },
+  trackTray: (location, trayId) => {
+    return new Promise(async (resolve, reject) => {
+      const tray = await masters.findOne({ code: trayId, cpc: location });
+      if (tray) {
+        resolve({ tray: tray, status: 1 });
+      } else {
+        resolve({ status: 0 });
+      }
+    });
+  },
 };

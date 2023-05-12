@@ -2528,7 +2528,7 @@ module.exports = {
         if (x.actual_items.length == 0) {
           let getDelivery = [];
           //x.code == "WHT1564"
-          
+
           if (x.code == "WHT1141") {
             getDelivery = await delivery.find({
               wht_tray: "WHT1141",
@@ -2794,157 +2794,44 @@ module.exports = {
     });
   },
   fixBaggingIssueWithAwbn: () => {
-    return new Promise(async(resolve, reject) => {
-      let arr = [    
-"'513360900847",
-"'513439510946",
-"'513438644826",
-"'513429658610",
-"'513430422453",
-"'513428023952",
-"'513330807558",
-"'513354966675",
-"'513432298346",
-"'513429536444",
-"'513436021193",
-"'513435175774",
-"'513428619889",
-"'513446998140",
-"'513305033180",
-"'513442204047",
-"'513426463156",
-"'513431213012",
-"'513428834664",
-"'513432085441",
-"'513440528565",
-"'513428868508",
-"'513440762990",
-"'513254588540",
-"'513434546506",
-"'513417242982",
-"'513427887050",
-"'513433676310",
-"'513435186497",
-"'513428924112",
-"'513427472515",
-"'513431767690",
-"'513430054012",
-"'513435299135",
-"'513432391559",
-"'513435517925",
-"'513443205753",
-"'513441211022",
-"'513430410788",
-"'513430947567",
-"'513430282972",
-"'513440877250",
-"'513437729739",
-"'513439035845",
-"'513434845623",
-"'513435522486",
-"'513425670586",
-"'513429016632",
-"'513435602010",
-"'513436362692",
-"'513431294295",
-"'513431551329",
-"'513448683235",
-"'513428822982",
-"'513428721957",
-"'513426017038",
-"'513431411036",
-"'513438557447",
-"'513430532817",
-"'513434138589",
-"'513429041924",
-"'513431462021",
-"'513426641899",
-"'513432782401",
-"'513434142869",
-"'513416922632",
-"'513404011737",
-"'513432949606",
-"'513430533593",
-"'513433780000",
-"'513426241693",
-"'513429058748",
-"'513437542260",
-"'513429735625",
-"'513429324720",
-"'513427411668",
-"'513447646316",
-"'513437656226",
-"'513428176566",
-"'513352325979",
-"'513438480066",
-"'513435007488",
-"'513428344385",
-"'513429013211",
-"'513440212471",
-"'513431791091",
-"'513434884158",
-"'513432517041",
-"'513432895262",
-"'513433009972",
-"'513440691580",
-"'513431475663",
-"'513432713573",
-"'513410922089",
-"'513444670079",
-"'513435639795",
-"'513427851266",
-"'513432019262",
-"'513434250731",
-"'513432746571",
-"'513431348820",
-"'513438156770",
-"'513431723306",
-"'513428868423",
-"'513437179176",
-"'513439588822",
-"'513465502977",
-"'513433740912",
-"'513441368658",
-"'513439919633",
-"'513428857236",
-"'513450579830",
-"'513445502300",
-"'513438413576",
-"'513431444997",
-"'513447314468",
-"'513449892544",
-"'513446770814",
-"'513426913576",
-"'513451252541",
-"'513461589873",
-"'513461579720",
-"'513445094386",
-"'513430754080",
-"'513442513989",
-"'513437741229",
-"'513259977271",
-"'513441634074",
-"'513255370717",
-"'513445502928",
-"'513445581787",
-"'513429070559"
-      ];
-        for (let x of arr) {
-          let findDeliveryExisted = await delivery.findOne({ tracking_id: x });
-          if (findDeliveryExisted) {
-             let ordercheck=await orders.findOne({order_id:findDeliveryExisted.order_id})
-             if(ordercheck){
+    return new Promise(async (resolve, reject) => {
+       
+        for(let x of arr){
+          x.created_at=Date.now()
+           let checkOrderPresent=await orders.findOne({order_id:x.order_id})
+           if(checkOrderPresent){
+            console.log("orderExists", x.order_id);
+           }
+           else{
+            let checkDelivery=await delivery.findOne({order_id:x.order_id})
+            if(checkDelivery){
+              console.log("Delivery Exists",x.order_id);
+              x["delivery_status"]="Delivered"
+              let updateDelivery=await delivery.findOneAndUpdate({order_id:x.order_id},{
+                $set:{
+                  temp_delivery_status: "Delivered",
+                }
+              })
             }
-            else{
-            }
-          }
-          else{
-            
-            console.log(x);
-          }
+             x.order_status="NEW"
+             x.partner_id=x.partner_id.toString()
+             x.order_date=new Date(x.order_date)
+             x.partner_id=x.partner_id.toString()
+             x.imei=x.imei.toString
+             x.base_discount=x.base_discount,
+             x.partner_purchase_price=x.partner_purchase_price.toString()
+             x.tracking_id=x.tracking_id.toString()
+             x.order_id_replaced=x.order_id_replaced?.toString()
+             x.gc_amount_redeemed=x.gc_amount_redeemed.toString()
+             x.partner_price_no_defect=x.partner_price_no_defect.toString()
+             x.revised_partner_price=x.revised_partner_price.toString()
+             x.delivery_fee=x.delivery_fee.toString()
+             x.exchange_facilitation_fee=x.exchange_facilitation_fee.toString()
+             x.created_at=Date.now()
+             const orderData=await orders.create(x)
+           }
         }
-        resolve(arr);
-    
+      resolve(arr);
     });
   },
   changeWHLocation: () => {
@@ -2989,17 +2876,18 @@ module.exports = {
       resolve(getWarehoue);
     });
   },
-  bugFixOfSpecOfTray:()=>{
-    return new Promise(async(resolve,reject)=>{
-      let getTrayZeroUnits=await masters.find({$or:[{code:"WHT1362"},{code:"WHT1392"}]})
-      for(let x of getTrayZeroUnits){
-      let  getDelivery = await delivery.find({ wht_tray: x.code });
+  bugFixOfSpecOfTray: () => {
+    return new Promise(async (resolve, reject) => {
+      let getTrayZeroUnits = await masters.find({
+        $or: [{ code: "WHT1362" }, { code: "WHT1392" }],
+      });
+      for (let x of getTrayZeroUnits) {
+        let getDelivery = await delivery.find({ wht_tray: x.code });
         let findMuic = await products.findOne({
           brand_name: x.brand,
           model_name: x.model,
         });
-        for(let y  of getDelivery){
-
+        for (let y of getDelivery) {
           let obj = {
             tracking_id: y.tracking_id,
             bot_agent: y.agent_name,
@@ -3017,20 +2905,19 @@ module.exports = {
           };
           let addToTray = await masters.findOneAndUpdate(
             { code: x.code },
-          
+
             {
               $push: {
                 actual_items: obj,
               },
-              $set:{
+              $set: {
                 sort_id: "BQC Done",
-              }
+              },
             }
           );
         }
       }
-      resolve(getTrayZeroUnits) 
-    })
-  }
+      resolve(getTrayZeroUnits);
+    });
+  },
 };
-

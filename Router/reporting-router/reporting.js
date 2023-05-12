@@ -429,22 +429,42 @@ router.post("/search/rdlOneDoneUnits", async (req, res, next) => {
   }
 });
 /* TRACK  ITEM BASED ON THE UIC / IMEI */
-router.post("/track-item",async(req,res,next)=>{
+router.post("/track-item", async (req, res, next) => {
   try {
-      const {inputData,location}=req.body
-      const searchResult=await reportingAgentRouter.findItemBasedOnInput(inputData,location)
-      if(searchResult.status == 1){
-        res.status(200).json({
-          data:searchResult.data
-        })
-      }
-      else{
-        res.status(202).json({
-          message:"No records"
-        })
-      }
+    const { inputData, location } = req.body;
+    const searchResult = await reportingAgentRouter.findItemBasedOnInput(
+      inputData,
+      location
+    );
+    if (searchResult.status == 1) {
+      res.status(200).json({
+        data: searchResult.data,
+      });
+    } else {
+      res.status(202).json({
+        message: "Sorry no records",
+      });
+    }
   } catch (error) {
-    next(error)
+    next(error);
   }
-})
+});
+/* TRACK TRAY */
+router.post("/track-tray", async (req, res, next) => {
+  try {
+    const { location, trayId } = req.body;
+    const trayData = await reportingAgentRouter.trackTray(location, trayId);
+    if (trayData.status == 1) {
+      res.status(200).json({
+        data: trayData.tray,
+      });
+    } else {
+      res.status(202).json({
+        message: "Sorry no records",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
 module.exports = router;

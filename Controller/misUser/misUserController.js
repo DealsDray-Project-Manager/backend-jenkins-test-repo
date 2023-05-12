@@ -2445,6 +2445,7 @@ module.exports = {
             $set: {
               sort_id: "Requested to Warehouse",
               issued_user_name: bagData.bot_name,
+              bag_assign_to_bot: Date.now(),
             },
           }
         );

@@ -123,6 +123,14 @@ const mastersSchema = mongoose.Schema({
   tray_grade: {
     type: String,
   },
+  bag_wh_added_item_close_fv_1:{
+    type:Date
+  },
+  bag_assign_to_bot:{
+    type:Date
+  },
+  
+
 });
 const masters = mongoose.model("masters", mastersSchema);
 module.exports = {

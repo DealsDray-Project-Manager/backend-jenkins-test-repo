@@ -736,6 +736,7 @@ module.exports = {
             uic: bagData.uic,
             sleaves: bagData.sleaves,
             status_change_time: Date.now(),
+            wh_added_item_close_fv_1:Date.now()
           },
         }
       );
