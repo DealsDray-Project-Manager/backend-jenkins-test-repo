@@ -1698,7 +1698,7 @@ module.exports = {
         }
       );
       if (uicExists) {
-        if (uicExists.bqc_software_report !== undefined) {
+        if (uicExists.bqc_done_close !== undefined) {
           let getOrder = await orders.findOne({ order_id: uicExists.order_id });
           obj.delivery = uicExists;
           obj.order = getOrder;
