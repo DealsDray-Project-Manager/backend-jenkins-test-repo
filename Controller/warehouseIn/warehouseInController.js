@@ -829,6 +829,7 @@ module.exports = {
             sort_id: issueData.status,
             description: issueData.description,
             assigned_date: Date.now(),
+            bag_tray_issue_to_bot:Date.now()
           }
         );
         if (data) {
@@ -858,6 +859,7 @@ module.exports = {
                   sort_id: "Issued",
                   status_change_time: Date.now(),
                   assign: "New Assign",
+                  bag_tray_issue_to_bot:Date.now()
                 },
               }
             );
@@ -1395,6 +1397,7 @@ module.exports = {
             {
               $set: {
                 sort_id: "Received From BOT",
+                tray_received_from_bot:Date.now()
               },
             }
           );
@@ -1507,6 +1510,7 @@ module.exports = {
             $set: {
               sort_id: "Closed By Warehouse",
               closed_time_wharehouse: Date.now(),
+              bot_done_tray_close_wh:Date.now()
             },
           }
         );
@@ -1561,6 +1565,7 @@ module.exports = {
               new Date().toISOString().split("T")[0]
             ),
             actual_items: [],
+            bot_done_tray_close_wh:Date.now()
           },
         }
       );

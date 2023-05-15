@@ -129,6 +129,21 @@ const mastersSchema = mongoose.Schema({
   bag_assign_to_bot:{
     type:Date
   },
+  bag_tray_issue_to_bot:{
+    type:Date
+  },
+  tray_close_by_bot:{
+    type:Date
+  },
+  tray_received_from_bot:{
+    type:Date
+  },
+  bot_done_tray_close_wh:{
+    type:Date
+  },
+  mis_assign_to_sorting:{
+    type:Date
+  }
   
 
 });
