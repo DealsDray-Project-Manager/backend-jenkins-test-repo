@@ -136,7 +136,9 @@ const mastersSchema = mongoose.Schema({
     sorting_agent_close_bot_wht:Date,
     sorting_done_received:Date,
     sorting_done_close_wh:Date,
-    forcefull_recharge_sup:Date
+    forcefull_recharge_sup:Date,
+    issue_to_merging:Date,
+    merging_done_close_sorting:Date
   }
   
 

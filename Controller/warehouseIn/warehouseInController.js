@@ -3777,6 +3777,7 @@ module.exports = {
             $set: {
               assigned_date: Date.now(),
               sort_id: "Audit Done Issued to Merging",
+              "track_tray.issue_to_merging":Date.now()
             },
           }
         );
@@ -3787,6 +3788,7 @@ module.exports = {
               $set: {
                 assigned_date: Date.now(),
                 sort_id: "Audit Done Issued to Merging",
+                "track_tray.issue_to_merging":Date.now()
               },
             }
           );
@@ -3802,6 +3804,7 @@ module.exports = {
             $set: {
               assigned_date: Date.now(),
               sort_id: "Ready to BQC Issued to Merging",
+              "track_tray.issue_to_merging":Date.now()
             },
           }
         );
@@ -3812,6 +3815,7 @@ module.exports = {
               $set: {
                 assigned_date: Date.now(),
                 sort_id: "Ready to BQC Issued to Merging",
+                "track_tray.issue_to_merging":Date.now()
               },
             }
           );
@@ -3828,6 +3832,7 @@ module.exports = {
             $set: {
               assigned_date: Date.now(),
               sort_id: "Ready to Audit Issued to Merging",
+              "track_tray.issue_to_merging":Date.now()
             },
           }
         );
@@ -3838,6 +3843,7 @@ module.exports = {
               $set: {
                 assigned_date: Date.now(),
                 sort_id: "Ready to Audit Issued to Merging",
+                "track_tray.issue_to_merging":Date.now()
               },
             }
           );
@@ -3854,6 +3860,7 @@ module.exports = {
             $set: {
               assigned_date: Date.now(),
               sort_id: "Ready to RDL-Repair Issued to Merging",
+              "track_tray.issue_to_merging":Date.now()
             },
           }
         );
@@ -3864,6 +3871,7 @@ module.exports = {
               $set: {
                 assigned_date: Date.now(),
                 sort_id: "Ready to RDL-Repair Issued to Merging",
+                "track_tray.issue_to_merging":Date.now()
               },
             }
           );
@@ -3877,6 +3885,8 @@ module.exports = {
             $set: {
               assigned_date: Date.now(),
               sort_id: "Issued to Sorting for Ctx to Stx",
+              "track_tray.wh_issue_to_sorting":Date.now()
+
             },
           }
         );
@@ -3887,6 +3897,7 @@ module.exports = {
               $set: {
                 assigned_date: Date.now(),
                 sort_id: "Issued to Sorting for Ctx to Stx",
+                "track_tray.wh_issue_to_sorting":Date.now()
               },
             }
           );
@@ -3900,6 +3911,7 @@ module.exports = {
             $set: {
               assigned_date: Date.now(),
               sort_id: "Issued to Merging",
+              "track_tray.issue_to_merging":Date.now()
             },
           }
         );
@@ -3910,6 +3922,7 @@ module.exports = {
               $set: {
                 assigned_date: Date.now(),
                 sort_id: "Issued to Merging",
+                "track_tray.issue_to_merging":Date.now()
               },
             }
           );

@@ -485,6 +485,7 @@ module.exports = {
             $set: {
               sort_id: "Audit Done Return from Merging",
               closed_time_sorting_agent: Date.now(),
+              "track_tray.merging_done_close_sorting":Date.now(),
               actual_items: [],
             },
           }
@@ -496,6 +497,7 @@ module.exports = {
               $set: {
                 sort_id: "Audit Done Return from Merging",
                 closed_time_sorting_agent: Date.now(),
+                "track_tray.merging_done_close_sorting":Date.now(),
                 actual_items: [],
               },
             }
@@ -515,6 +517,7 @@ module.exports = {
             $set: {
               sort_id: "Ready to BQC Merging Done",
               closed_time_sorting_agent: Date.now(),
+              "track_tray.merging_done_close_sorting":Date.now(),
               actual_items: [],
             },
           }
@@ -526,6 +529,7 @@ module.exports = {
               $set: {
                 sort_id: "Ready to BQC Merging Done",
                 closed_time_sorting_agent: Date.now(),
+                "track_tray.merging_done_close_sorting":Date.now(),
                 actual_items: [],
               },
             }
@@ -545,6 +549,7 @@ module.exports = {
             $set: {
               sort_id: "Ready to Audit Merging Done",
               closed_time_sorting_agent: Date.now(),
+              "track_tray.merging_done_close_sorting":Date.now(),
               actual_items: [],
             },
           }
@@ -556,6 +561,7 @@ module.exports = {
               $set: {
                 sort_id: "Ready to Audit Merging Done",
                 closed_time_sorting_agent: Date.now(),
+                "track_tray.merging_done_close_sorting":Date.now(),
                 actual_items: [],
               },
             }
@@ -575,6 +581,7 @@ module.exports = {
             $set: {
               sort_id: "Ready to RDL-Repair Merging Done",
               closed_time_sorting_agent: Date.now(),
+              "track_tray.merging_done_close_sorting":Date.now(),
               actual_items: [],
             },
           }
@@ -586,6 +593,7 @@ module.exports = {
               $set: {
                 sort_id: "Ready to RDL-Repair Merging Done",
                 closed_time_sorting_agent: Date.now(),
+                "track_tray.merging_done_close_sorting":Date.now(),
                 actual_items: [],
               },
             }
@@ -605,6 +613,7 @@ module.exports = {
             $set: {
               sort_id: "Ctx to Stx Sorting Done",
               closed_time_sorting_agent: Date.now(),
+              "track_tray.sorting_agent_close_bot_wht":Date.now(),
               actual_items: [],
             },
           }
@@ -616,6 +625,7 @@ module.exports = {
               $set: {
                 sort_id: "Ctx to Stx Sorting Done",
                 closed_time_sorting_agent: Date.now(),
+                "track_tray.sorting_agent_close_bot_wht":Date.now(),
                 actual_items: [],
               },
             }
@@ -635,7 +645,7 @@ module.exports = {
             $set: {
               sort_id: "Merging Done",
               closed_time_sorting_agent: Date.now(),
-
+              "track_tray.merging_done_close_sorting":Date.now(),
               actual_items: [],
             },
           }
@@ -647,6 +657,7 @@ module.exports = {
               $set: {
                 sort_id: "Merging Done",
                 closed_time_sorting_agent: Date.now(),
+                "track_tray.merging_done_close_sorting":Date.now(),
                 actual_items: [],
               },
             }
