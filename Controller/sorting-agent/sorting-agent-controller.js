@@ -239,6 +239,7 @@ module.exports = {
           $set: {
             sort_id: "Closed By Sorting Agent",
             closed_time_sorting_agent: Date.now(),
+            "track_tray.sorting_agent_close_bot_wht":Date.now()
           },
         }
       );
@@ -258,6 +259,7 @@ module.exports = {
                   $set: {
                     sort_id: "Closed By Sorting Agent",
                     closed_time_sorting_agent: Date.now(),
+                    "track_tray.sorting_agent_close_bot_wht":Date.now(),
                     actual_items: [],
                   },
                 }
@@ -275,6 +277,7 @@ module.exports = {
               $set: {
                 sort_id: "Closed By Sorting Agent",
                 closed_time_sorting_agent: Date.now(),
+                "track_tray.sorting_agent_close_bot_wht":Date.now(),
                 actual_items: [],
               },
             }

@@ -829,7 +829,7 @@ module.exports = {
             sort_id: issueData.status,
             description: issueData.description,
             assigned_date: Date.now(),
-            bag_tray_issue_to_bot:Date.now()
+            "track_tray.bag_tray_issue_to_bot":Date.now()
           }
         );
         if (data) {
@@ -859,7 +859,7 @@ module.exports = {
                   sort_id: "Issued",
                   status_change_time: Date.now(),
                   assign: "New Assign",
-                  bag_tray_issue_to_bot:Date.now()
+                  "track_tray.bag_tray_issue_to_bot":Date.now()
                 },
               }
             );
@@ -1397,7 +1397,7 @@ module.exports = {
             {
               $set: {
                 sort_id: "Received From BOT",
-                tray_received_from_bot:Date.now()
+                "track_tray.tray_received_from_bot":Date.now()
               },
             }
           );
@@ -1510,7 +1510,7 @@ module.exports = {
             $set: {
               sort_id: "Closed By Warehouse",
               closed_time_wharehouse: Date.now(),
-              bot_done_tray_close_wh:Date.now()
+              "track_tray.bot_done_tray_close_wh":Date.now()
             },
           }
         );
@@ -1565,7 +1565,7 @@ module.exports = {
               new Date().toISOString().split("T")[0]
             ),
             actual_items: [],
-            bot_done_tray_close_wh:Date.now()
+            "track_tray.bot_done_tray_close_wh":Date.now()
           },
         }
       );
@@ -1730,6 +1730,7 @@ module.exports = {
             actual_items: [],
             temp_array: [],
             wht_tray: [],
+            "track_tray.bot_release_by_wh":Date.now(),
           },
         }
       );
@@ -3239,6 +3240,7 @@ module.exports = {
             {
               $set: {
                 sort_id: "Received From Sorting",
+                "track_tray.sorting_done_received":Date.now()
               },
             }
           );
@@ -3339,6 +3341,7 @@ module.exports = {
               sort_id: trayData.type,
               status_change_time: Date.now(),
               issued_user_name: trayData.username,
+              "track_tray.wh_issue_to_sorting":Date.now()
             },
           }
         );
@@ -3391,6 +3394,7 @@ module.exports = {
               closed_time_wharehouse: Date.now(),
               actual_items: [],
               issued_user_name: null,
+              sorting_done_close_wh:Date.now()
             },
           }
         );
