@@ -19,8 +19,10 @@ const {
 const moment = require("moment");
 const elasticsearch = require("../../Elastic-search/elastic");
 
+
 const IISDOMAIN = "https://prexo-v8-2-adminapi.dealsdray.com/user/profile/";
 const IISDOMAINPRDT = "https://prexo-v8-2-adminapi.dealsdray.com/product/image/";
+
 
 /************************************************************************************************** */
 
@@ -212,14 +214,43 @@ module.exports = {
   },
   /*--------------------------------FIND WAREHOUSE-----------------------------------*/
 
-  getWarehouse: (code) => {
+  getWarehouse: (code, type) => {
+    console.log(code);
     return new Promise(async (resolve, reject) => {
-      let warehouse = await infra.find({
-        parent_id: code,
-        type_taxanomy: "Warehouse",
-      });
+      if (type !== undefined) {
+        let warehouse;
+        if (type == "Processing") {
+          warehouse = await infra.find({
+            $or: [
+              {
+                parent_id: code,
+                warehouse_type: type,
+                type_taxanomy: "Warehouse",
+              },
+              {
+                parent_id: code,
+                warehouse_type: "PRC RMW",
+                type_taxanomy: "Warehouse",
+              },
+            ],
+          });
+        } else {
+          warehouse = await infra.find({
+            parent_id: code,
+            warehouse_type: type,
+            type_taxanomy: "Warehouse",
+          });
+        }
 
-      resolve(warehouse);
+        console.log(warehouse);
+        resolve(warehouse);
+      } else {
+        let warehouse = await infra.find({
+          parent_id: code,
+          type_taxanomy: "Warehouse",
+        });
+        resolve(warehouse);
+      }
     });
   },
   /*--------------------------------FIND USERS-----------------------------------*/
@@ -2282,6 +2313,45 @@ module.exports = {
       resolve(data);
     });
   },
+  bulkValidationForPartCheck: (partData) => {
+    return new Promise(async (resolve, reject) => {
+      let err = {};
+      let partName = [];
+      let i = 0;
+      for (let x of partData) {
+        let checkName = await partAndColor.findOne({ name: x.part_name });
+        if (checkName) {
+          partName.push(x.part_name);
+          err["duplicate_part_name"] = partName;
+        } else {
+          if (
+            partData.some(
+              (data, index) => data.part_name == x.part_name && index != i
+            )
+          ) {
+            partName.push(x.part_name);
+            err["duplicate_part_name"] = partName;
+          }
+        }
+        i++;
+      }
+      if (Object.keys(err).length === 0) {
+        resolve({ status: true });
+      } else {
+        resolve({ status: false, err: err });
+      }
+    });
+  },
+  bulkAddPart: (partData) => {
+    return new Promise(async (resolve, reject) => {
+      let data = await partAndColor.create(partData);
+      if (data) {
+        resolve({ status: true });
+      } else {
+        resolve({ status: false });
+      }
+    });
+  },
   getMuic: () => {
     return new Promise(async (resolve, reject) => {
       const muicData = await products.find({}, { muic: 1 }).sort({ muic: 1 });
@@ -2460,6 +2530,7 @@ module.exports = {
         if (x.actual_items.length == 0) {
           let getDelivery = [];
           //x.code == "WHT1564"
+          
           if (x.code == "WHT1141") {
             getDelivery = await delivery.find({
               wht_tray: "WHT1141",
@@ -2879,4 +2950,90 @@ module.exports = {
     
     });
   },
+  changeWHLocation: () => {
+    return new Promise(async (resolve, reject) => {
+      let getWarehoue = await infra.find({ type_taxanomy: "Warehouse" });
+      for (let x of getWarehoue) {
+        let getLocation = await infra.findOne({
+          type_taxanomy: "CPC",
+          name: x.parent_id,
+        });
+        if (x.warehouse_type == "STW") {
+          let update = await infra.findOneAndUpdate(
+            { code: x.code },
+            {
+              $set: {
+                parent_id: getLocation.code,
+                warehouse_type: "Dock",
+              },
+            }
+          );
+        } else if (x.warehouse_type == "PRC") {
+          let update = await infra.findOneAndUpdate(
+            { code: x.code },
+            {
+              $set: {
+                parent_id: getLocation.code,
+                warehouse_type: "Processing",
+              },
+            }
+          );
+        } else {
+          let update = await infra.findOneAndUpdate(
+            { code: x.code },
+            {
+              $set: {
+                parent_id: getLocation.code,
+              },
+            }
+          );
+        }
+      }
+      resolve(getWarehoue);
+    });
+  },
+  bugFixOfSpecOfTray:()=>{
+    return new Promise(async(resolve,reject)=>{
+      let getTrayZeroUnits=await masters.find({$or:[{code:"WHT1362"},{code:"WHT1392"}]})
+      for(let x of getTrayZeroUnits){
+      let  getDelivery = await delivery.find({ wht_tray: x.code });
+        let findMuic = await products.findOne({
+          brand_name: x.brand,
+          model_name: x.model,
+        });
+        for(let y  of getDelivery){
+
+          let obj = {
+            tracking_id: y.tracking_id,
+            bot_agent: y.agent_name,
+            tray_id: y.tray_id,
+            uic: y.uic_code.code,
+            imei: y.imei,
+            muic: findMuic.muic,
+            brand_name: x.brand,
+            model_name: x.model,
+            order_id: y.order_id,
+            order_date: y.order_date,
+            status: "Valid",
+            bot_eval_result: y.bot_report,
+            charging: y.charging,
+          };
+          let addToTray = await masters.findOneAndUpdate(
+            { code: x.code },
+          
+            {
+              $push: {
+                actual_items: obj,
+              },
+              $set:{
+                sort_id: "BQC Done",
+              }
+            }
+          );
+        }
+      }
+      resolve(getTrayZeroUnits) 
+    })
+  }
 };
+

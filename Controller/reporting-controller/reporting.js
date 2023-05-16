@@ -1953,79 +1953,118 @@ module.exports = {
       let deliveryData = [];
       if (type == "order_id") {
         deliveryData = await delivery
-          .find({ partner_shop: location, temp_delivery_status: { $ne: "Pending" }, })
-          .sort({ order_id: sortFormate, })
+          .find({
+            partner_shop: location,
+            temp_delivery_status: { $ne: "Pending" },
+          })
+          .sort({ order_id: sortFormate })
           .skip(skip)
           .limit(limit);
       } else if (type == "tracking_id") {
         deliveryData = await delivery
-          .find({ partner_shop: location, temp_delivery_status: { $ne: "Pending" }, })
+          .find({
+            partner_shop: location,
+            temp_delivery_status: { $ne: "Pending" },
+          })
           .sort({ tracking_id: sortFormate })
           .skip(skip)
           .limit(limit);
       } else if (type == "model_name") {
         deliveryData = await delivery
-          .find({ partner_shop: location, temp_delivery_status: { $ne: "Pending" }, })
+          .find({
+            partner_shop: location,
+            temp_delivery_status: { $ne: "Pending" },
+          })
           .sort({ old_item_details: sortFormate })
           .skip(skip)
           .limit(limit);
       } else if (type == "imei") {
         deliveryData = await delivery
-          .find({ partner_shop: location, temp_delivery_status: { $ne: "Pending" }, })
+          .find({
+            partner_shop: location,
+            temp_delivery_status: { $ne: "Pending" },
+          })
           .sort({ imei: sortFormate })
           .skip(skip)
           .limit(limit);
       } else if (type == "sku_name") {
         deliveryData = await delivery
-          .find({ partner_shop: location, temp_delivery_status: { $ne: "Pending" }, })
+          .find({
+            partner_shop: location,
+            temp_delivery_status: { $ne: "Pending" },
+          })
           .sort({ item_id: sortFormate })
           .skip(skip)
           .limit(limit);
       } else if (type == "bot_remark") {
         deliveryData = await delivery
-          .find({ partner_shop: location, temp_delivery_status: { $ne: "Pending" }, })
+          .find({
+            partner_shop: location,
+            temp_delivery_status: { $ne: "Pending" },
+          })
           .sort({ "bot_report.body_damage_des": sortFormate })
           .skip(skip)
           .limit(limit);
       } else if (type == "type") {
         deliveryData = await delivery
-          .find({ partner_shop: location, temp_delivery_status: { $ne: "Pending" }, })
+          .find({
+            partner_shop: location,
+            temp_delivery_status: { $ne: "Pending" },
+          })
           .sort({ tray_type: sortFormate })
           .skip(skip)
           .limit(limit);
       } else if (type == "uic") {
         deliveryData = await delivery
-          .find({ partner_shop: location, temp_delivery_status: { $ne: "Pending" }, })
+          .find({
+            partner_shop: location,
+            temp_delivery_status: { $ne: "Pending" },
+          })
           .sort({ "uic_code.code": sortFormate })
           .skip(skip)
           .limit(limit);
       } else if (type == "price") {
         deliveryData = await delivery
-          .find({ partner_shop: location, temp_delivery_status: { $ne: "Pending" }, })
+          .find({
+            partner_shop: location,
+            temp_delivery_status: { $ne: "Pending" },
+          })
           .sort({ partner_purchase_price: sortFormate })
           .skip(skip)
           .limit(limit);
       } else if (type == "order_date") {
         deliveryData = await delivery
-          .find({ partner_shop: location, temp_delivery_status: { $ne: "Pending" }, })
+          .find({
+            partner_shop: location,
+            temp_delivery_status: { $ne: "Pending" },
+          })
           .sort({ order_date: sortFormate })
           .skip(skip)
           .limit(limit);
       } else if (type == "location") {
         deliveryData = await delivery
-          .find({ partner_shop: location, temp_delivery_status: { $ne: "Pending" }, })
+          .find({
+            partner_shop: location,
+            temp_delivery_status: { $ne: "Pending" },
+          })
           .sort({ partner_shop: sortFormate })
           .skip(skip)
           .limit(limit);
       } else if (type == "delivery_date") {
         deliveryData = await delivery
-          .find({ partner_shop: location, temp_delivery_status: { $ne: "Pending" }, })
+          .find({
+            partner_shop: location,
+            temp_delivery_status: { $ne: "Pending" },
+          })
           .sort({ delivery_date: sortFormate })
           .skip(skip)
           .limit(limit);
       } else if (type == "packet_open_date") {
         deliveryData = await delivery
-          .find({ partner_shop: location, temp_delivery_status: { $ne: "Pending" }, })
+          .find({
+            partner_shop: location,
+            temp_delivery_status: { $ne: "Pending" },
+          })
           .sort({ assign_to_agent: sortFormate })
           .skip(skip)
           .limit(limit);
@@ -2047,6 +2086,48 @@ module.exports = {
         rdl_fls_closed_date: { $exists: true },
       });
       resolve({ units: getUnits, count: count });
+    });
+  },
+  findItemBasedOnInput: (searchInput, location) => {
+    return new Promise(async (resolve, reject) => {
+      const data = await delivery
+        .aggregate([
+          {
+            $match: {
+              $or: [
+                {
+                  "uic_code.code": searchInput,
+                  partner_shop: location,
+                },
+                { imei: searchInput, partner_shop: location },
+                { imei: "'" + searchInput, partner_shop: location },
+              ],
+            },
+          },
+          {
+            $lookup: {
+              from: "products",
+              localField: `item_id`,
+              foreignField: "vendor_sku_id",
+              as: "products",
+            },
+          },
+          {
+            $lookup: {
+              from: "orders",
+              localField: `order_id`,
+              foreignField: "order_id",
+              as: "order",
+            },
+          },
+        ])
+        .catch((err) => reject(err));
+      console.log(data);
+      if (data.length == 0) {
+        resolve({ status: 0 });
+      } else {
+        resolve({ status: 1, data: data });
+      }
     });
   },
 };
