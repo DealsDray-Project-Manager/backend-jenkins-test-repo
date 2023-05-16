@@ -53,7 +53,7 @@ exports = module.exports = () => {
     console.log(error);
   }
   try {
-    corn.schedule("00 23 * * *", () => {
+    corn.schedule("34 11 * * *", () => {
       /*----------------------------------------------CSV READ-----------------------------*/
       let result = [];
       fs.createReadStream("blancco_qc_data/blancco_qc_data.csv")
@@ -65,6 +65,10 @@ exports = module.exports = () => {
         .on("end", async () => {
           console.log(result[0]);
           for (let x of result) {
+            // let checkAlreadyThere=await delivery.findOne({ "uic_code.code": x.uic,bqc_software_report:{$exists:true} })
+            // if(checkAlreadyThere){
+            //   console.log(x.uic);
+            // }
             let updateBqcData = await delivery.updateOne(
               { "uic_code.code": x.uic },
               {
