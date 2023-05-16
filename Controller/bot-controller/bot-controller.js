@@ -64,6 +64,7 @@ module.exports = {
             sort_id: "Closed By Bot",
             assign: "Old Assign",
             closed_time_bot: Date.now(),
+            "track_tray.tray_close_by_bot":Date.now()
           },
         }
       );
@@ -278,6 +279,7 @@ module.exports = {
               sort_id: "Closed By Bot",
               closed_time_bot: Date.now(),
               actual_items: [],
+              "track_tray.tray_close_by_bot":Date.now()
             },
           }
         );

@@ -736,6 +736,7 @@ module.exports = {
             uic: bagData.uic,
             sleaves: bagData.sleaves,
             status_change_time: Date.now(),
+            wh_added_item_close_fv_1: Date.now(),
           },
         }
       );
@@ -828,6 +829,7 @@ module.exports = {
             sort_id: issueData.status,
             description: issueData.description,
             assigned_date: Date.now(),
+            "track_tray.bag_tray_issue_to_bot": Date.now(),
           }
         );
         if (data) {
@@ -857,6 +859,7 @@ module.exports = {
                   sort_id: "Issued",
                   status_change_time: Date.now(),
                   assign: "New Assign",
+                  "track_tray.bag_tray_issue_to_bot": Date.now(),
                 },
               }
             );
@@ -1394,6 +1397,7 @@ module.exports = {
             {
               $set: {
                 sort_id: "Received From BOT",
+                "track_tray.tray_received_from_bot": Date.now(),
               },
             }
           );
@@ -1506,6 +1510,7 @@ module.exports = {
             $set: {
               sort_id: "Closed By Warehouse",
               closed_time_wharehouse: Date.now(),
+              "track_tray.bot_done_tray_close_wh": Date.now(),
             },
           }
         );
@@ -1515,6 +1520,7 @@ module.exports = {
           {
             $set: {
               sort_id: "Open",
+              track_tray: {},
               closed_time_wharehouse: Date.now(),
               issued_user_name: null,
             },
@@ -1560,6 +1566,7 @@ module.exports = {
               new Date().toISOString().split("T")[0]
             ),
             actual_items: [],
+            "track_tray.bot_done_tray_close_wh": Date.now(),
           },
         }
       );
@@ -1724,6 +1731,7 @@ module.exports = {
             actual_items: [],
             temp_array: [],
             wht_tray: [],
+            track_tray: {},
           },
         }
       );
@@ -2452,6 +2460,7 @@ module.exports = {
               temp_array: [],
               sort_id: "Issued to BQC",
               assigned_date: Date.now(),
+              "track_tray.issued_to_bqc_wh": Date.now(),
             },
           }
         );
@@ -2487,6 +2496,7 @@ module.exports = {
               description: trayData.description,
               sort_id: "Issued to Recharging",
               assigned_date: Date.now(),
+              "track_tray.issued_to_recharging": Date.now(),
               temp_array: [],
             },
           }
@@ -2500,6 +2510,7 @@ module.exports = {
                   tray_status: "Issued to Recharging",
                   agent_name_charging: data.issued_user_name,
                   assign_to_agent_charging: Date.now(),
+                  "track_tray.issued_to_recharging": Date.now(),
                   tray_location: "Charging",
                   updated_at: Date.now(),
                 },
@@ -2523,6 +2534,7 @@ module.exports = {
               description: trayData.description,
               sort_id: "Issued to RDL-FLS",
               requested_date: Date.now(),
+              "track_tray.issued_rdl_1_wh": Date.now(),
               assigned_date: Date.now(),
               temp_array: [],
             },
@@ -2607,6 +2619,7 @@ module.exports = {
               description: trayData.description,
               sort_id: "Issued to Charging",
               assigned_date: Date.now(),
+              "track_tray.issued_to_charging": Date.now(),
             },
           }
         );
@@ -2846,6 +2859,7 @@ module.exports = {
               sort_id: "Ready to Audit",
               closed_time_wharehouse: Date.now(),
               issued_user_name: null,
+              "track_tray.bqc_done_close_by_wh": Date.now(),
               actual_items: [],
             },
           }
@@ -2878,18 +2892,37 @@ module.exports = {
           resolve();
         }
       } else {
-        data = await masters.findOneAndUpdate(
-          { code: trayData.trayId },
-          {
-            $set: {
-              description: trayData.description,
-              sort_id: "Ready to BQC",
-              closed_time_wharehouse: Date.now(),
-              issued_user_name: null,
-              actual_items: [],
-            },
-          }
-        );
+        if (trayData.sort_id == "Received From Recharging") {
+          data = await masters.findOneAndUpdate(
+            { code: trayData.trayId },
+            {
+              $set: {
+                description: trayData.description,
+                sort_id: "Ready to BQC",
+                closed_time_wharehouse: Date.now(),
+                issued_user_name: null,
+
+                "track_tray.recharging_done_close_wh": Date.now(),
+                actual_items: [],
+              },
+            }
+          );
+        } else {
+          data = await masters.findOneAndUpdate(
+            { code: trayData.trayId },
+            {
+              $set: {
+                description: trayData.description,
+                sort_id: "Ready to BQC",
+                closed_time_wharehouse: Date.now(),
+                issued_user_name: null,
+                "track_tray.charging_done_close_wh": Date.now(),
+
+                actual_items: [],
+              },
+            }
+          );
+        }
         if (data) {
           for (let x of data.items) {
             let deliveryUpdate = await delivery.findOneAndUpdate(
@@ -2939,6 +2972,7 @@ module.exports = {
               closed_time_wharehouse: Date.now(),
               actual_items: [],
               issued_user_name: null,
+              "track_tray.audit_done_close_wh": Date.now(),
               from_merge: null,
               to_merge: null,
             },
@@ -2955,6 +2989,7 @@ module.exports = {
                 actual_items: [],
                 items: [],
                 temp_array: [],
+                track_tray: {},
                 issued_user_name: null,
               },
             }
@@ -2968,6 +3003,7 @@ module.exports = {
                 sort_id: "Ready to Transfer to Sales",
                 actual_items: [],
                 issued_user_name: null,
+                "track_tray.audit_done_close_wh": Date.now(),
                 from_merge: null,
                 to_merge: null,
               },
@@ -2981,6 +3017,7 @@ module.exports = {
               $set: {
                 description: trayData.description,
                 sort_id: trayData.type,
+                "track_tray.audit_done_close_wh": Date.now(),
                 actual_items: [],
                 issued_user_name: null,
               },
@@ -3233,6 +3270,7 @@ module.exports = {
             {
               $set: {
                 sort_id: "Received From Sorting",
+                "track_tray.sorting_done_received": Date.now(),
               },
             }
           );
@@ -3333,6 +3371,7 @@ module.exports = {
               sort_id: trayData.type,
               status_change_time: Date.now(),
               issued_user_name: trayData.username,
+              "track_tray.wh_issue_to_sorting": Date.now(),
             },
           }
         );
@@ -3385,6 +3424,7 @@ module.exports = {
               closed_time_wharehouse: Date.now(),
               actual_items: [],
               issued_user_name: null,
+              sorting_done_close_wh: Date.now(),
             },
           }
         );
@@ -3767,6 +3807,7 @@ module.exports = {
             $set: {
               assigned_date: Date.now(),
               sort_id: "Audit Done Issued to Merging",
+              "track_tray.issue_to_merging": Date.now(),
             },
           }
         );
@@ -3777,6 +3818,7 @@ module.exports = {
               $set: {
                 assigned_date: Date.now(),
                 sort_id: "Audit Done Issued to Merging",
+                "track_tray.issue_to_merging": Date.now(),
               },
             }
           );
@@ -3792,6 +3834,7 @@ module.exports = {
             $set: {
               assigned_date: Date.now(),
               sort_id: "Ready to BQC Issued to Merging",
+              "track_tray.issue_to_merging": Date.now(),
             },
           }
         );
@@ -3802,6 +3845,7 @@ module.exports = {
               $set: {
                 assigned_date: Date.now(),
                 sort_id: "Ready to BQC Issued to Merging",
+                "track_tray.issue_to_merging": Date.now(),
               },
             }
           );
@@ -3818,6 +3862,7 @@ module.exports = {
             $set: {
               assigned_date: Date.now(),
               sort_id: "Ready to Audit Issued to Merging",
+              "track_tray.issue_to_merging": Date.now(),
             },
           }
         );
@@ -3828,6 +3873,7 @@ module.exports = {
               $set: {
                 assigned_date: Date.now(),
                 sort_id: "Ready to Audit Issued to Merging",
+                "track_tray.issue_to_merging": Date.now(),
               },
             }
           );
@@ -3844,6 +3890,7 @@ module.exports = {
             $set: {
               assigned_date: Date.now(),
               sort_id: "Ready to RDL-Repair Issued to Merging",
+              "track_tray.issue_to_merging": Date.now(),
             },
           }
         );
@@ -3854,6 +3901,7 @@ module.exports = {
               $set: {
                 assigned_date: Date.now(),
                 sort_id: "Ready to RDL-Repair Issued to Merging",
+                "track_tray.issue_to_merging": Date.now(),
               },
             }
           );
@@ -3867,6 +3915,7 @@ module.exports = {
             $set: {
               assigned_date: Date.now(),
               sort_id: "Issued to Sorting for Ctx to Stx",
+              "track_tray.wh_issue_to_sorting": Date.now(),
             },
           }
         );
@@ -3877,6 +3926,7 @@ module.exports = {
               $set: {
                 assigned_date: Date.now(),
                 sort_id: "Issued to Sorting for Ctx to Stx",
+                "track_tray.wh_issue_to_sorting": Date.now(),
               },
             }
           );
@@ -3890,6 +3940,7 @@ module.exports = {
             $set: {
               assigned_date: Date.now(),
               sort_id: "Issued to Merging",
+              "track_tray.issue_to_merging": Date.now(),
             },
           }
         );
@@ -3900,6 +3951,7 @@ module.exports = {
               $set: {
                 assigned_date: Date.now(),
                 sort_id: "Issued to Merging",
+                "track_tray.issue_to_merging": Date.now(),
               },
             }
           );
@@ -4070,6 +4122,7 @@ module.exports = {
               $set: {
                 sort_id: "Open",
                 actual_items: [],
+                track_tray: {},
                 temp_array: [],
                 items: [],
                 issued_user_name: null,
@@ -4125,6 +4178,7 @@ module.exports = {
                 actual_items: [],
                 temp_array: [],
                 items: [],
+                track_tray: {},
                 issued_user_name: null,
                 from_merge: null,
                 to_merge: null,
@@ -4295,6 +4349,7 @@ module.exports = {
                 actual_items: [],
                 temp_array: [],
                 items: [],
+                track_tray: {},
                 issued_user_name: null,
                 from_merge: null,
                 to_merge: null,
@@ -4472,6 +4527,7 @@ module.exports = {
               assigned_date: Date.now(),
               description: trayData.description,
               issued_user_name: trayData.username,
+              "track_tray.issue_to_audit_wh": Date,
               actual_items: [],
               temp_array: [],
             },
@@ -4545,6 +4601,7 @@ module.exports = {
             actual_items: [],
             temp_array: [],
             sort_id: "Open",
+            track_tray: {},
             issued_user_name: null,
             description: "",
             from_merge: "",
@@ -4743,6 +4800,7 @@ module.exports = {
               to_merge: null,
               issued_user_name: null,
               sort_id: "Open",
+              track_tray: {},
             },
           }
         );
@@ -5150,6 +5208,7 @@ module.exports = {
               temp_array: [],
               pickup_type: null,
               items: [],
+              track_tray: {},
               to_tray_for_pickup: null,
             },
           }
@@ -5535,6 +5594,7 @@ module.exports = {
             sort_id: "Ready to RDL-Repair",
             closed_time_wharehouse: Date.now(),
             assigned_date: Date.now(),
+            "track_tray.rdl_1_done_close_by_wh": Date.now(),
           },
         }
       );
@@ -5580,6 +5640,7 @@ module.exports = {
                 recommend_location: null,
                 actual_items: [],
                 temp_array: [],
+                "track_tray.ctx_transfer_to_sales":Date.now()
               },
             }
           );
@@ -5600,6 +5661,7 @@ module.exports = {
                 recommend_location: null,
                 actual_items: [],
                 temp_array: [],
+                "track_tray.ctx_transfer_to_processing":Date.now()
               },
             }
           );
@@ -5638,6 +5700,7 @@ module.exports = {
                 issued_user_name: null,
                 actual_items: [],
                 temp_array: [],
+                track_tray: {},
                 to_merge: null,
                 from_merge: null,
               },
@@ -5824,6 +5887,7 @@ module.exports = {
                 from_merge: null,
                 to_merge: null,
                 sort_id: "Open",
+                track_tray: {},
                 description: trayData.description,
               },
             }
@@ -6000,6 +6064,7 @@ module.exports = {
             $set: {
               sort_id: "Open",
               actual_items: [],
+              track_tray: {},
               issued_user_name: null,
               temp_array: [],
             },
@@ -6010,7 +6075,7 @@ module.exports = {
           resolve({ status: 1 });
         }
       } else if (data) {
-        resolve({ status:1 });
+        resolve({ status: 1 });
       } else {
         resolve({ status: 2 });
       }
@@ -6018,21 +6083,22 @@ module.exports = {
   },
   billedBinReport: (location) => {
     return new Promise(async (resolve, reject) => {
-      let getData = await delivery.aggregate([{
-        $match:{
-          partner_shop: location,
-          item_moved_to_billed_bin: "Yes",
-
-        }
-      },{
-        $lookup: {
-          from: "products",
-          localField: `item_id`,
-          foreignField: "vendor_sku_id",
-          as: "products",
+      let getData = await delivery.aggregate([
+        {
+          $match: {
+            partner_shop: location,
+            item_moved_to_billed_bin: "Yes",
+          },
         },
-      }
-    ]);
+        {
+          $lookup: {
+            from: "products",
+            localField: `item_id`,
+            foreignField: "vendor_sku_id",
+            as: "products",
+          },
+        },
+      ]);
       resolve(getData);
     });
   },

@@ -2445,6 +2445,7 @@ module.exports = {
             $set: {
               sort_id: "Requested to Warehouse",
               issued_user_name: bagData.bot_name,
+              "track_tray.bag_assign_to_bot": Date.now(),
             },
           }
         );
@@ -2594,6 +2595,7 @@ module.exports = {
               sort_id: "Sorting Request Sent To Warehouse",
               issued_user_name: botTrayData.agent_name,
               status_change_time: Date.now(),
+              "track_tray.mis_assign_to_sorting":Date.now()
             },
           }
         );
@@ -2605,6 +2607,7 @@ module.exports = {
                 sort_id: "Sorting Request Sent To Warehouse",
                 issued_user_name: botTrayData.agent_name,
                 status_change_time: Date.now(),
+                "track_tray.mis_assign_to_sorting":Date.now()
               },
             }
           );

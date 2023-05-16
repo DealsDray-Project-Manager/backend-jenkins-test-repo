@@ -123,6 +123,37 @@ const mastersSchema = mongoose.Schema({
   tray_grade: {
     type: String,
   },
+  track_tray:{
+    bag_wh_added_item_close_fv_1:Date,
+    bag_assign_to_bot:Date,
+    bag_tray_issue_to_bot:Date,
+    tray_close_by_bot:Date,
+    tray_received_from_bot:Date,
+    bot_done_tray_close_wh:Date,
+    mis_assign_to_sorting:Date,
+    wh_issue_to_sorting:Date,
+    bot_release_by_wh:Date,
+    sorting_agent_close_bot_wht:Date,
+    sorting_done_received:Date,
+    sorting_done_close_wh:Date,
+    forcefull_recharge_sup:Date,
+    issue_to_merging:Date,
+    merging_done_close_sorting:Date,
+    issued_to_recharging:Date,
+    issued_to_charging:Date,
+    charging_done_close_wh:Date,
+    recharging_done_close_wh:Date,
+    issued_to_bqc_wh:Date,
+    bqc_done_close_by_wh:Date,
+    issue_to_audit_wh:Date,
+    audit_done_close_wh:Date,
+    issued_rdl_1_wh:Date,
+    rdl_1_done_close_by_wh:Date,
+    ctx_transfer_to_sales:Date,
+    ctx_transfer_to_processing:Date,
+  }
+  
+
 });
 const masters = mongoose.model("masters", mastersSchema);
 module.exports = {
