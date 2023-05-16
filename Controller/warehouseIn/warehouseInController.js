@@ -5202,7 +5202,24 @@ module.exports = {
               },
             }
           );
-        } else if (trayData.stage == "Ready to RDL-Repair") {
+        }
+        else if (trayData.stage == "Inuse") {
+          status = "Inuse";
+          data = await masters.findOneAndUpdate(
+            { code: trayData.trayId },
+            {
+              $set: {
+                sort_id: "Inuse",
+                issued_user_name: null,
+                actual_items: [],
+                temp_array: [],
+                pickup_type: null,
+                to_tray_for_pickup: null,
+              },
+            }
+          );
+        }
+         else if (trayData.stage == "Ready to RDL-Repair") {
           status = "Ready to RDL-Repair";
           data = await masters.findOneAndUpdate(
             { code: trayData.trayId },
