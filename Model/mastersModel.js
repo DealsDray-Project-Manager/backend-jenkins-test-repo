@@ -138,7 +138,19 @@ const mastersSchema = mongoose.Schema({
     sorting_done_close_wh:Date,
     forcefull_recharge_sup:Date,
     issue_to_merging:Date,
-    merging_done_close_sorting:Date
+    merging_done_close_sorting:Date,
+    issued_to_recharging:Date,
+    issued_to_charging:Date,
+    charging_done_close_wh:Date,
+    recharging_done_close_wh:Date,
+    issued_to_bqc_wh:Date,
+    bqc_done_close_by_wh:Date,
+    issue_to_audit_wh:Date,
+    audit_done_close_wh:Date,
+    issued_rdl_1_wh:Date,
+    rdl_1_done_close_by_wh:Date,
+    ctx_transfer_to_sales:Date,
+    ctx_transfer_to_processing:Date,
   }
   
 
