@@ -1190,10 +1190,10 @@ router.post("/pickup/items/:type/:location", async (req, res, next) => {
 });
 // SORT ITEM BASED ON THE BRAND AND MODEL
 router.post(
-  "/pickup/sortItem/:brand/:model/:type/:location",
+  "/pickup/sortItem",
   async (req, res, next) => {
     try {
-      let { brand, model, type, location } = req.params;
+      let { brand, model, type, location } = req.body;
       let data = await misUserController.pickUpSortBrandModel(
         brand,
         model,

@@ -1762,10 +1762,10 @@ router.post("/salesBinItem/search/:uic", async (req, res, next) => {
 
 /*-------------------------------------AUDIT USER STATUS CHECKING------------------------------------------------------------*/
 router.post(
-  "/auditUserStatusChecking/:username/:brand/:model",
+  "/auditUserStatusChecking",
   async (req, res, next) => {
     try {
-      const { username, brand, model } = req.params;
+      const { username, brand, model } = req.body;
       let data = await warehouseInController.checkAuditUserFreeOrNot(
         username,
         brand,
@@ -1793,10 +1793,10 @@ router.post(
 /*----------------------------AUDIT TRAY ASSIGN WITH OTHER TRAY CHECKING------------------------------------------------------*/
 
 router.post(
-  "/trayIdCheckAuditApprovePage/:trayId/:trayType/:location/:brand/:model",
+  "/trayIdCheckAuditApprovePage",
   async (req, res, next) => {
     try {
-      const { trayId, trayType, location, brand, model } = req.params;
+      const { trayId, trayType, location, brand, model } = req.body;
 
       let data = await warehouseInController.checkTrayStatusAuditApprovePage(
         trayId,
@@ -1853,10 +1853,10 @@ router.post("/auditTrayIssueToAgent", async (req, res, next) => {
 /*-------------------------------------FETCH ASSIGNED OTHER TRAY--------------------------------------------*/
 
 router.post(
-  "/fetchAssignedTrayForAudit/:username/:brand/:model",
+  "/fetchAssignedTrayForAudit",
   async (req, res, next) => {
     try {
-      const { username, brand, model } = req.params;
+      const { username, brand, model } = req.body;
       let data = await warehouseInController.getAssignedTrayForAudit(
         username,
         brand,
