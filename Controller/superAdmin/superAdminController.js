@@ -2315,9 +2315,13 @@ module.exports = {
     return new Promise(async (resolve, reject) => {
       let err = {};
       let partName = [];
+      let color = [];
       let i = 0;
       for (let x of partData) {
-        let checkName = await partAndColor.findOne({ name: x.part_name });
+        let checkName = await partAndColor.findOne({
+          name: x.part_name,
+          type: "part-list",
+        });
         if (checkName) {
           partName.push(x.part_name);
           err["duplicate_part_name"] = partName;
@@ -2331,6 +2335,14 @@ module.exports = {
             err["duplicate_part_name"] = partName;
           }
         }
+        let checkColor = await partAndColor.findOne({
+          name: x.part_color,
+          type: "color-list",
+        });
+        if (checkColor == null) {
+          color.push(x.part_color);
+          err["duplicate_color"] = color;
+        }
         i++;
       }
       if (Object.keys(err).length === 0) {
@@ -2342,7 +2354,26 @@ module.exports = {
   },
   bulkAddPart: (partData) => {
     return new Promise(async (resolve, reject) => {
-      let data = await partAndColor.create(partData);
+      const newArrayOfObj = partData.map(
+        ({
+          part_name: name,
+          part_color: color,
+          technical_qc: technical_qc,
+          description: description,
+          code: part_code,
+          ...rest
+        }) => ({
+          name,
+          color,
+          part_code,
+          name,
+          technical_qc,
+          description,
+          ...rest,
+        })
+      );
+      console.log(newArrayOfObj);
+      let data = await partAndColor.create(newArrayOfObj);
       if (data) {
         resolve({ status: true });
       } else {
@@ -2401,7 +2432,15 @@ module.exports = {
           if (checkUsed) {
             resolve({ status: 3 });
           } else {
-            resolve({ status: 1, masterData: findData });
+            let checkInPart = await partAndColor.findOne({
+              type: "part-list",
+              color: findData.name,
+            });
+            if (checkInPart) {
+              resolve({ status: 3 });
+            } else {
+              resolve({ status: 1, masterData: findData });
+            }
           }
         }
       }
@@ -2430,6 +2469,7 @@ module.exports = {
             muic: dataOfPartorColor.muic,
             description: dataOfPartorColor.description,
             color: dataOfPartorColor?.color,
+            technical_qc:dataOfPartorColor?.dataOfPartorColor
           },
         }
       );
@@ -2440,13 +2480,31 @@ module.exports = {
       }
     });
   },
-  deletePartOrColor: (id) => {
+  deletePartOrColor: (id, type, page) => {
     return new Promise(async (resolve, reject) => {
-      let deleteData = await partAndColor.deleteOne({ _id: id });
-      if (deleteData.deletedCount !== 0) {
-        resolve({ status: 1 });
+      if (page == "part-list") {
+        const activateOrDeactiveate = await partAndColor.findOneAndUpdate(
+          {
+            _id: id,
+          },
+          {
+            $set: {
+              status: type,
+            },
+          }
+        );
+        if (activateOrDeactiveate) {
+          resolve({ status: 1 });
+        } else {
+          resolve({ status: 2 });
+        }
       } else {
-        resolve({ status: 2 });
+        let deleteData = await partAndColor.deleteOne({ _id: id });
+        if (deleteData.deletedCount !== 0) {
+          resolve({ status: 1 });
+        } else {
+          resolve({ status: 2 });
+        }
       }
     });
   },
@@ -2795,42 +2853,43 @@ module.exports = {
   },
   fixBaggingIssueWithAwbn: () => {
     return new Promise(async (resolve, reject) => {
-       
-        for(let x of arr){
-          x.created_at=Date.now()
-           let checkOrderPresent=await orders.findOne({order_id:x.order_id})
-           if(checkOrderPresent){
-            console.log("orderExists", x.order_id);
-           }
-           else{
-            let checkDelivery=await delivery.findOne({order_id:x.order_id})
-            if(checkDelivery){
-              console.log("Delivery Exists",x.order_id);
-              x["delivery_status"]="Delivered"
-              let updateDelivery=await delivery.findOneAndUpdate({order_id:x.order_id},{
-                $set:{
+      for (let x of arr) {
+        x.created_at = Date.now();
+        let checkOrderPresent = await orders.findOne({ order_id: x.order_id });
+        if (checkOrderPresent) {
+          console.log("orderExists", x.order_id);
+        } else {
+          let checkDelivery = await delivery.findOne({ order_id: x.order_id });
+          if (checkDelivery) {
+            console.log("Delivery Exists", x.order_id);
+            x["delivery_status"] = "Delivered";
+            let updateDelivery = await delivery.findOneAndUpdate(
+              { order_id: x.order_id },
+              {
+                $set: {
                   temp_delivery_status: "Delivered",
-                }
-              })
-            }
-             x.order_status="NEW"
-             x.partner_id=x.partner_id.toString()
-             x.order_date=new Date(x.order_date)
-             x.partner_id=x.partner_id.toString()
-             x.imei=x.imei.toString
-             x.base_discount=x.base_discount,
-             x.partner_purchase_price=x.partner_purchase_price.toString()
-             x.tracking_id=x.tracking_id.toString()
-             x.order_id_replaced=x.order_id_replaced?.toString()
-             x.gc_amount_redeemed=x.gc_amount_redeemed.toString()
-             x.partner_price_no_defect=x.partner_price_no_defect.toString()
-             x.revised_partner_price=x.revised_partner_price.toString()
-             x.delivery_fee=x.delivery_fee.toString()
-             x.exchange_facilitation_fee=x.exchange_facilitation_fee.toString()
-             x.created_at=Date.now()
-             const orderData=await orders.create(x)
-           }
+                },
+              }
+            );
+          }
+          x.order_status = "NEW";
+          x.partner_id = x.partner_id.toString();
+          x.order_date = new Date(x.order_date);
+          x.partner_id = x.partner_id.toString();
+          x.imei = x.imei.toString;
+          (x.base_discount = x.base_discount),
+            (x.partner_purchase_price = x.partner_purchase_price.toString());
+          x.tracking_id = x.tracking_id.toString();
+          x.order_id_replaced = x.order_id_replaced?.toString();
+          x.gc_amount_redeemed = x.gc_amount_redeemed.toString();
+          x.partner_price_no_defect = x.partner_price_no_defect.toString();
+          x.revised_partner_price = x.revised_partner_price.toString();
+          x.delivery_fee = x.delivery_fee.toString();
+          x.exchange_facilitation_fee = x.exchange_facilitation_fee.toString();
+          x.created_at = Date.now();
+          const orderData = await orders.create(x);
         }
+      }
       resolve(arr);
     });
   },

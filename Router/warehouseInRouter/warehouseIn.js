@@ -1762,10 +1762,10 @@ router.post("/salesBinItem/search/:uic", async (req, res, next) => {
 
 /*-------------------------------------AUDIT USER STATUS CHECKING------------------------------------------------------------*/
 router.post(
-  "/auditUserStatusChecking/:username/:brand/:model",
+  "/auditUserStatusChecking",
   async (req, res, next) => {
     try {
-      const { username, brand, model } = req.params;
+      const { username, brand, model } = req.body;
       let data = await warehouseInController.checkAuditUserFreeOrNot(
         username,
         brand,

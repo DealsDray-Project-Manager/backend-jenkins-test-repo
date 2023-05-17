@@ -1529,7 +1529,6 @@ router.post("/partAndColor/create", async (req, res, next) => {
   try {
     const { type } = req.body;
     const data = await superAdminController.createPartOrColor(req.body);
-
     if (data.status == 1) {
       if (type == "part-list") {
         fs.readFile(
@@ -1612,8 +1611,33 @@ router.post("/bulkAddPart", async (req, res, next) => {
   try {
     const data = await superAdminController.bulkAddPart(req.body);
     if (data.status == true) {
+      fs.readFile(
+        "myjsonfile.json",
+        "utf8",
+        function readFileCallback(err, datafile) {
+          if (err) {
+          } else {
+            obj = JSON.parse(datafile);
+            let num = parseInt(obj.PARTID.substring(2)) + req.body.length;
+            let updatedStr =
+              obj.PARTID.substring(0, 2) + num.toString().padStart(6, "0");
+            obj.PARTID = updatedStr;
+            json = JSON.stringify(obj);
+            fs.writeFile(
+              "myjsonfile.json",
+              json,
+              "utf8",
+              function readFileCallback(err, data) {
+                if (err) {
+                }
+              }
+            );
+          }
+        }
+      );
       res.status(200).json({
         message: "Successfully Added",
+        addedCount:req.body.length
       });
     } else {
       res.status(202).json({
@@ -1732,10 +1756,10 @@ router.post("/partAndColor/edit", async (req, res, next) => {
   }
 });
 // EDIT PART or color
-router.post("/partAndColor/delete/:id", async (req, res, next) => {
+router.post("/partAndColor/delete", async (req, res, next) => {
   try {
-    const { id } = req.params;
-    const data = await superAdminController.deletePartOrColor(id);
+    const { id,type,page } = req.body;
+    const data = await superAdminController.deletePartOrColor(id,type,page);
     if (data.status == 1) {
       res.status(200).json({
         message: "Successfully Deleted",
