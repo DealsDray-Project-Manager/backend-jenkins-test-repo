@@ -1777,6 +1777,47 @@ router.post("/partAndColor/edit", async (req, res, next) => {
     next(error);
   }
 });
+
+// MANAGE STOCK
+router.post("/partlist/manageStock/bulkValidation", async (req, res, next) => {
+  try {
+    const data = await superAdminController.partListManageBulkValidation(
+      req.body
+    );
+    if (data.status == true) {
+      res.status(200).json({
+        message: "Successfully Validated",
+      });
+    } else {
+      res.status(202).json({
+        data: data.err,
+        message: "Please Check Errors",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
+// UPDATE STOCK
+router.post("/partlist/manageStock/update", async (req, res, next) => {
+  try {
+    const data = await superAdminController.partlistManageStockUpdate(req.body);
+    if (data.status == true) {
+      res.status(200).json({
+        message: "Successfully Updated",
+        count: data.count,
+      });
+    } else {
+      res.status(202).json({
+        message: "Updation failed",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
 // EDIT PART or color
 router.post("/partAndColor/delete", async (req, res, next) => {
   try {
