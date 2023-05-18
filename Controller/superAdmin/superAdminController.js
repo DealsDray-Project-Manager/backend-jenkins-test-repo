@@ -19,10 +19,9 @@ const {
 const moment = require("moment");
 const elasticsearch = require("../../Elastic-search/elastic");
 
-
 const IISDOMAIN = "https://prexo-v8-2-adminapi.dealsdray.com/user/profile/";
-const IISDOMAINPRDT = "https://prexo-v8-2-adminapi.dealsdray.com/product/image/";
-
+const IISDOMAINPRDT =
+  "https://prexo-v8-2-adminapi.dealsdray.com/product/image/";
 
 /************************************************************************************************** */
 
@@ -2318,10 +2317,10 @@ module.exports = {
       let err = {};
       let partName = [];
       let color = [];
-      let technical_qc=[]
+      let technical_qc = [];
       let i = 0;
       for (let x of partData) {
-        if(x.technical_qc !== "Y" &&  x.technical_qc !== "N"){
+        if (x.technical_qc !== "Y" && x.technical_qc !== "N") {
           technical_qc.push(x.technical_qc);
           err["err_technical_qc"] = technical_qc;
         }
@@ -2564,27 +2563,27 @@ module.exports = {
       }
     });
   },
-  muicAssosiationRemove:(muicData)=>{
+  muicAssosiationRemove: (muicData) => {
     console.log(muicData);
-    return new Promise(async(resolve,reject)=>{
-      const muicDataRemove=await partAndColor.findOneAndUpdate({
-        part_code:muicData.part_code
-      },{
-        $pull:{
-          muic_association:{
-
-            muic:muicData.muic
-          }
+    return new Promise(async (resolve, reject) => {
+      const muicDataRemove = await partAndColor.findOneAndUpdate(
+        {
+          part_code: muicData.part_code,
+        },
+        {
+          $pull: {
+            muic_association: {
+              muic: muicData.muic,
+            },
+          },
         }
+      );
+      if (muicDataRemove) {
+        resolve({ status: true });
+      } else {
+        resolve({ status: false });
       }
-      )
-      if(muicDataRemove){
-        resolve({status:true})
-      }
-      else{
-        resolve({status:false})
-      }
-    })
+    });
   },
   editPartOrColor: (dataOfPartorColor) => {
     console.log(dataOfPartorColor);
@@ -2606,6 +2605,62 @@ module.exports = {
       } else {
         resolve({ status: 0 });
       }
+    });
+  },
+  partListManageBulkValidation: (dataofPartStock) => {
+    return new Promise(async (resolve, reject) => {
+      let err = {};
+      let partId = [];
+      let updateStock = [];
+      let dupPartId = [];
+      let i = 0;
+      for (let x of dataofPartStock) {
+        let checkPartId = await partAndColor.findOne({
+          part_code: x.part_code,
+        });
+        if (checkPartId == null) {
+          partId.push(x.part_code);
+          err["part_code_not_exists"] = partId;
+        } else {
+          if (
+            dataofPartStock.some(
+              (data, index) => data.part_code == x.part_code && index != i
+            )
+          ) {
+            dupPartId.push(x.part_code);
+            err["duplicate_part_code"] = dupPartId;
+          }
+        }
+
+        let number = parseFloat(x.update_stock);
+
+        if (number < 0 || isNaN(number)) {
+          updateStock.push(x.update_stock);
+          err["update_stock_check"] = updateStock;
+        }
+        i++;
+      }
+      console.log(err);
+      if (Object.keys(err).length === 0) {
+        resolve({ status: true });
+      } else {
+        resolve({ status: false, err: err });
+      }
+    });
+  },
+  partlistManageStockUpdate: (partStockData) => {
+    return new Promise(async (resolve, reject) => {
+      for (let x of partStockData) {
+        const updateStock = await partAndColor.findOneAndUpdate(
+          { part_code: x.part_code },
+          {
+            $inc: {
+              avl_stock: parseInt(x.update_stock),
+            },
+          }
+        );
+      }
+      resolve({ status: true, count: partStockData.length });
     });
   },
   deletePartOrColor: (id, type, page) => {
@@ -2875,7 +2930,6 @@ module.exports = {
   },
   addOtherAudtitorFeedBack: () => {
     return new Promise(async (resolve, reject) => {
-      
       const add = await audtiorFeedback.create(arr);
       if (add) {
         resolve(add);
