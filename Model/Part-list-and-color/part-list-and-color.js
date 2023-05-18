@@ -19,6 +19,20 @@ const partAndcolorSchema = mongoose.Schema({
   color: {
     type: String,
   },
+  technical_qc:{
+    type:String
+  },
+  avl_stock:{
+    type:Number,
+    default:0
+  },
+  muic_association:{
+     type:Array
+  },
+  status:{
+      type:String,
+      default:"Active"
+  },
   created_at: {
     type: Date,
     default:Date.now()
