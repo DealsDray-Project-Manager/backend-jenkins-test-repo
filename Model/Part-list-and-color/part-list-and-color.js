@@ -26,6 +26,9 @@ const partAndcolorSchema = mongoose.Schema({
     type:Number,
     default:0
   },
+  muic_association:{
+     type:Array
+  },
   status:{
       type:String,
       default:"Active"

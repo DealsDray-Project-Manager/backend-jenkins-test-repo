@@ -2316,8 +2316,13 @@ module.exports = {
       let err = {};
       let partName = [];
       let color = [];
+      let technical_qc=[]
       let i = 0;
       for (let x of partData) {
+        if(x.technical_qc !== "Y" &&  x.technical_qc !== "N"){
+          technical_qc.push(x.technical_qc);
+          err["err_technical_qc"] = technical_qc;
+        }
         let checkName = await partAndColor.findOne({
           name: x.part_name,
           type: "part-list",
@@ -2446,6 +2451,14 @@ module.exports = {
       }
     });
   },
+  onePartDatWithMuicAssosiation: (id, type) => {
+    return new Promise(async (resolve, reject) => {
+      const getOnePart = await partAndColor.findOne({ part_code: id });
+      if (getOnePart) {
+        resolve({ status: 1, masterData: getOnePart });
+      }
+    });
+  },
   updateElasticSearch: () => {
     return new Promise(async (resolve, reject) => {
       let lastUpdateData = await delivery
@@ -2459,7 +2472,120 @@ module.exports = {
       resolve({ status: 1 });
     });
   },
+  muicAssositaionBulkValidation: (validationData) => {
+    return new Promise(async (resolve, reject) => {
+      let arr = [];
+      let DupFindObj = {};
+      let obj = {};
+      let flag1 = false;
+      let flag2 = false;
+      let flag3 = false;
+      let flag4 = false;
+      const muicArr = validationData.muic.split(",");
+      let validateObj = {
+        total: muicArr.length,
+        success: 0,
+        duplicate: 0,
+        inValid: 0,
+        AlreadyAdded: 0,
+      };
+      for (let x of muicArr) {
+        const checkValidMuic = await products.findOne({ muic: x });
+        DupFindObj[x] = (DupFindObj[x] || 0) + 1;
+        if (checkValidMuic) {
+          let checkInAlready = await partAndColor.findOne({
+            part_code: validationData.part_code,
+            "muic_association.muic": x,
+          });
+          if (checkInAlready) {
+            (obj.muic = checkValidMuic.muic),
+              (obj.brand = checkValidMuic.brand_name),
+              (obj.model = checkValidMuic.model_name),
+              (obj.validationStatus = "Already Added");
+            flag1 = true;
+            validateObj.AlreadyAdded++;
+          } else {
+            (obj.muic = checkValidMuic.muic),
+              (obj.brand = checkValidMuic.brand_name),
+              (obj.model = checkValidMuic.model_name),
+              (obj.validationStatus = "Success");
+            validateObj.success++;
+          }
+          flag2 = false;
+          if (DupFindObj[x] === 2) {
+            flag4 = true;
+            obj.validationStatus = "Duplicate";
+            validateObj.duplicate++;
+          }
+          arr.push(obj);
+        } else {
+          flag3 = true;
+          (obj.muic = checkValidMuic.muic),
+            (obj.brand = checkValidMuic.brand_name),
+            (obj.model = checkValidMuic.model_name),
+            (obj.validationStatus = "Invalid Muic"),
+            validateObj.inValid++;
+          arr.push(obj);
+        }
+        obj = {};
+      }
+
+      if (flag1 == true || flag2 == true || flag3 == true || flag4 == true) {
+        resolve({ status: false, arr: arr, validateObj: validateObj });
+      } else {
+        resolve({ status: true, arr: arr, validateObj: validateObj });
+      }
+      resolve;
+    });
+  },
+  muicAssosiationAdd: (muicData) => {
+    return new Promise(async (resolve, reject) => {
+      let updateAssosiation;
+      for (let x of muicData.muic) {
+        if (x.validationStatus == "Success") {
+          updateAssosiation = await partAndColor.updateOne(
+            {
+              part_code: muicData.part_code,
+            },
+            {
+              $push: {
+                muic_association: x,
+              },
+            }
+          );
+        }
+      }
+      if (updateAssosiation.modifiedCount !== 0) {
+        resolve({ status: true });
+      } else {
+        resolve({ status: false });
+      }
+    });
+  },
+  muicAssosiationRemove:(muicData)=>{
+    console.log(muicData);
+    return new Promise(async(resolve,reject)=>{
+      const muicDataRemove=await partAndColor.findOneAndUpdate({
+        part_code:muicData.part_code
+      },{
+        $pull:{
+          muic_association:{
+
+            muic:muicData.muic
+          }
+        }
+      }
+      )
+      if(muicDataRemove){
+        resolve({status:true})
+      }
+      else{
+        resolve({status:false})
+      }
+    })
+  },
   editPartOrColor: (dataOfPartorColor) => {
+    console.log(dataOfPartorColor);
     return new Promise(async (resolve, reject) => {
       let updateData = await partAndColor.updateOne(
         { _id: dataOfPartorColor._id },
@@ -2469,7 +2595,7 @@ module.exports = {
             muic: dataOfPartorColor.muic,
             description: dataOfPartorColor.description,
             color: dataOfPartorColor?.color,
-            technical_qc:dataOfPartorColor?.dataOfPartorColor
+            technical_qc: dataOfPartorColor?.technical_qc,
           },
         }
       );

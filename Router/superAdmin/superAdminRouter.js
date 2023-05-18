@@ -1592,6 +1592,7 @@ router.post("/bulkvalidationForPart", async (req, res, next) => {
     const data = await superAdminController.bulkValidationForPartCheck(
       req.body
     );
+    console.log(data);
     if (data.status == true) {
       res.status(200).json({
         message: "Successfully Validated",
@@ -1637,7 +1638,7 @@ router.post("/bulkAddPart", async (req, res, next) => {
       );
       res.status(200).json({
         message: "Successfully Added",
-        addedCount:req.body.length
+        addedCount: req.body.length,
       });
     } else {
       res.status(202).json({
@@ -1738,6 +1739,27 @@ router.post("/partAndColor/oneData/:id/:type", async (req, res, next) => {
     next(error);
   }
 });
+// GET ONE PART
+router.post("/partList/oneData/:id/:type", async (req, res, next) => {
+  try {
+    const { id, type } = req.params;
+    const data = await superAdminController.onePartDatWithMuicAssosiation(
+      id,
+      type
+    );
+    if (data.status == 1) {
+      res.status(200).json({
+        data: data.masterData,
+      });
+    } else {
+      res.status(202).json({
+        message: "No Data found",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
 // EDIT PART or color
 router.post("/partAndColor/edit", async (req, res, next) => {
   try {
@@ -1758,8 +1780,8 @@ router.post("/partAndColor/edit", async (req, res, next) => {
 // EDIT PART or color
 router.post("/partAndColor/delete", async (req, res, next) => {
   try {
-    const { id,type,page } = req.body;
-    const data = await superAdminController.deletePartOrColor(id,type,page);
+    const { id, type, page } = req.body;
+    const data = await superAdminController.deletePartOrColor(id, type, page);
     if (data.status == 1) {
       res.status(200).json({
         message: "Successfully Deleted",
@@ -1790,6 +1812,66 @@ router.post("/update/elasticSearch", async (req, res, next) => {
     next(error);
   }
 });
+/*--------------------------MUIC ASSOSIATION------------------------------------*/
+// BULK VALIDATION FOR MUIC
+router.post("/muicAssociation/bulkValidation", async (req, res, next) => {
+  try {
+    const bulkValidation =
+      await superAdminController.muicAssositaionBulkValidation(req.body);
+    if (bulkValidation.status == true) {
+      res.status(200).json({
+        message: "Successfully Validated",
+        data: bulkValidation.arr,
+        validateObj: bulkValidation.validateObj,
+      });
+    } else {
+      res.status(202).json({
+        data: bulkValidation.arr,
+        validateObj: bulkValidation.validateObj,
+        message: "Please Check Errors",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+/* ----------------------------------------MUIC ASSOSIATION ADD ------------------------------------------*/
+// MUIC ASSOSIATION
+router.post("/muicAssociation/add", async (req, res, next) => {
+  try {
+    const data = await superAdminController.muicAssosiationAdd(req.body);
+    if (data.status == true) {
+      res.status(200).json({
+        message: "Successfully Added",
+      });
+    } else {
+      res.status(202).json({
+        message: "Failed Please Tray Again...",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
+// REMOVE MUIC FROM PART ASSOSITATION
+router.post("/muicAssociation/remove", async (req, res, next) => {
+  try {
+    const data = await superAdminController.muicAssosiationRemove(req.body);
+    if (data.status == true) {
+      res.status(200).json({
+        message: "Successfully Removed",
+      });
+    } else {
+      res.status(202).json({
+        message: "Failed Please Tray Again...",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
 /***********************************************EXTRA  SECTION*********************************************************** */
 
 /****************************************************************************************************** */
