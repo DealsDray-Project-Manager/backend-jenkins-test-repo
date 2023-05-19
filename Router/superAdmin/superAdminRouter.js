@@ -1693,6 +1693,29 @@ router.post("/muic/listColor/:muic", async (req, res, next) => {
       res.status(200).json({
         data: data,
       });
+    } else {
+      res.status(202).json({
+        message: "No data found",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+//GET PRODUCT AND ASSOSIATED PART
+router.post("/muic/getParts/:muic", async (req, res, next) => {
+  try {
+    const { muic } = req.params;
+    const data = await superAdminController.muicGetParts(muic);
+    if (data.status == true) {
+      res.status(200).json({
+        data: data.data,
+      });
+    } else {
+      res.status(202).json({
+        message: "No data found",
+        data: data.data,
+      });
     }
   } catch (error) {
     next(error);
@@ -1859,6 +1882,7 @@ router.post("/muicAssociation/bulkValidation", async (req, res, next) => {
   try {
     const bulkValidation =
       await superAdminController.muicAssositaionBulkValidation(req.body);
+    console.log(bulkValidation);
     if (bulkValidation.status == true) {
       res.status(200).json({
         message: "Successfully Validated",
@@ -1870,6 +1894,46 @@ router.post("/muicAssociation/bulkValidation", async (req, res, next) => {
         data: bulkValidation.arr,
         validateObj: bulkValidation.validateObj,
         message: "Please Check Errors",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+// MUIC WITH PART ASSOSIATION
+router.post("/muicPage/addPartAssosiation", async (req, res, next) => {
+  try {
+    const bulkValidation =
+      await superAdminController.muicPageAddPartAssosiation(req.body);
+
+    if (bulkValidation.status == true) {
+      res.status(200).json({
+        message: "Successfully Validated",
+        data: bulkValidation.arr,
+        validateObj: bulkValidation.validateObj,
+      });
+    } else {
+      res.status(202).json({
+        data: bulkValidation.arr,
+        validateObj: bulkValidation.validateObj,
+        message: "Please Check Errors",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+// ADD PART IN MUIC PAGE
+router.post("/muicPage/partAdd", async (req, res, next) => {
+  try {
+    const bulkValidation = await superAdminController.muicPageAddPart(req.body);
+    if (bulkValidation.status == true) {
+      res.status(200).json({
+        message: "Successfully Validated",
+      });
+    } else {
+      res.status(202).json({
+        message: "Failed please tray again...",
       });
     }
   } catch (error) {

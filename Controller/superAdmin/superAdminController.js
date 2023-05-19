@@ -2322,7 +2322,7 @@ module.exports = {
       for (let x of partData) {
         if (x.technical_qc !== "Y" && x.technical_qc !== "N") {
           technical_qc.push(x.technical_qc);
-          err["err_technical_qc"] = technical_qc;
+          err["technical_qc"] = technical_qc;
         }
         let checkName = await partAndColor.findOne({
           name: x.part_name,
@@ -2400,6 +2400,26 @@ module.exports = {
         type: "color-list",
       });
       resolve(colorData);
+    });
+  },
+  muicGetParts: (muic) => {
+    return new Promise(async (resolve, reject) => {
+      let data = await products.aggregate([
+        { $match: { muic: muic } },
+        {
+          $lookup: {
+            from: "partandcolors",
+            localField: `muic`,
+            foreignField: "muic_association.muic",
+            as: "parts",
+          },
+        },
+      ]);
+      if (data.length == 0) {
+        resolve({ status: false, data: data });
+      } else {
+        resolve({ status: true, data: data });
+      }
     });
   },
   partListMuicColor: (muic, color) => {
@@ -2521,9 +2541,9 @@ module.exports = {
           arr.push(obj);
         } else {
           flag3 = true;
-          (obj.muic = checkValidMuic.muic),
-            (obj.brand = checkValidMuic.brand_name),
-            (obj.model = checkValidMuic.model_name),
+          (obj.muic = checkValidMuic?.muic),
+            (obj.brand = checkValidMuic?.brand_name),
+            (obj.model = checkValidMuic?.model_name),
             (obj.validationStatus = "Invalid Muic"),
             validateObj.inValid++;
           arr.push(obj);
@@ -2539,12 +2559,124 @@ module.exports = {
       resolve;
     });
   },
+  muicPageAddPartAssosiation: (validationData) => {
+    console.log(validationData);
+    return new Promise(async (resolve, reject) => {
+      let arr = [];
+      let DupFindObj = {};
+      let obj = {};
+      let flag1 = false;
+      let flag2 = false;
+      let flag3 = false;
+      let flag4 = false;
+      const partArr = validationData.partId.split(",");
+      let validateObj = {
+        total: partArr.length,
+        success: 0,
+        duplicate: 0,
+        inValid: 0,
+        AlreadyAdded: 0,
+      };
+      for (let x of partArr) {
+        const checkPart = await partAndColor.findOne({ part_code: x });
+        DupFindObj[x] = (DupFindObj[x] || 0) + 1;
+        if (checkPart) {
+          let checkInAlready = await partAndColor.findOne({
+            part_code: x,
+            "muic_association.muic": validationData.muic,
+          });
+          if (checkInAlready) {
+            (obj.part_code = x),
+              (obj.name = checkPart.name),
+              (obj.technical_qc = checkPart.technical_qc),
+              (obj.avl_stock = checkPart.avl_stock),
+              (obj.color = checkPart.color);
+            obj.created_at = checkPart.created_at;
+            obj.status = checkPart.status;
+            obj.description = checkPart.description;
+            obj.validationStatus = "Already Added";
+
+            flag1 = true;
+            validateObj.AlreadyAdded++;
+          } else {
+            (obj.part_code = x),
+              (obj.name = checkPart.name),
+              (obj.technical_qc = checkPart.technical_qc),
+              (obj.avl_stock = checkPart.avl_stock),
+              (obj.color = checkPart.color);
+            obj.created_at = checkPart?.created_at;
+            obj.status = checkPart.status;
+            obj.description = checkPart.description;
+            obj.validationStatus = "Success";
+            validateObj.success++;
+          }
+          flag2 = false;
+          if (DupFindObj[x] === 2) {
+            flag4 = true;
+            obj.validationStatus = "Duplicate";
+            validateObj.duplicate++;
+          }
+          arr.push(obj);
+        } else {
+          flag3 = true;
+          (obj.name = checkPart?.name),
+            (obj.part_code = x),
+            (obj.technical_qc = checkPart?.technical_qc),
+            (obj.avl_stock = checkPart?.avl_stock),
+            (obj.color = checkPart?.color);
+          obj.created_at = checkPart?.created_at;
+          obj.status = checkPart?.status;
+          obj.description = checkPart?.description;
+          obj.validationStatus = "Invalid PartId";
+
+          validateObj.inValid++;
+          arr.push(obj);
+        }
+        obj = {};
+      }
+
+      if (flag1 == true || flag2 == true || flag3 == true || flag4 == true) {
+        resolve({ status: false, arr: arr, validateObj: validateObj });
+      } else {
+        resolve({ status: true, arr: arr, validateObj: validateObj });
+      }
+      resolve;
+    });
+  },
+  muicPageAddPart: (dataofPart) => {
+    console.log(dataofPart);
+    return new Promise(async (resolve, reject) => {
+      let updateAssosiation;
+      for (let x of dataofPart.part) {
+        if (x.validationStatus == "Success") {
+          let obj = {
+            muic: dataofPart.muicData.muic,
+            brand: dataofPart.muicData.brand_name,
+            model: dataofPart.muicData.model_name,
+          };
+          updateAssosiation = await partAndColor.findOneAndUpdate(
+            {
+              part_code: x.part_code,
+            },
+            {
+              $push: {
+                muic_association: obj,
+              },
+            }
+          );
+          obj = {};
+          console.log(updateAssosiation);
+        }
+      }
+      resolve({ status: true });
+    });
+  },
   muicAssosiationAdd: (muicData) => {
     return new Promise(async (resolve, reject) => {
       let updateAssosiation;
       for (let x of muicData.muic) {
         if (x.validationStatus == "Success") {
-          updateAssosiation = await partAndColor.updateOne(
+          updateAssosiation = await partAndColor.findOneAndUpdate(
             {
               part_code: muicData.part_code,
             },
@@ -2556,11 +2688,7 @@ module.exports = {
           );
         }
       }
-      if (updateAssosiation.modifiedCount !== 0) {
-        resolve({ status: true });
-      } else {
-        resolve({ status: false });
-      }
+      resolve({ status: true });
     });
   },
   muicAssosiationRemove: (muicData) => {
