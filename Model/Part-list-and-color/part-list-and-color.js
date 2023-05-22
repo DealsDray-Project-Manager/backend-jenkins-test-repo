@@ -37,6 +37,9 @@ const partAndcolorSchema = mongoose.Schema({
     type: Date,
     default:Date.now()
   },
+  created_by:{
+    type:String
+  }
 });
 
 const partAndColor = mongoose.model("partAndColor", partAndcolorSchema);

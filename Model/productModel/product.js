@@ -23,6 +23,9 @@ const productSchema = mongoose.Schema({
   created_at: {
     type: Date,
   },
+  created_by:{
+    type:String
+  }
 });
 
 const products = mongoose.model("product", productSchema);

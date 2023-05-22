@@ -28,6 +28,7 @@ const salesPanel = require("./Router/sales-agent-router/sales-agent-router");
 const pricingpanel = require("./Router/pricing-router/pricing-router");
 const ReportingPanel=require("./Router/reporting-router/reporting");
 const Rdl2Panel=require("./Router/Rdl-2-router/rdl-2-router");
+const RmUserPanel=require("./Router/Rm-user-router/rm-user");
 
 app.use(logger("dev"));
 app.use(express.json({ limit: "25mb" }));
@@ -61,6 +62,8 @@ app.use("/api/v7/reporting-agent", ReportingPanel);
 app.use("/api/v7/pricing-agent", pricingpanel);
 /* API FOR RDL 2 PANLE */
 app.use("/api/v7/rdl-two", Rdl2Panel);
+/* API FOR RM USER PANLE */
+app.use("/api/v7/rm-user", RmUserPanel);
 /* User-profile */
 app.use("/user/profile", express.static(__dirname + "/public/user-profile"));
 /* Product Image */
