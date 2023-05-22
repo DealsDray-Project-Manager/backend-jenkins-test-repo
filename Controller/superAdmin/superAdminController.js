@@ -10,6 +10,7 @@ const { usersHistory } = require("../../Model/users-history-model/model");
 const { delivery } = require("../../Model/deliveryModel/delivery");
 const { trayCategory } = require("../../Model/tray-category/tray-category");
 const { audtiorFeedback } = require("../../Model/temp/auditor-feedback");
+const { vendorMaster } = require("../../Model/vendorModel/vendorModel");
 const {
   partAndColor,
 } = require("../../Model/Part-list-and-color/part-list-and-color");
@@ -72,6 +73,7 @@ module.exports = {
       count.warehouse = await infra.count({ type_taxanomy: "Warehouse" });
       count.brand = await brands.count({});
       count.products = await products.count({});
+      count.vendor = await vendorMaster.count({});
       count.ctxCategory = await trayCategory.count({});
       count.tray = await masters.count({ prefix: "tray-master" });
       count.bag = await masters.count({ prefix: "bag-master" });
@@ -759,11 +761,30 @@ module.exports = {
         ],
       });
       if (checkNameExists) {
-        resolve({ status: false });
+        resolve({ status: 2 });
       } else {
-        let data = await infra.create(locationData);
-        if (data) {
-          resolve({ status: true });
+        if (
+          locationData.type_taxanomy == "Warehouse" &&
+          locationData.warehouse_type == "PRC RMW"
+        ) {
+          let checkExists = await infra.findOne({
+            parent_id: locationData.parent_id,
+            warehouse_type: "PRC RMW",
+          });
+          console.log(checkExists);
+          if (checkExists) {
+            resolve({ status: 1 });
+          } else {
+            let data = await infra.create(locationData);
+            if (data) {
+              resolve({ status: 3 });
+            }
+          }
+        } else {
+          let data = await infra.create(locationData);
+          if (data) {
+            resolve({ status: 3 });
+          }
         }
       }
     });
@@ -2341,13 +2362,16 @@ module.exports = {
             err["duplicate_part_name"] = partName;
           }
         }
-        let checkColor = await partAndColor.findOne({
-          name: x.part_color,
-          type: "color-list",
-        });
-        if (checkColor == null) {
-          color.push(x.part_color);
-          err["duplicate_color"] = color;
+        console.log(x.part_color);
+        if (x.part_color !== undefined && x.part_color !== "") {
+          let checkColor = await partAndColor.findOne({
+            name: x.part_color,
+            type: "color-list",
+          });
+          if (checkColor == null) {
+            color.push(x.part_color);
+            err["duplicate_color"] = color;
+          }
         }
         i++;
       }
@@ -2367,14 +2391,15 @@ module.exports = {
           technical_qc: technical_qc,
           description: description,
           code: part_code,
+          created_by: created_by,
           ...rest
         }) => ({
           name,
           color,
           part_code,
-          name,
           technical_qc,
           description,
+          created_by,
           ...rest,
         })
       );
@@ -2673,10 +2698,9 @@ module.exports = {
   },
   muicAssosiationAdd: (muicData) => {
     return new Promise(async (resolve, reject) => {
-      let updateAssosiation;
       for (let x of muicData.muic) {
         if (x.validationStatus == "Success") {
-          updateAssosiation = await partAndColor.findOneAndUpdate(
+          let updateAssosiation = await partAndColor.findOneAndUpdate(
             {
               part_code: muicData.part_code,
             },
@@ -2712,6 +2736,89 @@ module.exports = {
         resolve({ status: false });
       }
     });
+  },
+  getAllVendor: () => {
+    return new Promise(async (resolve, reject) => {
+      const data = await vendorMaster.find();
+      resolve(data);
+    });
+  },
+  createVendor: (vendorData) => {
+    return new Promise(async (resolve, reject) => {
+      const checkAlready = await vendorMaster.findOne({
+        $or: [{ vendor_id: vendorData.vendor_id }, { name: vendorData.name }],
+      });
+      if (checkAlready) {
+        resolve({ status: 2 });
+      } else {
+        const addVendor = await vendorMaster.create(vendorData);
+        if (addVendor) {
+          resolve({ status: 1 });
+        } else {
+          resolve({ status: 3 });
+        }
+      }
+    });
+  },
+  editVendor: (vendorData) => {
+    return new Promise(async (resolve, reject) => {
+      console.log(vendorData);
+      const updateVendor = await vendorMaster.findOneAndUpdate(
+        {
+          vendor_id: vendorData.vendor_id,
+        },
+        {
+          $set: {
+            name:vendorData.name,
+            address:vendorData.address,
+            city:vendorData.city,
+            state:vendorData.state,
+            mobile_one:vendorData.mobile_one,
+            mobile_two:vendorData.mobile_two,
+            deals:vendorData.deals,
+            reference:vendorData.reference,
+            location:vendorData.location,
+
+          },
+        }
+      );
+      if (updateVendor) {
+        resolve({ status: 1 });
+      } else {
+        resolve({ status: 2 });
+      }
+    });
+  },
+  vendorStatusChange: (vendorData) => {
+    console.log(vendorData);
+    return new Promise(async (resolve, reject) => {
+      const update = await vendorMaster.findOneAndUpdate(
+        {
+          vendor_id: vendorData.id,
+        },
+        {
+          $set: {
+            status: vendorData.type,
+          },
+        }
+      );
+      if (update) {
+        resolve({ status: 1 });
+      } else {
+        resolve({ status: 2 });
+      }
+    });
+  },
+  getOneVendor:(vendor_id)=>{
+    return new Promise(async(resolve,reject)=>{
+      const getoneVendor=await vendorMaster.findOne({vendor_id:vendor_id})
+      if(getoneVendor){
+        resolve({status:1,data:getoneVendor})
+      }
+      else{
+        resolve({status:2})
+      }
+    })
   },
   editPartOrColor: (dataOfPartorColor) => {
     console.log(dataOfPartorColor);
@@ -2761,7 +2868,7 @@ module.exports = {
         }
 
         let number = parseFloat(x.update_stock);
-
+        console.log(x.update_stock);
         if (number < 0 || isNaN(number)) {
           updateStock.push(x.update_stock);
           err["update_stock_check"] = updateStock;

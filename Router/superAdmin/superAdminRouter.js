@@ -610,14 +610,20 @@ router.post("/get-product-model/:brandName", async (req, res, next) => {
 /*-----------------------------ADD LOCATION--------------------------------------*/
 router.post("/addLocation", async (req, res, next) => {
   try {
+    const { type_taxanomy } = req.body;
     let data = await superAdminController.addLocation(req.body);
-    if (data.status == true) {
+    console.log(data);
+    if (data.status == 3) {
       res.status(200).json({
         message: "Successfully Added",
       });
+    } else if (data.status == 1) {
+      res.status(202).json({
+        message: "Already Exists",
+      });
     } else {
       res.status(202).json({
-        message: "Location Already Exists",
+        message: `${type_taxanomy} Already Exists`,
       });
     }
   } catch (error) {
@@ -1674,9 +1680,9 @@ router.post("/partList/idGen", async (req, res, next) => {
         if (err) {
         } else {
           obj = JSON.parse(data);
-
           res.status(200).json({
             data: obj.PARTID,
+            venId: obj.VENDORID,
           });
         }
       }
@@ -1970,6 +1976,120 @@ router.post("/muicAssociation/remove", async (req, res, next) => {
     } else {
       res.status(202).json({
         message: "Failed Please Tray Again...",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+/*----------------------------------------------VENDOR MASTER ----------------------------------------------------*/
+// GET ALL THE VENDORS
+router.post("/vendorMaster/view", async (req, res, next) => {
+  try {
+    const vendorData = await superAdminController.getAllVendor();
+    if (vendorData) {
+      res.status(200).json({
+        data: vendorData,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
+// CREATE VENDOR
+router.post("/vendorMaster/create", async (req, res, next) => {
+  try {
+    const vendorData = await superAdminController.createVendor(req.body);
+    if (vendorData.status == 1) {
+      fs.readFile(
+        "myjsonfile.json",
+        "utf8",
+        function readFileCallback(err, datafile) {
+          if (err) {
+          } else {
+            obj = JSON.parse(datafile);
+            let num = parseInt(obj.VENDORID.substring(2)) + 1;
+            let updatedStr =
+              obj.VENDORID.substring(0, 2) + num.toString().padStart(6, "0");
+            obj.VENDORID = updatedStr;
+            json = JSON.stringify(obj);
+            fs.writeFile(
+              "myjsonfile.json",
+              json,
+              "utf8",
+              function readFileCallback(err, data) {
+                if (err) {
+                }
+              }
+            );
+          }
+        }
+      );
+
+      res.status(200).json({
+        message: "Successfully Created",
+      });
+    } else if (vendorData.status == 2) {
+      res.status(202).json({
+        message: "Already Created",
+      });
+    } else {
+      res.status(202).json({
+        message: "Creation Failed...",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+// EDIT VENDOR
+router.post("/vendorMaster/edit", async (req, res, next) => {
+  try {
+    const vendorData = await superAdminController.editVendor(req.body);
+    if (vendorData.status == 1) {
+      res.status(200).json({
+        message: "Successfully Updated",
+      });
+    } else {
+      res.status(202).json({
+        message: "Updation Failed...",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+// VENDOR STATUS CHANGE
+router.post("/vendorMaster/statusChange", async (req, res, next) => {
+  try {
+    const { type } = req.body;
+    const vendorData = await superAdminController.vendorStatusChange(req.body);
+    if (vendorData.status == 1) {
+      res.status(200).json({
+        message: `Successfully ${type}`,
+      });
+    } else {
+      res.status(202).json({
+        message: "Updation Failed...",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+// GET ONE VENDOR
+router.post("/vendorMaster/one/:vendorId", async (req, res, next) => {
+  try {
+    const { vendorId } = req.params;
+    const vendorData = await superAdminController.getOneVendor(vendorId);
+    if (vendorData.status == 1) {
+      res.status(200).json({
+        data: vendorData.data,
+      });
+    } else {
+      res.status(200).json({
+        message: "No data found",
       });
     }
   } catch (error) {
