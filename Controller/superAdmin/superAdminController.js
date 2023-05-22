@@ -20,9 +20,9 @@ const {
 const moment = require("moment");
 const elasticsearch = require("../../Elastic-search/elastic");
 
-const IISDOMAIN = "https://prexo-v8-2-adminapi.dealsdray.com/user/profile/";
+const IISDOMAIN = "https://prexo-v8-3-dev-api.dealsdray.com/user/profile/";
 const IISDOMAINPRDT =
-  "https://prexo-v8-2-adminapi.dealsdray.com/product/image/";
+  "https://prexo-v8-3-dev-api.dealsdray.com/product/image/";
 
 /************************************************************************************************** */
 

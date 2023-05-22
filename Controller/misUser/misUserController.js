@@ -161,7 +161,7 @@ module.exports = {
         ctxToStxSorting: 0,
         stxMerge: 0,
       };
-      count.orders = await orders.count({ partner_shop: location });
+      count.orders = await orders.count({ partner_shop: location,order_status:"NEW" });
       count.badOrders = await badOrders.count({ partner_shop: location });
       count.delivered = await orders.count({
         partner_shop: location,
@@ -169,6 +169,7 @@ module.exports = {
       });
       count.notDelivered = await orders.count({
         partner_shop: location,
+        order_status: "NEW",
         delivery_status: "Pending",
       });
       count.delivery = await delivery.count({

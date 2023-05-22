@@ -4527,7 +4527,7 @@ module.exports = {
               assigned_date: Date.now(),
               description: trayData.description,
               issued_user_name: trayData.username,
-              "track_tray.issue_to_audit_wh": Date,
+              "track_tray.issue_to_audit_wh": Date.now(),
               actual_items: [],
               temp_array: [],
             },

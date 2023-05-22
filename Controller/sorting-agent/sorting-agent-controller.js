@@ -414,6 +414,7 @@ module.exports = {
                   $set: {
                     tray_location: "Sales-Sorting",
                     stx_tray_id: mmtTrayData.toTray,
+                    tray_type:"ST",
                     updated_at: Date.now(),
                   },
                 },
