@@ -3674,11 +3674,12 @@ module.exports = {
       }
     });
   },
-  getAuditDone: () => {
+  getAuditDone: (location) => {
     return new Promise(async (resolve, reject) => {
       let data = await masters.find({
         sort_id: "Ready to RDL",
         type_taxanomy: "WHT",
+        cpc:location
       });
       if (data) {
         resolve(data);
@@ -3720,11 +3721,12 @@ module.exports = {
       }
     });
   },
-  getRdlDonetray: () => {
+  getRdlDonetray: (location) => {
     return new Promise(async (resolve, reject) => {
       let data = await masters.find({
         sort_id: "Ready to RDL-Repair",
         type_taxanomy: "WHT",
+        cpc:location
       });
       if (data) {
         resolve(data);

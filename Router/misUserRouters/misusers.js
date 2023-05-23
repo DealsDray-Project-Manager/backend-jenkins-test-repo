@@ -1479,9 +1479,9 @@ router.post("/whtUtility/resticker/save/:trayId", async (req, res, next) => {
     next(error);
   }
 });
-router.post("/auditDoneWht", async (req, res, next) => {
+router.post("/auditDoneWht/:location", async (req, res, next) => {
   try {
-    let data = await misUserController.getAuditDone();
+    let data = await misUserController.getAuditDone(location);
     if (data) {
       res.status(200).json({
         data: data,
@@ -1537,9 +1537,10 @@ router.post(
     }
   }
 );
-router.post("/RDLoneDoneTray", async (req, res, next) => {
+router.post("/RDLoneDoneTray/:location", async (req, res, next) => {
   try {
-    let data = await misUserController.getRdlDonetray();
+    const {location}=req.params
+    let data = await misUserController.getRdlDonetray(location);
     if (data) {
       res.status(200).json({
         data: data,
