@@ -689,6 +689,7 @@ module.exports = {
               stockin_date: Date.now(),
               stock_in_status: data.status,
               updated_at: Date.now(),
+              old_item_details:data.old_item_details
             },
           }
         );

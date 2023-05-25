@@ -1189,34 +1189,31 @@ router.post("/pickup/items/:type/:location", async (req, res, next) => {
   }
 });
 // SORT ITEM BASED ON THE BRAND AND MODEL
-router.post(
-  "/pickup/sortItem/:brand/:model/:type/:location",
-  async (req, res, next) => {
-    try {
-      let { brand, model, type, location } = req.params;
-      let data = await misUserController.pickUpSortBrandModel(
-        brand,
-        model,
-        type,
-        location
-      );
+router.post("/pickup/sortItem", async (req, res, next) => {
+  try {
+    let { brand, model, type, location } = req.body;
+    let data = await misUserController.pickUpSortBrandModel(
+      brand,
+      model,
+      type,
+      location
+    );
 
-      if (data.items.length !== 0) {
-        res.status(200).json({
-          data: data.items,
-        });
-      } else {
-        res.status(202).json({
-          data: data.items,
+    if (data.items.length !== 0) {
+      res.status(200).json({
+        data: data.items,
+      });
+    } else {
+      res.status(202).json({
+        data: data.items,
 
-          message: "No records found",
-        });
-      }
-    } catch (error) {
-      next(error);
+        message: "No records found",
+      });
     }
+  } catch (error) {
+    next(error);
   }
-);
+});
 // UIC SEARCH
 router.post("/pickup/uicSearch/:uic/:type", async (req, res, next) => {
   try {
@@ -1481,6 +1478,7 @@ router.post("/whtUtility/resticker/save/:trayId", async (req, res, next) => {
 });
 router.post("/auditDoneWht/:location", async (req, res, next) => {
   try {
+    const { location } = req.params;
     let data = await misUserController.getAuditDone(location);
     if (data) {
       res.status(200).json({
@@ -1539,7 +1537,7 @@ router.post(
 );
 router.post("/RDLoneDoneTray/:location", async (req, res, next) => {
   try {
-    const {location}=req.params
+    const { location } = req.params;
     let data = await misUserController.getRdlDonetray(location);
     if (data) {
       res.status(200).json({
