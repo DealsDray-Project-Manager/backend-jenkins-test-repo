@@ -104,7 +104,6 @@ exports = module.exports = () => {
         .find({}, { _id: 0 })
         .sort({ updated_at: -1 })
         .limit(500);
-      console.log(lastUpdateData[0]);
       for (let x of lastUpdateData) {
         let update = await elasticSearch.uicCodeGen(x);
       }

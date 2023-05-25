@@ -894,7 +894,6 @@ router.post("/wht-add-actual-item", async (req, res, next) => {
     } else if (data.status == 3) {
       res.status(202).json({
         message: "Item Already Added",
-        setLoading,
       });
     }
   } catch (error) {
@@ -1761,75 +1760,69 @@ router.post("/salesBinItem/search/:uic", async (req, res, next) => {
 });
 
 /*-------------------------------------AUDIT USER STATUS CHECKING------------------------------------------------------------*/
-router.post(
-  "/auditUserStatusChecking",
-  async (req, res, next) => {
-    try {
-      const { username, brand, model } = req.body;
-      let data = await warehouseInController.checkAuditUserFreeOrNot(
-        username,
-        brand,
-        model
-      );
-      if (data.status === 1) {
-        res.status(200).json({
-          data: "User is free",
-        });
-      } else if (data.status === 2) {
-        res.status(200).json({
-          data: "Agent already have a lot",
-        });
-      } else if (data.status === 3) {
-        res.status(200).json({
-          data: "User not active",
-        });
-      }
-    } catch (error) {
-      next(error);
+router.post("/auditUserStatusChecking", async (req, res, next) => {
+  try {
+    const { username, brand, model } = req.body;
+    let data = await warehouseInController.checkAuditUserFreeOrNot(
+      username,
+      brand,
+      model
+    );
+    if (data.status === 1) {
+      res.status(200).json({
+        data: "User is free",
+      });
+    } else if (data.status === 2) {
+      res.status(200).json({
+        data: "Agent already have a lot",
+      });
+    } else if (data.status === 3) {
+      res.status(200).json({
+        data: "User not active",
+      });
     }
+  } catch (error) {
+    next(error);
   }
-);
+});
 
 /*----------------------------AUDIT TRAY ASSIGN WITH OTHER TRAY CHECKING------------------------------------------------------*/
 
-router.post(
-  "/trayIdCheckAuditApprovePage/:trayId/:trayType/:location/:brand/:model",
-  async (req, res, next) => {
-    try {
-      const { trayId, trayType, location, brand, model } = req.params;
+router.post("/trayIdCheckAuditApprovePage", async (req, res, next) => {
+  try {
+    const { trayId, trayType, location, brand, model } = req.body;
 
-      let data = await warehouseInController.checkTrayStatusAuditApprovePage(
-        trayId,
-        trayType,
-        location,
-        brand,
-        model
-      );
-      if (data.status == 1) {
-        res.status(200).json({
-          message: "Valid Tray",
-          trayId: trayId,
-        });
-      } else if (data.status == 2) {
-        res.status(202).json({
-          message: `Not a ${trayType} tray`,
-        });
-      } else if (data.status == 4) {
-        res.status(202).json({
-          message: "Tray id does not exists",
-        });
-      } else if (data.status == 5) {
-        res.status(202).json({
-          message: "Mismatch Brand and Model",
-        });
-      } else {
-        res.status(202).json({
-          message: "Tray already in process",
-        });
-      }
-    } catch (error) {}
-  }
-);
+    let data = await warehouseInController.checkTrayStatusAuditApprovePage(
+      trayId,
+      trayType,
+      location,
+      brand,
+      model
+    );
+    if (data.status == 1) {
+      res.status(200).json({
+        message: "Valid Tray",
+        trayId: trayId,
+      });
+    } else if (data.status == 2) {
+      res.status(202).json({
+        message: `Not a ${trayType} tray`,
+      });
+    } else if (data.status == 4) {
+      res.status(202).json({
+        message: "Tray id does not exists",
+      });
+    } else if (data.status == 5) {
+      res.status(202).json({
+        message: "Mismatch Brand and Model",
+      });
+    } else {
+      res.status(202).json({
+        message: "Tray already in process",
+      });
+    }
+  } catch (error) {}
+});
 
 /*----------------------------------------AUDIT TRAY ISSUE TO AGENT----------------------------------------------- */
 
@@ -1852,27 +1845,24 @@ router.post("/auditTrayIssueToAgent", async (req, res, next) => {
 
 /*-------------------------------------FETCH ASSIGNED OTHER TRAY--------------------------------------------*/
 
-router.post(
-  "/fetchAssignedTrayForAudit/:username/:brand/:model",
-  async (req, res, next) => {
-    try {
-      const { username, brand, model } = req.params;
-      let data = await warehouseInController.getAssignedTrayForAudit(
-        username,
-        brand,
-        model
-      );
+router.post("/fetchAssignedTrayForAudit", async (req, res, next) => {
+  try {
+    const { username, brand, model } = req.body;
+    let data = await warehouseInController.getAssignedTrayForAudit(
+      username,
+      brand,
+      model
+    );
 
-      if (data) {
-        res.status(200).json({
-          data: data,
-        });
-      }
-    } catch (error) {
-      next(error);
+    if (data) {
+      res.status(200).json({
+        data: data,
+      });
     }
+  } catch (error) {
+    next(error);
   }
-);
+});
 
 /*-----------------------------------------RETURN FROM AUDIT WHT RELEASE----------------------------------------------------*/
 router.post("/wht-relase/:trayId", async (req, res, next) => {
@@ -2481,19 +2471,21 @@ router.post("/billedBin/:location", async (req, res, next) => {
 // ACTIO MOVED TO BILLED BIN
 router.post("/movedToBilledBin", async (req, res, next) => {
   try {
-    const { uic, trayId,username } = req.body;
-    const data = await warehouseInController.itemMoviedToBillBin(uic,trayId,username);
+    const { uic, trayId, username } = req.body;
+    const data = await warehouseInController.itemMoviedToBillBin(
+      uic,
+      trayId,
+      username
+    );
     if (data.status == 1) {
       res.status(200).json({
-       message:"Item Successfully Moved to Billed Bin"
+        message: "Item Successfully Moved to Billed Bin",
+      });
+    } else {
+      res.status(202).json({
+        message: "Failed Please Tray again...",
       });
     }
-    else{
-      res.status(202).json({
-        message:"Failed Please Tray again..."
-       });
-    }
-
   } catch (error) {
     next(error);
   }

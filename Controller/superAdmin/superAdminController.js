@@ -20,9 +20,8 @@ const {
 const moment = require("moment");
 const elasticsearch = require("../../Elastic-search/elastic");
 
-const IISDOMAIN = "https://prexo-v8-2-adminapi.dealsdray.com/user/profile/";
-const IISDOMAINPRDT =
-  "https://prexo-v8-2-adminapi.dealsdray.com/product/image/";
+const IISDOMAIN = "https://prexo-v8-3-uat-api.dealsdray.com/user/profile/";
+const IISDOMAINPRDT = "https://prexo-v8-3-uat-api.dealsdray.com/product/image/";
 
 /************************************************************************************************** */
 
@@ -1034,7 +1033,7 @@ module.exports = {
           let warehouseCheck = await infra.findOne({
             type_taxanomy: "Warehouse",
             name: trayData[i]?.warehouse,
-            parent_id: cpcCheck.name,
+            parent_id: cpcCheck.code,
           });
           if (warehouseCheck == null) {
             warehouse.push(trayData[i]?.tray_id);
@@ -1047,7 +1046,7 @@ module.exports = {
         } else if (trayID > 8051 && trayData[i].tray_category == "MMT") {
           tray_id.push(trayData[i].tray_id);
           err["tray_id"] = tray_id;
-        } else if (trayID > 1501 && trayData[i].tray_category == "WHT") {
+        } else if (trayID > 11000 && trayData[i].tray_category == "WHT") {
           tray_id.push(trayData[i].tray_id);
           err["tray_id"] = tray_id;
         } else if (trayID > 8151 && trayData[i].tray_category == "PMT") {
@@ -2328,6 +2327,7 @@ module.exports = {
     });
   },
   viewColorOrPart: (type) => {
+    console.log(type);
     return new Promise(async (resolve, reject) => {
       const data = await partAndColor.find({ type: type });
       resolve(data);
@@ -2769,16 +2769,15 @@ module.exports = {
         },
         {
           $set: {
-            name:vendorData.name,
-            address:vendorData.address,
-            city:vendorData.city,
-            state:vendorData.state,
-            mobile_one:vendorData.mobile_one,
-            mobile_two:vendorData.mobile_two,
-            deals:vendorData.deals,
-            reference:vendorData.reference,
-            location:vendorData.location,
-
+            name: vendorData.name,
+            address: vendorData.address,
+            city: vendorData.city,
+            state: vendorData.state,
+            mobile_one: vendorData.mobile_one,
+            mobile_two: vendorData.mobile_two,
+            deals: vendorData.deals,
+            reference: vendorData.reference,
+            location: vendorData.location,
           },
         }
       );
@@ -2809,16 +2808,15 @@ module.exports = {
       }
     });
   },
-  getOneVendor:(vendor_id)=>{
-    return new Promise(async(resolve,reject)=>{
-      const getoneVendor=await vendorMaster.findOne({vendor_id:vendor_id})
-      if(getoneVendor){
-        resolve({status:1,data:getoneVendor})
+  getOneVendor: (vendor_id) => {
+    return new Promise(async (resolve, reject) => {
+      const getoneVendor = await vendorMaster.findOne({ vendor_id: vendor_id });
+      if (getoneVendor) {
+        resolve({ status: 1, data: getoneVendor });
+      } else {
+        resolve({ status: 2 });
       }
-      else{
-        resolve({status:2})
-      }
-    })
+    });
   },
   editPartOrColor: (dataOfPartorColor) => {
     console.log(dataOfPartorColor);
@@ -2896,6 +2894,18 @@ module.exports = {
         );
       }
       resolve({ status: true, count: partStockData.length });
+    });
+  },
+  checkTrayStatus: (trayData) => {
+    return new Promise(async (resolve, reject) => {
+      for (let x of trayData.ischeck) {
+        const tray = await masters.findOne({ code: x });
+        if (tray.sort_id != trayData.status) {
+          resolve({ status: 2 });
+          break;
+        }
+      }
+      resolve({ status: 1 });
     });
   },
   deletePartOrColor: (id, type, page) => {
@@ -3024,7 +3034,7 @@ module.exports = {
             model_name: x.model,
           });
           // x.code == "WHT1501" || x.code == "WHT1521" ||  x.code == "WHT1564" || x.code == "WHT1593" || x.code == "WHT1190"
-          if (x.code == "WHT1141") {
+          if (x.code == "WHT1300") {
             for (let y of getDelivery) {
               let obj = {
                 tracking_id: y.tracking_id,

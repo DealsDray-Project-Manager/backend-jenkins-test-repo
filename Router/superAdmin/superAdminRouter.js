@@ -169,7 +169,7 @@ router.get("/getCpc/", async (req, res) => {
 router.post("/getWarehouseByLocation", async (req, res) => {
   try {
     const { name, type } = req.body;
-    console.log(req.body);
+    console.log(type);
     let warehouse = await superAdminController.getWarehouse(name, type);
     if (warehouse) {
       res.status(200).json({ data: { warehouse } });
@@ -900,6 +900,7 @@ router.post("/bulkValidationTray", async (req, res, next) => {
 router.post("/createBulkTray", async (req, res, next) => {
   try {
     const { allCount } = req.body;
+    console.log(allCount);
     let data = await superAdminController.addbulkTray(req.body.item);
     if (data) {
       fs.readFile(
@@ -2096,6 +2097,25 @@ router.post("/vendorMaster/one/:vendorId", async (req, res, next) => {
     next(error);
   }
 });
+/*-------------------------------ADMIN FORCEFULL VALIDATION --------------------------------------*/
+// CHECK CURRENT TRAY STATUS 
+router.post("/tray/checkStatus",async(req,res,next)=>{
+  try {
+     const tray=await superAdminController.checkTrayStatus(req.body)
+     if(tray.status == 1){
+      res.status(200).json({
+        message:"Successfully Validated"
+      })
+     }
+     else{
+      res.status(202).json({
+        message:"Failed please check selected tray"
+      })
+     }
+  } catch (error) {
+    next(error)
+  }
+})
 
 /***********************************************EXTRA  SECTION*********************************************************** */
 

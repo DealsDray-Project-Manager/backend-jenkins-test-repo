@@ -161,7 +161,10 @@ module.exports = {
         ctxToStxSorting: 0,
         stxMerge: 0,
       };
-      count.orders = await orders.count({ partner_shop: location });
+      count.orders = await orders.count({
+        partner_shop: location,
+        order_status: "NEW",
+      });
       count.badOrders = await badOrders.count({ partner_shop: location });
       count.delivered = await orders.count({
         partner_shop: location,
@@ -169,6 +172,7 @@ module.exports = {
       });
       count.notDelivered = await orders.count({
         partner_shop: location,
+        order_status: "NEW",
         delivery_status: "Pending",
       });
       count.delivery = await delivery.count({
@@ -2595,7 +2599,7 @@ module.exports = {
               sort_id: "Sorting Request Sent To Warehouse",
               issued_user_name: botTrayData.agent_name,
               status_change_time: Date.now(),
-              "track_tray.mis_assign_to_sorting":Date.now()
+              "track_tray.mis_assign_to_sorting": Date.now(),
             },
           }
         );
@@ -2607,7 +2611,7 @@ module.exports = {
                 sort_id: "Sorting Request Sent To Warehouse",
                 issued_user_name: botTrayData.agent_name,
                 status_change_time: Date.now(),
-                "track_tray.mis_assign_to_sorting":Date.now()
+                "track_tray.mis_assign_to_sorting": Date.now(),
               },
             }
           );
@@ -3673,11 +3677,12 @@ module.exports = {
       }
     });
   },
-  getAuditDone: () => {
+  getAuditDone: (location) => {
     return new Promise(async (resolve, reject) => {
       let data = await masters.find({
         sort_id: "Ready to RDL",
         type_taxanomy: "WHT",
+        cpc: location,
       });
       if (data) {
         resolve(data);
@@ -3719,11 +3724,12 @@ module.exports = {
       }
     });
   },
-  getRdlDonetray: () => {
+  getRdlDonetray: (location) => {
     return new Promise(async (resolve, reject) => {
       let data = await masters.find({
         sort_id: "Ready to RDL-Repair",
         type_taxanomy: "WHT",
+        cpc: location,
       });
       if (data) {
         resolve(data);

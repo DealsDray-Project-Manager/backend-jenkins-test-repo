@@ -689,6 +689,7 @@ module.exports = {
               stockin_date: Date.now(),
               stock_in_status: data.status,
               updated_at: Date.now(),
+              old_item_details:data.old_item_details
             },
           }
         );
@@ -4527,7 +4528,7 @@ module.exports = {
               assigned_date: Date.now(),
               description: trayData.description,
               issued_user_name: trayData.username,
-              "track_tray.issue_to_audit_wh": Date,
+              "track_tray.issue_to_audit_wh": Date.now(),
               actual_items: [],
               temp_array: [],
             },

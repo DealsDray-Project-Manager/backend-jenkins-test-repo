@@ -249,7 +249,7 @@ module.exports = {
                       wht_tray: findTray.code,
                       tray_location: "Audit",
                       updated_at: Date.now(),
-                      tray_type: itemData.type,
+                      tray_type: "CT",
                       audit_report: obj,
                       updated_at: Date.now(),
                     },
@@ -306,7 +306,7 @@ module.exports = {
                   {
                     $set: {
                       ctx_tray_id: findTray.code,
-                      tray_type: itemData.type,
+                      tray_type: "CT",
                       tray_location: "Audit",
                       audit_report: obj,
                       updated_at: Date.now(),

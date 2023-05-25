@@ -3,6 +3,7 @@ const { masters } = require("../../Model/mastersModel");
 
 module.exports = {
   dashboardData: (location) => {
+    
     return new Promise(async (resolve, reject) => {
       let count = {
         rdl_two: 0,
