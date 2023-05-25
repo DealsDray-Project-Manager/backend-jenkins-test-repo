@@ -34,6 +34,9 @@ const vendorShcema = mongoose.Schema({
   created_at: {
     type: Date,
   },
+  pincode:{
+    type:String
+  },
   status: {
     type: String,
     default: "Active",
