@@ -975,8 +975,14 @@ module.exports = {
       let trayLimit = [];
       let category = [];
       let grade = [];
+      let dup = false;
 
       for (let i = 0; i < trayData.length; i++) {
+        let checkDupId = await masters.findOne({ code: trayData[i]?.tray_id });
+        if (checkDupId) {
+          dup = true;
+          break;
+        }
         let trayID = trayData[i]?.tray_id?.split(
           `${trayData[i]?.tray_category}`
         )[1];
@@ -992,7 +998,8 @@ module.exports = {
           trayData[i].tray_category !== "BOT" &&
           trayData[i].tray_category !== "PMT" &&
           trayData[i].tray_category !== "MMT" &&
-          trayData[i].tray_category !== "WHT"
+          trayData[i].tray_category !== "WHT" &&
+          trayData[i].tray_category !== "SP"
         ) {
           if (
             trayData[i].tray_category !== "CT" &&
@@ -1050,6 +1057,9 @@ module.exports = {
           tray_id.push(trayData[i].tray_id);
           err["tray_id"] = tray_id;
         } else if (trayID > 8151 && trayData[i].tray_category == "PMT") {
+          tray_id.push(trayData[i].tray_id);
+          err["tray_id"] = tray_id;
+        } else if (trayID > 19999 && trayData[i].tray_category == "SP") {
           tray_id.push(trayData[i].tray_id);
           err["tray_id"] = tray_id;
         } else {
@@ -1145,9 +1155,9 @@ module.exports = {
         }
       }
       if (Object.keys(err).length === 0) {
-        resolve({ status: true });
+        resolve({ status: true, dupId: dup });
       } else {
-        resolve({ status: false, data: err });
+        resolve({ status: false, data: err, dupId: dup });
       }
     });
   },
@@ -1228,10 +1238,10 @@ module.exports = {
       let exist = await masters.findOne({
         $or: [
           {
-            $and: [
-              { name: mastersData.name },
+            $or: [
+              { name: mastersData.name,prefix: mastersData.prefix },
               { code: mastersData.code },
-              { prefix: mastersData.prefix },
+              { prefix: mastersData.prefix,display:mastersData.display },
             ],
           },
         ],
@@ -2329,21 +2339,31 @@ module.exports = {
   viewColorOrPart: (type) => {
     console.log(type);
     return new Promise(async (resolve, reject) => {
-      const data = await partAndColor.find({ type: type });
+      const data = await partAndColor
+        .find({ type: type })
+        .sort({ name: 1 })
+        .collation({ locale: "en_US", numericOrdering: true });
       resolve(data);
     });
   },
   bulkValidationForPartCheck: (partData) => {
+    console.log(partData);
     return new Promise(async (resolve, reject) => {
       let err = {};
       let partName = [];
       let color = [];
       let technical_qc = [];
+      let dup = false;
       let i = 0;
       for (let x of partData) {
         if (x.technical_qc !== "Y" && x.technical_qc !== "N") {
           technical_qc.push(x.technical_qc);
           err["technical_qc"] = technical_qc;
+        }
+        let checkpartIdDup = await partAndColor.findOne({ part_code: x.code });
+        if (checkpartIdDup) {
+          dup = true;
+          break;
         }
         let checkName = await partAndColor.findOne({
           name: x.part_name,
@@ -2362,7 +2382,6 @@ module.exports = {
             err["duplicate_part_name"] = partName;
           }
         }
-        console.log(x.part_color);
         if (x.part_color !== undefined && x.part_color !== "") {
           let checkColor = await partAndColor.findOne({
             name: x.part_color,
@@ -2376,9 +2395,9 @@ module.exports = {
         i++;
       }
       if (Object.keys(err).length === 0) {
-        resolve({ status: true });
+        resolve({ status: true, dupId: dup });
       } else {
-        resolve({ status: false, err: err });
+        resolve({ status: false, err: err, dupId: dup });
       }
     });
   },
@@ -2967,18 +2986,23 @@ module.exports = {
       let str = "DP000000";
       for (let x of allPart) {
         let num = parseInt(str.substring(2)) + 1;
-
         let updatedStr = str.substring(0, 2) + num.toString().padStart(6, "0");
         str = updatedStr;
-
         const updateid = await partAndColor.updateOne(
           { type: "part-list", name: x.name },
           {
             $set: {
               part_code: str,
+              status: "Active",
+              created_by: "super-admin",
             },
           }
         );
+        let updateMuic=await products.updateMany({},{
+          $set:{
+            created_by:"super-admin"
+          }
+        })
       }
       resolve(str);
     });

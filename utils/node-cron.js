@@ -6,6 +6,7 @@ const formatXml = require("xml-formatter");
 const csvParser = require("csv-parser");
 const { delivery } = require("../Model/deliveryModel/delivery");
 const elasticSearch = require("../Elastic-search/elastic");
+const emailNotification=require("../Utils/email-notification")
 /***************************************** */
 
 exports = module.exports = () => {
@@ -53,7 +54,7 @@ exports = module.exports = () => {
     console.log(error);
   }
   try {
-    corn.schedule("34 11 * * *", () => {
+    corn.schedule("42 15 * * *", () => {
       /*----------------------------------------------CSV READ-----------------------------*/
       let result = [];
       fs.createReadStream("blancco_qc_data/blancco_qc_data.csv")
@@ -63,12 +64,9 @@ exports = module.exports = () => {
           result.push(toLowerKeys(data));
         })
         .on("end", async () => {
-          console.log(result[0]);
+        let check=emailNotification.blancoDataUpdateNotification()
           for (let x of result) {
-            // let checkAlreadyThere=await delivery.findOne({ "uic_code.code": x.uic,bqc_software_report:{$exists:true} })
-            // if(checkAlreadyThere){
-            //   console.log(x.uic);
-            // }
+          
             let updateBqcData = await delivery.updateOne(
               { "uic_code.code": x.uic },
               {

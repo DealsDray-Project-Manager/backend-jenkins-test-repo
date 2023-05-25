@@ -771,6 +771,11 @@ router.post("/trayIdGenrate", async (req, res, next) => {
               data: obj.WHT,
             });
           }
+          else if (type == "SP") {
+            res.status(200).json({
+              data: obj.SP,
+            });
+          }
           //  else if (type == "CTA") {
           //   res.status(200).json({
           //     data: obj.CTA,
@@ -883,11 +888,13 @@ router.post("/bulkValidationTray", async (req, res, next) => {
     let data = await superAdminController.bulkValidationTray(req.body);
     if (data.status == true) {
       res.status(200).json({
+        dupId:data.dup,
         message: "Successfully Validated",
       });
     } else {
       res.status(202).json({
         data: data.data,
+        dupId:data.dup,
         message: "Please Check Errors",
       });
     }
@@ -1048,7 +1055,11 @@ router.post("/createMasters", async (req, res, next) => {
                 obj.MMT = obj.MMT + 1;
               } else if (type_taxanomy == "WHT") {
                 obj.WHT = obj.WHT + 1;
-              } else {
+              } 
+              else if (type_taxanomy == "SP") {
+                obj.SP = obj.SP + 1;
+              } 
+              else {
                 obj[type_taxanomy + tray_grade] =
                   obj[type_taxanomy + tray_grade] + 1;
               }
@@ -1602,11 +1613,13 @@ router.post("/bulkvalidationForPart", async (req, res, next) => {
     console.log(data);
     if (data.status == true) {
       res.status(200).json({
+        dupId:data.dup,
         message: "Successfully Validated",
       });
     } else {
       res.status(202).json({
         data: data.err,
+        dupId:data.dup,
         message: "Please Check Errors",
       });
     }
@@ -1936,7 +1949,7 @@ router.post("/muicPage/partAdd", async (req, res, next) => {
     const bulkValidation = await superAdminController.muicPageAddPart(req.body);
     if (bulkValidation.status == true) {
       res.status(200).json({
-        message: "Successfully Validated",
+        message: "Successfully Added",
       });
     } else {
       res.status(202).json({
