@@ -151,6 +151,8 @@ const mastersSchema = mongoose.Schema({
     rdl_1_done_close_by_wh:Date,
     ctx_transfer_to_sales:Date,
     ctx_transfer_to_processing:Date,
+    ctx_issued_sorting:Date,
+    ctx_sorting_done:Date
   }
   
 

@@ -1556,9 +1556,9 @@ router.post("/partAndColor/create", async (req, res, next) => {
             if (err) {
             } else {
               obj = JSON.parse(datafile);
-              let num = parseInt(obj.PARTID.substring(2)) + 1;
+              let num = parseInt(obj.PARTID.substring(4)) + 1;
               let updatedStr =
-                obj.PARTID.substring(0, 2) + num.toString().padStart(6, "0");
+                obj.PARTID.substring(0, 4) + num.toString().padStart(6, "0");
               obj.PARTID = updatedStr;
               json = JSON.stringify(obj);
               fs.writeFile(

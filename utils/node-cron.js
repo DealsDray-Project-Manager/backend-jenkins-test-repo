@@ -54,7 +54,7 @@ exports = module.exports = () => {
     console.log(error);
   }
   try {
-    corn.schedule("42 15 * * *", () => {
+    corn.schedule("25 16 * * *", () => {
       /*----------------------------------------------CSV READ-----------------------------*/
       let result = [];
       fs.createReadStream("blancco_qc_data/blancco_qc_data.csv")
@@ -66,7 +66,6 @@ exports = module.exports = () => {
         .on("end", async () => {
         let check=emailNotification.blancoDataUpdateNotification()
           for (let x of result) {
-          
             let updateBqcData = await delivery.updateOne(
               { "uic_code.code": x.uic },
               {

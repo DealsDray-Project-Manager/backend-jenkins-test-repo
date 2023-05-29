@@ -3916,7 +3916,7 @@ module.exports = {
             $set: {
               assigned_date: Date.now(),
               sort_id: "Issued to Sorting for Ctx to Stx",
-              "track_tray.wh_issue_to_sorting": Date.now(),
+              "track_tray.ctx_issued_sorting": Date.now(),
             },
           }
         );
@@ -3927,7 +3927,7 @@ module.exports = {
               $set: {
                 assigned_date: Date.now(),
                 sort_id: "Issued to Sorting for Ctx to Stx",
-                "track_tray.wh_issue_to_sorting": Date.now(),
+                "track_tray.ctx_issued_sorting": Date.now(),
               },
             }
           );
@@ -5662,7 +5662,6 @@ module.exports = {
                 recommend_location: null,
                 actual_items: [],
                 temp_array: [],
-                "track_tray.ctx_transfer_to_processing":Date.now()
               },
             }
           );
@@ -5714,19 +5713,39 @@ module.exports = {
           resolve({ status: 0 });
         }
       } else {
-        let data = await masters.findOneAndUpdate(
-          { code: trayData.trayId },
-          {
-            $set: {
-              cpc: trayData.sales_location,
-              description: trayData.description,
-              sort_id: trayData.sortId,
-              recommend_location: null,
-              actual_items: [],
-              temp_array: [],
-            },
-          }
-        );
+        let data
+        if(trayData.sortId == "Transferred to Sales"){
+           data = await masters.findOneAndUpdate(
+            { code: trayData.trayId },
+            {
+              $set: {
+                cpc: trayData.sales_location,
+                description: trayData.description,
+                sort_id: trayData.sortId,
+                recommend_location: null,
+                actual_items: [],
+                "track_tray.ctx_transfer_to_sales":Date.now(),
+                temp_array: [],
+              },
+            }
+          );
+        }
+        else{
+          data = await masters.findOneAndUpdate(
+            { code: trayData.trayId },
+            {
+              $set: {
+                cpc: trayData.sales_location,
+                description: trayData.description,
+                sort_id: trayData.sortId,
+                recommend_location: null,
+                actual_items: [],
+                "track_tray.ctx_transfer_to_processing":Date.now(),
+                temp_array: [],
+              },
+            }
+          );
+        }
         if (data) {
           for (let x of data.items) {
             let updateTrack = await delivery.findOneAndUpdate(
@@ -5868,6 +5887,7 @@ module.exports = {
                 from_merge: null,
                 to_merge: null,
                 sort_id: "Ready to Pricing",
+                "track_tray.ctx_sorting_done":Date.now(),
                 description: trayData.description,
               },
             }
@@ -5888,6 +5908,7 @@ module.exports = {
                 from_merge: null,
                 to_merge: null,
                 sort_id: "Open",
+                "track_tray.ctx_sorting_done":Date.now(),
                 track_tray: {},
                 description: trayData.description,
               },
@@ -5909,6 +5930,7 @@ module.exports = {
                 from_merge: null,
                 to_merge: null,
                 sort_id: "Inuse",
+                "track_tray.ctx_sorting_done":Date.now(),
                 closed_time_wharehouse: Date.now(),
                 description: trayData.description,
               },
@@ -5931,6 +5953,7 @@ module.exports = {
                 temp_array: [],
                 from_merge: null,
                 to_merge: null,
+                "track_tray.ctx_sorting_done":Date.now(),
                 sort_id: "Ready to Transfer to Processing",
                 description: trayData.description,
               },
@@ -5951,6 +5974,7 @@ module.exports = {
                 temp_array: [],
                 from_merge: null,
                 to_merge: null,
+                "track_tray.ctx_sorting_done":Date.now(),
                 sort_id: "Ready to Transfer to STX",
                 description: trayData.description,
               },

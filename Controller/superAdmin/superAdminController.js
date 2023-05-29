@@ -1239,9 +1239,9 @@ module.exports = {
         $or: [
           {
             $or: [
-              { name: mastersData.name,prefix: mastersData.prefix },
+              { name: mastersData.name, prefix: mastersData.prefix },
               { code: mastersData.code },
-              { prefix: mastersData.prefix,display:mastersData.display },
+              { prefix: mastersData.prefix, display: mastersData.display },
             ],
           },
         ],
@@ -2339,11 +2339,17 @@ module.exports = {
   viewColorOrPart: (type) => {
     console.log(type);
     return new Promise(async (resolve, reject) => {
-      const data = await partAndColor
-        .find({ type: type })
-        .sort({ name: 1 })
-        .collation({ locale: "en_US", numericOrdering: true });
-      resolve(data);
+      if (type == "part-list") {
+        const data = await partAndColor.find({ type: type });
+
+        resolve(data);
+      } else {
+        const data = await partAndColor
+          .find({ type: type })
+          .sort({ name: 1 })
+          .collation({ locale: "en_US", numericOrdering: true });
+        resolve(data);
+      }
     });
   },
   bulkValidationForPartCheck: (partData) => {
@@ -2983,10 +2989,10 @@ module.exports = {
   extraPartidAdd: () => {
     return new Promise(async (resolve, reject) => {
       const allPart = await partAndColor.find({ type: "part-list" });
-      let str = "DP000000";
+      let str = "SPN.000000";
       for (let x of allPart) {
-        let num = parseInt(str.substring(2)) + 1;
-        let updatedStr = str.substring(0, 2) + num.toString().padStart(6, "0");
+        let num = parseInt(str.substring(4)) + 1;
+        let updatedStr = str.substring(0, 4) + num.toString().padStart(6, "0");
         str = updatedStr;
         const updateid = await partAndColor.updateOne(
           { type: "part-list", name: x.name },
@@ -2998,11 +3004,14 @@ module.exports = {
             },
           }
         );
-        let updateMuic=await products.updateMany({},{
-          $set:{
-            created_by:"super-admin"
+        let updateMuic = await products.updateMany(
+          {},
+          {
+            $set: {
+              created_by: "super-admin",
+            },
           }
-        })
+        );
       }
       resolve(str);
     });
