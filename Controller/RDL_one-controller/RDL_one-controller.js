@@ -2,6 +2,7 @@ const { orders } = require("../../Model/ordersModel/ordersModel");
 const { delivery } = require("../../Model/deliveryModel/delivery");
 const { masters } = require("../../Model/mastersModel");
 const Elasticsearch = require("../../Elastic-search/elastic");
+const {partAndColor}=require("../../Model/Part-list-and-color/part-list-and-color")
 
 module.exports = {
   getAssignedTray: (username) => {
@@ -131,6 +132,17 @@ module.exports = {
             resolve();
           }
         }
+      }
+    });
+  },
+  rdlFlsFetchPartList: (muic) => {
+    return new Promise(async (resolve, reject) => {
+      const partList = await partAndColor.find({ "muic_association.muic": muic, status: "Active" })
+        .catch((err) => {
+          reject(err);
+        });
+      if (partList) {
+        resolve(partList);
       }
     });
   },
