@@ -144,7 +144,7 @@ module.exports = {
               });
               let muicFind=await products.findOne({vendor_sku_id:uicExists.item_id})
               let otherAudFeedBackData=await audtiorFeedback.findOne({uic:uicExists.uic_code.code})
-              console.log(otherAudFeedBackData);
+            
               obj.delivery = uicExists;
               obj.order = getOrder;
               obj.checkIntray = checkIntray;

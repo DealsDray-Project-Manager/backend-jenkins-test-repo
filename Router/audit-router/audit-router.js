@@ -131,7 +131,13 @@ router.post("/traySegrigation", async (req, res, next) => {
         res.status(200).json({
           message: `UIC is accepted with no Grade Change. Please put it in Tray ${data.trayId}`,
         });
-      } else if (stage == "Upgrade") {
+      }
+      else if (stage == "Direct Downgrade" || stage == "Direct Upgrade") {
+        res.status(200).json({
+          message: `UIC is ${stage} with Grade Change. Please put it in Tray ${data.trayId}`,
+        });
+      }
+       else if (stage == "Upgrade") {
         res.status(200).json({
           message: `UIC Planned for an Upgrade, leave it in the WHT Tray`,
         });

@@ -91,5 +91,21 @@ router.post("/rdl-fls/closeRdlFlsWhtTray", async (req, res, next) => {
     next(error);
   }
 });
+
+/*----------------------------------------FETCH MUIC BASED PART LIST FROM MASTER -------------------------------*/
+// PART LIST FETCH
+router.post("/rdl-fls/fetchPart/:muic", async (req, res, next) => {
+  try {
+    const { muic } = req.params;
+    let data = await RDL_0neController.rdlFlsFetchPartList(muic);
+    if (data) {
+      res.status(200).json({
+        data: data,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
 /************************************************************************************************************** */
 module.exports = router;

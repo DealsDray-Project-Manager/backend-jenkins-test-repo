@@ -6,7 +6,8 @@ const formatXml = require("xml-formatter");
 const csvParser = require("csv-parser");
 const { delivery } = require("../Model/deliveryModel/delivery");
 const elasticSearch = require("../Elastic-search/elastic");
-const emailNotification=require("../Utils/email-notification")
+const emailNotification = require("../Utils/email-notification");
+const { products } = require("../Model/productModel/product");
 /***************************************** */
 
 exports = module.exports = () => {
@@ -54,9 +55,11 @@ exports = module.exports = () => {
     console.log(error);
   }
   try {
-    corn.schedule("42 15 * * *", () => {
+    corn.schedule("50 17 * * *", () => {
       /*----------------------------------------------CSV READ-----------------------------*/
       let result = [];
+      let updatedMuic = [];
+      let arrofTray = [];
       fs.createReadStream("blancco_qc_data/blancco_qc_data.csv")
         .pipe(csvParser())
         .on("data", (data) => {
@@ -64,10 +67,8 @@ exports = module.exports = () => {
           result.push(toLowerKeys(data));
         })
         .on("end", async () => {
-        let check=emailNotification.blancoDataUpdateNotification()
           for (let x of result) {
-          
-            let updateBqcData = await delivery.updateOne(
+            let updateBqcData = await delivery.findOneAndUpdate(
               { "uic_code.code": x.uic },
               {
                 $set: {
@@ -75,7 +76,36 @@ exports = module.exports = () => {
                 },
               }
             );
+            // if(x.tray_id !== updateBqcData?.wht_tray){
+            //   console.log(x.uic);
+            // }
+
+            if (updateBqcData) {
+              let obj = {
+                updatedUic: x.uic,
+                tray: x.tray_id,
+                brand: "",
+                model: "",
+              };
+              if (arrofTray.includes(x.tray_id) == false) {
+                arrofTray.push(x.tray_id);
+              }
+
+              let findBrandAndModel = await products.findOne({
+                vendor_sku_id: updateBqcData.item_id,
+              });
+              if (findBrandAndModel) {
+                obj.brand = findBrandAndModel.brand_name;
+                obj.model = findBrandAndModel.model_name;
+              }
+              updatedMuic.push(obj);
+            }
           }
+          console.log(updatedMuic);
+          let check = emailNotification.blancoDataUpdateNotification(
+            updatedMuic,
+            arrofTray
+          );
           console.log("BQC report updated");
         });
       /*---------------------------------FOR OBJECT KEY CONVERT TO LOWER KEY ------------------*/

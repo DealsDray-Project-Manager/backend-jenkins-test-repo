@@ -771,9 +771,14 @@ router.post("/trayIdGenrate", async (req, res, next) => {
               data: obj.WHT,
             });
           }
-          else if (type == "SP") {
+          else if (type == "SPT") {
             res.status(200).json({
-              data: obj.SP,
+              data: obj.SPT,
+            });
+          }
+          else if (type == "RPT") {
+            res.status(200).json({
+              data: obj.RPT,
             });
           }
           //  else if (type == "CTA") {
@@ -1056,8 +1061,11 @@ router.post("/createMasters", async (req, res, next) => {
               } else if (type_taxanomy == "WHT") {
                 obj.WHT = obj.WHT + 1;
               } 
-              else if (type_taxanomy == "SP") {
-                obj.SP = obj.SP + 1;
+              else if (type_taxanomy == "SPT") {
+                obj.SPT = obj.SPT + 1;
+              }
+              else if (type_taxanomy == "RPT") {
+                obj.RPT = obj.RPT + 1;
               } 
               else {
                 obj[type_taxanomy + tray_grade] =
@@ -1556,9 +1564,9 @@ router.post("/partAndColor/create", async (req, res, next) => {
             if (err) {
             } else {
               obj = JSON.parse(datafile);
-              let num = parseInt(obj.PARTID.substring(2)) + 1;
+              let num = parseInt(obj.PARTID.substring(3)) + 1;
               let updatedStr =
-                obj.PARTID.substring(0, 2) + num.toString().padStart(6, "0");
+                obj.PARTID.substring(0, 3) + num.toString().padStart(6, "0");
               obj.PARTID = updatedStr;
               json = JSON.stringify(obj);
               fs.writeFile(
@@ -1639,9 +1647,9 @@ router.post("/bulkAddPart", async (req, res, next) => {
           if (err) {
           } else {
             obj = JSON.parse(datafile);
-            let num = parseInt(obj.PARTID.substring(2)) + req.body.length;
+            let num = parseInt(obj.PARTID.substring(3)) + req.body.length;
             let updatedStr =
-              obj.PARTID.substring(0, 2) + num.toString().padStart(6, "0");
+              obj.PARTID.substring(0, 3) + num.toString().padStart(6, "0");
             obj.PARTID = updatedStr;
             json = JSON.stringify(obj);
             fs.writeFile(

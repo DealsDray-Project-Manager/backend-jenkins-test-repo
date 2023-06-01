@@ -20,8 +20,8 @@ const {
 const moment = require("moment");
 const elasticsearch = require("../../Elastic-search/elastic");
 
-const IISDOMAIN = "https://prexo-v8-3-uat-api.dealsdray.com/user/profile/";
-const IISDOMAINPRDT = "https://prexo-v8-3-uat-api.dealsdray.com/product/image/";
+const IISDOMAIN = "https://prexo-v8-3-dev-api.dealsdray.com/user/profile/";
+const IISDOMAINPRDT = "https://prexo-v8-3-dev-api.dealsdray.com/product/image/";
 
 /************************************************************************************************** */
 
@@ -81,7 +81,7 @@ module.exports = {
       count.readyForTransferSales = await masters.count({
         prefix: "tray-master",
         sort_id: "Audit Done Closed By Warehouse",
-        type_taxanomy: { $nin: ["BOT", "PMT", "MMT", "WHT", "ST"] },
+        type_taxanomy: { $nin: ["BOT", "PMT", "MMT", "WHT", "ST","SPT","RPT"] },
       });
       count.readyForRdl = await masters.count({
         sort_id: "Audit Done Closed By Warehouse",
@@ -229,7 +229,7 @@ module.exports = {
               },
               {
                 parent_id: code,
-                warehouse_type: "PRC RMW",
+                warehouse_type: "Spare Part Warehouse",
                 type_taxanomy: "Warehouse",
               },
             ],
@@ -764,11 +764,11 @@ module.exports = {
       } else {
         if (
           locationData.type_taxanomy == "Warehouse" &&
-          locationData.warehouse_type == "PRC RMW"
+          locationData.warehouse_type == "Spare Part Warehouse"
         ) {
           let checkExists = await infra.findOne({
             parent_id: locationData.parent_id,
-            warehouse_type: "PRC RMW",
+            warehouse_type: "Spare Part Warehouse",
           });
           console.log(checkExists);
           if (checkExists) {
@@ -999,7 +999,9 @@ module.exports = {
           trayData[i].tray_category !== "PMT" &&
           trayData[i].tray_category !== "MMT" &&
           trayData[i].tray_category !== "WHT" &&
-          trayData[i].tray_category !== "SP"
+          trayData[i].tray_category !== "SPT" &&
+          trayData[i].tray_category !== "RPT"
+
         ) {
           if (
             trayData[i].tray_category !== "CT" &&
@@ -1059,7 +1061,11 @@ module.exports = {
         } else if (trayID > 8151 && trayData[i].tray_category == "PMT") {
           tray_id.push(trayData[i].tray_id);
           err["tray_id"] = tray_id;
-        } else if (trayID > 19999 && trayData[i].tray_category == "SP") {
+        } else if (trayID > 19999 && trayData[i].tray_category == "SPT") {
+          tray_id.push(trayData[i].tray_id);
+          err["tray_id"] = tray_id;
+        }
+        else if (trayID > 19999 && trayData[i].tray_category == "RPT") {
           tray_id.push(trayData[i].tray_id);
           err["tray_id"] = tray_id;
         } else {
@@ -1126,10 +1132,10 @@ module.exports = {
           }
         }
         if (
-          trayData[i].tray_category !== "BOT" ||
-          trayData[i].tray_category !== "PMT" ||
-          trayData[i].tray_category !== "PMT" ||
-          trayData[i].tray_category !== "WHT"
+          trayData[i].tray_category !== "BOT" &&
+          trayData[i].tray_category !== "PMT" &&
+          trayData[i].tray_category !== "MMT" &&
+          trayData[i].tray_category !== "SPT"
         ) {
           let brandModel = await brands.findOne({
             brand_name: {
@@ -1239,9 +1245,9 @@ module.exports = {
         $or: [
           {
             $or: [
-              { name: mastersData.name,prefix: mastersData.prefix },
+              { name: mastersData.name, prefix: mastersData.prefix },
               { code: mastersData.code },
-              { prefix: mastersData.prefix,display:mastersData.display },
+              { prefix: mastersData.prefix, display: mastersData.display },
             ],
           },
         ],
@@ -1827,7 +1833,7 @@ module.exports = {
       let data = await masters.find({
         prefix: "tray-master",
         sort_id: "Audit Done Closed By Warehouse",
-        type_taxanomy: { $nin: ["BOT", "PMT", "MMT", "WHT", "ST"] },
+        type_taxanomy: { $nin: ["BOT", "PMT", "MMT", "WHT", "ST","SPT","RPT"] },
       });
       resolve(data);
     });
@@ -1883,7 +1889,7 @@ module.exports = {
   addGrade: () => {
     return new Promise(async (resolve, reject) => {
       let ctxOld = await masters.find({
-        type_taxanomy: { $nin: ["BOT", "PMT", "MMT", "WHT", "ST", "CT"] },
+        type_taxanomy: { $nin: ["BOT", "PMT", "MMT", "WHT", "ST", "CT","SPT","RPT"] },
         prefix: "tray-master",
       });
       for (let x of ctxOld) {
@@ -1937,7 +1943,7 @@ module.exports = {
     return new Promise(async (resolve, reject) => {
       let Allwht = await masters.find({
         prefix: "tray-master",
-        type_taxanomy: { $nin: ["BOT", "PMT", "MMT", "WHT", "ST"] },
+        type_taxanomy: { $nin: ["BOT", "PMT", "MMT", "WHT", "ST","SPT","RPT"] },
       });
       for (let x of Allwht) {
         if (x.items.length != 0) {
@@ -2319,8 +2325,21 @@ module.exports = {
   createPartOrColor: (dataOfPartOrColor) => {
     return new Promise(async (resolve, reject) => {
       let checkDup = await partAndColor.findOne({
-        name: dataOfPartOrColor.name,
-        type: dataOfPartOrColor.type,
+        $or: [
+          {
+            name: dataOfPartOrColor.name,
+            type: "color-list",
+          },
+          {
+            name: dataOfPartOrColor.name,
+            type: "part-list",
+            color: dataOfPartOrColor.color,
+          },
+          {
+            part_code: dataOfPartOrColor.part_code,
+          },
+        ],
+
         // muic: dataOfPartOrColor.muic,
       });
       if (checkDup) {
@@ -2339,15 +2358,20 @@ module.exports = {
   viewColorOrPart: (type) => {
     console.log(type);
     return new Promise(async (resolve, reject) => {
-      const data = await partAndColor
-        .find({ type: type })
-        .sort({ name: 1 })
-        .collation({ locale: "en_US", numericOrdering: true });
-      resolve(data);
+      if (type == "part-list") {
+        const data = await partAndColor.find({ type: type });
+
+        resolve(data);
+      } else {
+        const data = await partAndColor
+          .find({ type: type })
+          .sort({ name: 1 })
+          .collation({ locale: "en_US", numericOrdering: true });
+        resolve(data);
+      }
     });
   },
   bulkValidationForPartCheck: (partData) => {
-    console.log(partData);
     return new Promise(async (resolve, reject) => {
       let err = {};
       let partName = [];
@@ -2355,6 +2379,8 @@ module.exports = {
       let technical_qc = [];
       let dup = false;
       let i = 0;
+      const duplicates = [];
+
       for (let x of partData) {
         if (x.technical_qc !== "Y" && x.technical_qc !== "N") {
           technical_qc.push(x.technical_qc);
@@ -2365,28 +2391,35 @@ module.exports = {
           dup = true;
           break;
         }
-        let checkName = await partAndColor.findOne({
-          name: x.part_name,
-          type: "part-list",
-        });
-        if (checkName) {
-          partName.push(x.part_name);
-          err["duplicate_part_name"] = partName;
-        } else {
-          if (
-            partData.some(
-              (data, index) => data.part_name == x.part_name && index != i
-            )
-          ) {
-            partName.push(x.part_name);
+        if (x.part_color != "-") {
+          let checkName = await partAndColor.findOne({
+            name: x.part_name,
+            type: "part-list",
+            color: x.part_color,
+          });
+          if (checkName) {
+            partName.push(x.code);
             err["duplicate_part_name"] = partName;
           }
+           else {
+            if (
+              partData.some(
+                (data, index) =>
+                  data.part_name == x.part_name && data.part_color == x.part_color && index != i
+              )
+            ) {
+              partName.push(x.code);
+              err["duplicate_part_name"] = x.code;
+            }
+          }
         }
+
         if (x.part_color !== undefined && x.part_color !== "") {
           let checkColor = await partAndColor.findOne({
             name: x.part_color,
             type: "color-list",
           });
+
           if (checkColor == null) {
             color.push(x.part_color);
             err["duplicate_color"] = color;
@@ -2411,6 +2444,7 @@ module.exports = {
           description: description,
           code: part_code,
           created_by: created_by,
+          created_at: created_at,
           ...rest
         }) => ({
           name,
@@ -2419,6 +2453,7 @@ module.exports = {
           technical_qc,
           description,
           created_by,
+          created_at,
           ...rest,
         })
       );
@@ -2884,10 +2919,9 @@ module.exports = {
           }
         }
 
-        let number = parseFloat(x.update_stock);
-        console.log(x.update_stock);
+        let number = parseFloat(x.add_stock);
         if (number < 0 || isNaN(number)) {
-          updateStock.push(x.update_stock);
+          updateStock.push(x.add_stock);
           err["update_stock_check"] = updateStock;
         }
         i++;
@@ -2907,7 +2941,7 @@ module.exports = {
           { part_code: x.part_code },
           {
             $inc: {
-              avl_stock: parseInt(x.update_stock),
+              avl_stock: parseInt(x.add_stock),
             },
           }
         );
@@ -2983,10 +3017,10 @@ module.exports = {
   extraPartidAdd: () => {
     return new Promise(async (resolve, reject) => {
       const allPart = await partAndColor.find({ type: "part-list" });
-      let str = "DP000000";
+      let str = "SPN000000";
       for (let x of allPart) {
-        let num = parseInt(str.substring(2)) + 1;
-        let updatedStr = str.substring(0, 2) + num.toString().padStart(6, "0");
+        let num = parseInt(str.substring(3)) + 1;
+        let updatedStr = str.substring(0, 3) + num.toString().padStart(6, "0");
         str = updatedStr;
         const updateid = await partAndColor.updateOne(
           { type: "part-list", name: x.name },
@@ -2998,11 +3032,14 @@ module.exports = {
             },
           }
         );
-        let updateMuic=await products.updateMany({},{
-          $set:{
-            created_by:"super-admin"
+        let updateMuic = await products.updateMany(
+          {},
+          {
+            $set: {
+              created_by: "super-admin",
+            },
           }
-        })
+        );
       }
       resolve(str);
     });
