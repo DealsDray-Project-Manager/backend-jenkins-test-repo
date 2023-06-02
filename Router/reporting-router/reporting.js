@@ -81,12 +81,9 @@ router.post("/tray/:sortId/:trayType/:location", async (req, res, next) => {
 router.post("/getDelivery/:location/:page/:size", async (req, res, next) => {
   try {
     let { location, page, size } = req.params;
-
     page++;
-
     const limit = parseInt(size);
     const skip = (page - 1) * size;
-
     let data = await reportingAgentRouter.getDeliveryForReport(
       location,
       limit,
@@ -108,7 +105,6 @@ router.post("/delivered/item/filter", async (req, res, next) => {
     let { brand, model, location, fromDate, toDate, page, size, totalCount } =
       req.body;
     page++;
-
     const limit = parseInt(size);
     const skip = (page - 1) * size;
     const filterData = await reportingAgentRouter.deliveredItemFilter(

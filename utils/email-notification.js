@@ -16,7 +16,6 @@ const transporter = nodemailer.createTransport({
 module.exports = {
   blancoDataUpdateNotification: (values, trayDetails) => {
     try {
-      console.log(values);
       let tableRows = "";
       for (const value of values) {
         tableRows += `
@@ -64,7 +63,7 @@ module.exports = {
 
       const mailOptions = {
         from: "prexo-no-reply@dealsdray.com",
-        to: "raghavendra.naik@dealsdray.com",
+        to: "projects@dealsdray.com",
         subject: `[${new Date(Date.now()).toLocaleString("en-GB", {
           year: "numeric",
           month: "2-digit",
@@ -85,4 +84,3 @@ module.exports = {
     }
   },
 };
- 

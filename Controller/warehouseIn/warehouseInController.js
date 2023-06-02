@@ -140,13 +140,13 @@ module.exports = {
         cpc: location,
         sort_id: "Ctx to Stx Send for Sorting",
         to_merge: { $ne: null },
-        type_taxanomy: { $nin: ["BOT", "PMT", "MMT", "WHT","SPT","RPT"] },
+        type_taxanomy: { $nin: ["BOT", "PMT", "MMT", "WHT", "SPT", "RPT"] },
       });
       count.ctxReceiveRequest = await masters.count({
         $or: [
           {
             prefix: "tray-master",
-            type_taxanomy: { $nin: ["BOT", "PMT", "MMT", "WHT","SPT","RPT"] },
+            type_taxanomy: { $nin: ["BOT", "PMT", "MMT", "WHT", "SPT", "RPT"] },
             sort_id: "Accepted From Processing",
             cpc: location,
           },
@@ -154,26 +154,28 @@ module.exports = {
             prefix: "tray-master",
             cpc: location,
             sort_id: "Accepted From Sales",
-            type_taxanomy: { $nin: ["BOT", "PMT", "MMT", "WHT","SPT","RPT"] },
+            type_taxanomy: { $nin: ["BOT", "PMT", "MMT", "WHT", "SPT", "RPT"] },
           },
           {
             prefix: "tray-master",
             cpc: location,
             sort_id: "Received From Processing",
-            type_taxanomy: { $nin: ["BOT", "PMT", "MMT", "WHT","SPT","RPT"] },
+            type_taxanomy: { $nin: ["BOT", "PMT", "MMT", "WHT", "SPT", "RPT"] },
           },
           {
             prefix: "tray-master",
             cpc: location,
             sort_id: "Received From Sales",
-            type_taxanomy: { $nin: ["BOT", "PMT", "MMT", "WHT","SPT","RPT"] },
+            type_taxanomy: { $nin: ["BOT", "PMT", "MMT", "WHT", "SPT", "RPT"] },
           },
         ],
       });
       count.ctxTransferRequest = await masters.count({
         prefix: "tray-master",
         sort_id: "Transfer Request sent to Warehouse",
-        type_taxanomy: { $nin: ["BOT", "PMT", "MMT", "WHT", "ST","SPT","RPT"] },
+        type_taxanomy: {
+          $nin: ["BOT", "PMT", "MMT", "WHT", "ST", "SPT", "RPT"],
+        },
         cpc: location,
       });
       count.pickupRequest = await masters.count({
@@ -283,7 +285,9 @@ module.exports = {
       count.allCtxTray = await masters.count({
         prefix: "tray-master",
         cpc: location,
-        type_taxanomy: { $nin: ["BOT", "PMT", "MMT", "WHT", "ST","SPT","RPT"] },
+        type_taxanomy: {
+          $nin: ["BOT", "PMT", "MMT", "WHT", "ST", "SPT", "RPT"],
+        },
       });
       count.allStxtray = await masters.count({
         prefix: "tray-master",
@@ -689,7 +693,7 @@ module.exports = {
               stockin_date: Date.now(),
               stock_in_status: data.status,
               updated_at: Date.now(),
-              old_item_details:data.old_item_details
+              old_item_details: data.old_item_details,
             },
           }
         );
@@ -4907,7 +4911,9 @@ module.exports = {
         let tray = await masters.find({
           prefix: "tray-master",
           cpc: location,
-          type_taxanomy: { $nin: ["BOT", "PMT", "MMT", "WHT", "ST","SPT","RPT"] },
+          type_taxanomy: {
+            $nin: ["BOT", "PMT", "MMT", "WHT", "ST", "SPT", "RPT"],
+          },
         });
         if (tray) {
           reslove({ status: 1, tray: tray });
@@ -4919,7 +4925,9 @@ module.exports = {
               prefix: "tray-master",
               cpc: location,
               sort_id: "Audit Done Closed By Warehouse",
-              type_taxanomy: { $nin: ["BOT", "PMT", "MMT", "WHT", "ST","SPT","RPT"] },
+              type_taxanomy: {
+                $nin: ["BOT", "PMT", "MMT", "WHT", "ST", "SPT", "RPT"],
+              },
             },
           ],
         });
@@ -4932,7 +4940,7 @@ module.exports = {
           cpc: location,
           sort_id: type,
           to_merge: { $ne: null },
-          type_taxanomy: { $nin: ["BOT", "PMT", "MMT", "WHT","SPT","RPT"] },
+          type_taxanomy: { $nin: ["BOT", "PMT", "MMT", "WHT", "SPT", "RPT"] },
         });
         if (tray) {
           reslove({ status: 1, tray: tray });
@@ -4945,14 +4953,18 @@ module.exports = {
               cpc: location,
               sort_id: "Transferred to Sales",
 
-              type_taxanomy: { $nin: ["BOT", "PMT", "MMT", "WHT","SPT","RPT"] },
+              type_taxanomy: {
+                $nin: ["BOT", "PMT", "MMT", "WHT", "SPT", "RPT"],
+              },
             },
             {
               prefix: "tray-master",
               cpc: location,
               sort_id: "Transferred to Processing",
 
-              type_taxanomy: { $nin: ["BOT", "PMT", "MMT", "WHT","SPT","RPT"] },
+              type_taxanomy: {
+                $nin: ["BOT", "PMT", "MMT", "WHT", "SPT", "RPT"],
+              },
             },
           ],
         });
@@ -4966,13 +4978,17 @@ module.exports = {
               prefix: "tray-master",
               cpc: location,
               sort_id: "Ready to Transfer to Sales",
-              type_taxanomy: { $nin: ["BOT", "PMT", "MMT", "WHT","SPT","RPT"] },
+              type_taxanomy: {
+                $nin: ["BOT", "PMT", "MMT", "WHT", "SPT", "RPT"],
+              },
             },
             {
               prefix: "tray-master",
               cpc: location,
               sort_id: "Ready to Transfer to Processing",
-              type_taxanomy: { $nin: ["BOT", "PMT", "MMT", "WHT","SPT","RPT"] },
+              type_taxanomy: {
+                $nin: ["BOT", "PMT", "MMT", "WHT", "SPT", "RPT"],
+              },
             },
           ],
         });
@@ -4984,7 +5000,9 @@ module.exports = {
           $or: [
             {
               prefix: "tray-master",
-              type_taxanomy: { $nin: ["BOT", "PMT", "MMT", "WHT","SPT","RPT"] },
+              type_taxanomy: {
+                $nin: ["BOT", "PMT", "MMT", "WHT", "SPT", "RPT"],
+              },
               sort_id: "Accepted From Processing",
               cpc: location,
             },
@@ -4992,19 +5010,25 @@ module.exports = {
               prefix: "tray-master",
               cpc: location,
               sort_id: "Accepted From Sales",
-              type_taxanomy: { $nin: ["BOT", "PMT", "MMT", "WHT","SPT","RPT"] },
+              type_taxanomy: {
+                $nin: ["BOT", "PMT", "MMT", "WHT", "SPT", "RPT"],
+              },
             },
             {
               prefix: "tray-master",
               cpc: location,
               sort_id: "Received From Processing",
-              type_taxanomy: { $nin: ["BOT", "PMT", "MMT", "WHT","SPT","RPT"] },
+              type_taxanomy: {
+                $nin: ["BOT", "PMT", "MMT", "WHT", "SPT", "RPT"],
+              },
             },
             {
               prefix: "tray-master",
               cpc: location,
               sort_id: "Received From Sales",
-              type_taxanomy: { $nin: ["BOT", "PMT", "MMT", "WHT","SPT","RPT"] },
+              type_taxanomy: {
+                $nin: ["BOT", "PMT", "MMT", "WHT", "SPT", "RPT"],
+              },
             },
           ],
         });
@@ -5016,7 +5040,7 @@ module.exports = {
           prefix: "tray-master",
           cpc: location,
           sort_id: type,
-          type_taxanomy: { $nin: ["BOT", "PMT", "MMT", "WHT","SPT","RPT"] },
+          type_taxanomy: { $nin: ["BOT", "PMT", "MMT", "WHT", "SPT", "RPT"] },
         });
         if (tray) {
           reslove({ status: 1, tray: tray });
@@ -5260,8 +5284,7 @@ module.exports = {
               },
             }
           );
-        }
-        else if (trayData.stage == "Inuse") {
+        } else if (trayData.stage == "Inuse") {
           status = "Inuse";
           data = await masters.findOneAndUpdate(
             { code: trayData.trayId },
@@ -5276,8 +5299,7 @@ module.exports = {
               },
             }
           );
-        }
-         else if (trayData.stage == "Ready to RDL-Repair") {
+        } else if (trayData.stage == "Ready to RDL-Repair") {
           status = "Ready to RDL-Repair";
           data = await masters.findOneAndUpdate(
             { code: trayData.trayId },
@@ -5639,7 +5661,7 @@ module.exports = {
                 recommend_location: null,
                 actual_items: [],
                 temp_array: [],
-                "track_tray.ctx_transfer_to_sales":Date.now()
+                "track_tray.ctx_transfer_to_sales": Date.now(),
               },
             }
           );
@@ -5711,24 +5733,8 @@ module.exports = {
           resolve({ status: 0 });
         }
       } else {
-        let data
-        if(trayData.sortId == "Transferred to Sales"){
-           data = await masters.findOneAndUpdate(
-            { code: trayData.trayId },
-            {
-              $set: {
-                cpc: trayData.sales_location,
-                description: trayData.description,
-                sort_id: trayData.sortId,
-                recommend_location: null,
-                actual_items: [],
-                "track_tray.ctx_transfer_to_sales":Date.now(),
-                temp_array: [],
-              },
-            }
-          );
-        }
-        else{
+        let data;
+        if (trayData.sortId == "Transferred to Sales") {
           data = await masters.findOneAndUpdate(
             { code: trayData.trayId },
             {
@@ -5738,7 +5744,22 @@ module.exports = {
                 sort_id: trayData.sortId,
                 recommend_location: null,
                 actual_items: [],
-                "track_tray.ctx_transfer_to_processing":Date.now(),
+                "track_tray.ctx_transfer_to_sales": Date.now(),
+                temp_array: [],
+              },
+            }
+          );
+        } else {
+          data = await masters.findOneAndUpdate(
+            { code: trayData.trayId },
+            {
+              $set: {
+                cpc: trayData.sales_location,
+                description: trayData.description,
+                sort_id: trayData.sortId,
+                recommend_location: null,
+                actual_items: [],
+                "track_tray.ctx_transfer_to_processing": Date.now(),
                 temp_array: [],
               },
             }
@@ -5885,7 +5906,7 @@ module.exports = {
                 from_merge: null,
                 to_merge: null,
                 sort_id: "Ready to Pricing",
-                "track_tray.ctx_sorting_done":Date.now(),
+                "track_tray.ctx_sorting_done": Date.now(),
                 description: trayData.description,
               },
             }
@@ -5906,7 +5927,7 @@ module.exports = {
                 from_merge: null,
                 to_merge: null,
                 sort_id: "Open",
-                "track_tray.ctx_sorting_done":Date.now(),
+                "track_tray.ctx_sorting_done": Date.now(),
                 track_tray: {},
                 description: trayData.description,
               },
@@ -5928,7 +5949,7 @@ module.exports = {
                 from_merge: null,
                 to_merge: null,
                 sort_id: "Inuse",
-                "track_tray.ctx_sorting_done":Date.now(),
+                "track_tray.ctx_sorting_done": Date.now(),
                 closed_time_wharehouse: Date.now(),
                 description: trayData.description,
               },
@@ -5951,7 +5972,7 @@ module.exports = {
                 temp_array: [],
                 from_merge: null,
                 to_merge: null,
-                "track_tray.ctx_sorting_done":Date.now(),
+                "track_tray.ctx_sorting_done": Date.now(),
                 sort_id: "Ready to Transfer to Processing",
                 description: trayData.description,
               },
@@ -5972,7 +5993,7 @@ module.exports = {
                 temp_array: [],
                 from_merge: null,
                 to_merge: null,
-                "track_tray.ctx_sorting_done":Date.now(),
+                "track_tray.ctx_sorting_done": Date.now(),
                 sort_id: "Ready to Transfer to STX",
                 description: trayData.description,
               },
@@ -6053,7 +6074,6 @@ module.exports = {
     });
   },
   itemMoviedToBillBin: (uic, trayId, username) => {
-    console.log(username);
     return new Promise(async (resolve, reject) => {
       let data = await masters.findOneAndUpdate(
         {

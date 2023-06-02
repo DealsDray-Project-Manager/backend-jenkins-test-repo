@@ -3730,7 +3730,7 @@ module.exports = {
         sort_id: "Ready to RDL-Repair",
         type_taxanomy: "WHT",
         cpc: location,
-      });
+      })
       if (data) {
         resolve(data);
       }

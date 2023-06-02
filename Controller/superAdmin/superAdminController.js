@@ -20,8 +20,8 @@ const {
 const moment = require("moment");
 const elasticsearch = require("../../Elastic-search/elastic");
 
-const IISDOMAIN = "https://prexo-v8-3-dev-api.dealsdray.com/user/profile/";
-const IISDOMAINPRDT = "https://prexo-v8-3-dev-api.dealsdray.com/product/image/";
+const IISDOMAIN = "https://prexo-v8-3-adminapi.dealsdray.com/user/profile/";
+const IISDOMAINPRDT = "https://prexo-v8-3-adminapi.dealsdray.com/product/image/";
 
 /************************************************************************************************** */
 
@@ -215,7 +215,6 @@ module.exports = {
   /*--------------------------------FIND WAREHOUSE-----------------------------------*/
 
   getWarehouse: (code, type) => {
-    console.log(code);
     return new Promise(async (resolve, reject) => {
       if (type !== undefined) {
         let warehouse;
@@ -241,8 +240,6 @@ module.exports = {
             type_taxanomy: "Warehouse",
           });
         }
-
-        console.log(warehouse);
         resolve(warehouse);
       } else {
         let warehouse = await infra.find({
@@ -770,7 +767,6 @@ module.exports = {
             parent_id: locationData.parent_id,
             warehouse_type: "Spare Part Warehouse",
           });
-          console.log(checkExists);
           if (checkExists) {
             resolve({ status: 1 });
           } else {
@@ -2356,7 +2352,6 @@ module.exports = {
     });
   },
   viewColorOrPart: (type) => {
-    console.log(type);
     return new Promise(async (resolve, reject) => {
       if (type == "part-list") {
         const data = await partAndColor.find({ type: type });
@@ -2457,7 +2452,6 @@ module.exports = {
           ...rest,
         })
       );
-      console.log(newArrayOfObj);
       let data = await partAndColor.create(newArrayOfObj);
       if (data) {
         resolve({ status: true });
@@ -2565,7 +2559,6 @@ module.exports = {
         .find({}, { _id: 0 })
         .sort({ updated_at: -1 })
         .limit(500);
-      console.log(lastUpdateData[0]);
       for (let x of lastUpdateData) {
         let update = await elasticsearch.uicCodeGen(x);
       }
@@ -2639,7 +2632,6 @@ module.exports = {
     });
   },
   muicPageAddPartAssosiation: (validationData) => {
-    console.log(validationData);
     return new Promise(async (resolve, reject) => {
       let arr = [];
       let DupFindObj = {};
@@ -2723,7 +2715,6 @@ module.exports = {
     });
   },
   muicPageAddPart: (dataofPart) => {
-    console.log(dataofPart);
     return new Promise(async (resolve, reject) => {
       let updateAssosiation;
       for (let x of dataofPart.part) {
@@ -2744,7 +2735,6 @@ module.exports = {
             }
           );
           obj = {};
-          console.log(updateAssosiation);
         }
       }
       resolve({ status: true });
@@ -2770,7 +2760,6 @@ module.exports = {
     });
   },
   muicAssosiationRemove: (muicData) => {
-    console.log(muicData);
     return new Promise(async (resolve, reject) => {
       const muicDataRemove = await partAndColor.findOneAndUpdate(
         {
@@ -2816,7 +2805,6 @@ module.exports = {
   },
   editVendor: (vendorData) => {
     return new Promise(async (resolve, reject) => {
-      console.log(vendorData);
       const updateVendor = await vendorMaster.findOneAndUpdate(
         {
           vendor_id: vendorData.vendor_id,
@@ -2843,7 +2831,6 @@ module.exports = {
     });
   },
   vendorStatusChange: (vendorData) => {
-    console.log(vendorData);
     return new Promise(async (resolve, reject) => {
       const update = await vendorMaster.findOneAndUpdate(
         {
@@ -2873,7 +2860,6 @@ module.exports = {
     });
   },
   editPartOrColor: (dataOfPartorColor) => {
-    console.log(dataOfPartorColor);
     return new Promise(async (resolve, reject) => {
       let updateData = await partAndColor.updateOne(
         { _id: dataOfPartorColor._id },
@@ -2926,7 +2912,6 @@ module.exports = {
         }
         i++;
       }
-      console.log(err);
       if (Object.keys(err).length === 0) {
         resolve({ status: true });
       } else {
@@ -3049,7 +3034,6 @@ module.exports = {
       let getTray = await masters.find({ sort_id: "Issued to RDL-FLS" });
       for (let x of getTray) {
         for (let y of x.actual_items) {
-          console.log(y.rdl_fls_report);
           let deliveryUpdate = await delivery.findOneAndUpdate(
             { tracking_id: y.tracking_id },
             {
@@ -3120,7 +3104,6 @@ module.exports = {
                   },
                 }
               );
-              console.log(addToTray);
             }
           }
         }
@@ -3193,7 +3176,6 @@ module.exports = {
       let getTray = await masters.find({ sort_id: "Issued to RDL-FLS" });
       for (let x of getTray) {
         for (let y of x.actual_items) {
-          console.log(y.rdl_fls_report);
           let deliveryUpdate = await delivery.findOneAndUpdate(
             { tracking_id: y.tracking_id },
             {
@@ -3268,8 +3250,6 @@ module.exports = {
 
       for (let x of arr) {
         let getDelivery = await delivery.findOne({ "uic_code.code": x });
-        console.log(getDelivery.tray_id);
-        console.log(getDelivery?.wht_tray);
         let obj = {
           awbn_number: getDelivery.tracking_id,
           order_id: getDelivery.order_id,
@@ -3346,11 +3326,9 @@ module.exports = {
         x.created_at = Date.now();
         let checkOrderPresent = await orders.findOne({ order_id: x.order_id });
         if (checkOrderPresent) {
-          console.log("orderExists", x.order_id);
         } else {
           let checkDelivery = await delivery.findOne({ order_id: x.order_id });
           if (checkDelivery) {
-            console.log("Delivery Exists", x.order_id);
             x["delivery_status"] = "Delivered";
             let updateDelivery = await delivery.findOneAndUpdate(
               { order_id: x.order_id },

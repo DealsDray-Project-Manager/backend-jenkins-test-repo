@@ -12,12 +12,12 @@ const client = new Client({
 // CREATE INDEXING
 module.exports = {
   creatIndex: async () => {
-    const result = await client.indices.create({ index: "prexo-delivery-8-2" });
+    const result = await client.indices.create({ index: "prexo-delivery-8-3" });
     console.log(result);
   },
   mappings: async () => {
     let data = await client.indices.putMapping({
-      index: "prexo-delivery-8-2",
+      index: "prexo-delivery-8-3",
       body: {
         properties: {
           tracking_id: {
@@ -557,5 +557,4 @@ module.exports = {
       }
     }
   },
- 
 };

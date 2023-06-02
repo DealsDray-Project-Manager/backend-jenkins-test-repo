@@ -169,7 +169,6 @@ router.get("/getCpc/", async (req, res) => {
 router.post("/getWarehouseByLocation", async (req, res) => {
   try {
     const { name, type } = req.body;
-    console.log(type);
     let warehouse = await superAdminController.getWarehouse(name, type);
     if (warehouse) {
       res.status(200).json({ data: { warehouse } });
@@ -612,7 +611,6 @@ router.post("/addLocation", async (req, res, next) => {
   try {
     const { type_taxanomy } = req.body;
     let data = await superAdminController.addLocation(req.body);
-    console.log(data);
     if (data.status == 3) {
       res.status(200).json({
         message: "Successfully Added",
@@ -912,7 +910,6 @@ router.post("/bulkValidationTray", async (req, res, next) => {
 router.post("/createBulkTray", async (req, res, next) => {
   try {
     const { allCount } = req.body;
-    console.log(allCount);
     let data = await superAdminController.addbulkTray(req.body.item);
     if (data) {
       fs.readFile(
@@ -1618,7 +1615,6 @@ router.post("/bulkvalidationForPart", async (req, res, next) => {
     const data = await superAdminController.bulkValidationForPartCheck(
       req.body
     );
-    console.log(data);
     if (data.status == true) {
       res.status(200).json({
         dupId:data.dup,
@@ -1754,7 +1750,6 @@ router.post("/partlist/muic", async (req, res, next) => {
   try {
     const { muic, color } = req.body;
     const data = await superAdminController.partListMuicColor(muic, color);
-    console.log(data);
     if (data) {
       res.status(200).json({
         data: data,
@@ -1910,7 +1905,6 @@ router.post("/muicAssociation/bulkValidation", async (req, res, next) => {
   try {
     const bulkValidation =
       await superAdminController.muicAssositaionBulkValidation(req.body);
-    console.log(bulkValidation);
     if (bulkValidation.status == true) {
       res.status(200).json({
         message: "Successfully Validated",

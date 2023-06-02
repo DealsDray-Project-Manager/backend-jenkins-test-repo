@@ -55,7 +55,7 @@ exports = module.exports = () => {
     console.log(error);
   }
   try {
-    corn.schedule("50 17 * * *", () => {
+    corn.schedule("00 23 * * *", () => {
       /*----------------------------------------------CSV READ-----------------------------*/
       let result = [];
       let updatedMuic = [];
@@ -131,7 +131,7 @@ exports = module.exports = () => {
       let lastUpdateData = await delivery
         .find({}, { _id: 0 })
         .sort({ updated_at: -1 })
-        .limit(500);
+        .limit(1000);
       for (let x of lastUpdateData) {
         let update = await elasticSearch.uicCodeGen(x);
       }
