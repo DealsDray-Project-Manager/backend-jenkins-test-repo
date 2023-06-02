@@ -1010,6 +1010,7 @@ router.post("/check-ready-for-merge", async (req, res, next) => {
     next(error);
   }
 });
+
 /* MERGE REQUEST SENT TO WAREHOUSE */
 router.post("/merge-request-sent-to-wh", async (req, res, next) => {
   try {
@@ -1027,6 +1028,7 @@ router.post("/merge-request-sent-to-wh", async (req, res, next) => {
     next(error);
   }
 });
+
 /********************************BAG TRANSACTION********************************* */
 /* GET BAG FOR TRANSACTION */
 router.post("/getBag-for-transaction/:location", async (req, res, next) => {
@@ -1539,6 +1541,7 @@ router.post("/RDLoneDoneTray/:location", async (req, res, next) => {
   try {
     const { location } = req.params;
     let data = await misUserController.getRdlDonetray(location);
+    console.log(data);
     if (data) {
       res.status(200).json({
         data: data,

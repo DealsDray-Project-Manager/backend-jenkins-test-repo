@@ -2122,7 +2122,6 @@ module.exports = {
           },
         ])
         .catch((err) => reject(err));
-      console.log(data);
       if (data.length == 0) {
         resolve({ status: 0 });
       } else {
