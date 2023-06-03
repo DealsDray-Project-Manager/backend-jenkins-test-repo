@@ -1503,10 +1503,16 @@ module.exports = {
               },
             },
           },
+          {
+            $facet: {
+              results: [{ $skip: skip }, { $limit: limit }],
+              count: [{ $count: "count" }],
+            },
+          },
         ]);
-        const count = 1;
-        const orders = allOrders;
-        resolve({ count: count, orders: orders });
+        // const count = 1;
+        // const orders = allOrders;
+        // resolve({ count: count, orders: orders });
       } else if (searchType == "imei") {
         allOrders = await orders.aggregate([
           {
