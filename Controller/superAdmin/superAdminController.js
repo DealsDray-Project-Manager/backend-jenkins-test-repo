@@ -2331,13 +2331,12 @@ module.exports = {
             type: "part-list",
             color: dataOfPartOrColor.color,
           },
-          {
-            part_code: dataOfPartOrColor.part_code,
-          },
+         
         ],
 
         // muic: dataOfPartOrColor.muic,
       });
+      console.log(checkDup);
       if (checkDup) {
         resolve({ status: 2 });
       } else {
@@ -2354,8 +2353,7 @@ module.exports = {
   viewColorOrPart: (type) => {
     return new Promise(async (resolve, reject) => {
       if (type == "part-list") {
-        const data = await partAndColor.find({ type: type });
-
+        const data = await partAndColor.find({ type: type }).sort({part_code:1});
         resolve(data);
       } else {
         const data = await partAndColor
@@ -3001,32 +2999,33 @@ module.exports = {
   },
   extraPartidAdd: () => {
     return new Promise(async (resolve, reject) => {
-      const allPart = await partAndColor.find({ type: "part-list" });
-      let str = "SPN000000";
-      for (let x of allPart) {
-        let num = parseInt(str.substring(3)) + 1;
-        let updatedStr = str.substring(0, 3) + num.toString().padStart(6, "0");
-        str = updatedStr;
-        const updateid = await partAndColor.updateOne(
-          { type: "part-list", name: x.name },
-          {
-            $set: {
-              part_code: str,
-              status: "Active",
-              created_by: "super-admin",
-            },
-          }
-        );
-        let updateMuic = await products.updateMany(
-          {},
-          {
-            $set: {
-              created_by: "super-admin",
-            },
-          }
-        );
-      }
-      resolve(str);
+      let updatePart=await partAndColor.deleteMany({type:"part-list"})
+      // const allPart = await partAndColor.find({ type: "part-list" });
+      // let str = "SPN000000";
+      // for (let x of allPart) {
+      //   let num = parseInt(str.substring(3)) + 1;
+      //   let updatedStr = str.substring(0, 3) + num.toString().padStart(6, "0");
+      //   str = updatedStr;
+      //   const updateid = await partAndColor.updateOne(
+      //     { type: "part-list", name: x.name },
+      //     {
+      //       $set: {
+      //         part_code: str,
+      //         status: "Active",
+      //         created_by: "super-admin",
+      //       },
+      //     }
+      //   );
+      //   let updateMuic = await products.updateMany(
+      //     {},
+      //     {
+      //       $set: {
+      //         created_by: "super-admin",
+      //       },
+      //     }
+      //   );
+      // }
+      resolve(updatePart);
     });
   },
   extraRdlOneReport: () => {
