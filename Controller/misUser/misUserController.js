@@ -222,7 +222,9 @@ module.exports = {
       });
       count.ctxToStxSorting = await masters.count({
         prefix: "tray-master",
-        type_taxanomy: { $nin: ["BOT", "PMT", "MMT", "WHT", "ST","SPT","RPT"] },
+        type_taxanomy: {
+          $nin: ["BOT", "PMT", "MMT", "WHT", "ST", "SPT", "RPT"],
+        },
         sort_id: "Ready to Transfer to STX",
         cpc: location,
       });
@@ -232,14 +234,16 @@ module.exports = {
             prefix: "tray-master",
             cpc: location,
             sort_id: "Transferred to Sales",
-            type_taxanomy: { $nin: ["BOT", "PMT", "MMT", "WHT", "ST","SPT","RPT"] },
+            type_taxanomy: {
+              $nin: ["BOT", "PMT", "MMT", "WHT", "ST", "SPT", "RPT"],
+            },
           },
           {
             prefix: "tray-master",
             cpc: location,
             sort_id: "Transferred to Processing",
 
-            type_taxanomy: { $nin: ["BOT", "PMT", "MMT", "WHT","SPT","RPT"] },
+            type_taxanomy: { $nin: ["BOT", "PMT", "MMT", "WHT", "SPT", "RPT"] },
           },
         ],
       });
@@ -247,7 +251,9 @@ module.exports = {
         prefix: "tray-master",
         cpc: location,
         sort_id: "Audit Done Closed By Warehouse",
-        type_taxanomy: { $nin: ["BOT", "PMT", "MMT", "WHT", "ST","SPT","RPT"] },
+        type_taxanomy: {
+          $nin: ["BOT", "PMT", "MMT", "WHT", "ST", "SPT", "RPT"],
+        },
       });
       count.stxMerge = await masters.count({
         prefix: "tray-master",
@@ -261,13 +267,15 @@ module.exports = {
             prefix: "tray-master",
             cpc: location,
             sort_id: "Ready to Transfer to Sales",
-            type_taxanomy: { $nin: ["BOT", "PMT", "MMT", "WHT", "ST","SPT","RPT"] },
+            type_taxanomy: {
+              $nin: ["BOT", "PMT", "MMT", "WHT", "ST", "SPT", "RPT"],
+            },
           },
           {
             prefix: "tray-master",
             cpc: location,
             sort_id: "Ready to Transfer to Processing",
-            type_taxanomy: { $nin: ["BOT", "PMT", "MMT", "WHT","SPT","RPT"] },
+            type_taxanomy: { $nin: ["BOT", "PMT", "MMT", "WHT", "SPT", "RPT"] },
           },
         ],
       });
@@ -3730,7 +3738,7 @@ module.exports = {
         sort_id: "Ready to RDL-Repair",
         type_taxanomy: "WHT",
         cpc: location,
-      })
+      });
       if (data) {
         resolve(data);
       }

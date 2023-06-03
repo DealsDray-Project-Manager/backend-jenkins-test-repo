@@ -38,7 +38,7 @@ const bardOrdersSchema = mongoose.Schema({
     type: String,
   },
   base_discount: {
-    type: Number,
+    type: String,
   },
   diagnostic: {
     type: String,
@@ -53,7 +53,7 @@ const bardOrdersSchema = mongoose.Schema({
     type: Date,
   },
   order_id_replaced: {
-    type: Number,
+    type: String,
   },
   deliverd_with_otp: {
     type: String,
@@ -62,10 +62,10 @@ const bardOrdersSchema = mongoose.Schema({
     type: String,
   },
   gc_amount_redeemed: {
-    type: Number,
+    type: String,
   },
   gc_amount_refund: {
-    type: Number,
+    type: String,
   },
   gc_redeem_time: {
     type: Date,
