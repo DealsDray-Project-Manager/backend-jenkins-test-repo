@@ -1172,8 +1172,8 @@ router.post("/TrayMergeRequestSend", async (req, res, next) => {
 router.post("/pickup/items/:type/:location", async (req, res, next) => {
   try {
     let { type, page, location } = req.params;
-
     const data = await misUserController.pickupPageItemView(type, location);
+    console.log(data);
     if (data.items.length !== 0) {
       res.status(200).json({
         data: data.items,
@@ -1190,6 +1190,29 @@ router.post("/pickup/items/:type/:location", async (req, res, next) => {
     next(error);
   }
 });
+//GET ITEM BASED ON THE TABS SEE ALL
+router.post("/pickup/seeAll/:type/:location", async (req, res, next) => {
+  try {
+    let { type, page, location } = req.params;
+    const data = await misUserController.pickupPageItemViewSeeAll(type, location);
+    console.log(data);
+    if (data.items.length !== 0) {
+      res.status(200).json({
+        data: data.items,
+        type: type,
+      });
+    } else {
+      res.status(202).json({
+        data: data.items,
+        type: type,
+        message: "No data found",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
 // SORT ITEM BASED ON THE BRAND AND MODEL
 router.post("/pickup/sortItem", async (req, res, next) => {
   try {

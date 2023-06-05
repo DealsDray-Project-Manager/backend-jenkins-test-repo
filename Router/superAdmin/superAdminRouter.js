@@ -2290,7 +2290,6 @@ router.post("/extra/rdl-one/report", async (req, res, next) => {
     next(error);
   }
 });
-
 //TO FIX BQC DONE UNITS 0 UNITS SHOWING
 router.post("/extra/bqcDone/bugFix", async (req, res, next) => {
   try {
@@ -2325,7 +2324,6 @@ router.post("/extra/bqcDoneReportIssue/bugFix", async (req, res, next) => {
     next(error);
   }
 });
-
 //RDL 1 USERNAME ADD
 router.post("/extra/changeWarehouseLocation/bugFix", async (req, res, next) => {
   try {
@@ -2381,6 +2379,23 @@ router.post("/extra/addOtherAudtiorFeedback", async (req, res, next) => {
 router.post("/extra/addBotTray", async (req, res, next) => {
   try {
     let data = await superAdminController.addBotTrayFromBackend();
+    if (data) {
+      res.status(200).json({
+        message: "done",
+      });
+    } else {
+      res.status(202).json({
+        message: "Failed",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+//05062023 SUMIT SIR REQUEST
+router.post("/extra/rollBackTray", async (req, res, next) => {
+  try {
+    let data = await superAdminController.rollBackTrayToAuditStage();
     if (data) {
       res.status(200).json({
         message: "done",

@@ -3397,7 +3397,51 @@ module.exports = {
   pickupPageItemView: (type, location) => {
     return new Promise(async (resolve, reject) => {
       let items = [];
+      const today = new Date(); // Get the current date
+      today.setHours(0, 0, 0, 0); // Set the time to midnight
 
+      const threeDaysAgo = new Date();
+      threeDaysAgo.setDate(today.getDate() - 3);
+      if (type == "Charge Done") {
+        items = await masters.aggregate([
+          { $match: {"track_tray.charging_done_close_wh" :{ $gte: threeDaysAgo } ,sort_id: "Ready to BQC", cpc: location } },
+          {
+            $unwind: "$items",
+          },
+        ]);
+      } else if (type == "BQC Done") {
+        items = await masters.aggregate([
+          { $match: {"track_tray.bqc_done_close_by_wh" :{ $gte: threeDaysAgo }, sort_id: "Ready to Audit", cpc: location } },
+          {
+            $unwind: "$items",
+          },
+        ]);
+      } else if (type == "Audit Done") {
+        items = await masters.aggregate([
+          { $match: {"track_tray.audit_done_close_wh" :{ $gte: threeDaysAgo }, sort_id: "Ready to RDL", cpc: location } },
+          {
+            $unwind: "$items",
+          },
+        ]);
+      } else {
+        items = await masters.aggregate([
+          { $match: {"track_tray.rdl_1_done_close_by_wh" :{ $gte: threeDaysAgo } ,sort_id: type, cpc: location } },
+          {
+            $unwind: "$items",
+          },
+        ]);
+      }
+      resolve({ items: items });
+    });
+  },
+  pickupPageItemViewSeeAll: (type, location) => {
+    return new Promise(async (resolve, reject) => {
+      let items = [];
+      const today = new Date(); // Get the current date
+      today.setHours(0, 0, 0, 0); // Set the time to midnight
+
+      const threeDaysAgo = new Date();
+      threeDaysAgo.setDate(today.getDate() - 3);
       if (type == "Charge Done") {
         items = await masters.aggregate([
           { $match: { sort_id: "Ready to BQC", cpc: location } },
@@ -3414,14 +3458,14 @@ module.exports = {
         ]);
       } else if (type == "Audit Done") {
         items = await masters.aggregate([
-          { $match: { sort_id: "Ready to RDL", cpc: location } },
+          { $match: {sort_id: "Ready to RDL", cpc: location } },
           {
             $unwind: "$items",
           },
         ]);
       } else {
         items = await masters.aggregate([
-          { $match: { sort_id: type, cpc: location } },
+          { $match: {sort_id: type, cpc: location } },
           {
             $unwind: "$items",
           },

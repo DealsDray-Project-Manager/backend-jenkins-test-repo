@@ -2903,8 +2903,8 @@ module.exports = {
           }
         }
 
-        let number = parseFloat(x.add_stock);
-        if (number < 0 || isNaN(number)) {
+        // let number = parseFloat(x.add_stock);
+        if (isNaN(x.add_stock)) {
           updateStock.push(x.add_stock);
           err["update_stock_check"] = updateStock;
         }
@@ -2920,14 +2920,31 @@ module.exports = {
   partlistManageStockUpdate: (partStockData) => {
     return new Promise(async (resolve, reject) => {
       for (let x of partStockData) {
-        const updateStock = await partAndColor.findOneAndUpdate(
-          { part_code: x.part_code },
-          {
-            $inc: {
-              avl_stock: parseInt(x.add_stock),
-            },
-          }
-        );
+        let number=parseInt(x.add_stock)
+        if(number >= "0"){
+          const updateStock = await partAndColor.findOneAndUpdate(
+            { part_code: x.part_code },
+            {
+              $inc: {
+                avl_stock: parseInt(x.add_stock),
+              },
+            }
+          );
+        }
+        else{
+          let findStok=await partAndColor.findOne({part_code: x.part_code})
+            
+            const updateStock = await partAndColor.findOneAndUpdate(
+              { part_code: x.part_code },
+              {
+                $inc: {
+                  avl_stock: parseInt(x.add_stock),
+                },
+              }
+            );
+          
+        }
+
       }
       resolve({ status: true, count: partStockData.length });
     });
@@ -3318,6 +3335,57 @@ module.exports = {
       }
       resolve(arr);
     });
+  },
+  rollBackTrayToAuditStage:()=>{
+    return new Promise(async(resolve,reject)=>{
+      // const findTray=await masters.findOne({code:"CTB2008"})
+      // for(let x of findTray.items ){
+      //   const updateToWht=await masters.findOneAndUpdate({code:"WHT1696"},{
+      //     $push:{
+      //       items:x
+      //     }
+      //   })
+      // }
+      // let updateCtx=await masters.findOneAndUpdate({code:"CTB2008"},{
+      //   $set:{
+      //     sort_id:"Open",
+      //     actual_items:[],
+      //     items:[],
+      //     temp_array:[],
+      //     recommend_location:null,
+
+      //   }
+      // })
+      // resolve(updateCtx) 
+      const findRdlDoneTray=await delivery.find({rdl_fls_one_report:{$exists:true}})
+      for(let x of findRdlDoneTray){
+        if (typeof x.rdl_fls_one_report.username === "object") {
+         
+          let update=await delivery.updateOne({"uic_code.code":x.uic_code.code},{
+            $set:{
+              "rdl_fls_one_report.username":x.rdl_fls_one_report.username.name
+            }
+          })
+        }
+      }
+      let findtray=await masters.find({"items.rdl_fls_report":{$exists:true}})
+          console.log(findtray.length);
+          for(let y of findtray){
+            for(let units of y.items){
+              console.log(units.rdl_fls_report);
+              if(typeof units.rdl_fls_report?.username === "object"){
+                let update=await masters.updateOne({ items: { $elemMatch: { uic: units.uic } },},{
+                  $set:{
+                    "items.$.rdl_fls_report.username":units.rdl_fls_report.username.name
+                  }
+                })
+
+              }
+            }
+          }
+      
+      resolve("done")
+    })
   },
   fixBaggingIssueWithAwbn: () => {
     return new Promise(async (resolve, reject) => {
