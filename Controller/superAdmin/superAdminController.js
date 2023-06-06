@@ -2336,7 +2336,6 @@ module.exports = {
 
         // muic: dataOfPartOrColor.muic,
       });
-      console.log(checkDup);
       if (checkDup) {
         resolve({ status: 2 });
       } else {
@@ -2889,6 +2888,7 @@ module.exports = {
         let checkPartId = await partAndColor.findOne({
           part_code: x.part_code,
         });
+
         if (checkPartId == null) {
           partId.push(x.part_code);
           err["part_code_not_exists"] = partId;
@@ -2902,9 +2902,23 @@ module.exports = {
             err["duplicate_part_code"] = dupPartId;
           }
         }
+        if(partId.length == 0){
+          const addStockValue = parseFloat(x.add_stock);
+          if(addStockValue > 0 || isNaN(addStockValue)){
 
-        let number = parseFloat(x.add_stock);
-        if (number < 0 || isNaN(number)) {
+          }
+          else{
+           
+            let check = checkPartId.avl_stock - Math.abs(x.add_stock);
+            console.log(check);
+            if(check < 0){
+              updateStock.push(x.add_stock);
+              err["update_stock_check"] = updateStock;
+            }
+          }
+        }
+        // let number = parseFloat(x.add_stock);
+        if (isNaN(x.add_stock)) {
           updateStock.push(x.add_stock);
           err["update_stock_check"] = updateStock;
         }
@@ -2920,14 +2934,31 @@ module.exports = {
   partlistManageStockUpdate: (partStockData) => {
     return new Promise(async (resolve, reject) => {
       for (let x of partStockData) {
-        const updateStock = await partAndColor.findOneAndUpdate(
-          { part_code: x.part_code },
-          {
-            $inc: {
-              avl_stock: parseInt(x.add_stock),
-            },
-          }
-        );
+        let number=parseInt(x.add_stock)
+        if(number >= "0"){
+          const updateStock = await partAndColor.findOneAndUpdate(
+            { part_code: x.part_code },
+            {
+              $inc: {
+                avl_stock: parseInt(x.add_stock),
+              },
+            }
+          );
+        }
+        else{
+          let findStok=await partAndColor.findOne({part_code: x.part_code})
+            
+            const updateStock = await partAndColor.findOneAndUpdate(
+              { part_code: x.part_code },
+              {
+                $inc: {
+                  avl_stock: parseInt(x.add_stock),
+                },
+              }
+            );
+          
+        }
+
       }
       resolve({ status: true, count: partStockData.length });
     });
@@ -3318,6 +3349,138 @@ module.exports = {
       }
       resolve(arr);
     });
+  },
+  rollBackTrayToAuditStage:()=>{
+    return new Promise(async(resolve,reject)=>{
+      // const findTray=await masters.findOne({code:"CTB2008"})
+      // for(let x of findTray.items ){
+      //   const updateToWht=await masters.findOneAndUpdate({code:"WHT1696"},{
+      //     $push:{
+      //       items:x
+      //     }
+      //   })
+      // }
+      // let updateCtx=await masters.findOneAndUpdate({code:"CTB2008"},{
+      //   $set:{
+      //     sort_id:"Open",
+      //     actual_items:[],
+      //     items:[],
+      //     temp_array:[],
+      //     recommend_location:null,
+
+      //   }
+      // })
+      // resolve(updateCtx) 
+      const findRdlDoneTray=await delivery.find({rdl_fls_one_report:{$exists:true}})
+      for(let x of findRdlDoneTray){
+        if (typeof x.rdl_fls_one_report.username === "object") {
+         
+          let update=await delivery.updateOne({"uic_code.code":x.uic_code.code},{
+            $set:{
+              "rdl_fls_one_report.username":x.rdl_fls_one_report.username.name
+            }
+          })
+        }
+      }
+      let findtray=await masters.find({"items.rdl_fls_report":{$exists:true}})
+          for(let y of findtray){
+            for(let units of y.items){
+              if(units?.rdl_fls_report?.selected_status == "Repair Required"){
+              let arr=[]
+              // console.log(units?.rdl_fls_report);
+              if(units.rdl_fls_report.part_list_1 !=="" && units.rdl_fls_report.part_list_1 !== undefined){
+                
+                let findId=await partAndColor.findOne({type:"part-list",name:units.rdl_fls_report.part_list_1})
+                let obj={
+                  part_name:units.rdl_fls_report.part_list_1,
+                  quantity:1
+                }
+                if(findId){
+                  obj.part_id=findId.part_code
+                }
+                else{
+                  obj.part_id="SPN000000"
+                }
+                console.log(obj);
+                arr.push(obj)
+              }
+              if(units.rdl_fls_report.part_list_2 !=="" && units.rdl_fls_report.part_list_2 !== undefined){
+                let findId=await partAndColor.findOne({type:"part-list",name:units.rdl_fls_report.part_list_2})
+                let obj={
+                  part_name:units.rdl_fls_report.part_list_2,
+                  quantity:1
+                }
+                if(findId){
+                  obj.part_id=findId.part_code
+                }
+                else{
+                  obj.part_id="SPN000000"
+                }
+                arr.push(obj)
+              }
+              if(units.rdl_fls_report.part_list_3 !=="" && units.rdl_fls_report.part_list_3 !== undefined){
+                let findId=await partAndColor.findOne({type:"part-list",name:units.rdl_fls_report.part_list_3})
+                let obj={
+                  part_name:units.rdl_fls_report.part_list_3,
+                  quantity:1
+                }
+                if(findId){
+                  obj.part_id=findId.part_code
+                }
+                else{
+                  obj.part_id="SPN000000"
+                }
+                arr.push(obj)
+              }
+              if(units.rdl_fls_report.part_list_4 !=="" && units.rdl_fls_report.part_list_4 !== undefined){
+                let findId=await partAndColor.findOne({type:"part-list",name:units.rdl_fls_report.part_list_4})
+                let obj={
+                  part_name:units.rdl_fls_report.part_list_4,
+                  quantity:1
+                }
+                if(findId){
+                  obj.part_id=findId.part_code
+                }
+                else{
+                  obj.part_id="SPN000000"
+                }
+                arr.push(obj)
+              }
+              if(units.rdl_fls_report.part_list_5 !=="" && units.rdl_fls_report.part_list_5 !== undefined){
+                let findId=await partAndColor.findOne({type:"part-list",name:units.rdl_fls_report.part_list_4})
+                let obj={
+                  part_name:units.rdl_fls_report.part_list_4,
+                  quantity:1
+                }
+                if(findId){
+                  obj.part_id=findId.part_code
+                }
+                else{
+                  obj.part_id="SPN000000"
+                }
+                arr.push(obj)
+              }
+                if(units.rdl_fls_report.partRequired == undefined){
+                  let update=await masters.updateOne({ items: { $elemMatch: { uic: units.uic } },},{
+                    $set:{
+                      "items.$.rdl_fls_report.partRequired":arr
+                    }
+                  })
+                }
+              }
+              
+              if(typeof units.rdl_fls_report?.username === "object"){
+                let update=await masters.updateOne({ items: { $elemMatch: { uic: units.uic } },},{
+                  $set:{
+                    "items.$.rdl_fls_report.username":units.rdl_fls_report.username.name
+                  }
+                })
+
+              }
+            }
+          }
+      resolve("done")
+    })
   },
   fixBaggingIssueWithAwbn: () => {
     return new Promise(async (resolve, reject) => {
