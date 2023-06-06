@@ -1173,7 +1173,7 @@ router.post("/pickup/items/:type/:location", async (req, res, next) => {
   try {
     let { type, page, location } = req.params;
     const data = await misUserController.pickupPageItemView(type, location);
-    console.log(data);
+   
     if (data.items.length !== 0) {
       res.status(200).json({
         data: data.items,
@@ -1195,7 +1195,7 @@ router.post("/pickup/seeAll/:type/:location", async (req, res, next) => {
   try {
     let { type, page, location } = req.params;
     const data = await misUserController.pickupPageItemViewSeeAll(type, location);
-    console.log(data);
+   
     if (data.items.length !== 0) {
       res.status(200).json({
         data: data.items,
@@ -1564,7 +1564,6 @@ router.post("/RDLoneDoneTray/:location", async (req, res, next) => {
   try {
     const { location } = req.params;
     let data = await misUserController.getRdlDonetray(location);
-    console.log(data);
     if (data) {
       res.status(200).json({
         data: data,

@@ -2336,7 +2336,6 @@ module.exports = {
 
         // muic: dataOfPartOrColor.muic,
       });
-      console.log(checkDup);
       if (checkDup) {
         resolve({ status: 2 });
       } else {
@@ -2889,6 +2888,7 @@ module.exports = {
         let checkPartId = await partAndColor.findOne({
           part_code: x.part_code,
         });
+
         if (checkPartId == null) {
           partId.push(x.part_code);
           err["part_code_not_exists"] = partId;
@@ -2902,7 +2902,21 @@ module.exports = {
             err["duplicate_part_code"] = dupPartId;
           }
         }
+        if(partId.length == 0){
+          const addStockValue = parseFloat(x.add_stock);
+          if(addStockValue > 0 || isNaN(addStockValue)){
 
+          }
+          else{
+           
+            let check = checkPartId.avl_stock - Math.abs(x.add_stock);
+            console.log(check);
+            if(check < 0){
+              updateStock.push(x.add_stock);
+              err["update_stock_check"] = updateStock;
+            }
+          }
+        }
         // let number = parseFloat(x.add_stock);
         if (isNaN(x.add_stock)) {
           updateStock.push(x.add_stock);
@@ -3369,10 +3383,92 @@ module.exports = {
         }
       }
       let findtray=await masters.find({"items.rdl_fls_report":{$exists:true}})
-          console.log(findtray.length);
           for(let y of findtray){
             for(let units of y.items){
-              console.log(units.rdl_fls_report);
+              if(units?.rdl_fls_report?.selected_status == "Repair Required"){
+              let arr=[]
+              // console.log(units?.rdl_fls_report);
+              if(units.rdl_fls_report.part_list_1 !=="" && units.rdl_fls_report.part_list_1 !== undefined){
+                
+                let findId=await partAndColor.findOne({type:"part-list",name:units.rdl_fls_report.part_list_1})
+                let obj={
+                  part_name:units.rdl_fls_report.part_list_1,
+                  quantity:1
+                }
+                if(findId){
+                  obj.part_id=findId.part_code
+                }
+                else{
+                  obj.part_id="SPN000000"
+                }
+                console.log(obj);
+                arr.push(obj)
+              }
+              if(units.rdl_fls_report.part_list_2 !=="" && units.rdl_fls_report.part_list_2 !== undefined){
+                let findId=await partAndColor.findOne({type:"part-list",name:units.rdl_fls_report.part_list_2})
+                let obj={
+                  part_name:units.rdl_fls_report.part_list_2,
+                  quantity:1
+                }
+                if(findId){
+                  obj.part_id=findId.part_code
+                }
+                else{
+                  obj.part_id="SPN000000"
+                }
+                arr.push(obj)
+              }
+              if(units.rdl_fls_report.part_list_3 !=="" && units.rdl_fls_report.part_list_3 !== undefined){
+                let findId=await partAndColor.findOne({type:"part-list",name:units.rdl_fls_report.part_list_3})
+                let obj={
+                  part_name:units.rdl_fls_report.part_list_3,
+                  quantity:1
+                }
+                if(findId){
+                  obj.part_id=findId.part_code
+                }
+                else{
+                  obj.part_id="SPN000000"
+                }
+                arr.push(obj)
+              }
+              if(units.rdl_fls_report.part_list_4 !=="" && units.rdl_fls_report.part_list_4 !== undefined){
+                let findId=await partAndColor.findOne({type:"part-list",name:units.rdl_fls_report.part_list_4})
+                let obj={
+                  part_name:units.rdl_fls_report.part_list_4,
+                  quantity:1
+                }
+                if(findId){
+                  obj.part_id=findId.part_code
+                }
+                else{
+                  obj.part_id="SPN000000"
+                }
+                arr.push(obj)
+              }
+              if(units.rdl_fls_report.part_list_5 !=="" && units.rdl_fls_report.part_list_5 !== undefined){
+                let findId=await partAndColor.findOne({type:"part-list",name:units.rdl_fls_report.part_list_4})
+                let obj={
+                  part_name:units.rdl_fls_report.part_list_4,
+                  quantity:1
+                }
+                if(findId){
+                  obj.part_id=findId.part_code
+                }
+                else{
+                  obj.part_id="SPN000000"
+                }
+                arr.push(obj)
+              }
+                if(units.rdl_fls_report.partRequired == undefined){
+                  let update=await masters.updateOne({ items: { $elemMatch: { uic: units.uic } },},{
+                    $set:{
+                      "items.$.rdl_fls_report.partRequired":arr
+                    }
+                  })
+                }
+              }
+              
               if(typeof units.rdl_fls_report?.username === "object"){
                 let update=await masters.updateOne({ items: { $elemMatch: { uic: units.uic } },},{
                   $set:{
@@ -3383,7 +3479,6 @@ module.exports = {
               }
             }
           }
-      
       resolve("done")
     })
   },
