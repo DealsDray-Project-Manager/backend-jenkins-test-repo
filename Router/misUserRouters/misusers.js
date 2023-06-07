@@ -831,8 +831,10 @@ router.post("/check-all-wht-inuse-for-sorting", async (req, res, next) => {
         message: "Ready For Sorting",
       });
     } else if (data.length !== 0) {
+      console.log(data);
+
       let arr = data.toString();
-      res.status(292).json({
+      res.status(202).json({
         message: `${arr} - This Tray's Are Already In Sorting`,
         data: data,
       });
@@ -1173,7 +1175,7 @@ router.post("/pickup/items/:type/:location", async (req, res, next) => {
   try {
     let { type, page, location } = req.params;
     const data = await misUserController.pickupPageItemView(type, location);
-   
+
     if (data.items.length !== 0) {
       res.status(200).json({
         data: data.items,
@@ -1194,8 +1196,11 @@ router.post("/pickup/items/:type/:location", async (req, res, next) => {
 router.post("/pickup/seeAll/:type/:location", async (req, res, next) => {
   try {
     let { type, page, location } = req.params;
-    const data = await misUserController.pickupPageItemViewSeeAll(type, location);
-   
+    const data = await misUserController.pickupPageItemViewSeeAll(
+      type,
+      location
+    );
+
     if (data.items.length !== 0) {
       res.status(200).json({
         data: data.items,

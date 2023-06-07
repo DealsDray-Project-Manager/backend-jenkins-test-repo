@@ -2935,6 +2935,8 @@ module.exports = {
             {
               $set: {
                 sort_id: whtTrayData.sort_id,
+                actual_items: [],
+                requested_date: Date.now(),
                 issued_user_name: whtTrayData.user_name,
               },
             }
@@ -3404,28 +3406,52 @@ module.exports = {
       threeDaysAgo.setDate(today.getDate() - 3);
       if (type == "Charge Done") {
         items = await masters.aggregate([
-          { $match: {"track_tray.charging_done_close_wh" :{ $gte: threeDaysAgo } ,sort_id: "Ready to BQC", cpc: location } },
+          {
+            $match: {
+              "track_tray.charging_done_close_wh": { $gte: threeDaysAgo },
+              sort_id: "Ready to BQC",
+              cpc: location,
+            },
+          },
           {
             $unwind: "$items",
           },
         ]);
       } else if (type == "BQC Done") {
         items = await masters.aggregate([
-          { $match: {"track_tray.bqc_done_close_by_wh" :{ $gte: threeDaysAgo }, sort_id: "Ready to Audit", cpc: location } },
+          {
+            $match: {
+              "track_tray.bqc_done_close_by_wh": { $gte: threeDaysAgo },
+              sort_id: "Ready to Audit",
+              cpc: location,
+            },
+          },
           {
             $unwind: "$items",
           },
         ]);
       } else if (type == "Audit Done") {
         items = await masters.aggregate([
-          { $match: {"track_tray.audit_done_close_wh" :{ $gte: threeDaysAgo }, sort_id: "Ready to RDL", cpc: location } },
+          {
+            $match: {
+              "track_tray.audit_done_close_wh": { $gte: threeDaysAgo },
+              sort_id: "Ready to RDL",
+              cpc: location,
+            },
+          },
           {
             $unwind: "$items",
           },
         ]);
       } else {
         items = await masters.aggregate([
-          { $match: {"track_tray.rdl_1_done_close_by_wh" :{ $gte: threeDaysAgo } ,sort_id: type, cpc: location } },
+          {
+            $match: {
+              "track_tray.rdl_1_done_close_by_wh": { $gte: threeDaysAgo },
+              sort_id: type,
+              cpc: location,
+            },
+          },
           {
             $unwind: "$items",
           },
@@ -3458,14 +3484,14 @@ module.exports = {
         ]);
       } else if (type == "Audit Done") {
         items = await masters.aggregate([
-          { $match: {sort_id: "Ready to RDL", cpc: location } },
+          { $match: { sort_id: "Ready to RDL", cpc: location } },
           {
             $unwind: "$items",
           },
         ]);
       } else {
         items = await masters.aggregate([
-          { $match: {sort_id: type, cpc: location } },
+          { $match: { sort_id: type, cpc: location } },
           {
             $unwind: "$items",
           },

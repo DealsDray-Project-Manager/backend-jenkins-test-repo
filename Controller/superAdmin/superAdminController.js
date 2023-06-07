@@ -21,7 +21,8 @@ const moment = require("moment");
 const elasticsearch = require("../../Elastic-search/elastic");
 
 const IISDOMAIN = "https://prexo-v8-3-adminapi.dealsdray.com/user/profile/";
-const IISDOMAINPRDT = "https://prexo-v8-3-adminapi.dealsdray.com/product/image/";
+const IISDOMAINPRDT =
+  "https://prexo-v8-3-adminapi.dealsdray.com/product/image/";
 
 /************************************************************************************************** */
 
@@ -81,7 +82,9 @@ module.exports = {
       count.readyForTransferSales = await masters.count({
         prefix: "tray-master",
         sort_id: "Audit Done Closed By Warehouse",
-        type_taxanomy: { $nin: ["BOT", "PMT", "MMT", "WHT", "ST","SPT","RPT"] },
+        type_taxanomy: {
+          $nin: ["BOT", "PMT", "MMT", "WHT", "ST", "SPT", "RPT"],
+        },
       });
       count.readyForRdl = await masters.count({
         sort_id: "Audit Done Closed By Warehouse",
@@ -997,7 +1000,6 @@ module.exports = {
           trayData[i].tray_category !== "WHT" &&
           trayData[i].tray_category !== "SPT" &&
           trayData[i].tray_category !== "RPT"
-
         ) {
           if (
             trayData[i].tray_category !== "CT" &&
@@ -1060,8 +1062,7 @@ module.exports = {
         } else if (trayID > 19999 && trayData[i].tray_category == "SPT") {
           tray_id.push(trayData[i].tray_id);
           err["tray_id"] = tray_id;
-        }
-        else if (trayID > 19999 && trayData[i].tray_category == "RPT") {
+        } else if (trayID > 19999 && trayData[i].tray_category == "RPT") {
           tray_id.push(trayData[i].tray_id);
           err["tray_id"] = tray_id;
         } else {
@@ -1829,7 +1830,9 @@ module.exports = {
       let data = await masters.find({
         prefix: "tray-master",
         sort_id: "Audit Done Closed By Warehouse",
-        type_taxanomy: { $nin: ["BOT", "PMT", "MMT", "WHT", "ST","SPT","RPT"] },
+        type_taxanomy: {
+          $nin: ["BOT", "PMT", "MMT", "WHT", "ST", "SPT", "RPT"],
+        },
       });
       resolve(data);
     });
@@ -1885,7 +1888,9 @@ module.exports = {
   addGrade: () => {
     return new Promise(async (resolve, reject) => {
       let ctxOld = await masters.find({
-        type_taxanomy: { $nin: ["BOT", "PMT", "MMT", "WHT", "ST", "CT","SPT","RPT"] },
+        type_taxanomy: {
+          $nin: ["BOT", "PMT", "MMT", "WHT", "ST", "CT", "SPT", "RPT"],
+        },
         prefix: "tray-master",
       });
       for (let x of ctxOld) {
@@ -1939,7 +1944,9 @@ module.exports = {
     return new Promise(async (resolve, reject) => {
       let Allwht = await masters.find({
         prefix: "tray-master",
-        type_taxanomy: { $nin: ["BOT", "PMT", "MMT", "WHT", "ST","SPT","RPT"] },
+        type_taxanomy: {
+          $nin: ["BOT", "PMT", "MMT", "WHT", "ST", "SPT", "RPT"],
+        },
       });
       for (let x of Allwht) {
         if (x.items.length != 0) {
@@ -2331,7 +2338,6 @@ module.exports = {
             type: "part-list",
             color: dataOfPartOrColor.color,
           },
-         
         ],
 
         // muic: dataOfPartOrColor.muic,
@@ -2352,7 +2358,9 @@ module.exports = {
   viewColorOrPart: (type) => {
     return new Promise(async (resolve, reject) => {
       if (type == "part-list") {
-        const data = await partAndColor.find({ type: type }).sort({part_code:1});
+        const data = await partAndColor
+          .find({ type: type })
+          .sort({ part_code: 1 });
         resolve(data);
       } else {
         const data = await partAndColor
@@ -2392,12 +2400,13 @@ module.exports = {
           if (checkName) {
             partName.push(x.code);
             err["duplicate_part_name"] = partName;
-          }
-           else {
+          } else {
             if (
               partData.some(
                 (data, index) =>
-                  data.part_name == x.part_name && data.part_color == x.part_color && index != i
+                  data.part_name == x.part_name &&
+                  data.part_color == x.part_color &&
+                  index != i
               )
             ) {
               partName.push(x.code);
@@ -2902,16 +2911,13 @@ module.exports = {
             err["duplicate_part_code"] = dupPartId;
           }
         }
-        if(partId.length == 0){
+        if (partId.length == 0) {
           const addStockValue = parseFloat(x.add_stock);
-          if(addStockValue > 0 || isNaN(addStockValue)){
-
-          }
-          else{
-           
+          if (addStockValue > 0 || isNaN(addStockValue)) {
+          } else {
             let check = checkPartId.avl_stock - Math.abs(x.add_stock);
             console.log(check);
-            if(check < 0){
+            if (check < 0) {
               updateStock.push(x.add_stock);
               err["update_stock_check"] = updateStock;
             }
@@ -2934,8 +2940,19 @@ module.exports = {
   partlistManageStockUpdate: (partStockData) => {
     return new Promise(async (resolve, reject) => {
       for (let x of partStockData) {
-        let number=parseInt(x.add_stock)
-        if(number >= "0"){
+        let number = parseInt(x.add_stock);
+        if (number >= "0") {
+          const updateStock = await partAndColor.findOneAndUpdate(
+            { part_code: x.part_code },
+            {
+              $inc: {
+                avl_stock: parseInt(x.add_stock),
+              },
+            }
+          );
+        } else {
+          let findStok = await partAndColor.findOne({ part_code: x.part_code });
+
           const updateStock = await partAndColor.findOneAndUpdate(
             { part_code: x.part_code },
             {
@@ -2945,20 +2962,6 @@ module.exports = {
             }
           );
         }
-        else{
-          let findStok=await partAndColor.findOne({part_code: x.part_code})
-            
-            const updateStock = await partAndColor.findOneAndUpdate(
-              { part_code: x.part_code },
-              {
-                $inc: {
-                  avl_stock: parseInt(x.add_stock),
-                },
-              }
-            );
-          
-        }
-
       }
       resolve({ status: true, count: partStockData.length });
     });
@@ -2973,6 +2976,142 @@ module.exports = {
         }
       }
       resolve({ status: 1 });
+    });
+  },
+  getAssignedTray: (trayType, sort_id) => {
+    return new Promise(async (resolve, reject) => {
+      if (sort_id == "Ctx to Stx Send for Sorting") {
+        const res = await masters
+          .find({
+            type_taxanomy: { $in: ["CT", "ST"] },
+            to_merge: { $ne: null },
+            sort_id: sort_id,
+          })
+          .catch((err) => reject(err));
+        resolve(res);
+      } else {
+        const res = await masters
+          .find({ type_taxanomy: trayType, sort_id: sort_id })
+          .catch((err) => reject(err));
+        resolve(res);
+      }
+    });
+  },
+  reassignForMerge: (sortingAgent, fromTray, toTray) => {
+    return new Promise(async (resolve, reject) => {
+      let updateFromTray = await masters.updateOne(
+        { code: fromTray },
+        {
+          $set: {
+            status_change_time: Date.now(),
+            issued_user_name: sortingAgent,
+            actual_items: [],
+          },
+        }
+      );
+      if (updateFromTray.modifiedCount !== 0) {
+        let updateToTray = await masters.updateOne(
+          { code: toTray },
+          {
+            $set: {
+              status_change_time: Date.now(),
+              issued_user_name: sortingAgent,
+              from_merge: fromTray,
+              to_merge: null,
+              actual_items: [],
+            },
+          }
+        );
+        if (updateToTray.modifiedCount !== 0) {
+          resolve({ status: 1 });
+        } else {
+          resolve({ status: 0 });
+        }
+      } else {
+        resolve({ status: 0 });
+      }
+    });
+  },
+  bagAssignedToBot: () => {
+    return new Promise(async (resolve, reject) => {
+      const bag = await masters
+        .find({ prefix: "bag-master", sort_id: "Requested to Warehouse" })
+        .catch((err) => reject(err));
+      resolve(bag);
+    });
+  },
+  getAssignedTrayForSortingBotToWht:() => {
+    return new Promise(async (resolve, reject) => {
+        let data = await masters.aggregate([
+          {
+            $match: {
+              $or: [
+                {
+                  sort_id: "Sorting Request Sent To Warehouse",
+                  // type_taxanomy: "BOT",
+                },
+                {
+                  sort_id: "Assigned to sorting agent",
+                  // type_taxanomy: "BOT",
+                },
+              ],
+            },
+          },
+          {
+            $group: {
+              _id: "$issued_user_name",
+              tray: {
+                $push: "$$ROOT",
+              },
+            },
+          },
+        ]);
+        for (let y of data) {
+          y.tray[0].botTray = [];
+          y.tray[0].WhtTray = [];
+          for (let x of y.tray) {
+            if (x.type_taxanomy == "BOT") {
+              y.tray[0].botTray.push(x.code);
+            } else if (x.type_taxanomy == "WHT") {
+              y.tray[0].WhtTray.push(x.code);
+            }
+          }
+        }
+        if (data) {
+          resolve(data);
+        }
+      
+    });
+  },
+  getAssignedTrayForMerging: () => {
+    return new Promise(async (resolve, reject) => {
+      const tray = await masters
+        .find({
+          $or: [
+            {
+              sort_id: "Merge Request Sent To Wharehouse",
+              to_merge: { $ne: null },
+            },
+            {
+              sort_id: "Audit Done Merge Request Sent To Wharehouse",
+              to_merge: { $ne: null },
+            },
+            {
+              sort_id: "Ready to BQC Merge Request Sent To Wharehouse",
+              to_merge: { $ne: null },
+            },
+            {
+              sort_id: "Ready to RDL-Repair Merge Request Sent To Wharehouse",
+              to_merge: { $ne: null },
+            },
+            {
+              sort_id: "Ready to Audit Merge Request Sent To Wharehouse",
+              to_merge: { $ne: null },
+            },
+          ],
+        })
+        .catch((err) => reject(err));
+      resolve(tray);
     });
   },
   deletePartOrColor: (id, type, page) => {
@@ -3030,7 +3169,7 @@ module.exports = {
   },
   extraPartidAdd: () => {
     return new Promise(async (resolve, reject) => {
-      let updatePart=await partAndColor.deleteMany({type:"part-list"})
+      let updatePart = await partAndColor.deleteMany({ type: "part-list" });
       // const allPart = await partAndColor.find({ type: "part-list" });
       // let str = "SPN000000";
       // for (let x of allPart) {
@@ -3350,8 +3489,8 @@ module.exports = {
       resolve(arr);
     });
   },
-  rollBackTrayToAuditStage:()=>{
-    return new Promise(async(resolve,reject)=>{
+  rollBackTrayToAuditStage: () => {
+    return new Promise(async (resolve, reject) => {
       // const findTray=await masters.findOne({code:"CTB2008"})
       // for(let x of findTray.items ){
       //   const updateToWht=await masters.findOneAndUpdate({code:"WHT1696"},{
@@ -3370,117 +3509,154 @@ module.exports = {
 
       //   }
       // })
-      // resolve(updateCtx) 
-      const findRdlDoneTray=await delivery.find({rdl_fls_one_report:{$exists:true}})
-      for(let x of findRdlDoneTray){
+      // resolve(updateCtx)
+      const findRdlDoneTray = await delivery.find({
+        rdl_fls_one_report: { $exists: true },
+      });
+      for (let x of findRdlDoneTray) {
         if (typeof x.rdl_fls_one_report.username === "object") {
-         
-          let update=await delivery.updateOne({"uic_code.code":x.uic_code.code},{
-            $set:{
-              "rdl_fls_one_report.username":x.rdl_fls_one_report.username.name
+          let update = await delivery.updateOne(
+            { "uic_code.code": x.uic_code.code },
+            {
+              $set: {
+                "rdl_fls_one_report.username":
+                  x.rdl_fls_one_report.username.name,
+              },
             }
-          })
+          );
         }
       }
-      let findtray=await masters.find({"items.rdl_fls_report":{$exists:true}})
-          for(let y of findtray){
-            for(let units of y.items){
-              if(units?.rdl_fls_report?.selected_status == "Repair Required"){
-              let arr=[]
-              // console.log(units?.rdl_fls_report);
-              if(units.rdl_fls_report.part_list_1 !=="" && units.rdl_fls_report.part_list_1 !== undefined){
-                
-                let findId=await partAndColor.findOne({type:"part-list",name:units.rdl_fls_report.part_list_1})
-                let obj={
-                  part_name:units.rdl_fls_report.part_list_1,
-                  quantity:1
-                }
-                if(findId){
-                  obj.part_id=findId.part_code
-                }
-                else{
-                  obj.part_id="SPN000000"
-                }
-                console.log(obj);
-                arr.push(obj)
+      let findtray = await masters.find({
+        "items.rdl_fls_report": { $exists: true },
+      });
+      for (let y of findtray) {
+        for (let units of y.items) {
+          if (units?.rdl_fls_report?.selected_status == "Repair Required") {
+            let arr = [];
+            // console.log(units?.rdl_fls_report);
+            if (
+              units.rdl_fls_report.part_list_1 !== "" &&
+              units.rdl_fls_report.part_list_1 !== undefined
+            ) {
+              let findId = await partAndColor.findOne({
+                type: "part-list",
+                name: units.rdl_fls_report.part_list_1,
+              });
+              let obj = {
+                part_name: units.rdl_fls_report.part_list_1,
+                quantity: 1,
+              };
+              if (findId) {
+                obj.part_id = findId.part_code;
+              } else {
+                obj.part_id = "SPN000000";
               }
-              if(units.rdl_fls_report.part_list_2 !=="" && units.rdl_fls_report.part_list_2 !== undefined){
-                let findId=await partAndColor.findOne({type:"part-list",name:units.rdl_fls_report.part_list_2})
-                let obj={
-                  part_name:units.rdl_fls_report.part_list_2,
-                  quantity:1
-                }
-                if(findId){
-                  obj.part_id=findId.part_code
-                }
-                else{
-                  obj.part_id="SPN000000"
-                }
-                arr.push(obj)
+              console.log(obj);
+              arr.push(obj);
+            }
+            if (
+              units.rdl_fls_report.part_list_2 !== "" &&
+              units.rdl_fls_report.part_list_2 !== undefined
+            ) {
+              let findId = await partAndColor.findOne({
+                type: "part-list",
+                name: units.rdl_fls_report.part_list_2,
+              });
+              let obj = {
+                part_name: units.rdl_fls_report.part_list_2,
+                quantity: 1,
+              };
+              if (findId) {
+                obj.part_id = findId.part_code;
+              } else {
+                obj.part_id = "SPN000000";
               }
-              if(units.rdl_fls_report.part_list_3 !=="" && units.rdl_fls_report.part_list_3 !== undefined){
-                let findId=await partAndColor.findOne({type:"part-list",name:units.rdl_fls_report.part_list_3})
-                let obj={
-                  part_name:units.rdl_fls_report.part_list_3,
-                  quantity:1
-                }
-                if(findId){
-                  obj.part_id=findId.part_code
-                }
-                else{
-                  obj.part_id="SPN000000"
-                }
-                arr.push(obj)
+              arr.push(obj);
+            }
+            if (
+              units.rdl_fls_report.part_list_3 !== "" &&
+              units.rdl_fls_report.part_list_3 !== undefined
+            ) {
+              let findId = await partAndColor.findOne({
+                type: "part-list",
+                name: units.rdl_fls_report.part_list_3,
+              });
+              let obj = {
+                part_name: units.rdl_fls_report.part_list_3,
+                quantity: 1,
+              };
+              if (findId) {
+                obj.part_id = findId.part_code;
+              } else {
+                obj.part_id = "SPN000000";
               }
-              if(units.rdl_fls_report.part_list_4 !=="" && units.rdl_fls_report.part_list_4 !== undefined){
-                let findId=await partAndColor.findOne({type:"part-list",name:units.rdl_fls_report.part_list_4})
-                let obj={
-                  part_name:units.rdl_fls_report.part_list_4,
-                  quantity:1
-                }
-                if(findId){
-                  obj.part_id=findId.part_code
-                }
-                else{
-                  obj.part_id="SPN000000"
-                }
-                arr.push(obj)
+              arr.push(obj);
+            }
+            if (
+              units.rdl_fls_report.part_list_4 !== "" &&
+              units.rdl_fls_report.part_list_4 !== undefined
+            ) {
+              let findId = await partAndColor.findOne({
+                type: "part-list",
+                name: units.rdl_fls_report.part_list_4,
+              });
+              let obj = {
+                part_name: units.rdl_fls_report.part_list_4,
+                quantity: 1,
+              };
+              if (findId) {
+                obj.part_id = findId.part_code;
+              } else {
+                obj.part_id = "SPN000000";
               }
-              if(units.rdl_fls_report.part_list_5 !=="" && units.rdl_fls_report.part_list_5 !== undefined){
-                let findId=await partAndColor.findOne({type:"part-list",name:units.rdl_fls_report.part_list_4})
-                let obj={
-                  part_name:units.rdl_fls_report.part_list_4,
-                  quantity:1
-                }
-                if(findId){
-                  obj.part_id=findId.part_code
-                }
-                else{
-                  obj.part_id="SPN000000"
-                }
-                arr.push(obj)
+              arr.push(obj);
+            }
+            if (
+              units.rdl_fls_report.part_list_5 !== "" &&
+              units.rdl_fls_report.part_list_5 !== undefined
+            ) {
+              let findId = await partAndColor.findOne({
+                type: "part-list",
+                name: units.rdl_fls_report.part_list_4,
+              });
+              let obj = {
+                part_name: units.rdl_fls_report.part_list_4,
+                quantity: 1,
+              };
+              if (findId) {
+                obj.part_id = findId.part_code;
+              } else {
+                obj.part_id = "SPN000000";
               }
-                if(units.rdl_fls_report.partRequired == undefined){
-                  let update=await masters.updateOne({ items: { $elemMatch: { uic: units.uic } },},{
-                    $set:{
-                      "items.$.rdl_fls_report.partRequired":arr
-                    }
-                  })
+              arr.push(obj);
+            }
+            if (units.rdl_fls_report.partRequired == undefined) {
+              let update = await masters.updateOne(
+                { items: { $elemMatch: { uic: units.uic } } },
+                {
+                  $set: {
+                    "items.$.rdl_fls_report.partRequired": arr,
+                  },
                 }
-              }
-              
-              if(typeof units.rdl_fls_report?.username === "object"){
-                let update=await masters.updateOne({ items: { $elemMatch: { uic: units.uic } },},{
-                  $set:{
-                    "items.$.rdl_fls_report.username":units.rdl_fls_report.username.name
-                  }
-                })
-
-              }
+              );
             }
           }
-      resolve("done")
-    })
+
+          if (typeof units.rdl_fls_report?.username === "object") {
+            let update = await masters.updateOne(
+              { items: { $elemMatch: { uic: units.uic } } },
+              {
+                $set: {
+                  "items.$.rdl_fls_report.username":
+                    units.rdl_fls_report.username.name,
+                },
+              }
+            );
+          }
+        }
+      }
+      resolve("done");
+    });
   },
   fixBaggingIssueWithAwbn: () => {
     return new Promise(async (resolve, reject) => {
