@@ -768,13 +768,11 @@ router.post("/trayIdGenrate", async (req, res, next) => {
             res.status(200).json({
               data: obj.WHT,
             });
-          }
-          else if (type == "SPT") {
+          } else if (type == "SPT") {
             res.status(200).json({
               data: obj.SPT,
             });
-          }
-          else if (type == "RPT") {
+          } else if (type == "RPT") {
             res.status(200).json({
               data: obj.RPT,
             });
@@ -891,13 +889,13 @@ router.post("/bulkValidationTray", async (req, res, next) => {
     let data = await superAdminController.bulkValidationTray(req.body);
     if (data.status == true) {
       res.status(200).json({
-        dupId:data.dup,
+        dupId: data.dup,
         message: "Successfully Validated",
       });
     } else {
       res.status(202).json({
         data: data.data,
-        dupId:data.dup,
+        dupId: data.dup,
         message: "Please Check Errors",
       });
     }
@@ -1057,14 +1055,11 @@ router.post("/createMasters", async (req, res, next) => {
                 obj.MMT = obj.MMT + 1;
               } else if (type_taxanomy == "WHT") {
                 obj.WHT = obj.WHT + 1;
-              } 
-              else if (type_taxanomy == "SPT") {
+              } else if (type_taxanomy == "SPT") {
                 obj.SPT = obj.SPT + 1;
-              }
-              else if (type_taxanomy == "RPT") {
+              } else if (type_taxanomy == "RPT") {
                 obj.RPT = obj.RPT + 1;
-              } 
-              else {
+              } else {
                 obj[type_taxanomy + tray_grade] =
                   obj[type_taxanomy + tray_grade] + 1;
               }
@@ -1617,13 +1612,13 @@ router.post("/bulkvalidationForPart", async (req, res, next) => {
     );
     if (data.status == true) {
       res.status(200).json({
-        dupId:data.dup,
+        dupId: data.dup,
         message: "Successfully Validated",
       });
     } else {
       res.status(202).json({
         data: data.err,
-        dupId:data.dup,
+        dupId: data.dup,
         message: "Please Check Errors",
       });
     }
@@ -2113,24 +2108,105 @@ router.post("/vendorMaster/one/:vendorId", async (req, res, next) => {
   }
 });
 /*-------------------------------ADMIN FORCEFULL VALIDATION --------------------------------------*/
-// CHECK CURRENT TRAY STATUS 
-router.post("/tray/checkStatus",async(req,res,next)=>{
+// CHECK CURRENT TRAY STATUS
+router.post("/tray/checkStatus", async (req, res, next) => {
   try {
-     const tray=await superAdminController.checkTrayStatus(req.body)
-     if(tray.status == 1){
+    const tray = await superAdminController.checkTrayStatus(req.body);
+    if (tray.status == 1) {
       res.status(200).json({
-        message:"Successfully Validated"
-      })
-     }
-     else{
+        message: "Successfully Validated",
+      });
+    } else {
       res.status(202).json({
-        message:"Failed please check selected tray"
-      })
-     }
+        message: "Failed please check selected tray",
+      });
+    }
   } catch (error) {
-    next(error)
+    next(error);
   }
-})
+});
+/*---------------------------------TRAY REASSING FUNCTIONALITY -----------------------------------------*/
+// ASSIGNED TRAY
+router.post("/tray/assigned", async (req, res, next) => {
+  try {
+    const { trayType, sort_id } = req.body;
+    const tray = await superAdminController.getAssignedTray(trayType, sort_id);
+    if (tray) {
+      res.status(200).json({
+        data: tray,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
+// ASSIGNED TO MERGING TRAY
+router.post("/tray/merge/assigned", async (req, res, next) => {
+  try {
+    // const { trayType, sort_id } = req.body;
+    const tray = await superAdminController.getAssignedTrayForMerging();
+    if (tray) {
+      res.status(200).json({
+        data: tray,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+// REASSIGN FOR MERGING
+/* MMT TRAY MERGE REQUEST SEND TO WAREHOUSE */
+router.post("/tray/reassign/merge", async (req, res, next) => {
+  try {
+    const { sort_agent, fromTray, toTray } = req.body;
+    let data = await superAdminController.reassignForMerge(
+      sort_agent,
+      fromTray,
+      toTray
+    );
+    if (data.status === 1) {
+      res.status(200).json({
+        message: "Request Successfully Sent to Warehouse",
+      });
+    } else {
+      res.status(202).json({
+        message: "Failed Please tray again..",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+//ASSIGNED BAG  to BOT
+router.post("/bagAssigned/bot", async (req, res, next) => {
+  try {
+    // const { trayType, sort_id } = req.body;
+    const bag = await superAdminController.bagAssignedToBot();
+    if (bag) {
+      res.status(200).json({
+        data: bag,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+//ASSIGNED TO SORTING BOT TO WHT 
+router.post("/tray/assignedToSorting/botToWh", async (req, res, next) => {
+  try {
+    // const { trayType, sort_id } = req.body;
+    const tray = await superAdminController.getAssignedTrayForSortingBotToWht();
+    if (tray) {
+      res.status(200).json({
+        data: tray,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
 
 /***********************************************EXTRA  SECTION*********************************************************** */
 
