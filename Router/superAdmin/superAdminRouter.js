@@ -1825,6 +1825,7 @@ router.post("/partlist/manageStock/bulkValidation", async (req, res, next) => {
     const data = await superAdminController.partListManageBulkValidation(
       req.body
     );
+    console.log(data);
     if (data.status == true) {
       res.status(200).json({
         message: "Successfully Validated",

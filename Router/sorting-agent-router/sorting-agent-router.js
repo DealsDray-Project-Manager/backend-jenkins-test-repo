@@ -346,4 +346,126 @@ router.post("/sorting/ctx/assignedTray/:username", async (req, res, next) => {
     next(error);
   }
 });
+
+/*-----------------------------------WHT TO RP SORTING -----------------------------------*/
+router.post(
+  "/sorting/wht-to-rp/assignedTray/:username/:trayType",
+  async (req, res, next) => {
+    try {
+      console.log(req.params);
+      const { username, trayType } = req.params;
+      let data = await sortingAgentController.sortingGetAssignedTrayForWhtToRp(
+        username,
+        trayType,
+        trayType
+      );
+
+      if (data) {
+        res.status(200).json({
+          data: data,
+        });
+      }
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+// START SORTING PAGE
+router.post("/sorting/wht-to-rp/:trayId/:username", async (req, res, next) => {
+  try {
+    const { trayId, username } = req.params;
+    let data = await sortingAgentController.sortingForWhtToRpStartPage(
+      trayId,
+      username
+    );
+    if (data.status == 1) {
+      res.status(200).json({
+        data: data.tray,
+        rpTray:data.rpTray
+      });
+    } else if (data.status == 2) {
+      res.status(202).json({
+        message: "Sorry you can't access this data",
+      });
+    } else {
+      res.status(202).json({
+        message: "Tray not found",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
+// UIC SCAN FOR WHT TO RP 
+router.post("/whtToRp/itemTransferUicScan", async (req, res, next) => {
+  try {
+    let data = await sortingAgentController.whtToRpItemScan(req.body);
+    if (data.status === 1) {
+      res.status(200).json({
+        data: data.data,
+        message: "Valid UIC",
+      });
+    } else if (data.status === 2) {
+      res.status(202).json({
+        message: "Invalid UIC",
+      });
+    } else if (data.status == 3) {
+      res.status(202).json({
+        message: "Item does not exists in the tray",
+      });
+    } else if (data.status == 4) {
+      res.status(202).json({
+        message: "Item Already added",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+// WHT TO RP ITEM SEGGRIGATION
+
+router.post("/whtToRp/itemTransfer", async (req, res, next) => {
+  try {
+    const { rpTray, whtTray } = req.body;
+    let data = await sortingAgentController.whtToRpItemTransfer(req.body);
+    if (data.status == 1) {
+      res.status(200).json({
+        message: `Item successfully transfer to - ${rpTray}`,
+      });
+    } else if (data.status == 2) {
+      res.status(200).json({
+        message: `This item not move keep it in the ${whtTray} `,
+      });
+    } else if (data.status == 3) {
+      res.status(200).json({
+        message: `This item  Already Added`,
+      });
+    } else {
+      res.status(202).json({
+        message: "Item Transfer failed",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+// WHT TO RP SORTING DONE CLOSE THE TRAY
+router.post("/whtToRp/closeTray", async (req, res, next) => {
+  try {
+    let data = await sortingAgentController.whtToTRpSortingDoneCloseTray(req.body);
+
+    if (data.status === 1) {
+      res.status(200).json({
+        message: "Successfully Sent to Warehouse",
+      });
+    } else {
+      res.status(202).json({
+        message: "Updation not completed please try again...",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
 module.exports = router;

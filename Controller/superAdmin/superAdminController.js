@@ -20,15 +20,16 @@ const {
 const moment = require("moment");
 const elasticsearch = require("../../Elastic-search/elastic");
 
-const IISDOMAIN = "https://prexo-v8-3-adminapi.dealsdray.com/user/profile/";
+const IISDOMAIN = "https://prexo-v8-4-dev-api.dealsdray.com/user/profile/";
 const IISDOMAINPRDT =
-  "https://prexo-v8-3-adminapi.dealsdray.com/product/image/";
+  "https://prexo-v8-4-dev-api.dealsdray.com/product/image/";
 
 /************************************************************************************************** */
 
 /* 
 
 @ SUPER ADMIN CONTROLLER FETCH DATA FROM MONGODB DATA BASE PREXO AND MAKE CHANGES ON DB 
+
 
 */
 
@@ -2916,9 +2917,8 @@ module.exports = {
           if (addStockValue > 0 || isNaN(addStockValue)) {
           } else {
             let check = checkPartId.avl_stock - Math.abs(x.add_stock);
-            console.log(check);
             if (check < 0) {
-              updateStock.push(x.add_stock);
+              updateStock.push(x.add_stock?.toString());
               err["update_stock_check"] = updateStock;
             }
           }

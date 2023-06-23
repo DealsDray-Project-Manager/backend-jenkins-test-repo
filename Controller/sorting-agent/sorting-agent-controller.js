@@ -239,7 +239,7 @@ module.exports = {
           $set: {
             sort_id: "Closed By Sorting Agent",
             closed_time_sorting_agent: Date.now(),
-            "track_tray.sorting_agent_close_bot_wht":Date.now()
+            "track_tray.sorting_agent_close_bot_wht": Date.now(),
           },
         }
       );
@@ -259,7 +259,7 @@ module.exports = {
                   $set: {
                     sort_id: "Closed By Sorting Agent",
                     closed_time_sorting_agent: Date.now(),
-                    "track_tray.sorting_agent_close_bot_wht":Date.now(),
+                    "track_tray.sorting_agent_close_bot_wht": Date.now(),
                     actual_items: [],
                   },
                 }
@@ -277,7 +277,7 @@ module.exports = {
               $set: {
                 sort_id: "Closed By Sorting Agent",
                 closed_time_sorting_agent: Date.now(),
-                "track_tray.sorting_agent_close_bot_wht":Date.now(),
+                "track_tray.sorting_agent_close_bot_wht": Date.now(),
                 actual_items: [],
               },
             }
@@ -414,7 +414,7 @@ module.exports = {
                   $set: {
                     tray_location: "Sales-Sorting",
                     stx_tray_id: mmtTrayData.toTray,
-                    tray_type:"ST",
+                    tray_type: "ST",
                     updated_at: Date.now(),
                   },
                 },
@@ -452,7 +452,6 @@ module.exports = {
                     tray_location: "Merging",
                     tray_id: mmtTrayData.toTray,
                     updated_at: Date.now(),
-
                   },
                 },
                 {
@@ -486,7 +485,7 @@ module.exports = {
             $set: {
               sort_id: "Audit Done Return from Merging",
               closed_time_sorting_agent: Date.now(),
-              "track_tray.merging_done_close_sorting":Date.now(),
+              "track_tray.merging_done_close_sorting": Date.now(),
               actual_items: [],
             },
           }
@@ -498,7 +497,7 @@ module.exports = {
               $set: {
                 sort_id: "Audit Done Return from Merging",
                 closed_time_sorting_agent: Date.now(),
-                "track_tray.merging_done_close_sorting":Date.now(),
+                "track_tray.merging_done_close_sorting": Date.now(),
                 actual_items: [],
               },
             }
@@ -518,7 +517,7 @@ module.exports = {
             $set: {
               sort_id: "Ready to BQC Merging Done",
               closed_time_sorting_agent: Date.now(),
-              "track_tray.merging_done_close_sorting":Date.now(),
+              "track_tray.merging_done_close_sorting": Date.now(),
               actual_items: [],
             },
           }
@@ -530,7 +529,7 @@ module.exports = {
               $set: {
                 sort_id: "Ready to BQC Merging Done",
                 closed_time_sorting_agent: Date.now(),
-                "track_tray.merging_done_close_sorting":Date.now(),
+                "track_tray.merging_done_close_sorting": Date.now(),
                 actual_items: [],
               },
             }
@@ -550,7 +549,7 @@ module.exports = {
             $set: {
               sort_id: "Ready to Audit Merging Done",
               closed_time_sorting_agent: Date.now(),
-              "track_tray.merging_done_close_sorting":Date.now(),
+              "track_tray.merging_done_close_sorting": Date.now(),
               actual_items: [],
             },
           }
@@ -562,7 +561,7 @@ module.exports = {
               $set: {
                 sort_id: "Ready to Audit Merging Done",
                 closed_time_sorting_agent: Date.now(),
-                "track_tray.merging_done_close_sorting":Date.now(),
+                "track_tray.merging_done_close_sorting": Date.now(),
                 actual_items: [],
               },
             }
@@ -582,7 +581,7 @@ module.exports = {
             $set: {
               sort_id: "Ready to RDL-Repair Merging Done",
               closed_time_sorting_agent: Date.now(),
-              "track_tray.merging_done_close_sorting":Date.now(),
+              "track_tray.merging_done_close_sorting": Date.now(),
               actual_items: [],
             },
           }
@@ -594,7 +593,7 @@ module.exports = {
               $set: {
                 sort_id: "Ready to RDL-Repair Merging Done",
                 closed_time_sorting_agent: Date.now(),
-                "track_tray.merging_done_close_sorting":Date.now(),
+                "track_tray.merging_done_close_sorting": Date.now(),
                 actual_items: [],
               },
             }
@@ -614,7 +613,7 @@ module.exports = {
             $set: {
               sort_id: "Ctx to Stx Sorting Done",
               closed_time_sorting_agent: Date.now(),
-              "track_tray.sorting_agent_close_bot_wht":Date.now(),
+              "track_tray.sorting_agent_close_bot_wht": Date.now(),
               actual_items: [],
             },
           }
@@ -626,7 +625,7 @@ module.exports = {
               $set: {
                 sort_id: "Ctx to Stx Sorting Done",
                 closed_time_sorting_agent: Date.now(),
-                "track_tray.sorting_agent_close_bot_wht":Date.now(),
+                "track_tray.sorting_agent_close_bot_wht": Date.now(),
                 actual_items: [],
               },
             }
@@ -646,7 +645,7 @@ module.exports = {
             $set: {
               sort_id: "Merging Done",
               closed_time_sorting_agent: Date.now(),
-              "track_tray.merging_done_close_sorting":Date.now(),
+              "track_tray.merging_done_close_sorting": Date.now(),
               actual_items: [],
             },
           }
@@ -658,7 +657,7 @@ module.exports = {
               $set: {
                 sort_id: "Merging Done",
                 closed_time_sorting_agent: Date.now(),
-                "track_tray.merging_done_close_sorting":Date.now(),
+                "track_tray.merging_done_close_sorting": Date.now(),
                 actual_items: [],
               },
             }
@@ -764,11 +763,13 @@ module.exports = {
   },
   pickupItemTrasfer: (itemData) => {
     return new Promise(async (resolve, reject) => {
-      let checkAlreadyAdded=await masters.findOne({code:itemData.fromTray,"actual_items.uic":itemData.item.uic})
-      if(checkAlreadyAdded){
-        resolve({status:3})
-      }
-      else{
+      let checkAlreadyAdded = await masters.findOne({
+        code: itemData.fromTray,
+        "actual_items.uic": itemData.item.uic,
+      });
+      if (checkAlreadyAdded) {
+        resolve({ status: 3 });
+      } else {
         if (
           itemData.item.pickup_toTray == undefined ||
           itemData.item.pickup_toTray == "" ||
@@ -824,7 +825,7 @@ module.exports = {
           // let updateElasticSearch = await Elasticsearch.uicCodeGen(
           //   updateDelivery
           // );
-  
+
           if (updateDelivery.modifiedCount !== 0) {
             resolve({ status: 1 });
           } else {
@@ -942,6 +943,237 @@ module.exports = {
         to_merge: { $ne: null },
       });
       resolve(data);
+    });
+  },
+  sortingGetAssignedTrayForWhtToRp: (user_name, trayType) => {
+    console.log(user_name);
+    return new Promise(async (resolve, reject) => {
+      let data = await masters.find({
+        issued_user_name: user_name,
+        sort_id: "Issued to sorting (Wht to rp)",
+        type_taxanomy: trayType,
+      });
+      resolve(data);
+    });
+  },
+  sortingForWhtToRpStartPage: (trayId, username) => {
+    return new Promise(async (resolve, reject) => {
+      const getTray = await masters.findOne({ code: trayId });
+      if (getTray) {
+        if (getTray.issued_user_name == username) {
+          if (getTray.sort_id == "Issued to sorting (Wht to rp)") {
+            const rpTray = await masters.findOne({ code: getTray.rp_tray });
+            if (rpTray) {
+              if (rpTray.sort_id == "Issued to sorting (Wht to rp)") {
+                resolve({ status: 1, tray: getTray, rpTray: rpTray });
+              } else {
+                resolve({ status: 3 });
+              }
+            } else {
+              resolve({ status: 3 });
+            }
+          } else {
+            resolve({ status: 2 });
+          }
+        } else {
+          resolve({ status: 2 });
+        }
+      } else {
+        resolve({ status3 });
+      }
+    });
+  },
+  whtToRpItemScan: (uicData) => {
+    return new Promise(async (resolve, reject) => {
+      let itemPresent = await delivery.findOne({
+        "uic_code.code": uicData.uic,
+      });
+      if (itemPresent) {
+        let checkItemPresentIntray = await masters.findOne({
+          code: uicData.whtTray,
+          items: { $elemMatch: { uic: uicData.uic } },
+        });
+        if (checkItemPresentIntray) {
+          let alreadyAdded = await masters.findOne({
+            $or: [
+              {
+                code: uicData.whtTray,
+                actual_items: { $elemMatch: { uic: uicData.uic } },
+              },
+              {
+                code: uicData.rpTray,
+                items: { $elemMatch: { uic: uicData.uic } },
+              },
+            ],
+          });
+          let obj;
+
+          if (alreadyAdded == null) {
+            for (let x of checkItemPresentIntray?.items) {
+              if (x.uic == uicData.uic) {
+                obj = x;
+                break;
+              }
+            }
+            resolve({ status: 1, data: obj });
+          } else {
+            resolve({ status: 4 });
+          }
+        } else {
+          resolve({ status: 3 });
+        }
+      } else {
+        resolve({ status: 2 });
+      }
+    });
+  },
+  whtToRpItemTransfer: (itemData) => {
+    return new Promise(async (resolve, reject) => {
+      let checkAlreadyAdded = await masters.findOne({
+        code: itemData.fromTray,
+        "actual_items.uic": itemData.item.uic,
+      });
+      if (checkAlreadyAdded) {
+        resolve({ status: 3 });
+      } else {
+        if (
+          itemData.item.rp_tray == undefined ||
+          itemData.item.rp_tray == "" ||
+          itemData.item.rp_tray == null
+        ) {
+          let updateData = await masters.updateOne(
+            { code: itemData.whtTray },
+            {
+              $push: {
+                actual_items: itemData.item,
+              },
+            }
+          );
+          if (updateData.modifiedCount != 0) {
+            resolve({ status: 2 });
+          } else {
+            resolve({ status: 0 });
+          }
+        } else {
+          let updateData = await masters.updateOne(
+            { code: itemData.whtTray },
+            {
+              $pull: {
+                items: {
+                  uic: itemData.item.uic,
+                },
+              },
+            }
+          );
+          itemData.item.rp_tray = null;
+          let itemTransfer = await masters.updateOne(
+            {
+              code: itemData.rpTray,
+            },
+            {
+              $push: {
+                items: itemData.item,
+              },
+            }
+          );
+          let updateDelivery = await delivery.findOneAndUpdate(
+            { "uic_code.code": itemData.item.uic },
+            {
+              $set: {
+                rp_tray: itemData.toTray,
+                updated_at: Date.now(),
+              },
+            },
+            {
+              new: true,
+              projection: { _id: 0 },
+            }
+          );
+          if (updateDelivery.modifiedCount !== 0) {
+            resolve({ status: 1 });
+          } else {
+            resolve({ status: 0 });
+          }
+        }
+      }
+    });
+  },
+  whtToTRpSortingDoneCloseTray: (trayDetails) => {
+    console.log(trayDetails);
+    return new Promise(async (resolve, reject) => {
+      let data;
+      let rpTray
+      if (trayDetails.type == "RPT" && trayDetails.screen !== "Starting - page") {
+        data = await masters.findOneAndUpdate(
+          { code: trayDetails.rpTray },
+          {
+            $set: {
+              sort_id: "Sorting done (Wht to rp)",
+              temp_array: [],
+              closed_date_agent: Date.now(),
+            },
+          }
+        );
+      } else if(trayDetails.type == "RPT" && trayDetails.screen == "Starting - page") {
+        rpTray = await masters.findOneAndUpdate(
+          { code: trayDetails.rpTray },
+          {
+            $set: {
+              sort_id: "Sorting done (Wht to rp)",
+              temp_array: [],
+              closed_date_agent: Date.now(),
+            },
+          }
+        );
+        data = await masters.findOneAndUpdate(
+          { code: trayDetails.whtTray },
+          {
+            $set: {
+              sort_id: "Sorting done (Wht to rp)",
+              temp_array: [],
+              actual_items: [],
+              closed_date_agent: Date.now(),
+            },
+          }
+        );
+      }
+      else{
+        data = await masters.findOneAndUpdate(
+          { code: trayDetails.whtTray },
+          {
+            $set: {
+              sort_id: "Sorting done (Wht to rp)",
+              temp_array: [],
+              actual_items: [],
+              closed_date_agent: Date.now(),
+            },
+          }
+        );
+      }
+      if (data) {
+        let updateDelivery;
+        const concatenatedArray = data.items.concat(rpTray.items);
+        for (let x of concatenatedArray) {
+          updateDelivery = await delivery.findOneAndUpdate(
+            { "uic_code.code": x.uic },
+            {
+              $set: {
+                wht_to_rp_sorting_done: Date.now(),
+                tray_status: "Sorting done (Wht to rp)",
+                tray_location: "Warehouse",
+                updated_at: Date.now(),
+              },
+            }
+          );
+        }
+        if (updateDelivery) {
+          resolve({ status: 1 });
+        } else {
+          resolve({ status: 0 });
+        }
+      } else {
+        resolve({ status: 0 });
+      }
     });
   },
 };

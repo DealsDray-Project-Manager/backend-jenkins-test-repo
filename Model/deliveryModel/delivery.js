@@ -264,6 +264,24 @@ const deliverySchema = mongoose.Schema({
   item_moved_to_billed_bin_done_username:{
     type:String
   },
+  issued_to_wht_to_rp:{
+    type:Date
+  },
+  wht_to_rp_sorting_agent:{
+    type:String
+  },
+  rp_tray:{
+    type:String
+  },
+  wht_to_rp_sorting_done:{
+    type:Date
+  },
+  wht_to_rp_sorting_done_received:{
+    type:Date
+  },
+  wht_to_rp_sorting_done_wh_closed:{
+    type:Date
+  }
 
 });
 

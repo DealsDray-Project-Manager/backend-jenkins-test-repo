@@ -791,6 +791,7 @@ router.post(
         sortId,
         location
       );
+      console.log(data);
       if (data.status == 1) {
         res.status(200).json({
           data: data.data,
@@ -1165,7 +1166,7 @@ router.post("/recieved-from-bqc", async (req, res, next) => {
         message: "Successfully Received",
       });
     }
-    if (data.status == 3) {
+   else if (data.status == 3) {
       res.status(202).json({
         message: "Please Enter Valid Count",
       });
@@ -2499,6 +2500,102 @@ router.post("/billedBin/report/:location", async (req, res, next) => {
     if (data) {
       res.status(200).json({
         data: data,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
+/*-----------------------------------------WHT TO RP SORTING ----------------------------------------*/
+
+// GET RP TRAY
+router.post("/whtToRp/requests/:location", async (req, res, next) => {
+  try {
+    const { location } = req.params;
+    const data = await warehouseInController.whtToRpRequests(location);
+    console.log(data);
+    if (data) {
+      res.status(200).json({
+        data: data,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
+// GET WHT TRAY
+router.post("/whtToRp/whtTray", async (req, res, next) => {
+  try {
+    const { whtTray, location } = req.body;
+    const data = await warehouseInController.whtToRpWhtTrayScan(
+      location,
+      whtTray
+    );
+    console.log(data);
+    if (data) {
+      res.status(200).json({
+        data: data,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+// ISSUED TO SORTING
+router.post("/whtToRp/issueToAgent", async (req, res, next) => {
+  try {
+    const { rpTray, whtTray } = req.body;
+    const data = await warehouseInController.whtToRpIssueToAgent(
+      rpTray,
+      whtTray
+    );
+    if (data.status == 1) {
+      res.status(200).json({
+        message: "Successfully Issued",
+      });
+    } else {
+      res.status(202).json({
+        message: "Failed please tray again...",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+// RETURN FROM SORTING WHT TO RP
+router.post("/returnFromWhtToRpSorting/:location", async (req, res, next) => {
+  try {
+    let data = await warehouseInController.getReturnFromSortingWhtToRp(
+      req.params.location
+    );
+
+    if (data) {
+      res.status(200).json({
+        data: data,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+// RECEIVED FROM SORTING WHT TO RP
+router.post("/recieved-from-sortingWhtToRp", async (req, res, next) => {
+  try {
+    let data = await warehouseInController.receivedFromWhtToRpSorting(req.body);
+    if (data.status == 1) {
+      res.status(200).json({
+        message: "Successfully Received",
+      });
+    }
+    if (data.status == 3) {
+      res.status(202).json({
+        message: "Please Enter Valid Count",
+      });
+    } else {
+      res.status(202).json({
+        message: "Failed",
       });
     }
   } catch (error) {
