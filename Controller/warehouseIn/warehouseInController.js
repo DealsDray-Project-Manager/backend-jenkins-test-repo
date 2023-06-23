@@ -2103,47 +2103,68 @@ module.exports = {
           ],
         });
       } else if (status == "wht-merge") {
-        data = await masters.find({
-          $or: [
-            {
-              cpc: location,
-              prefix: "tray-master",
-              type_taxanomy: "WHT",
-              sort_id: "Inuse",
-              items: {
-                $ne: [],
-                $exists: true,
+        data = await masters.find(
+          {
+            $or: [
+              {
+                cpc: location,
+                prefix: "tray-master",
+                type_taxanomy: "WHT",
+                sort_id: "Inuse",
+                items: {
+                  $ne: [],
+                  $exists: true,
+                },
               },
-            },
-            {
-              cpc: location,
-              prefix: "tray-master",
-              type_taxanomy: "WHT",
-              sort_id: "Audit Done Closed By Warehouse",
-            },
-            {
-              cpc: location,
-              prefix: "tray-master",
-              type_taxanomy: "WHT",
-              $expr: { $ne: [{ $size: "$items" }, { $toInt: "$limit" }] },
-              sort_id: "Ready to RDL-Repair",
-            },
-            {
-              cpc: location,
-              prefix: "tray-master",
-              type_taxanomy: "WHT",
-              $expr: { $ne: [{ $size: "$items" }, { $toInt: "$limit" }] },
-              sort_id: "Ready to BQC",
-            },
-            {
-              cpc: location,
-              prefix: "tray-master",
-              type_taxanomy: "WHT",
-              $expr: { $ne: [{ $size: "$items" }, { $toInt: "$limit" }] },
-              sort_id: "Ready to Audit",
-            },
-          ],
-        });
+              {
+                cpc: location,
+                prefix: "tray-master",
+                type_taxanomy: "WHT",
+                sort_id: "Audit Done Closed By Warehouse",
+              },
+              {
+                cpc: location,
+                prefix: "tray-master",
+                type_taxanomy: "WHT",
+                $expr: {
+                  $and: [
+                    { $ne: [{ $ifNull: ["$items", null] }, null] },
+                    { $ne: [{ $size: "$items" }, { $toInt: "$limit" }] },
+                  ],
+                },
+                sort_id: "Ready to RDL-Repair",
+              },
+              {
+                cpc: location,
+                prefix: "tray-master",
+                type_taxanomy: "WHT",
+                $expr: {
+                  $and: [
+                    { $ne: [{ $ifNull: ["$items", null] }, null] },
+                    { $ne: [{ $size: "$items" }, { $toInt: "$limit" }] },
+                  ],
+                },
+                sort_id: "Ready to BQC",
+              },
+              {
+                cpc: location,
+                prefix: "tray-master",
+                type_taxanomy: "WHT",
+                $expr: {
+                  $and: [
+                    { $ne: [{ $ifNull: ["$items", null] }, null] },
+                    { $ne: [{ $size: "$items" }, { $toInt: "$limit" }] },
+                  ],
+                },
+                sort_id: "Ready to Audit",
+              },
+            ],
+          },
+          {
+            temp_array: 0,
+            wht_tray: 0,
+          }
+        );
       } else {
         data = await masters.find({
           $or: [

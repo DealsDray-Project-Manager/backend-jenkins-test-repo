@@ -1267,7 +1267,7 @@ module.exports = {
   getMasters: (type) => {
     return new Promise(async (resolve, reject) => {
       let data = await masters
-        .find({ prefix: type.master_type })
+        .find({ prefix: type.master_type },{items:0,actual_items:0,temp_array:0,wht_tray:0})
         .sort({ code: 1 })
         .collation({ locale: "en_US", numericOrdering: true });
       resolve(data);

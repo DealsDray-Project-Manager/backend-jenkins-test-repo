@@ -195,12 +195,9 @@ router.post(
   async (req, res, next) => {
     try {
       let { location, page, size } = req.params;
-
       page++;
-
       const limit = parseInt(size);
       const skip = (page - 1) * size;
-
       let data = await misUserController.getDeliveredOrders(
         location,
         limit,
