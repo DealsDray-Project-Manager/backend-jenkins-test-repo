@@ -332,21 +332,36 @@ module.exports = {
             cpc: location,
             prefix: "tray-master",
             type_taxanomy: "WHT",
-            $expr: { $and: [{ $ne: [{ $ifNull: ["$items", null] }, null] }, { $ne: [{ $size: "$items" }, { $toInt: "$limit" }] }] },
+            $expr: {
+              $and: [
+                { $ne: [{ $ifNull: ["$items", null] }, null] },
+                { $ne: [{ $size: "$items" }, { $toInt: "$limit" }] },
+              ],
+            },
             sort_id: "Ready to RDL-Repair",
           },
           {
             cpc: location,
             prefix: "tray-master",
             type_taxanomy: "WHT",
-            $expr: { $and: [{ $ne: [{ $ifNull: ["$items", null] }, null] }, { $ne: [{ $size: "$items" }, { $toInt: "$limit" }] }] },
+            $expr: {
+              $and: [
+                { $ne: [{ $ifNull: ["$items", null] }, null] },
+                { $ne: [{ $size: "$items" }, { $toInt: "$limit" }] },
+              ],
+            },
             sort_id: "Ready to BQC",
           },
           {
             cpc: location,
             prefix: "tray-master",
             type_taxanomy: "WHT",
-            $expr: { $and: [{ $ne: [{ $ifNull: ["$items", null] }, null] }, { $ne: [{ $size: "$items" }, { $toInt: "$limit" }] }] },
+            $expr: {
+              $and: [
+                { $ne: [{ $ifNull: ["$items", null] }, null] },
+                { $ne: [{ $size: "$items" }, { $toInt: "$limit" }] },
+              ],
+            },
             sort_id: "Ready to Audit",
           },
         ],
@@ -2868,6 +2883,7 @@ module.exports = {
               brand: brand,
               model: model,
               cpc: location,
+              items: { $ne: [] },
               sort_id: getFromtState.sort_id,
               code: { $ne: fromTray },
             })

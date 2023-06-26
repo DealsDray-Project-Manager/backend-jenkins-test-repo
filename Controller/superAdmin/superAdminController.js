@@ -21,8 +21,7 @@ const moment = require("moment");
 const elasticsearch = require("../../Elastic-search/elastic");
 
 const IISDOMAIN = "https://prexo-v8-4-dev-api.dealsdray.com/user/profile/";
-const IISDOMAINPRDT =
-  "https://prexo-v8-4-dev-api.dealsdray.com/product/image/";
+const IISDOMAINPRDT = "https://prexo-v8-4-dev-api.dealsdray.com/product/image/";
 
 /************************************************************************************************** */
 
@@ -38,13 +37,13 @@ module.exports = {
 
   doLogin: (loginData) => {
     return new Promise(async (resolve, reject) => {
-      let data = await admin.findOne({
-        user_name: loginData.user_name,
-        password: loginData.password,
-      });
-      if (data) {
-        resolve({ status: 1, data: data });
-      } else {
+      // let data = await admin.findOne({
+      //   user_name: loginData.user_name,
+      //   password: loginData.password,
+      // });
+      // if (data) {
+      //   resolve({ status: 1, data: data });
+      // } else {
         let userGet = await user.findOne({
           user_name: loginData.user_name,
           password: loginData.password,
@@ -62,6 +61,25 @@ module.exports = {
           }
         }
         resolve({ status: 2 });
+      // }
+    });
+  },
+  updateJwtTokeInDb: (id, jwtToken) => {
+    return new Promise(async (resolve, reject) => {
+      const updateTheData = await user
+        .findOneAndUpdate(
+          { _id: id },
+          {
+            $set: {
+              jwt_token: jwtToken,
+            },
+          }
+        )
+        .catch((err) => reject(err));
+      if (updateTheData) {
+        resolve({ status: 1 });
+      } else {
+        resolve({ status: 0 });
       }
     });
   },
@@ -136,13 +154,18 @@ module.exports = {
   },
 
   /*--------------------------------CHECK USER ACTIVE OR NOT-----------------------------------*/
-  checkUserStatus: (userName) => {
+  checkUserStatus: (userName,jwt) => {
     return new Promise(async (resolve, reject) => {
       let data = await user.findOne({ user_name: userName, status: "Active" });
       if (data) {
-        resolve(data);
+        if(data.jwt_token == jwt){
+          resolve({data:data,status:1});
+        }
+        else{
+          resolve({status:2})
+        }
       } else {
-        resolve();
+        resolve({status:3});
       }
     });
   },
@@ -471,6 +494,7 @@ module.exports = {
       let allBrands = await brands
         .find({})
         .sort({ brand_name: 1 })
+        .collation({ locale: "en_US", numericOrdering: true })
         .catch((err) => reject(err));
       if (allBrands) {
         resolve(allBrands);
@@ -642,7 +666,10 @@ module.exports = {
 
   getBrandBasedPrdouct: (brandName) => {
     return new Promise(async (resolve, reject) => {
-      let allProducts = await products.find({ brand_name: brandName });
+      let allProducts = await products
+        .find({ brand_name: brandName })
+        .sort({ model_name: 1 })
+        .collation({ locale: "en_US", numericOrdering: true });
       resolve(allProducts);
     });
   },
@@ -1267,7 +1294,10 @@ module.exports = {
   getMasters: (type) => {
     return new Promise(async (resolve, reject) => {
       let data = await masters
-        .find({ prefix: type.master_type },{items:0,actual_items:0,temp_array:0,wht_tray:0})
+        .find(
+          { prefix: type.master_type },
+          { items: 0, actual_items: 0, temp_array: 0, wht_tray: 0 }
+        )
         .sort({ code: 1 })
         .collation({ locale: "en_US", numericOrdering: true });
       resolve(data);
@@ -2113,82 +2143,33 @@ module.exports = {
   extraReAudit: () => {
     return new Promise(async (resolve, reject) => {
       let arr = [
-        "WHT1010",
-        "WHT1014",
-        "WHT1021",
-        "WHT1035",
-        "WHT1036",
-        "WHT1037",
-        "WHT1039",
-        "WHT1043",
-        "WHT1050",
-        "WHT1051",
-        "WHT1054",
-        "WHT1057",
-        "WHT1084",
-        "WHT1100",
-        "WHT1106",
-        "WHT1125",
-        "WHT1135",
-        "WHT1141",
-        "WHT1149",
-        "WHT1205",
-        "WHT1210",
-        "WHT1213",
-        "WHT1218",
-        "WHT1243",
-        "WHT1252",
-        "WHT1255",
-        "WHT1257",
-        "WHT1264",
-        "WHT1269",
-        "WHT1275",
-        "WHT1280",
-        "WHT1286",
-        "WHT1299",
-        "WHT1301",
-        "WHT1302",
-        "WHT1305",
-        "WHT1312",
-        "WHT1322",
-        "WHT1323",
-        "WHT1338",
-        "WHT1340",
-        "WHT1348",
-        "WHT1398",
-        "WHT1453",
-        "WHT1481",
-        "WHT1489",
-        "WHT1526",
-        "WHT1532",
-        "WHT1006",
-        "WHT1052",
-        "WHT1111",
-        "WHT1116",
-        "WHT1131",
-        "WHT1226",
-        "WHT1234",
-        "WHT1240",
-        "WHT1249",
-        "WHT1307",
-        "WHT1331",
-        "WHT1342",
-        "WHT1405",
-        "WHT1425",
-        "WHT1428",
-        "WHT1430",
-        "WHT1434",
-        "WHT1483",
-        "WHT1485",
-        "WHT1488",
-        "WHT1490",
-        "WHT1491",
-        "WHT1531",
-        "WHT1538",
-        "WHT1386",
-        "WHT1034",
+        "WHT1602",
+        "WHT1603",
+        "WHT1604",
+        "WHT1605",
+        "WHT1606",
+        "WHT1609",
+        "WHT1610",
+        "WHT1611",
+        "WHT1612",
+        "WHT1613",
+        "WHT1614",
+        "WHT1615",
+        "WHT1616",
+        "WHT1617",
+        "WHT1618",
+        "WHT1619",
+        "WHT1620",
+        "WHT1621",
+        "WHT1622",
+        "WHT1623",
+        "WHT1624",
+        "WHT1625",
+        "WHT1626",
+        "WHT1279",
+        "WHT1790",
+        "WHT1825",
       ];
-
       for (let x of arr) {
         let data = await masters.updateOne(
           {
@@ -3040,47 +3021,46 @@ module.exports = {
       resolve(bag);
     });
   },
-  getAssignedTrayForSortingBotToWht:() => {
+  getAssignedTrayForSortingBotToWht: () => {
     return new Promise(async (resolve, reject) => {
-        let data = await masters.aggregate([
-          {
-            $match: {
-              $or: [
-                {
-                  sort_id: "Sorting Request Sent To Warehouse",
-                  // type_taxanomy: "BOT",
-                },
-                {
-                  sort_id: "Assigned to sorting agent",
-                  // type_taxanomy: "BOT",
-                },
-              ],
-            },
-          },
-          {
-            $group: {
-              _id: "$issued_user_name",
-              tray: {
-                $push: "$$ROOT",
+      let data = await masters.aggregate([
+        {
+          $match: {
+            $or: [
+              {
+                sort_id: "Sorting Request Sent To Warehouse",
+                // type_taxanomy: "BOT",
               },
+              {
+                sort_id: "Assigned to sorting agent",
+                // type_taxanomy: "BOT",
+              },
+            ],
+          },
+        },
+        {
+          $group: {
+            _id: "$issued_user_name",
+            tray: {
+              $push: "$$ROOT",
             },
           },
-        ]);
-        for (let y of data) {
-          y.tray[0].botTray = [];
-          y.tray[0].WhtTray = [];
-          for (let x of y.tray) {
-            if (x.type_taxanomy == "BOT") {
-              y.tray[0].botTray.push(x.code);
-            } else if (x.type_taxanomy == "WHT") {
-              y.tray[0].WhtTray.push(x.code);
-            }
+        },
+      ]);
+      for (let y of data) {
+        y.tray[0].botTray = [];
+        y.tray[0].WhtTray = [];
+        for (let x of y.tray) {
+          if (x.type_taxanomy == "BOT") {
+            y.tray[0].botTray.push(x.code);
+          } else if (x.type_taxanomy == "WHT") {
+            y.tray[0].WhtTray.push(x.code);
           }
         }
-        if (data) {
-          resolve(data);
-        }
-      
+      }
+      if (data) {
+        resolve(data);
+      }
     });
   },
   getAssignedTrayForMerging: () => {

@@ -1578,19 +1578,35 @@ module.exports = {
 
   trayCloseBot: (trayData) => {
     return new Promise(async (resolve, reject) => {
-      let data = await masters.findOneAndUpdate(
-        { code: trayData.trayId },
-        {
-          $set: {
-            sort_id: "Closed By Warehouse",
-            closed_time_wharehouse_from_bot: new Date(
-              new Date().toISOString().split("T")[0]
-            ),
-            actual_items: [],
-            "track_tray.bot_done_tray_close_wh": Date.now(),
-          },
-        }
-      );
+      let getTray = await masters.findOne({ code: trayData.trayId });
+      let data;
+      if (getTray?.items?.length !== 0) {
+        data = await masters.findOneAndUpdate(
+          { code: trayData.trayId },
+          {
+            $set: {
+              sort_id: "Closed By Warehouse",
+              closed_time_wharehouse_from_bot: new Date(
+                new Date().toISOString().split("T")[0]
+              ),
+              actual_items: [],
+              "track_tray.bot_done_tray_close_wh": Date.now(),
+            },
+          }
+        );
+      } else {
+        data = await masters.findOneAndUpdate(
+          { code: trayData.trayId },
+          {
+            $set: {
+              sort_id: "Open",
+              track_tray: {},
+              closed_time_wharehouse: Date.now(),
+              issued_user_name: null,
+            },
+          }
+        );
+      }
       if (data) {
         for (let x of data.items) {
           let getItemId = await delivery.findOneAndUpdate(
@@ -2399,39 +2415,48 @@ module.exports = {
 
   /*------------------CHECK UIC CODE---------------------------*/
 
-  checkUicCode: (uic, trayId) => {
-    return new Promise(async (resolve, reject) => {
-      let data = await delivery.findOne({ "uic_code.code": uic });
-      if (data) {
-        let checkExitThisTray = await masters.findOne({
-          code: trayId,
-          items: { $elemMatch: { uic: uic } },
-        });
-        if (checkExitThisTray) {
-          let alreadyAdded = await masters.findOne({
-            code: trayId,
-            "actual_items.uic": uic,
-          });
-          if (alreadyAdded) {
-            resolve({ status: 3 });
-          } else {
-            let obj;
-            for (let x of checkExitThisTray.items) {
-              if (x.uic == uic) {
-                obj = x;
-              }
-            }
-            resolve({ status: 4, data: obj });
-          }
-        } else {
-          resolve({ status: 2 });
-        }
-      } else {
-        resolve({ status: 1 });
+  checkUicCode: async (uic, trayId) => {
+    try {
+      let deliveryData = await delivery.findOne({ "uic_code.code": uic });
+      if (!deliveryData) {
+        return { status: 1 }; // UIC not found in delivery collection
       }
-    });
-  },
 
+      let trayData = await masters.findOne({
+        code: trayId,
+        items: { $elemMatch: { uic: uic } },
+      });
+      if (!trayData) {
+        return { status: 2 }; // UIC not found in tray items
+      }
+
+      let alreadyAdded = await masters.findOne({
+        code: trayId,
+        "actual_items.uic": uic,
+      });
+      if (alreadyAdded) {
+        return { status: 3 }; // UIC already added to the tray
+      }
+
+      let obj = trayData.items.find((item) => item.uic === uic);
+
+      let updateResult = await masters.updateOne(
+        { code: trayId },
+        {
+          $push: {
+            actual_items: obj,
+          },
+        }
+      );
+      if (updateResult.modifiedCount !== 1) {
+        throw new Error("Failed to update tray with UIC");
+      }
+
+      return { status: 4, data: obj }; // UIC found in tray items
+    } catch (error) {
+      throw new Error(error);
+    }
+  },
   /*------------------ADD ACTUAL ITEM CONFIRMATION---------------------------*/
 
   addWhtActual: (trayItemData) => {
@@ -3049,7 +3074,10 @@ module.exports = {
               },
             }
           );
-        } else if (trayData?.length == trayData?.limit) {
+        } else if (
+          trayData?.length == trayData?.limit &&
+          trayData.length !== 0
+        ) {
           stage = "Ready to Transfer to Sales";
           data = await masters.findOneAndUpdate(
             { code: trayData.trayId },
