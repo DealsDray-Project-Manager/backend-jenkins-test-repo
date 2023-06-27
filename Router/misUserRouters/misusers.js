@@ -1196,8 +1196,8 @@ router.post("/pickup/items/:type/:location", async (req, res, next) => {
 router.post("/pickup/dateFilter", async (req, res, next) => {
   try {
     console.log(req.body);
-    let { type, location,fromDate,toDate } = req.body;
-    const data = await misUserController.pickUpDateWiseFilter(type, location,fromDate,toDate);
+    let { type, location,selectedStatus } = req.body;
+    const data = await misUserController.pickUpDateWiseFilter(type, location,selectedStatus);
 
     if (data.items.length !== 0) {
       res.status(200).json({
