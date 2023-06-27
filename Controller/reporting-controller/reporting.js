@@ -933,15 +933,37 @@ module.exports = {
             cpc: location,
             prefix: "tray-master",
             type_taxanomy: "WHT",
-            $expr: { $ne: [{ $size: "$items" }, { $toInt: "$limit" }] },
+            $expr: {
+              $and: [
+                { $ne: [{ $ifNull: ["$items", null] }, null] },
+                { $ne: [{ $size: "$items" }, { $toInt: "$limit" }] },
+              ],
+            },
             sort_id: "Ready to RDL-Repair",
           },
           {
             cpc: location,
             prefix: "tray-master",
             type_taxanomy: "WHT",
-            $expr: { $ne: [{ $size: "$items" }, { $toInt: "$limit" }] },
+            $expr: {
+              $and: [
+                { $ne: [{ $ifNull: ["$items", null] }, null] },
+                { $ne: [{ $size: "$items" }, { $toInt: "$limit" }] },
+              ],
+            },
             sort_id: "Ready to BQC",
+          },
+          {
+            cpc: location,
+            prefix: "tray-master",
+            type_taxanomy: "WHT",
+            $expr: {
+              $and: [
+                { $ne: [{ $ifNull: ["$items", null] }, null] },
+                { $ne: [{ $size: "$items" }, { $toInt: "$limit" }] },
+              ],
+            },
+            sort_id: "Ready to Audit",
           },
         ],
       });
@@ -969,14 +991,24 @@ module.exports = {
                 cpc: location,
                 prefix: "tray-master",
                 type_taxanomy: "WHT",
-                $expr: { $ne: [{ $size: "$items" }, { $toInt: "$limit" }] },
+                $expr: {
+                  $and: [
+                    { $ne: [{ $ifNull: ["$items", null] }, null] },
+                    { $ne: [{ $size: "$items" }, { $toInt: "$limit" }] },
+                  ],
+                },
                 sort_id: "Ready to RDL-Repair",
               },
               {
                 cpc: location,
                 prefix: "tray-master",
                 type_taxanomy: "WHT",
-                $expr: { $ne: [{ $size: "$items" }, { $toInt: "$limit" }] },
+                $expr: {
+                  $and: [
+                    { $ne: [{ $ifNull: ["$items", null] }, null] },
+                    { $ne: [{ $size: "$items" }, { $toInt: "$limit" }] },
+                  ],
+                },
                 sort_id: "Ready to BQC",
               },
             ],
