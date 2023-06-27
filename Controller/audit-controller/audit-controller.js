@@ -249,7 +249,7 @@ module.exports = {
                       wht_tray: findTray.code,
                       tray_location: "Audit",
                       updated_at: Date.now(),
-                      tray_type: "CT",
+                      tray_type: "WHT",
                       audit_report: obj,
                       updated_at: Date.now(),
                     },
