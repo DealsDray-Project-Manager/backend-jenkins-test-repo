@@ -1198,7 +1198,6 @@ router.post("/pickup/seeAll/:type/:location", async (req, res, next) => {
       type,
       location
     );
-    console.log(data.items.length);
     if (data.items.length !== 0) {
       res.status(200).json({
         data: data.items,

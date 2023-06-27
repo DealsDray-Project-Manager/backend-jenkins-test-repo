@@ -2846,39 +2846,39 @@ module.exports = {
 
   /*-----------------RETURN FROM SORTING WAREHOUSE WILL CHECK UIC CODE --------------------------*/
 
-  checkUicCodeSortingDone: (uic, trayId) => {
-    return new Promise(async (resolve, reject) => {
-      let data = await delivery.findOne({ "uic_code.code": uic });
-      if (data) {
-        let checkExitThisTray = await masters.findOne({
-          code: trayId,
-          items: { $elemMatch: { uic: uic } },
-        });
-        if (checkExitThisTray) {
-          let alreadyAdded = await masters.findOne({
-            code: trayId,
-            "actual_items.uic": uic,
-          });
-          if (alreadyAdded) {
-            resolve({ status: 3 });
-          } else {
-            let obj;
-            for (let x of checkExitThisTray.items) {
-              if (x.uic == uic) {
-                obj = x;
-              }
-            }
-            resolve({ status: 4, data: obj });
-          }
-        } else {
-          resolve({ status: 2 });
-        }
-      } else {
-        resolve({ status: 1 });
+  checkUicCodeSortingDone: async (uic, trayId) => {
+    try {
+      const deliveryData = await delivery.findOne({ "uic_code.code": uic });
+      if (!deliveryData) {
+        return { status: 1 }; // UIC not found in delivery collection
       }
-    });
-  },
 
+      const trayData = await masters.findOne({
+        code: trayId,
+        items: { $elemMatch: { uic: uic } },
+      });
+      if (!trayData) {
+        return { status: 2 }; // UIC not found in tray items
+      }
+
+      const alreadyAdded = await masters.exists({
+        code: trayId,
+        "actual_items.uic": uic,
+      });
+      if (alreadyAdded) {
+        return { status: 3 }; // UIC already added to the tray
+      }
+
+      const obj = trayData.items.find((item) => item.uic === uic);
+      if (!obj) {
+        return { status: 2 }; // UIC not found in tray items
+      }
+
+      return { status: 4, data: obj };
+    } catch (error) {
+      throw new Error(error);
+    }
+  },
   /*-----------------CHARGE DONE VERIFY ACTUAL ITEM--------------------------*/
 
   chargingDoneActualItemPut: (trayItemData) => {
