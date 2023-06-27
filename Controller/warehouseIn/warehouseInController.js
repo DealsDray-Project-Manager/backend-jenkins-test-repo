@@ -2383,37 +2383,47 @@ module.exports = {
 
   /*------------------CHECK UIC CODE---------------------------*/
 
-  checkUicCode: (uic, trayId) => {
-    return new Promise(async (resolve, reject) => {
-      let data = await delivery.findOne({ "uic_code.code": uic });
-      if (data) {
-        let checkExitThisTray = await masters.findOne({
-          code: trayId,
-          items: { $elemMatch: { uic: uic } },
-        });
-        if (checkExitThisTray) {
-          let alreadyAdded = await masters.findOne({
-            code: trayId,
-            "actual_items.uic": uic,
-          });
-          if (alreadyAdded) {
-            resolve({ status: 3 });
-          } else {
-            let obj;
-            for (let x of checkExitThisTray.items) {
-              if (x.uic == uic) {
-                obj = x;
-              }
-            }
-            resolve({ status: 4, data: obj });
-          }
-        } else {
-          resolve({ status: 2 });
-        }
-      } else {
-        resolve({ status: 1 });
+  checkUicCode: async (uic, trayId) => {
+    try {
+      let deliveryData = await delivery.findOne({ "uic_code.code": uic });
+      if (!deliveryData) {
+        return { status: 1 }; // UIC not found in delivery collection
       }
-    });
+
+      let trayData = await masters.findOne({
+        code: trayId,
+        items: { $elemMatch: { uic: uic } },
+      });
+      if (!trayData) {
+        return { status: 2 }; // UIC not found in tray items
+      }
+
+      let alreadyAdded = await masters.findOne({
+        code: trayId,
+        "actual_items.uic": uic,
+      });
+      if (alreadyAdded) {
+        return { status: 3 }; // UIC already added to the tray
+      }
+
+      let obj = trayData.items.find((item) => item.uic === uic);
+
+      let updateResult = await masters.updateOne(
+        { code: trayId },
+        {
+          $push: {
+            actual_items: obj,
+          },
+        }
+      );
+      if (updateResult.modifiedCount !== 1) {
+        throw new Error("Failed to update tray with UIC");
+      }
+
+      return { status: 4, data: obj }; // UIC found in tray items
+    } catch (error) {
+      throw new Error(error);
+    }
   },
 
   /*------------------ADD ACTUAL ITEM CONFIRMATION---------------------------*/
