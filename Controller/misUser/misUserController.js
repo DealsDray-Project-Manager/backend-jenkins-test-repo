@@ -168,6 +168,7 @@ module.exports = {
       count.badOrders = await badOrders.count({ partner_shop: location });
       count.delivered = await orders.count({
         partner_shop: location,
+        order_status: "NEW",
         delivery_status: "Delivered",
       });
       count.notDelivered = await orders.count({
@@ -183,14 +184,17 @@ module.exports = {
       count.uicGented = await delivery.count({
         partner_shop: location,
         uic_status: "Created",
+        temp_delivery_status: { $ne: "Pending" },
       });
       count.uicDownloaded = await delivery.count({
         partner_shop: location,
         uic_status: "Printed",
+        temp_delivery_status: { $ne: "Pending" },
       });
       count.uicNotGenrated = await delivery.count({
         partner_shop: location,
         uic_status: "Pending",
+        temp_delivery_status: { $ne: "Pending" },
       });
       count.assigBot = await masters.count({
         $or: [
@@ -325,21 +329,36 @@ module.exports = {
             cpc: location,
             prefix: "tray-master",
             type_taxanomy: "WHT",
-            $expr: { $ne: [{ $size: "$items" }, { $toInt: "$limit" }] },
+            $expr: {
+              $and: [
+                { $ne: [{ $ifNull: ["$items", null] }, null] },
+                { $ne: [{ $size: "$items" }, { $toInt: "$limit" }] },
+              ],
+            },
             sort_id: "Ready to RDL-Repair",
           },
           {
             cpc: location,
             prefix: "tray-master",
             type_taxanomy: "WHT",
-            $expr: { $ne: [{ $size: "$items" }, { $toInt: "$limit" }] },
+            $expr: {
+              $and: [
+                { $ne: [{ $ifNull: ["$items", null] }, null] },
+                { $ne: [{ $size: "$items" }, { $toInt: "$limit" }] },
+              ],
+            },
             sort_id: "Ready to BQC",
           },
           {
             cpc: location,
             prefix: "tray-master",
             type_taxanomy: "WHT",
-            $expr: { $ne: [{ $size: "$items" }, { $toInt: "$limit" }] },
+            $expr: {
+              $and: [
+                { $ne: [{ $ifNull: ["$items", null] }, null] },
+                { $ne: [{ $size: "$items" }, { $toInt: "$limit" }] },
+              ],
+            },
             sort_id: "Ready to Audit",
           },
         ],
@@ -352,6 +371,7 @@ module.exports = {
       });
       count.trackItem = await orders.count({
         partner_shop: location,
+        order_status: "NEW",
         delivery_status: "Delivered",
       });
       if (count) {
