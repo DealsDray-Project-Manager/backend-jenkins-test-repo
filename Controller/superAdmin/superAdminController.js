@@ -3040,47 +3040,46 @@ module.exports = {
       resolve(bag);
     });
   },
-  getAssignedTrayForSortingBotToWht:() => {
+  getAssignedTrayForSortingBotToWht: () => {
     return new Promise(async (resolve, reject) => {
-        let data = await masters.aggregate([
-          {
-            $match: {
-              $or: [
-                {
-                  sort_id: "Sorting Request Sent To Warehouse",
-                  // type_taxanomy: "BOT",
-                },
-                {
-                  sort_id: "Assigned to sorting agent",
-                  // type_taxanomy: "BOT",
-                },
-              ],
-            },
-          },
-          {
-            $group: {
-              _id: "$issued_user_name",
-              tray: {
-                $push: "$$ROOT",
+      let data = await masters.aggregate([
+        {
+          $match: {
+            $or: [
+              {
+                sort_id: "Sorting Request Sent To Warehouse",
+                // type_taxanomy: "BOT",
               },
+              {
+                sort_id: "Assigned to sorting agent",
+                // type_taxanomy: "BOT",
+              },
+            ],
+          },
+        },
+        {
+          $group: {
+            _id: "$issued_user_name",
+            tray: {
+              $push: "$$ROOT",
             },
           },
-        ]);
-        for (let y of data) {
-          y.tray[0].botTray = [];
-          y.tray[0].WhtTray = [];
-          for (let x of y.tray) {
-            if (x.type_taxanomy == "BOT") {
-              y.tray[0].botTray.push(x.code);
-            } else if (x.type_taxanomy == "WHT") {
-              y.tray[0].WhtTray.push(x.code);
-            }
+        },
+      ]);
+      for (let y of data) {
+        y.tray[0].botTray = [];
+        y.tray[0].WhtTray = [];
+        for (let x of y.tray) {
+          if (x.type_taxanomy == "BOT") {
+            y.tray[0].botTray.push(x.code);
+          } else if (x.type_taxanomy == "WHT") {
+            y.tray[0].WhtTray.push(x.code);
           }
         }
-        if (data) {
-          resolve(data);
-        }
-      
+      }
+      if (data) {
+        resolve(data);
+      }
     });
   },
   getAssignedTrayForMerging: () => {
@@ -3782,6 +3781,83 @@ module.exports = {
         }
       }
       resolve(getTrayZeroUnits);
+    });
+  },
+  extraWhClosedDateUpdation: () => {
+    return new Promise(async (resolve, reject) => {
+      // const BqcDoneUnits = await masters.find({ sort_id: "Ready to Audit" });
+      // for (let x of BqcDoneUnits) {
+      //   if (x?.track_tray?.audit_done_close_wh == undefined) {
+      //     let updateTray = await masters.findOneAndUpdate(
+      //       { code: x.code },
+      //       {
+      //         $set: {
+      //           "track_tray.bqc_done_close_by_wh": x.closed_time_wharehouse,
+      //         },
+      //       }
+      //     );
+      //   }
+      // }
+      // resolve(BqcDoneUnits);
+      // const BqcDoneUnits = await masters.find({ sort_id: "Ready to RDL" });
+      // for (let x of BqcDoneUnits) {
+      //   if (x?.track_tray?.audit_done_close_wh == undefined) {
+      //     let find=await delivery.findOne({"uic_code.code":x.items[0]?.uic})
+      //     if(find.audit_done_close == undefined){
+      //       let updateTray = await masters.findOneAndUpdate(
+      //         { code: x.code },
+      //         {
+      //           $set: {
+      //             "track_tray.audit_done_close_wh": x.closed_time_wharehouse,
+      //           },
+      //         }
+      //       );
+      //     }
+      //     else{
+      //       let updateTray = await masters.findOneAndUpdate(
+      //         { code: x.code },
+      //         {
+      //           $set: {
+      //             "track_tray.audit_done_close_wh": find.audit_done_close,
+      //           },
+      //         }
+      //       );
+      //     }
+      //   }
+      // }
+      // resolve(BqcDoneUnits);
+      const BqcDoneUnits = await masters.find({
+        sort_id: "Ready to RDL-Repair",
+      });
+      for (let x of BqcDoneUnits) {
+        if (x?.track_tray?.rdl_1_done_close_by_wh == undefined) {
+          let find = await delivery.findOne({
+            "uic_code.code": x.items[0]?.uic,
+          });
+
+          if (find.rdl_fls_done_closed_wh == undefined) {
+            let updateTray = await masters.findOneAndUpdate(
+              { code: x.code },
+              {
+                $set: {
+                  "track_tray.rdl_1_done_close_by_wh": x.closed_time_wharehouse,
+                },
+              }
+            );
+          } else {
+            let updateTray = await masters.findOneAndUpdate(
+              { code: x.code },
+              {
+                $set: {
+                  "track_tray.rdl_1_done_close_by_wh":
+                    find.rdl_fls_done_closed_wh,
+                },
+              }
+            );
+          }
+        }
+      }
+      resolve(BqcDoneUnits);
     });
   },
 };

@@ -3028,7 +3028,10 @@ module.exports = {
               },
             }
           );
-        } else if (trayData?.length == trayData?.limit) {
+        } else if (
+          trayData?.length == trayData?.limit &&
+          trayData?.length !== 0
+        ) {
           stage = "Ready to Transfer to Sales";
           data = await masters.findOneAndUpdate(
             { code: trayData.trayId },

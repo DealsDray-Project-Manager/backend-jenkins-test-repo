@@ -171,4 +171,36 @@ module.exports = {
       }
     });
   },
+  checkUicCode: (uic, trayId) => {
+    return new Promise(async (resolve, reject) => {
+      let data = await delivery.findOne({ "uic_code.code": uic });
+      if (data) {
+        let checkExitThisTray = await masters.findOne({
+          code: trayId,
+          items: { $elemMatch: { uic: uic } },
+        });
+        if (checkExitThisTray) {
+          let alreadyAdded = await masters.findOne({
+            code: trayId,
+            "actual_items.uic": uic,
+          });
+          if (alreadyAdded) {
+            resolve({ status: 3 });
+          } else {
+            let obj;
+            for (let x of checkExitThisTray.items) {
+              if (x.uic == uic) {
+                obj = x;
+              }
+            }
+            resolve({ status: 4, data: obj });
+          }
+        } else {
+          resolve({ status: 2 });
+        }
+      } else {
+        resolve({ status: 1 });
+      }
+    });
+  },
 };

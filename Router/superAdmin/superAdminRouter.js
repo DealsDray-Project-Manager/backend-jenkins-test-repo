@@ -2192,7 +2192,7 @@ router.post("/bagAssigned/bot", async (req, res, next) => {
     next(error);
   }
 });
-//ASSIGNED TO SORTING BOT TO WHT 
+//ASSIGNED TO SORTING BOT TO WHT
 router.post("/tray/assignedToSorting/botToWh", async (req, res, next) => {
   try {
     // const { trayType, sort_id } = req.body;
@@ -2206,7 +2206,6 @@ router.post("/tray/assignedToSorting/botToWh", async (req, res, next) => {
     next(error);
   }
 });
-
 
 /***********************************************EXTRA  SECTION*********************************************************** */
 
@@ -2472,6 +2471,22 @@ router.post("/extra/addBotTray", async (req, res, next) => {
 router.post("/extra/rollBackTray", async (req, res, next) => {
   try {
     let data = await superAdminController.rollBackTrayToAuditStage();
+    if (data) {
+      res.status(200).json({
+        message: "done",
+      });
+    } else {
+      res.status(202).json({
+        message: "Failed",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+router.post("/extra/whClosedDateUpdation", async (req, res, next) => {
+  try {
+    let data = await superAdminController.extraWhClosedDateUpdation();
     if (data) {
       res.status(200).json({
         message: "done",

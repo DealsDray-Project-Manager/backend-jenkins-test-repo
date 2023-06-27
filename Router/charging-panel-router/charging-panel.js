@@ -81,5 +81,33 @@ router.post("/charging-done", async (req, res, next) => {
     next(error);
   }
 });
+
+
+router.post("/check-uic", async (req, res, next) => {
+  try {
+    const { trayId, uic } = req.body;
+    let data = await chargingController.checkUicCode(uic, trayId);
+    if (data.status == 1) {
+      res.status(202).json({
+        message: "UIC Does Not Exists",
+      });
+    } else if (data.status == 2) {
+      res.status(202).json({
+        message: "UIC Not Exists In This Tray",
+      });
+    } else if (data.status == 3) {
+      res.status(202).json({
+        message: "Already Added",
+      });
+    } else if (data.status == 4) {
+      res.status(200).json({
+        message: "Valid UIC",
+        data: data.data,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
 /************************************************************************************************************** */
 module.exports = router;
