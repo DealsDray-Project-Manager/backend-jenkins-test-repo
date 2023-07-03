@@ -3604,7 +3604,7 @@ module.exports = {
           {
             $match: {
               "items.rdl_fls_report.selected_status": { $in: selectedStatus },
-              sort_id: "Ready to RDL",
+              sort_id: "Ready to RDL-Repair",
               cpc: location,
             },
           },
