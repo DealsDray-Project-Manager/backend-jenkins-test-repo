@@ -71,7 +71,6 @@ module.exports = {
         })}] Blancoo task scheduler report`,
         html: htmlContent,
       };
-
       transporter.sendMail(mailOptions, (error, info) => {
         if (error) {
           console.log("Error occurred:", error.message);

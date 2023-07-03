@@ -67,6 +67,9 @@ const userSchema = mongoose.Schema({
   cpc_type: {
     type: String,
   },
+  jwt_token:{
+    type:String
+  }
 });
 const user = mongoose.model("users", userSchema);
 module.exports = {

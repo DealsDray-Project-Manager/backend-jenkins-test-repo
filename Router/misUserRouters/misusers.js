@@ -195,12 +195,9 @@ router.post(
   async (req, res, next) => {
     try {
       let { location, page, size } = req.params;
-
       page++;
-
       const limit = parseInt(size);
       const skip = (page - 1) * size;
-
       let data = await misUserController.getDeliveredOrders(
         location,
         limit,
@@ -1176,6 +1173,7 @@ router.post("/pickup/items/:type/:location", async (req, res, next) => {
     let { type, page, location } = req.params;
     const data = await misUserController.pickupPageItemView(type, location);
 
+    console.log(data.items.length);
     if (data.items.length !== 0) {
       res.status(200).json({
         data: data.items,
@@ -1223,7 +1221,6 @@ router.post("/pickup/seeAll/:type/:location", async (req, res, next) => {
       type,
       location
     );
-
     if (data.items.length !== 0) {
       res.status(200).json({
         data: data.items,
@@ -1689,4 +1686,119 @@ router.post("/sorting/ctxToStx/request/sendToWh", async (req, res, next) => {
     next(error);
   }
 });
+/*-----------------------------------ASSING TO RDL 2 AND WHT TO RP SORTING ------------------------*/
+// SCREEN LIST OF MUIC TO REPIRS
+router.post("/whToRp/muicList/repair/:location", async (req, res, next) => {
+  try {
+    const { location } = req.params;
+    let data = await misUserController.whtToRpMuicListToRepair(location);
+    if (data) {
+      res.status(200).json({
+        data: data,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+// ASSIGN FOR REPAIR AND SORTING
+router.post("/whToRpAssignForRepair", async (req, res, next) => {
+  try {
+    const { location, brand, model } = req.body;
+    let data = await misUserController.whtToRpMuicListToRepairAssignForRepair(
+      location,
+      brand,
+      model
+    );
+    if (data.status == 1) {
+      res.status(200).json({
+        data: data.findItem,
+      });
+    } else {
+      res.status(202).json({
+        message: "",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+//ASSIGN FOR REPAIR AND CHECK THE STOCK AVAILABILTY
+router.post("/assignForRepiar/stockCheck", async (req, res, next) => {
+  try {
+    const { partList, uic, isCheck, checked } = req.body;
+    let data = await misUserController.assignForRepairStockCheck(
+      partList,
+      uic,
+      isCheck,
+      checked
+    );
+    if (data.status == 1) {
+      res.status(200).json({
+        data: data.isCheck,
+      });
+    } else if (data.status == 0) {
+      res.status(202).json({
+        message: `${data.partid} - out of stock`,
+      });
+    } else if (data.status == 5) {
+      res.status(202).json({
+        message: "Part is not active state or not exists",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+// ASSIGN TO SORTING WHT TO RP
+router.post("/assignForRepiar/getTheRequrements", async (req, res, next) => {
+  try {
+    const { location, uicLength, brand, model ,isCheck} = req.body;
+    let data = await misUserController.assignForRepairSortingGetTheRequrements(
+      location,
+      uicLength,
+      brand,
+      model,
+      isCheck
+    );
+    if (data) {
+      res.status(200).json({
+        getSortingAgent: data.getSortingAgent,
+        getSpTray: data.getSpTray,
+        getRpTray: data.getRpTray,
+        spWhUser: data.spWhUser,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+// WHT TO RP SORTING ASSIGN
+router.post("/whtToRpSorting/assign", async (req, res, next) => {
+  try {
+    console.log(req.body);
+    const { spDetails, spTray, rpTray, spwhuser,sortingUser,selectedUic } = req.body;
+    let data = await misUserController.whtToRpSortingAssign(
+      spDetails,
+      spTray,
+      rpTray,
+      spwhuser,
+      sortingUser,
+      selectedUic
+    );
+    if (data.status == 1) {
+      res.status(200).json({
+       message:"Successfully Assigned"
+      });
+    }
+    else{
+      res.status(202).json({
+        message:"Not able to assign please try again..."
+       });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
 module.exports = router;

@@ -11,6 +11,9 @@ const { tempOrders } = require("../../Model/WhtUtility/tempOrder");
 const { tempDelivery } = require("../../Model/WhtUtility/tempDelivery");
 const { trayCategory } = require("../../Model/tray-category/tray-category");
 const moment = require("moment");
+const {
+  partAndColor,
+} = require("../../Model/Part-list-and-color/part-list-and-color");
 const elasticsearch = require("../../Elastic-search/elastic");
 /******************************************************************* */
 
@@ -875,6 +878,7 @@ module.exports = {
         {
           $match: {
             partner_shop: location,
+            order_status: "NEW",
             delivery_status: "Delivered",
           },
         },
@@ -898,6 +902,7 @@ module.exports = {
       ]);
       let count = await orders.count({
         partner_shop: location,
+        order_status: "NEW",
         delivery_status: "Delivered",
       });
       let check = await orders.find({
@@ -2316,6 +2321,7 @@ module.exports = {
           $match: {
             partner_shop: status.location,
             uic_status: status.status,
+            temp_delivery_status: { $ne: "Pending" },
           },
         },
         {
@@ -2339,6 +2345,7 @@ module.exports = {
       let count = await delivery.count({
         partner_shop: status.location,
         uic_status: status.status,
+        temp_delivery_status: { $ne: "Pending" },
       });
       resolve({ data: data, count: count });
     });
@@ -2876,6 +2883,7 @@ module.exports = {
               brand: brand,
               model: model,
               cpc: location,
+              items: { $ne: [] },
               sort_id: getFromtState.sort_id,
               code: { $ne: fromTray },
             })
@@ -2910,7 +2918,7 @@ module.exports = {
 
       if (whtTray.length !== 0) {
         for (let x of whtTray) {
-          if (parseInt(x.limit) > parseInt(x.items.length)) {
+          if (parseInt(x.limit) >= parseInt(x.items.length)) {
             arr.push(x);
           }
         }
@@ -3985,19 +3993,45 @@ module.exports = {
     return new Promise(async (resolve, reject) => {
       let sendtoRdlMis;
       for (let x of tray) {
-        sendtoRdlMis = await masters.findOneAndUpdate(
-          { code: x },
-          {
-            $set: {
-              sort_id: sortId,
-              actual_items: [],
-              issued_user_name: user_name,
-              from_merge: null,
-              to_merge: null,
-              requested_date: Date.now(),
-            },
+        if (sortId == "Send for RDL-2") {
+          sendtoRdlMis = await masters.findOneAndUpdate(
+            { code: x },
+            {
+              $set: {
+                sort_id: sortId,
+                actual_items: [],
+                issued_user_name: user_name,
+                from_merge: null,
+                to_merge: null,
+                requested_date: Date.now(),
+              },
+            }
+          );
+          if (sendtoRdlMis) {
+            const updateSp = await masters.findOneAndUpdate(
+              { code: sendtoRdlMis.sp_tray },
+              {
+                $set: {
+                  rdl_2_user_temp: user_name,
+                },
+              }
+            );
           }
-        );
+        } else {
+          sendtoRdlMis = await masters.findOneAndUpdate(
+            { code: x },
+            {
+              $set: {
+                sort_id: sortId,
+                actual_items: [],
+                issued_user_name: user_name,
+                from_merge: null,
+                to_merge: null,
+                requested_date: Date.now(),
+              },
+            }
+          );
+        }
       }
       if (sendtoRdlMis) {
         resolve({ status: true });
@@ -4018,12 +4052,25 @@ module.exports = {
   },
   getRdlDonetray: (location) => {
     return new Promise(async (resolve, reject) => {
-      let data = await masters.find({
-        sort_id: "Ready to RDL-Repair",
-        type_taxanomy: "WHT",
-        cpc: location,
-      });
+      let data = await masters.aggregate([
+        {
+          $match: {
+            sort_id: "Ready to RDL-Repair",
+            type_taxanomy: "RPT",
+            cpc: location,
+          },
+        },
+        {
+          $lookup: {
+            from: "masters",
+            localField: "sp_tray",
+            foreignField: "code",
+            as: "spTray",
+          },
+        },
+      ]);
       if (data) {
+        console.log(data);
         resolve(data);
       }
     });
@@ -4113,6 +4160,281 @@ module.exports = {
         }
       } else {
         resolve({ status: 3 });
+      }
+    });
+  },
+  whtToRpMuicListToRepair: (location) => {
+    return new Promise(async (resolve, reject) => {
+      const findItem = await masters.aggregate([
+        {
+          $match: {
+            "items.rdl_fls_report.selected_status": "Repair Required",
+            cpc: location,
+            sort_id: "Ready to RDL-Repair",
+          },
+        },
+        {
+          $unwind: "$items",
+        },
+        {
+          $match: {
+            "items.rdl_fls_report.selected_status": "Repair Required",
+          },
+        },
+        {
+          $group: {
+            _id: {
+              model: "$items.model_name",
+              brand: "$items.brand_name",
+              muic: "$items.muic",
+            },
+            count: { $sum: 1 },
+          },
+        },
+      ]);
+      resolve(findItem);
+    });
+  },
+  whtToRpMuicListToRepairAssignForRepair: (location, brand, model) => {
+    return new Promise(async (resolve, reject) => {
+      const findItem = await masters.aggregate([
+        {
+          $match: {
+            "items.rdl_fls_report.selected_status": "Repair Required",
+            cpc: location,
+            brand: brand,
+            model: model,
+            sort_id: "Ready to RDL-Repair",
+          },
+        },
+        {
+          $unwind: "$items",
+        },
+        {
+          $match: {
+            "items.rdl_fls_report.selected_status": "Repair Required",
+          },
+        },
+        {
+          $project: {
+            items: "$items",
+            closed_date_agent: "$closed_date_agent",
+            code: "$code",
+          },
+        },
+      ]);
+      if (findItem) {
+        console.log(findItem[0]);
+        resolve({ findItem: findItem, status: 1 });
+      } else {
+        resolve({ status: 2 });
+      }
+    });
+  },
+  assignForRepairStockCheck: (partId, uic, isCheck, checked) => {
+    return new Promise(async (resolve, reject) => {
+      let arr = [];
+      let flag = false;
+      for (let x of partId) {
+        if (!checked) {
+          isCheck = isCheck
+            .map((item) => {
+              let updated;
+              if (item?.partId === x?.part_id) {
+                updated = {
+                  ...item,
+                  uic: item?.uic.filter((uicData) => uicData !== uic),
+                  selected_qty: Number(item?.selected_qty) - 1,
+                  balance_stock: Number(item?.balance_stock) + 1,
+                };
+                flag = true;
+              }
+              if (item?.uic?.length === 1 && flag) {
+                flag = false;
+                return;
+              } else if (flag) {
+                flag = false;
+                return updated;
+              } else {
+                flag = false;
+                return item;
+              }
+            })
+            .filter((item) => item !== undefined);
+        } else {
+          const foundPart = isCheck?.find(
+            (item) => item?.partId === x?.part_id
+          );
+          if (foundPart) {
+            isCheck = isCheck.map((item) => {
+              if (item?.partId === x?.part_id) {
+                const updatedItem = {
+                  ...item,
+                  selected_qty: Number(item?.selected_qty) + 1,
+                  balance_stock: Number(item?.balance_stock) - 1,
+                };
+                updatedItem.uic.push(uic);
+                return updatedItem;
+              }
+              return item;
+            });
+          } else {
+            const checkQty = await partAndColor.findOne({
+              type: "part-list",
+              part_code: x.part_id,
+              status: "Active",
+            });
+            if (checkQty) {
+              let check = checkQty?.avl_stock - Math.abs(1);
+              if (check < 0) {
+                resolve({ status: 0, partid: x?.part_id });
+              } else {
+                let obj = {
+                  uic: [uic],
+                  partName: x?.part_name,
+                  partId: x?.part_id,
+                  avl_stock: checkQty?.avl_stock,
+                  selected_qty: "1",
+                  balance_stock: check,
+                  status: "Pending",
+                };
+                isCheck.push(obj);
+              }
+            } else {
+              resolve({ status: 5 });
+            }
+          }
+        }
+      }
+      resolve({ status: 1, isCheck });
+    });
+  },
+  assignForRepairSortingGetTheRequrements: (
+    location,
+    uicLength,
+    brand,
+    model,
+    isCheck
+  ) => {
+    return new Promise(async (resolve, reject) => {
+      const getSortingAgent = await user.find({
+        user_type: "Sorting Agent",
+        status: "Active",
+        cpc: location,
+      });
+      const spWhUser = await user.find({
+        user_type: "SP User",
+        status: "Active",
+        cpc: location,
+      });
+      const getRpTray = await masters.find({
+        prefix: "tray-master",
+        type_taxanomy: "RPT",
+        sort_id: "Open",
+        brand: brand,
+        model: model,
+        cpc: location,
+      });
+      const rpArr = [];
+      if (getRpTray.length !== 0) {
+        for (let rpt of getRpTray) {
+          console.log(rpt.limit);
+          console.log(uicLength);
+          if (parseInt(rpt.limit) >= uicLength) {
+            rpArr.push(rpt);
+          }
+        }
+      }
+      const getSpTray = await masters.find({
+        prefix: "tray-master",
+        type_taxanomy: "SPT",
+        sort_id: "Open",
+        cpc: location,
+      });
+      const spArr = [];
+      if (getSpTray.length !== 0) {
+        for (let spt of getSpTray) {
+          if (parseInt(spt.limit) >= parseInt(isCheck)) {
+            spArr.push(spt);
+          }
+        }
+      }
+      resolve({
+        getSpTray: spArr,
+        getRpTray: rpArr,
+        spWhUser: spWhUser,
+        getSortingAgent: getSortingAgent,
+      });
+    });
+  },
+  whtToRpSortingAssign: (
+    spDetails,
+    spTray,
+    rpTray,
+    spwhuser,
+    sortingUser,
+    selectedUic
+  ) => {
+    return new Promise(async (resolve, reject) => {
+      let whtTrayArr = [];
+      for (let uic of selectedUic) {
+        const updateItem = await masters.findOneAndUpdate(
+          {
+            "items.uic": uic,
+          },
+          {
+            $set: {
+              "items.$.rp_tray": rpTray,
+              rp_tray: rpTray,
+              requested_date: Date.now(),
+              issued_user_name: sortingUser,
+              sort_id: "Assigned to sorting (Wht to rp)",
+            },
+          }
+        );
+        if (updateItem) {
+          if (whtTrayArr.includes(updateItem.code) == false) {
+            whtTrayArr.push(updateItem.code);
+          }
+        }
+      }
+      if (whtTrayArr.length !== 0) {
+        const rpTrayUpdation = await masters.findOneAndUpdate(
+          { code: rpTray },
+          {
+            $set: {
+              issued_user_name: sortingUser,
+              requested_date: Date.now(),
+              wht_tray: whtTrayArr,
+              temp_array: selectedUic,
+              sp_tray: spTray,
+              sort_id: "Assigned to sorting (Wht to rp)",
+            },
+          }
+        );
+        if (rpTrayUpdation) {
+          const spTrayUpdation = await masters.findOneAndUpdate(
+            { code: spTray },
+            {
+              $set: {
+                issued_user_name: spwhuser,
+                requested_date: Date.now(),
+                items: spDetails,
+                sort_id: "Sent to sp warehouse",
+                rp_tray: rpTray,
+              },
+            }
+          );
+          if (spTrayUpdation) {
+            resolve({ status: 1 });
+          } else {
+            resolve({ status: 0 });
+          }
+        } else {
+          resolve({ status: 0 });
+        }
+      } else {
+        resolve({ status: 0 });
       }
     });
   },

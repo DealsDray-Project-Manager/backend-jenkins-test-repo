@@ -685,18 +685,34 @@ module.exports = {
         //   data.awbn_number,
         //   data.bag_id
         // );
-        let updateDelivery = await delivery.updateOne(
-          { tracking_id: data.awbn_number },
-          {
-            $set: {
-              bag_id: data.bag_id,
-              stockin_date: Date.now(),
-              stock_in_status: data.status,
-              updated_at: Date.now(),
-              old_item_details: data.old_item_details,
-            },
-          }
-        );
+        if (data.order_date !== null && data.order_date !== undefined) {
+          let updateDelivery = await delivery.updateOne(
+            { tracking_id: data.awbn_number },
+            {
+              $set: {
+                bag_id: data.bag_id,
+                stockin_date: Date.now(),
+                stock_in_status: data.status,
+                updated_at: Date.now(),
+                old_item_details: data.old_item_details,
+                order_date: data.order_date,
+              },
+            }
+          );
+        } else {
+          let updateDelivery = await delivery.updateOne(
+            { tracking_id: data.awbn_number },
+            {
+              $set: {
+                bag_id: data.bag_id,
+                stockin_date: Date.now(),
+                stock_in_status: data.status,
+                updated_at: Date.now(),
+                old_item_details: data.old_item_details,
+              },
+            }
+          );
+        }
       }
       if (res) {
         resolve(res);
@@ -1562,19 +1578,35 @@ module.exports = {
 
   trayCloseBot: (trayData) => {
     return new Promise(async (resolve, reject) => {
-      let data = await masters.findOneAndUpdate(
-        { code: trayData.trayId },
-        {
-          $set: {
-            sort_id: "Closed By Warehouse",
-            closed_time_wharehouse_from_bot: new Date(
-              new Date().toISOString().split("T")[0]
-            ),
-            actual_items: [],
-            "track_tray.bot_done_tray_close_wh": Date.now(),
-          },
-        }
-      );
+      let getTray = await masters.findOne({ code: trayData.trayId });
+      let data;
+      if (getTray?.items?.length !== 0) {
+        data = await masters.findOneAndUpdate(
+          { code: trayData.trayId },
+          {
+            $set: {
+              sort_id: "Closed By Warehouse",
+              closed_time_wharehouse_from_bot: new Date(
+                new Date().toISOString().split("T")[0]
+              ),
+              actual_items: [],
+              "track_tray.bot_done_tray_close_wh": Date.now(),
+            },
+          }
+        );
+      } else {
+        data = await masters.findOneAndUpdate(
+          { code: trayData.trayId },
+          {
+            $set: {
+              sort_id: "Open",
+              track_tray: {},
+              closed_time_wharehouse: Date.now(),
+              issued_user_name: null,
+            },
+          }
+        );
+      }
       if (data) {
         for (let x of data.items) {
           let getItemId = await delivery.findOneAndUpdate(
@@ -2149,6 +2181,68 @@ module.exports = {
             wht_tray: 0,
           }
         );
+        data = await masters.find(
+          {
+            $or: [
+              {
+                cpc: location,
+                prefix: "tray-master",
+                type_taxanomy: "WHT",
+                sort_id: "Inuse",
+                items: {
+                  $ne: [],
+                  $exists: true,
+                },
+              },
+              {
+                cpc: location,
+                prefix: "tray-master",
+                type_taxanomy: "WHT",
+                sort_id: "Audit Done Closed By Warehouse",
+              },
+              {
+                cpc: location,
+                prefix: "tray-master",
+                type_taxanomy: "WHT",
+                $expr: {
+                  $and: [
+                    { $ne: [{ $ifNull: ["$items", null] }, null] },
+                    { $ne: [{ $size: "$items" }, { $toInt: "$limit" }] },
+                  ],
+                },
+                sort_id: "Ready to RDL-Repair",
+              },
+              {
+                cpc: location,
+                prefix: "tray-master",
+                type_taxanomy: "WHT",
+                $expr: {
+                  $and: [
+                    { $ne: [{ $ifNull: ["$items", null] }, null] },
+                    { $ne: [{ $size: "$items" }, { $toInt: "$limit" }] },
+                  ],
+                },
+                sort_id: "Ready to BQC",
+              },
+              {
+                cpc: location,
+                prefix: "tray-master",
+                type_taxanomy: "WHT",
+                $expr: {
+                  $and: [
+                    { $ne: [{ $ifNull: ["$items", null] }, null] },
+                    { $ne: [{ $size: "$items" }, { $toInt: "$limit" }] },
+                  ],
+                },
+                sort_id: "Ready to Audit",
+              },
+            ],
+          },
+          {
+            temp_array: 0,
+            wht_tray: 0,
+          }
+        );
       } else {
         data = await masters.find({
           $or: [
@@ -2425,7 +2519,6 @@ module.exports = {
       throw new Error(error);
     }
   },
-
   /*------------------ADD ACTUAL ITEM CONFIRMATION---------------------------*/
 
   addWhtActual: (trayItemData) => {
@@ -2486,7 +2579,21 @@ module.exports = {
   issueToagentWht: (trayData) => {
     return new Promise(async (resolve, reject) => {
       let data;
-      if (trayData.sortId == "Send for BQC") {
+      if (trayData.sortId == "Ready to RDL-Repair") {
+        data = await masters.findOneAndUpdate(
+          { code: trayData.trayId },
+          {
+            $set: {
+              actual_items: [],
+              issued_user_name: trayData.username,
+              temp_array: [],
+              sort_id: "Issued to RDL-2",
+              assigned_date: Date.now(),
+              "track_tray.issued_to_rdl_two": Date.now(),
+            },
+          }
+        );
+      } else if (trayData.sortId == "Send for BQC") {
         data = await masters.findOneAndUpdate(
           { code: trayData.trayId },
           {
@@ -2614,6 +2721,7 @@ module.exports = {
               sort_id: "Issued to RDL-2",
               requested_date: Date.now(),
               assigned_date: Date.now(),
+              "track_tray.issued_to_rdl_two": Date.now(),
               temp_array: [],
             },
           }
@@ -2800,39 +2908,39 @@ module.exports = {
 
   /*-----------------RETURN FROM SORTING WAREHOUSE WILL CHECK UIC CODE --------------------------*/
 
-  checkUicCodeSortingDone: (uic, trayId) => {
-    return new Promise(async (resolve, reject) => {
-      let data = await delivery.findOne({ "uic_code.code": uic });
-      if (data) {
-        let checkExitThisTray = await masters.findOne({
-          code: trayId,
-          items: { $elemMatch: { uic: uic } },
-        });
-        if (checkExitThisTray) {
-          let alreadyAdded = await masters.findOne({
-            code: trayId,
-            "actual_items.uic": uic,
-          });
-          if (alreadyAdded) {
-            resolve({ status: 3 });
-          } else {
-            let obj;
-            for (let x of checkExitThisTray.items) {
-              if (x.uic == uic) {
-                obj = x;
-              }
-            }
-            resolve({ status: 4, data: obj });
-          }
-        } else {
-          resolve({ status: 2 });
-        }
-      } else {
-        resolve({ status: 1 });
+  checkUicCodeSortingDone: async (uic, trayId) => {
+    try {
+      const deliveryData = await delivery.findOne({ "uic_code.code": uic });
+      if (!deliveryData) {
+        return { status: 1 }; // UIC not found in delivery collection
       }
-    });
-  },
 
+      const trayData = await masters.findOne({
+        code: trayId,
+        items: { $elemMatch: { uic: uic } },
+      });
+      if (!trayData) {
+        return { status: 2 }; // UIC not found in tray items
+      }
+
+      const alreadyAdded = await masters.exists({
+        code: trayId,
+        "actual_items.uic": uic,
+      });
+      if (alreadyAdded) {
+        return { status: 3 }; // UIC already added to the tray
+      }
+
+      const obj = trayData.items.find((item) => item.uic === uic);
+      if (!obj) {
+        return { status: 2 }; // UIC not found in tray items
+      }
+
+      return { status: 4, data: obj };
+    } catch (error) {
+      throw new Error(error);
+    }
+  },
   /*-----------------CHARGE DONE VERIFY ACTUAL ITEM--------------------------*/
 
   chargingDoneActualItemPut: (trayItemData) => {
@@ -4421,6 +4529,10 @@ module.exports = {
             { issued_user_name: username, sort_id: "Merging Done" },
             {
               issued_user_name: username,
+              sort_id: "Issued to sorting (Wht to rp)",
+            },
+            {
+              issued_user_name: username,
               sort_id: "Ready to Audit Issued to Merging",
             },
             {
@@ -5437,18 +5549,34 @@ module.exports = {
   },
   getRDLoneRequest: (status, location) => {
     return new Promise(async (resolve, reject) => {
-      let data = await masters.find({
-        $or: [
-          {
-            prefix: "tray-master",
-            type_taxanomy: "WHT",
-            sort_id: status,
-            cpc: location,
-          },
-        ],
-      });
-      if (data) {
-        resolve(data);
+      if (status == "Send for RDL-2") {
+        let data = await masters.find({
+          $or: [
+            {
+              prefix: "tray-master",
+              type_taxanomy: "RPT",
+              sort_id: status,
+              cpc: location,
+            },
+          ],
+        });
+        if (data) {
+          resolve(data);
+        }
+      } else {
+        let data = await masters.find({
+          $or: [
+            {
+              prefix: "tray-master",
+              type_taxanomy: "WHT",
+              sort_id: status,
+              cpc: location,
+            },
+          ],
+        });
+        if (data) {
+          resolve(data);
+        }
       }
     });
   },
@@ -5556,9 +5684,6 @@ module.exports = {
                 projection: { _id: 0 },
               }
             );
-            // let elasticSearchUpdate = await elasticsearch.uicCodeGen(
-            //   deliveryTrack
-            // );
           }
           resolve({ status: 1 });
         } else {
@@ -5655,20 +5780,39 @@ module.exports = {
       );
       if (data) {
         for (let x of data.items) {
-          let deliveryUpdate = await delivery.findOneAndUpdate(
-            { tracking_id: x.tracking_id },
-            {
-              $set: {
-                tray_status: "Ready to RDL-Repair",
-                rdl_fls_done_closed_wh: Date.now(),
-                updated_at: Date.now(),
+          if (trayData.screen == "return-from-wht-to-rp-sorting") {
+            let deliveryUpdate = await delivery.findOneAndUpdate(
+              { tracking_id: x.tracking_id },
+              {
+                $set: {
+                  tray_status: "Ready to RDL-Repair",
+                  wht_to_rp_sorting_done_wh_closed: Date.now(),
+                  tray_location: "Warehouse",
+                  tray_status: "Ready to RDL-Repair",
+                  updated_at: Date.now(),
+                },
               },
-            },
-            {
-              new: true,
-              projection: { _id: 0 },
-            }
-          );
+              {
+                new: true,
+                projection: { _id: 0 },
+              }
+            );
+          } else {
+            let deliveryUpdate = await delivery.findOneAndUpdate(
+              { tracking_id: x.tracking_id },
+              {
+                $set: {
+                  tray_status: "Ready to RDL-Repair",
+                  rdl_fls_done_closed_wh: Date.now(),
+                  updated_at: Date.now(),
+                },
+              },
+              {
+                new: true,
+                projection: { _id: 0 },
+              }
+            );
+          }
           // let elasticSearchUpdate = await elasticsearch.uicCodeGen(
           //   deliveryUpdate
           // );
@@ -6177,6 +6321,126 @@ module.exports = {
         },
       ]);
       resolve(getData);
+    });
+  },
+  whtToRpRequests: (location) => {
+    return new Promise(async (resolve, reject) => {
+      const getTray = await masters.find({
+        prefix: "tray-master",
+        type_taxanomy: "RPT",
+        cpc: location,
+        sort_id: "Assigned to sorting (Wht to rp)",
+      });
+      resolve(getTray);
+    });
+  },
+  whtToRpWhtTrayScan: (location, whtTray) => {
+    return new Promise(async (resolve, reject) => {
+      let trayData = [];
+      for (let tray of whtTray) {
+        const data = await masters.findOne({ cpc: location, code: tray });
+        if (data) {
+          trayData.push(data);
+        }
+      }
+      resolve(trayData);
+    });
+  },
+  whtToRpIssueToAgent: (rpTray, whtTray) => {
+    return new Promise(async (resolve, reject) => {
+      whtTray.push(rpTray);
+      let rptTrayUpdate;
+      for (let tray of whtTray) {
+        rptTrayUpdate = await masters.findOneAndUpdate(
+          { code: tray },
+          {
+            $set: {
+              sort_id: "Issued to sorting (Wht to rp)",
+              assigned_date: Date.now(),
+              "track_tray.wht_to_rp_sorting_issued": Date.now(),
+              actual_items: [],
+            },
+          }
+        );
+        if (rptTrayUpdate) {
+          for (let x of rptTrayUpdate?.items) {
+            const updateDelivery = await delivery.findOneAndUpdate(
+              { "uic_code.code": x.uic },
+              {
+                $set: {
+                  tray_location: "Sorting agent",
+                  tray_status: "Issued to sorting (Wht to rp)",
+                  issued_to_wht_to_rp: Date.now(),
+                  wht_to_rp_sorting_agent: rptTrayUpdate.issued_user_name,
+                },
+              }
+            );
+          }
+        }
+      }
+      if (rptTrayUpdate) {
+        resolve({ status: 1 });
+      } else {
+        resolve({ status: 0 });
+      }
+    });
+  },
+  getReturnFromSortingWhtToRp: (location) => {
+    return new Promise(async (resolve, reject) => {
+      const data = await masters.find({
+        $or: [
+          {
+            prefix: "tray-master",
+            sort_id: "Sorting done (Wht to rp)",
+            cpc: location,
+          },
+          {
+            prefix: "tray-master",
+            sort_id: "Received from sorting (Wht to rp)",
+            cpc: location,
+          },
+        ],
+      });
+      resolve(data);
+    });
+  },
+  receivedFromWhtToRpSorting: (trayData) => {
+    return new Promise(async (resolve, reject) => {
+      let tray = await masters.findOne({ code: trayData.trayId });
+      if (tray?.items?.length == trayData.counts) {
+        let data = await masters.findOneAndUpdate(
+          { code: trayData.trayId },
+          {
+            $set: {
+              sort_id: "Received from sorting (Wht to rp)",
+            },
+          }
+        );
+        if (data) {
+          for (let i = 0; i < data.items.length; i++) {
+            let deliveryTrack = await delivery.findOneAndUpdate(
+              { tracking_id: data.items[i].tracking_id },
+              {
+                $set: {
+                  tray_status: "Received from sorting (Wht to rp)",
+                  tray_location: "Warehouse",
+                  wht_to_rp_sorting_done_received: Date.now(),
+                  updated_at: Date.now(),
+                },
+              },
+              {
+                new: true,
+                projection: { _id: 0 },
+              }
+            );
+          }
+          resolve({ status: 1 });
+        } else {
+          resolve({ status: 2 });
+        }
+      } else {
+        resolve({ status: 3 });
+      }
     });
   },
 };

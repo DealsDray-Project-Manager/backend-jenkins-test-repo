@@ -20,15 +20,15 @@ const {
 const moment = require("moment");
 const elasticsearch = require("../../Elastic-search/elastic");
 
-const IISDOMAIN = "https://prexo-v8-3-adminapi.dealsdray.com/user/profile/";
-const IISDOMAINPRDT =
-  "https://prexo-v8-3-adminapi.dealsdray.com/product/image/";
+const IISDOMAIN = "https://prexo-v8-4-dev-api.dealsdray.com/user/profile/";
+const IISDOMAINPRDT = "https://prexo-v8-4-dev-api.dealsdray.com/product/image/";
 
 /************************************************************************************************** */
 
 /* 
 
 @ SUPER ADMIN CONTROLLER FETCH DATA FROM MONGODB DATA BASE PREXO AND MAKE CHANGES ON DB 
+
 
 */
 
@@ -37,13 +37,13 @@ module.exports = {
 
   doLogin: (loginData) => {
     return new Promise(async (resolve, reject) => {
-      let data = await admin.findOne({
-        user_name: loginData.user_name,
-        password: loginData.password,
-      });
-      if (data) {
-        resolve({ status: 1, data: data });
-      } else {
+      // let data = await admin.findOne({
+      //   user_name: loginData.user_name,
+      //   password: loginData.password,
+      // });
+      // if (data) {
+      //   resolve({ status: 1, data: data });
+      // } else {
         let userGet = await user.findOne({
           user_name: loginData.user_name,
           password: loginData.password,
@@ -61,6 +61,25 @@ module.exports = {
           }
         }
         resolve({ status: 2 });
+      // }
+    });
+  },
+  updateJwtTokeInDb: (id, jwtToken) => {
+    return new Promise(async (resolve, reject) => {
+      const updateTheData = await user
+        .findOneAndUpdate(
+          { _id: id },
+          {
+            $set: {
+              jwt_token: jwtToken,
+            },
+          }
+        )
+        .catch((err) => reject(err));
+      if (updateTheData) {
+        resolve({ status: 1 });
+      } else {
+        resolve({ status: 0 });
       }
     });
   },
@@ -135,13 +154,18 @@ module.exports = {
   },
 
   /*--------------------------------CHECK USER ACTIVE OR NOT-----------------------------------*/
-  checkUserStatus: (userName) => {
+  checkUserStatus: (userName,jwt) => {
     return new Promise(async (resolve, reject) => {
       let data = await user.findOne({ user_name: userName, status: "Active" });
       if (data) {
-        resolve(data);
+        if(data.jwt_token == jwt){
+          resolve({data:data,status:1});
+        }
+        else{
+          resolve({status:2})
+        }
       } else {
-        resolve();
+        resolve({status:3});
       }
     });
   },
@@ -470,6 +494,7 @@ module.exports = {
       let allBrands = await brands
         .find({})
         .sort({ brand_name: 1 })
+        .collation({ locale: "en_US", numericOrdering: true })
         .catch((err) => reject(err));
       if (allBrands) {
         resolve(allBrands);
@@ -641,7 +666,10 @@ module.exports = {
 
   getBrandBasedPrdouct: (brandName) => {
     return new Promise(async (resolve, reject) => {
-      let allProducts = await products.find({ brand_name: brandName });
+      let allProducts = await products
+        .find({ brand_name: brandName })
+        .sort({ model_name: 1 })
+        .collation({ locale: "en_US", numericOrdering: true });
       resolve(allProducts);
     });
   },
@@ -1266,7 +1294,10 @@ module.exports = {
   getMasters: (type) => {
     return new Promise(async (resolve, reject) => {
       let data = await masters
-        .find({ prefix: type.master_type })
+        .find(
+          { prefix: type.master_type },
+          { items: 0, actual_items: 0, temp_array: 0, wht_tray: 0 }
+        )
         .sort({ code: 1 })
         .collation({ locale: "en_US", numericOrdering: true });
       resolve(data);
@@ -2242,7 +2273,6 @@ module.exports = {
         "WHT1625",
         "WHT1778", 
       ];
-
       for (let x of arr) {
         let data = await masters.updateOne(
           {
@@ -2973,9 +3003,8 @@ module.exports = {
           if (addStockValue > 0 || isNaN(addStockValue)) {
           } else {
             let check = checkPartId.avl_stock - Math.abs(x.add_stock);
-            console.log(check);
             if (check < 0) {
-              updateStock.push(x.add_stock);
+              updateStock.push(x.add_stock?.toString());
               err["update_stock_check"] = updateStock;
             }
           }
