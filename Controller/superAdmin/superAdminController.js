@@ -37,13 +37,13 @@ module.exports = {
 
   doLogin: (loginData) => {
     return new Promise(async (resolve, reject) => {
-      // let data = await admin.findOne({
-      //   user_name: loginData.user_name,
-      //   password: loginData.password,
-      // });
-      // if (data) {
-      //   resolve({ status: 1, data: data });
-      // } else {
+      let data = await admin.findOne({
+        user_name: loginData.user_name,
+        password: loginData.password,
+      });
+      if (data) {
+        resolve({ status: 1, data: data });
+      } else {
         let userGet = await user.findOne({
           user_name: loginData.user_name,
           password: loginData.password,
@@ -61,21 +61,35 @@ module.exports = {
           }
         }
         resolve({ status: 2 });
-      // }
+      }
     });
   },
-  updateJwtTokeInDb: (id, jwtToken) => {
+  updateJwtTokeInDb: (id, jwtToken, userType) => {
     return new Promise(async (resolve, reject) => {
-      const updateTheData = await user
-        .findOneAndUpdate(
-          { _id: id },
-          {
-            $set: {
-              jwt_token: jwtToken,
-            },
-          }
-        )
-        .catch((err) => reject(err));
+      let updateTheData;
+      if (userType == "super-admin") {
+        updateTheData = await admin
+          .findOneAndUpdate(
+            { _id: id },
+            {
+              $set: {
+                jwt_token: jwtToken,
+              },
+            }
+          )
+          .catch((err) => reject(err));
+      } else {
+        updateTheData = await user
+          .findOneAndUpdate(
+            { _id: id },
+            {
+              $set: {
+                jwt_token: jwtToken,
+              },
+            }
+          )
+          .catch((err) => reject(err));
+      }
       if (updateTheData) {
         resolve({ status: 1 });
       } else {
@@ -154,18 +168,33 @@ module.exports = {
   },
 
   /*--------------------------------CHECK USER ACTIVE OR NOT-----------------------------------*/
-  checkUserStatus: (userName,jwt) => {
+  checkUserStatus: (userName, jwt, userType) => {
     return new Promise(async (resolve, reject) => {
-      let data = await user.findOne({ user_name: userName, status: "Active" });
-      if (data) {
-        if(data.jwt_token == jwt){
-          resolve({data:data,status:1});
-        }
-        else{
-          resolve({status:2})
+      if (userType == "super-admin") {
+        let data = await admin.findOne({ user_name: userName });
+        if (data) {
+          if (data.jwt_token == jwt) {
+            resolve({ data: data, status: 1 });
+          } else {
+            resolve({ status: 2 });
+          }
+        } else {
+          resolve({ status: 3 });
         }
       } else {
-        resolve({status:3});
+        let data = await user.findOne({
+          user_name: userName,
+          status: "Active",
+        });
+        if (data) {
+          if (data.jwt_token == jwt) {
+            resolve({ data: data, status: 1 });
+          } else {
+            resolve({ status: 2 });
+          }
+        } else {
+          resolve({ status: 3 });
+        }
       }
     });
   },
@@ -2271,7 +2300,7 @@ module.exports = {
         "WHT1225",
         "WHT1580",
         "WHT1625",
-        "WHT1778", 
+        "WHT1778",
       ];
       for (let x of arr) {
         let data = await masters.updateOne(
@@ -3745,42 +3774,19 @@ module.exports = {
   },
   fixBaggingIssueWithAwbn: () => {
     return new Promise(async (resolve, reject) => {
-      for (let x of arr) {
-        x.created_at = Date.now();
-        let checkOrderPresent = await orders.findOne({ order_id: x.order_id });
-        if (checkOrderPresent) {
-        } else {
-          let checkDelivery = await delivery.findOne({ order_id: x.order_id });
-          if (checkDelivery) {
-            x["delivery_status"] = "Delivered";
-            let updateDelivery = await delivery.findOneAndUpdate(
-              { order_id: x.order_id },
-              {
-                $set: {
-                  temp_delivery_status: "Delivered",
-                },
-              }
-            );
+      let i=0
+      let findOrder=await orders.find({})
+      for(let x of findOrder){
+        let findDelivery=await delivery.findOne({order_id:x.order_id})
+        if(findDelivery){
+          if(x.partner_shop !== findDelivery.partner_shop){
+            console.log(findDelivery);
+            break
           }
-          x.order_status = "NEW";
-          x.partner_id = x.partner_id.toString();
-          x.order_date = new Date(x.order_date);
-          x.partner_id = x.partner_id.toString();
-          x.imei = x.imei.toString;
-          (x.base_discount = x.base_discount),
-            (x.partner_purchase_price = x.partner_purchase_price.toString());
-          x.tracking_id = x.tracking_id.toString();
-          x.order_id_replaced = x.order_id_replaced?.toString();
-          x.gc_amount_redeemed = x.gc_amount_redeemed.toString();
-          x.partner_price_no_defect = x.partner_price_no_defect.toString();
-          x.revised_partner_price = x.revised_partner_price.toString();
-          x.delivery_fee = x.delivery_fee.toString();
-          x.exchange_facilitation_fee = x.exchange_facilitation_fee.toString();
-          x.created_at = Date.now();
-          const orderData = await orders.create(x);
         }
       }
-      resolve(arr);
+      console.log(i);
+      resolve(findOrder);
     });
   },
   changeWHLocation: () => {

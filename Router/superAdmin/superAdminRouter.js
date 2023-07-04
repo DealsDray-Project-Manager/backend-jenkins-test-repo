@@ -87,6 +87,7 @@ router.post("/login", async (req, res, next) => {
         const updateJwtToken = await superAdminController.updateJwtTokeInDb(
           loginData.data._id,
           jwtToken,
+          loginData.data.user_type
         );
         if (updateJwtToken.status == 1) {
           res.status(200).json({
@@ -117,8 +118,8 @@ router.post("/login", async (req, res, next) => {
 /*----------------------------------USER STATUS CHECKING---------------------------------*/
 router.post("/check-user-status", async (req, res, next) => {
   try {
-    const { username, jwt } = req.body;
-    let data = await superAdminController.checkUserStatus(username, jwt);
+    const { username, jwt ,user_type} = req.body;
+    let data = await superAdminController.checkUserStatus(username, jwt,user_type);
     if (data.status == 1) {
       res.status(200).json({
         message: "Active user",

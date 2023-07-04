@@ -49,6 +49,7 @@ module.exports = {
         partner_shop: location,
         temp_delivery_status: { $ne: "Pending" },
       });
+
       count.allOrders = await orders.count({
         partner_shop: location,
         order_status: "NEW",
