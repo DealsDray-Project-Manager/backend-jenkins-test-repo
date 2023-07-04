@@ -791,7 +791,6 @@ router.post(
         sortId,
         location
       );
-      console.log(data);
       if (data.status == 1) {
         res.status(200).json({
           data: data.data,

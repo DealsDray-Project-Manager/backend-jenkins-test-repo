@@ -1190,6 +1190,29 @@ router.post("/pickup/items/:type/:location", async (req, res, next) => {
     next(error);
   }
 });
+// GET DATA BASED ON THE FROM DATE AND TO DATE 
+router.post("/pickup/dateFilter", async (req, res, next) => {
+  try {
+    console.log(req.body);
+    let { type, location,selectedStatus } = req.body;
+    const data = await misUserController.pickUpDateWiseFilter(type, location,selectedStatus);
+
+    if (data.items.length !== 0) {
+      res.status(200).json({
+        data: data.items,
+        type: type,
+      });
+    } else {
+      res.status(202).json({
+        data: data.items,
+        type: type,
+        message: "No data found",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
 //GET ITEM BASED ON THE TABS SEE ALL
 router.post("/pickup/seeAll/:type/:location", async (req, res, next) => {
   try {
@@ -1198,7 +1221,6 @@ router.post("/pickup/seeAll/:type/:location", async (req, res, next) => {
       type,
       location
     );
-    console.log(data.items.length);
     if (data.items.length !== 0) {
       res.status(200).json({
         data: data.items,

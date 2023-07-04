@@ -81,18 +81,30 @@ router.post("/superAdminDashboard", async (req, res, next) => {
 router.post("/login", async (req, res, next) => {
   try {
     let loginData = await superAdminController.doLogin(req.body);
-
     if (loginData.status == 1) {
-      const jwtToken = await jwt.jwtSign(loginData.data);
-      res.status(200).json({
-        status: 1,
-        data: {
-          message: "Login Success",
-          jwt: jwtToken,
-          user_type: loginData?.data?.user_type,
-          data: loginData.data,
-        },
-      });
+      const jwtToken = jwt.jwtSign(loginData.data);
+      if (jwtToken) {
+        const updateJwtToken = await superAdminController.updateJwtTokeInDb(
+          loginData.data._id,
+          jwtToken,
+          loginData.data.user_type
+        );
+        if (updateJwtToken.status == 1) {
+          res.status(200).json({
+            status: 1,
+            data: {
+              message: "Login Success",
+              jwt: jwtToken,
+              user_type: loginData?.data?.user_type,
+              data: loginData.data,
+            },
+          });
+        } else {
+          res.status(202).json({ data: { message: "server error" } });
+        }
+      } else {
+        res.status(202).json({ data: { message: "server error" } });
+      }
     } else if (loginData.status == 2) {
       res.status(202).json({ data: { message: "Wrong username or password" } });
     } else if (loginData.status == 3) {
@@ -104,17 +116,22 @@ router.post("/login", async (req, res, next) => {
 });
 
 /*----------------------------------USER STATUS CHECKING---------------------------------*/
-router.post("/check-user-status/:username", async (req, res, next) => {
+router.post("/check-user-status", async (req, res, next) => {
   try {
-    const { username } = req.params;
-    let data = await superAdminController.checkUserStatus(username);
-    if (data) {
+    const { username, jwt ,user_type} = req.body;
+    let data = await superAdminController.checkUserStatus(username, jwt,user_type);
+    if (data.status == 1) {
       res.status(200).json({
         message: "Active user",
       });
-    } else {
+    } else if (data.status == 3) {
       res.status(202).json({
         message: "Admin deactivated",
+      });
+    } else {
+      res.status(202).json({
+        message:
+          "Another user has logged in with the same username and password. Please log in again.",
       });
     }
   } catch (error) {
@@ -2193,7 +2210,7 @@ router.post("/bagAssigned/bot", async (req, res, next) => {
     next(error);
   }
 });
-//ASSIGNED TO SORTING BOT TO WHT 
+//ASSIGNED TO SORTING BOT TO WHT
 router.post("/tray/assignedToSorting/botToWh", async (req, res, next) => {
   try {
     // const { trayType, sort_id } = req.body;
@@ -2207,7 +2224,6 @@ router.post("/tray/assignedToSorting/botToWh", async (req, res, next) => {
     next(error);
   }
 });
-
 
 /***********************************************EXTRA  SECTION*********************************************************** */
 
@@ -2473,6 +2489,22 @@ router.post("/extra/addBotTray", async (req, res, next) => {
 router.post("/extra/rollBackTray", async (req, res, next) => {
   try {
     let data = await superAdminController.rollBackTrayToAuditStage();
+    if (data) {
+      res.status(200).json({
+        message: "done",
+      });
+    } else {
+      res.status(202).json({
+        message: "Failed",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+router.post("/extra/whClosedDateUpdation", async (req, res, next) => {
+  try {
+    let data = await superAdminController.extraWhClosedDateUpdation();
     if (data) {
       res.status(200).json({
         message: "done",

@@ -332,21 +332,36 @@ module.exports = {
             cpc: location,
             prefix: "tray-master",
             type_taxanomy: "WHT",
-            $expr: { $and: [{ $ne: [{ $ifNull: ["$items", null] }, null] }, { $ne: [{ $size: "$items" }, { $toInt: "$limit" }] }] },
+            $expr: {
+              $and: [
+                { $ne: [{ $ifNull: ["$items", null] }, null] },
+                { $ne: [{ $size: "$items" }, { $toInt: "$limit" }] },
+              ],
+            },
             sort_id: "Ready to RDL-Repair",
           },
           {
             cpc: location,
             prefix: "tray-master",
             type_taxanomy: "WHT",
-            $expr: { $and: [{ $ne: [{ $ifNull: ["$items", null] }, null] }, { $ne: [{ $size: "$items" }, { $toInt: "$limit" }] }] },
+            $expr: {
+              $and: [
+                { $ne: [{ $ifNull: ["$items", null] }, null] },
+                { $ne: [{ $size: "$items" }, { $toInt: "$limit" }] },
+              ],
+            },
             sort_id: "Ready to BQC",
           },
           {
             cpc: location,
             prefix: "tray-master",
             type_taxanomy: "WHT",
-            $expr: { $and: [{ $ne: [{ $ifNull: ["$items", null] }, null] }, { $ne: [{ $size: "$items" }, { $toInt: "$limit" }] }] },
+            $expr: {
+              $and: [
+                { $ne: [{ $ifNull: ["$items", null] }, null] },
+                { $ne: [{ $size: "$items" }, { $toInt: "$limit" }] },
+              ],
+            },
             sort_id: "Ready to Audit",
           },
         ],
@@ -2868,6 +2883,7 @@ module.exports = {
               brand: brand,
               model: model,
               cpc: location,
+              items: { $ne: [] },
               sort_id: getFromtState.sort_id,
               code: { $ne: fromTray },
             })
@@ -3428,6 +3444,15 @@ module.exports = {
           {
             $unwind: "$items",
           },
+          {
+            $project:{
+              items:1,
+              brand:1,
+              model:1,
+              code:1,
+              closed_date_agent:1
+            }
+          }
         ]);
       } else if (type == "BQC Done") {
         items = await masters.aggregate([
@@ -3441,6 +3466,15 @@ module.exports = {
           {
             $unwind: "$items",
           },
+          {
+            $project:{
+              items:1,
+              brand:1,
+              model:1,
+              code:1,
+              closed_date_agent:1
+            }
+          }
         ]);
       } else if (type == "Audit Done") {
         items = await masters.aggregate([
@@ -3454,6 +3488,15 @@ module.exports = {
           {
             $unwind: "$items",
           },
+          {
+            $project:{
+              items:1,
+              brand:1,
+              model:1,
+              code:1,
+              closed_date_agent:1
+            }
+          }
         ]);
       } else {
         items = await masters.aggregate([
@@ -3467,6 +3510,131 @@ module.exports = {
           {
             $unwind: "$items",
           },
+          {
+            $project:{
+              items:1,
+              brand:1,
+              model:1,
+              code:1,
+              closed_date_agent:1
+            }
+          }
+        ]);
+      }
+      resolve({ items: items });
+    });
+  },
+  pickUpDateWiseFilter: (type, location,selectedStatus) => {
+    return new Promise(async (resolve, reject) => {
+      let items = [];
+    
+
+      if (type == "Charge Done") {
+        items = await masters.aggregate([
+          {
+            $match: {
+             
+              sort_id: "Ready to BQC",
+              cpc: location,
+            },
+          },
+          {
+            $unwind: "$items",
+          },
+          {
+            $project:{
+              items:1,
+              brand:1,
+              model:1,
+              code:1,
+              closed_date_agent:1
+            }
+          }
+        ]);
+      } else if (type == "BQC Done") {
+        items = await masters.aggregate([
+          {
+            $match: {
+              "track_tray.bqc_done_close_by_wh": {
+                $gte: new Date(startDate),
+                $lt: new Date(endDate),
+              },
+              sort_id: "Ready to Audit",
+              cpc: location,
+            },
+          },
+          {
+            $unwind: "$items",
+          },
+          {
+            $project:{
+              items:1,
+              brand:1,
+              model:1,
+              code:1,
+              closed_date_agent:1
+            }
+          }
+        ]);
+
+      } else if (type == "Audit Done") {
+        items = await masters.aggregate([
+          {
+            $match: {
+              "items.audit_report.stage": { $in: selectedStatus },
+              sort_id: "Ready to RDL",
+              cpc: location,
+            },
+          },
+          {
+            $project: {
+              items: {
+                $filter: {
+                  input: "$items",
+                  cond: {
+                    $in: ["$$this.audit_report.stage", selectedStatus],
+                  },
+                },
+              },
+              brand: 1,
+              model: 1,
+              code: 1,
+              closed_date_agent:1
+            },
+          },
+          {
+            $unwind: "$items"
+          }
+        ]);        
+      } else {
+
+        items = await masters.aggregate([
+          {
+            $match: {
+              "items.rdl_fls_report.selected_status": { $in: selectedStatus },
+              sort_id: "Ready to RDL-Repair",
+              cpc: location,
+            },
+          },
+          {
+            $project: {
+              items: {
+                $filter: {
+                  input: "$items",
+                  cond: {
+                    $in: ["$$this.rdl_fls_report.selected_status", selectedStatus],
+                  },
+                },
+              },
+              brand: 1,
+              model: 1,
+              code: 1,
+              closed_date_agent:1
+            },
+          },
+          {
+            $unwind: "$items"
+          }
         ]);
       }
       resolve({ items: items });
@@ -3486,6 +3654,15 @@ module.exports = {
           {
             $unwind: "$items",
           },
+          {
+            $project:{
+              items:1,
+              brand:1,
+              model:1,
+              code:1,
+              closed_date_agent:1
+            }
+          }
         ]);
       } else if (type == "BQC Done") {
         items = await masters.aggregate([
@@ -3493,6 +3670,15 @@ module.exports = {
           {
             $unwind: "$items",
           },
+          {
+            $project:{
+              items:1,
+              brand:1,
+              model:1,
+              code:1,
+              closed_date_agent:1
+            }
+          }
         ]);
       } else if (type == "Audit Done") {
         items = await masters.aggregate([
@@ -3500,6 +3686,15 @@ module.exports = {
           {
             $unwind: "$items",
           },
+          {
+            $project:{
+              items:1,
+              brand:1,
+              model:1,
+              code:1,
+              closed_date_agent:1
+            }
+          }
         ]);
       } else {
         items = await masters.aggregate([
@@ -3507,6 +3702,15 @@ module.exports = {
           {
             $unwind: "$items",
           },
+          {
+            $project:{
+              items:1,
+              brand:1,
+              model:1,
+              code:1,
+              closed_date_agent:1
+            }
+          }
         ]);
       }
       resolve({ items: items });

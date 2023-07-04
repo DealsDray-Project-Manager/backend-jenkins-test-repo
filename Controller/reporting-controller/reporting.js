@@ -49,6 +49,7 @@ module.exports = {
         partner_shop: location,
         temp_delivery_status: { $ne: "Pending" },
       });
+
       count.allOrders = await orders.count({
         partner_shop: location,
         order_status: "NEW",
@@ -933,24 +934,38 @@ module.exports = {
             cpc: location,
             prefix: "tray-master",
             type_taxanomy: "WHT",
-            $expr: { $and: [{ $ne: [{ $ifNull: ["$items", null] }, null] }, { $ne: [{ $size: "$items" }, { $toInt: "$limit" }] }] },
+            $expr: {
+              $and: [
+                { $ne: [{ $ifNull: ["$items", null] }, null] },
+                { $ne: [{ $size: "$items" }, { $toInt: "$limit" }] },
+              ],
+            },
             sort_id: "Ready to RDL-Repair",
           },
           {
             cpc: location,
             prefix: "tray-master",
             type_taxanomy: "WHT",
-            $expr: { $and: [{ $ne: [{ $ifNull: ["$items", null] }, null] }, { $ne: [{ $size: "$items" }, { $toInt: "$limit" }] }] },
+            $expr: {
+              $and: [
+                { $ne: [{ $ifNull: ["$items", null] }, null] },
+                { $ne: [{ $size: "$items" }, { $toInt: "$limit" }] },
+              ],
+            },
             sort_id: "Ready to BQC",
           },
           {
             cpc: location,
             prefix: "tray-master",
             type_taxanomy: "WHT",
-            $expr: { $and: [{ $ne: [{ $ifNull: ["$items", null] }, null] }, { $ne: [{ $size: "$items" }, { $toInt: "$limit" }] }] },
+            $expr: {
+              $and: [
+                { $ne: [{ $ifNull: ["$items", null] }, null] },
+                { $ne: [{ $size: "$items" }, { $toInt: "$limit" }] },
+              ],
+            },
             sort_id: "Ready to Audit",
           },
-        
         ],
       });
       count.readyToMergeItemCount = await masters.aggregate([
@@ -977,14 +992,24 @@ module.exports = {
                 cpc: location,
                 prefix: "tray-master",
                 type_taxanomy: "WHT",
-                $expr: { $and: [{ $ne: [{ $ifNull: ["$items", null] }, null] }, { $ne: [{ $size: "$items" }, { $toInt: "$limit" }] }] },
+                $expr: {
+                  $and: [
+                    { $ne: [{ $ifNull: ["$items", null] }, null] },
+                    { $ne: [{ $size: "$items" }, { $toInt: "$limit" }] },
+                  ],
+                },
                 sort_id: "Ready to RDL-Repair",
               },
               {
                 cpc: location,
                 prefix: "tray-master",
                 type_taxanomy: "WHT",
-                $expr: { $and: [{ $ne: [{ $ifNull: ["$items", null] }, null] }, { $ne: [{ $size: "$items" }, { $toInt: "$limit" }] }] },
+                $expr: {
+                  $and: [
+                    { $ne: [{ $ifNull: ["$items", null] }, null] },
+                    { $ne: [{ $size: "$items" }, { $toInt: "$limit" }] },
+                  ],
+                },
                 sort_id: "Ready to BQC",
               },
               

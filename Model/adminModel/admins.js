@@ -16,6 +16,9 @@ const adminSchema = mongoose.Schema({
   email: {
     type: String,
   },
+  jwt_token:{
+    type:String
+  }
 });
 
 const admin = mongoose.model("admin", adminSchema);
