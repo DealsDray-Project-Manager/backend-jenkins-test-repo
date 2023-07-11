@@ -1190,12 +1190,16 @@ router.post("/pickup/items/:type/:location", async (req, res, next) => {
     next(error);
   }
 });
-// GET DATA BASED ON THE FROM DATE AND TO DATE 
+// GET DATA BASED ON THE FROM DATE AND TO DATE
 router.post("/pickup/dateFilter", async (req, res, next) => {
   try {
     console.log(req.body);
-    let { type, location,selectedStatus } = req.body;
-    const data = await misUserController.pickUpDateWiseFilter(type, location,selectedStatus);
+    let { type, location, selectedStatus } = req.body;
+    const data = await misUserController.pickUpDateWiseFilter(
+      type,
+      location,
+      selectedStatus
+    );
 
     if (data.items.length !== 0) {
       res.status(200).json({
@@ -1753,7 +1757,7 @@ router.post("/assignForRepiar/stockCheck", async (req, res, next) => {
 // ASSIGN TO SORTING WHT TO RP
 router.post("/assignForRepiar/getTheRequrements", async (req, res, next) => {
   try {
-    const { location, uicLength, brand, model ,isCheck} = req.body;
+    const { location, uicLength, brand, model, isCheck } = req.body;
     let data = await misUserController.assignForRepairSortingGetTheRequrements(
       location,
       uicLength,
@@ -1777,7 +1781,8 @@ router.post("/assignForRepiar/getTheRequrements", async (req, res, next) => {
 router.post("/whtToRpSorting/assign", async (req, res, next) => {
   try {
     console.log(req.body);
-    const { spDetails, spTray, rpTray, spwhuser,sortingUser,selectedUic } = req.body;
+    const { spDetails, spTray, rpTray, spwhuser, sortingUser, selectedUic } =
+      req.body;
     let data = await misUserController.whtToRpSortingAssign(
       spDetails,
       spTray,
@@ -1788,13 +1793,12 @@ router.post("/whtToRpSorting/assign", async (req, res, next) => {
     );
     if (data.status == 1) {
       res.status(200).json({
-       message:"Successfully Assigned"
+        message: "Successfully Assigned",
       });
-    }
-    else{
+    } else {
       res.status(202).json({
-        message:"Not able to assign please try again..."
-       });
+        message: "Not able to assign please try again...",
+      });
     }
   } catch (error) {
     next(error);

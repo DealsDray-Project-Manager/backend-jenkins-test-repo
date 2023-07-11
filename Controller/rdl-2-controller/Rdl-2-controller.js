@@ -10,7 +10,18 @@ module.exports = {
         trayRequest: 0,
       };
       count.trayRequest = await masters.count({
-        $or: [{ issued_user_name: username, sort_id: "Issued to RDL-2" }],
+        $or: [
+          {
+            issued_user_name: username,
+            sort_id: "Issued to RDL-two",
+            type_taxanomy: "RPT",
+          },
+          {
+            issued_user_name: username,
+            sort_id: "Rdl-two inprogress",
+            type_taxanomy: "RPT",
+          },
+        ],
       });
       if (count) {
         resolve(count);
@@ -25,12 +36,12 @@ module.exports = {
             $or: [
               {
                 issued_user_name: username,
-                sort_id: "Issued to RDL-2",
+                sort_id: "Issued to RDL-two",
                 type_taxanomy: "RPT",
               },
               {
                 issued_user_name: username,
-                sort_id: "Rdl-2 inprogress",
+                sort_id: "Rdl-two inprogress",
                 type_taxanomy: "RPT",
               },
             ],
@@ -52,23 +63,31 @@ module.exports = {
   },
   receiveSpTray: (trayData) => {
     return new Promise(async (resolve, reject) => {
+      let selectedQtySum = 0;
       let tray = await masters.findOne({ code: trayData.trayId });
-      if (tray?.items?.length == trayData.counts) {
-        let data = await masters.findOneAndUpdate(
-          { code: trayData.trayId },
-          {
-            $set: {
-              sort_id: "Rdl-2 inprogress",
-            },
+      if (tray) {
+        for (const item of tray.items) {
+          selectedQtySum += parseInt(item.selected_qty);
+        }
+        if (selectedQtySum == trayData.counts) {
+          let data = await masters.findOneAndUpdate(
+            { code: trayData.trayId },
+            {
+              $set: {
+                sort_id: "Rdl-two inprogress",
+              },
+            }
+          );
+          if (data) {
+            resolve({ status: 1 });
+          } else {
+            resolve({ status: 2 });
           }
-        );
-        if (data) {
-          resolve({ status: 1 });
         } else {
-          resolve({ status: 2 });
+          resolve({ status: 3 });
         }
       } else {
-        resolve({ status: 3 });
+        resolve({ status: 0 });
       }
     });
   },
@@ -78,7 +97,7 @@ module.exports = {
         { code: trayid },
         {
           $set: {
-            sort_id: "Rdl-2 inprogress",
+            sort_id: "Rdl-two inprogress",
             actual_items: [],
           },
         }
@@ -195,35 +214,34 @@ module.exports = {
   traySummery: (trayId, user_name) => {
     return new Promise(async (resolve, reject) => {
       const getTheTray = await masters.findOne({ code: trayId });
-      if (getTheTray.sort_id == "Rdl-2 inprogress") {
+      if (getTheTray.sort_id == "Rdl-two inprogress") {
         if (getTheTray.issued_user_name == user_name) {
           if (getTheTray.items.length == 0) {
-            let obj={
-              morePartRequred:[],
-              partNotAvailable:[],
-              usedParts:[],
-              partFaulty:[],
-              notReapairable:[],
+            let obj = {
+              morePartRequred: [],
+              partNotAvailable: [],
+              usedParts: [],
+              partFaulty: [],
+              notReapairable: [],
+            };
+            for (let x of getTheTray.actual_items) {
+              if (x.rdl_repair_report.more_part_required.length !== 0) {
+                obj.morePartRequred.push(x);
+              }
+              if (x.rdl_repair_report.part_not_available.length !== 0) {
+                obj.partNotAvailable.push(x);
+              }
+              if (x.rdl_repair_report.used_parts.length !== 0) {
+                obj.usedParts.push(x);
+              }
+              if (x.rdl_repair_report.part_faulty.length !== 0) {
+                obj.partFaulty.push(x);
+              }
+              if (x.rdl_repair_report.part_not_available.length !== 0) {
+                obj.notReapairable.push(x);
+              }
             }
-            for(let x of getTheTray.actual_items){
-              if(x.rdl_repair_report.more_part_required.length !== 0){
-                obj.morePartRequred.push(x)
-              }
-              if(x.rdl_repair_report.part_not_available.length !== 0){
-                obj.partNotAvailable.push(x)
-              }
-              if(x.rdl_repair_report.used_parts.length !== 0){
-                obj.usedParts.push(x)
-              }
-              if(x.rdl_repair_report.part_faulty.length !== 0){
-                obj.partFaulty.push(x)
-              }
-              if(x.rdl_repair_report.part_not_available.length !== 0){
-                obj.notReapairable.push(x)
-              }
-             
-            }
-            resolve({ status: 1, tray: getTheTray,summery:obj });
+            resolve({ status: 1, tray: getTheTray, summery: obj });
           } else {
             resolve({ status: 2 });
           }

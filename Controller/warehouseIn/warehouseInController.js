@@ -339,7 +339,7 @@ module.exports = {
       count.rdl2Request = await masters.count({
         prefix: "tray-master",
         type_taxanomy: "WHT",
-        sort_id: "Send for RDL-2",
+        sort_id: "Send for RDL-two",
         cpc: location,
       });
       count.returnFromRdlFls = await masters.count({
@@ -2068,7 +2068,11 @@ module.exports = {
           prefix: "tray-master",
           type_taxanomy: "WHT",
           cpc: location,
-        });
+        },
+        {
+          temp_array:0,
+        }
+        );
         resolve(data);
       } else {
         let data = await masters.find({
@@ -2587,7 +2591,7 @@ module.exports = {
               actual_items: [],
               issued_user_name: trayData.username,
               temp_array: [],
-              sort_id: "Issued to RDL-2",
+              sort_id: "Issued to RDL-two",
               assigned_date: Date.now(),
               "track_tray.issued_to_rdl_two": Date.now(),
             },
@@ -2711,14 +2715,14 @@ module.exports = {
             }
           }
         }
-      } else if (trayData.sortId == "Send for RDL-2") {
+      } else if (trayData.sortId == "Send for RDL-two") {
         data = await masters.findOneAndUpdate(
           { code: trayData.trayId },
           {
             $set: {
               actual_items: [],
               description: trayData.description,
-              sort_id: "Issued to RDL-2",
+              sort_id: "Issued to RDL-two",
               requested_date: Date.now(),
               assigned_date: Date.now(),
               "track_tray.issued_to_rdl_two": Date.now(),
@@ -2732,7 +2736,7 @@ module.exports = {
               { tracking_id: x.tracking_id },
               {
                 $set: {
-                  tray_status: "Issued to RDL-2",
+                  tray_status: "Issued to RDL-two",
                   rdl_fls_one_user_name: data?.issued_user_name,
                   rdl_fls_issued_date: Date.now(),
                   tray_location: "RDL-2",
@@ -4530,6 +4534,11 @@ module.exports = {
             {
               issued_user_name: username,
               sort_id: "Issued to sorting (Wht to rp)",
+              type_taxanomy:"WHT"
+            },
+            {
+              issued_user_name: username,
+              sort_id: "Sorting done (Wht to rp)",
             },
             {
               issued_user_name: username,
@@ -5532,7 +5541,7 @@ module.exports = {
       if (userActive.status == "Active") {
         let data = await masters.findOne({
           $or: [
-            { issued_user_name: username, sort_id: "Issued to RDL-2" },
+            { issued_user_name: username, sort_id: "Issued to RDL-two" },
             { issued_user_name: username, sort_id: "Closed By RDL-2" },
           ],
         });
@@ -5549,7 +5558,7 @@ module.exports = {
   },
   getRDLoneRequest: (status, location) => {
     return new Promise(async (resolve, reject) => {
-      if (status == "Send for RDL-2") {
+      if (status == "Send for RDL-two") {
         let data = await masters.find({
           $or: [
             {

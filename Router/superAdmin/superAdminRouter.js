@@ -118,8 +118,12 @@ router.post("/login", async (req, res, next) => {
 /*----------------------------------USER STATUS CHECKING---------------------------------*/
 router.post("/check-user-status", async (req, res, next) => {
   try {
-    const { username, jwt ,user_type} = req.body;
-    let data = await superAdminController.checkUserStatus(username, jwt,user_type);
+    const { username, jwt, user_type } = req.body;
+    let data = await superAdminController.checkUserStatus(
+      username,
+      jwt,
+      user_type
+    );
     if (data.status == 1) {
       res.status(200).json({
         message: "Active user",
@@ -2521,6 +2525,25 @@ router.post("/extra/whClosedDateUpdation", async (req, res, next) => {
 router.post("/fixBaggingIssue", async (req, res, next) => {
   try {
     let data = await superAdminController.fixBaggingIssueWithAwbn();
+    if (data) {
+      res.status(200).json({
+        message: "Successfully updated",
+        data:data
+      });
+    } else {
+      res.status(202).json({
+        message: "Failed",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
+//WHT TRAY ISSUE
+router.post("/whtTray/recorrect", async (req, res, next) => {
+  try {
+    let data = await superAdminController.whtTrayRecorrect();
     if (data) {
       res.status(200).json({
         message: "Successfully updated",

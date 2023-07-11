@@ -3775,18 +3775,22 @@ module.exports = {
   fixBaggingIssueWithAwbn: () => {
     return new Promise(async (resolve, reject) => {
       let i=0
-      let findOrder=await orders.find({})
-      for(let x of findOrder){
-        let findDelivery=await delivery.findOne({order_id:x.order_id})
-        if(findDelivery){
-          if(x.partner_shop !== findDelivery.partner_shop){
-            console.log(findDelivery);
-            break
+      let arr=[]
+      let findDelivery=await delivery.find({})
+      for(let x of findDelivery){
+        if(x.wht_tray){
+          let findTray=await masters.findOne({code:x.wht_tray,"items.uic":x?.uic_code?.code})
+          if(findTray == null){
+            if(x.sales_bin_status == undefined && x.ctx_tray_id == undefined){
+              if(arr.includes(x.wht_tray)== false){
+                arr.push(x.wht_tray)
+              }
+            }
           }
         }
       }
-      console.log(i);
-      resolve(findOrder);
+      console.log(arr.length);
+      resolve(arr)
     });
   },
   changeWHLocation: () => {
@@ -3834,10 +3838,10 @@ module.exports = {
   bugFixOfSpecOfTray: () => {
     return new Promise(async (resolve, reject) => {
       let getTrayZeroUnits = await masters.find({
-        $or: [{ code: "WHT1362" }, { code: "WHT1392" }],
+        $or: [{ code: "WHT1100" }, { code: "WHT1084" }, { code: "WHT1057" },{ code: "WHT1054" },{ code: "WHT1036" },{ code: "WHT1149" }, { code: "WHT1218" }, { code: "WHT1255" },{ code: "WHT1532" },{ code: "WHT1481" },{ code: "WHT1526" }],
       });
       for (let x of getTrayZeroUnits) {
-        let getDelivery = await delivery.find({ wht_tray: x.code });
+        let getDelivery = await delivery.find({ wht_tray: x.code,sales_bin_status:{$exists:false},ctx_tray_id:{$exists:false} });
         let findMuic = await products.findOne({
           brand_name: x.brand,
           model_name: x.model,
@@ -3857,16 +3861,16 @@ module.exports = {
             status: "Valid",
             bot_eval_result: y.bot_report,
             charging: y.charging,
+            bqc_report:y.bqc_report
           };
           let addToTray = await masters.findOneAndUpdate(
             { code: x.code },
-
             {
               $push: {
-                actual_items: obj,
+                items: obj,
               },
               $set: {
-                sort_id: "BQC Done",
+                sort_id: "Ready to Audit",
               },
             }
           );
@@ -3952,4 +3956,20 @@ module.exports = {
       resolve(BqcDoneUnits);
     });
   },
+  whtTrayRecorrect:()=>{
+    let arr=[
+      "WHT1100",
+      "WHT1084",
+      "WHT1057",
+      "WHT1054",
+      "WHT1036"
+    ]
+    return new Promise(async(resolve,reject)=>{
+      for(let x of arr){
+        let findTray=await delivery.find({wht_tray:x,sales_bin_status:{$exists:false},ctx_tray_id:{$exists:false}})
+        
+        
+      }
+    })
+  }
 };

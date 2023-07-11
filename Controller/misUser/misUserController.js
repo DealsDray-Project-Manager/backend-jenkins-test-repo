@@ -30,9 +30,31 @@ module.exports = {
       let imei = [];
       let tracking_id = [];
       let order_status = [];
+      let order_date = [];
       let i = 0;
+      const imeiRegex = /^\d{15}$/; // Regex pattern for 15 digits
       for (let x of ordersData.item) {
         if (x.order_status == "NEW") {
+        
+          if (x?.imei.match(/[0-9]/g).join("").length !== 15) {
+            // IMEI length is correct
+            console.log(x.imei);
+            imei.push(x.imei);
+            err["imei_number_is_duplicate"] = imei;
+          } 
+          const orderDate = x?.order_date; // Assuming `data` is available
+          const parsedDate = new Date(orderDate);
+          if (isNaN(parsedDate)) {
+            order_date.push(x.order_date);
+            err["order_date"] = order_date;
+          } else {
+            const currentDate = new Date(); // Get the current date
+
+            if (parsedDate > currentDate) {
+              order_date.push(x.order_date);
+              err["order_date"] = order_date;
+            }
+          }
           if (x.tracking_id !== undefined) {
             if (x?.tracking_id.match(/[0-9]/g).join("").length !== 12) {
               tracking_id.push(x.tracking_id);
@@ -94,34 +116,6 @@ module.exports = {
             model_name.push(x?.old_item_details?.split(":")[1]);
             err["model_name_does_not_exist"] = model_name;
           }
-          // let imei_nmuber = await orders.findOne({
-          //   imei: x?.imei,
-          //   order_status: x?.order_status,
-          // });
-          // if (imei_nmuber) {
-          //   let obj = {
-          //     imei: x?.imei,
-          //     status: x?.order_status,
-          //   };
-          //   imei.push(obj);
-          //   err["imei_number_is_duplicate"] = imei;
-          // } else {
-          //   if (
-          //     ordersData.item.some(
-          //       (data, index) =>
-          //         data?.imei == x?.imei &&
-          //         data?.order_status == x?.order_status &&
-          //         index != i
-          //     )
-          //   ) {
-          //     let obj = {
-          //       imei: x?.imei,
-          //       status: x?.order_status,
-          //     };
-          //     imei.push(obj);
-          //     err["imei_number_is_duplicate"] = imei;
-          //   }
-          // }
         } else {
           order_status.push(x.order_status);
           err["order_status"] = order_status;
@@ -298,11 +292,10 @@ module.exports = {
         sort_id: "Ready to RDL",
         cpc: location,
       });
-      count.rdl_two = await masters.count({
-        prefix: "tray-master",
-        type_taxanomy: "WHT",
-        sort_id: "Ready to RDL-Repair",
+      count.rdl_two =await masters.countDocuments({
         cpc: location,
+        sort_id: "Ready to RDL-Repair",
+        type_taxanomy:"RPT"
       });
       count.botToWht = await masters.count({
         type_taxanomy: "BOT",
@@ -3445,14 +3438,14 @@ module.exports = {
             $unwind: "$items",
           },
           {
-            $project:{
-              items:1,
-              brand:1,
-              model:1,
-              code:1,
-              closed_date_agent:1
-            }
-          }
+            $project: {
+              items: 1,
+              brand: 1,
+              model: 1,
+              code: 1,
+              closed_date_agent: 1,
+            },
+          },
         ]);
       } else if (type == "BQC Done") {
         items = await masters.aggregate([
@@ -3467,14 +3460,14 @@ module.exports = {
             $unwind: "$items",
           },
           {
-            $project:{
-              items:1,
-              brand:1,
-              model:1,
-              code:1,
-              closed_date_agent:1
-            }
-          }
+            $project: {
+              items: 1,
+              brand: 1,
+              model: 1,
+              code: 1,
+              closed_date_agent: 1,
+            },
+          },
         ]);
       } else if (type == "Audit Done") {
         items = await masters.aggregate([
@@ -3489,14 +3482,14 @@ module.exports = {
             $unwind: "$items",
           },
           {
-            $project:{
-              items:1,
-              brand:1,
-              model:1,
-              code:1,
-              closed_date_agent:1
-            }
-          }
+            $project: {
+              items: 1,
+              brand: 1,
+              model: 1,
+              code: 1,
+              closed_date_agent: 1,
+            },
+          },
         ]);
       } else {
         items = await masters.aggregate([
@@ -3511,29 +3504,27 @@ module.exports = {
             $unwind: "$items",
           },
           {
-            $project:{
-              items:1,
-              brand:1,
-              model:1,
-              code:1,
-              closed_date_agent:1
-            }
-          }
+            $project: {
+              items: 1,
+              brand: 1,
+              model: 1,
+              code: 1,
+              closed_date_agent: 1,
+            },
+          },
         ]);
       }
       resolve({ items: items });
     });
   },
-  pickUpDateWiseFilter: (type, location,selectedStatus) => {
+  pickUpDateWiseFilter: (type, location, selectedStatus) => {
     return new Promise(async (resolve, reject) => {
       let items = [];
-    
 
       if (type == "Charge Done") {
         items = await masters.aggregate([
           {
             $match: {
-             
               sort_id: "Ready to BQC",
               cpc: location,
             },
@@ -3542,14 +3533,14 @@ module.exports = {
             $unwind: "$items",
           },
           {
-            $project:{
-              items:1,
-              brand:1,
-              model:1,
-              code:1,
-              closed_date_agent:1
-            }
-          }
+            $project: {
+              items: 1,
+              brand: 1,
+              model: 1,
+              code: 1,
+              closed_date_agent: 1,
+            },
+          },
         ]);
       } else if (type == "BQC Done") {
         items = await masters.aggregate([
@@ -3567,16 +3558,15 @@ module.exports = {
             $unwind: "$items",
           },
           {
-            $project:{
-              items:1,
-              brand:1,
-              model:1,
-              code:1,
-              closed_date_agent:1
-            }
-          }
+            $project: {
+              items: 1,
+              brand: 1,
+              model: 1,
+              code: 1,
+              closed_date_agent: 1,
+            },
+          },
         ]);
-
       } else if (type == "Audit Done") {
         items = await masters.aggregate([
           {
@@ -3599,15 +3589,14 @@ module.exports = {
               brand: 1,
               model: 1,
               code: 1,
-              closed_date_agent:1
+              closed_date_agent: 1,
             },
           },
           {
-            $unwind: "$items"
-          }
-        ]);        
+            $unwind: "$items",
+          },
+        ]);
       } else {
-
         items = await masters.aggregate([
           {
             $match: {
@@ -3622,19 +3611,22 @@ module.exports = {
                 $filter: {
                   input: "$items",
                   cond: {
-                    $in: ["$$this.rdl_fls_report.selected_status", selectedStatus],
+                    $in: [
+                      "$$this.rdl_fls_report.selected_status",
+                      selectedStatus,
+                    ],
                   },
                 },
               },
               brand: 1,
               model: 1,
               code: 1,
-              closed_date_agent:1
+              closed_date_agent: 1,
             },
           },
           {
-            $unwind: "$items"
-          }
+            $unwind: "$items",
+          },
         ]);
       }
       resolve({ items: items });
@@ -3655,14 +3647,14 @@ module.exports = {
             $unwind: "$items",
           },
           {
-            $project:{
-              items:1,
-              brand:1,
-              model:1,
-              code:1,
-              closed_date_agent:1
-            }
-          }
+            $project: {
+              items: 1,
+              brand: 1,
+              model: 1,
+              code: 1,
+              closed_date_agent: 1,
+            },
+          },
         ]);
       } else if (type == "BQC Done") {
         items = await masters.aggregate([
@@ -3671,14 +3663,14 @@ module.exports = {
             $unwind: "$items",
           },
           {
-            $project:{
-              items:1,
-              brand:1,
-              model:1,
-              code:1,
-              closed_date_agent:1
-            }
-          }
+            $project: {
+              items: 1,
+              brand: 1,
+              model: 1,
+              code: 1,
+              closed_date_agent: 1,
+            },
+          },
         ]);
       } else if (type == "Audit Done") {
         items = await masters.aggregate([
@@ -3687,14 +3679,14 @@ module.exports = {
             $unwind: "$items",
           },
           {
-            $project:{
-              items:1,
-              brand:1,
-              model:1,
-              code:1,
-              closed_date_agent:1
-            }
-          }
+            $project: {
+              items: 1,
+              brand: 1,
+              model: 1,
+              code: 1,
+              closed_date_agent: 1,
+            },
+          },
         ]);
       } else {
         items = await masters.aggregate([
@@ -3703,14 +3695,14 @@ module.exports = {
             $unwind: "$items",
           },
           {
-            $project:{
-              items:1,
-              brand:1,
-              model:1,
-              code:1,
-              closed_date_agent:1
-            }
-          }
+            $project: {
+              items: 1,
+              brand: 1,
+              model: 1,
+              code: 1,
+              closed_date_agent: 1,
+            },
+          },
         ]);
       }
       resolve({ items: items });
@@ -3993,7 +3985,7 @@ module.exports = {
     return new Promise(async (resolve, reject) => {
       let sendtoRdlMis;
       for (let x of tray) {
-        if (sortId == "Send for RDL-2") {
+        if (sortId == "Send for RDL-two") {
           sendtoRdlMis = await masters.findOneAndUpdate(
             { code: x },
             {

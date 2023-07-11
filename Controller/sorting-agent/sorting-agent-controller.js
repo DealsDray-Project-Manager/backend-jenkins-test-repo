@@ -23,7 +23,19 @@ module.exports = {
         pickup: 0,
         pickupToTray: 0,
         ctxtoStxSorting: 0,
+        whtToRpTraySorting:0,
+        rpTrayCount:0
       };
+      count.rpTrayCount = await masters.count({
+        issued_user_name: username,
+        type_taxanomy: "RPT",
+        sort_id: "Issued to sorting (Wht to rp)",
+      });
+      count.whtToRpTraySorting = await masters.count({
+        issued_user_name: username,
+        type_taxanomy: "WHT",
+        sort_id: "Issued to sorting (Wht to rp)",
+      });
       count.sorting = await masters.count({
         issued_user_name: username,
         type_taxanomy: "BOT",
@@ -1102,8 +1114,11 @@ module.exports = {
     console.log(trayDetails);
     return new Promise(async (resolve, reject) => {
       let data;
-      let rpTray
-      if (trayDetails.type == "RPT" && trayDetails.screen !== "Starting - page") {
+      let rpTray;
+      if (
+        trayDetails.type == "RPT" &&
+        trayDetails.screen !== "Starting - page"
+      ) {
         data = await masters.findOneAndUpdate(
           { code: trayDetails.rpTray },
           {
@@ -1114,7 +1129,10 @@ module.exports = {
             },
           }
         );
-      } else if(trayDetails.type == "RPT" && trayDetails.screen == "Starting - page") {
+      } else if (
+        trayDetails.type == "RPT" &&
+        trayDetails.screen == "Starting - page"
+      ) {
         rpTray = await masters.findOneAndUpdate(
           { code: trayDetails.rpTray },
           {
@@ -1136,8 +1154,7 @@ module.exports = {
             },
           }
         );
-      }
-      else{
+      } else {
         data = await masters.findOneAndUpdate(
           { code: trayDetails.whtTray },
           {
@@ -1152,7 +1169,15 @@ module.exports = {
       }
       if (data) {
         let updateDelivery;
-        const concatenatedArray = data.items.concat(rpTray.items);
+        let concatenatedArray;
+        if (
+          trayDetails.type == "RPT" &&
+          trayDetails.screen == "Starting - page"
+        ) {
+          concatenatedArray = data.items.concat(rpTray.items);
+        } else {
+          concatenatedArray = data.items;
+        }
         for (let x of concatenatedArray) {
           updateDelivery = await delivery.findOneAndUpdate(
             { "uic_code.code": x.uic },
