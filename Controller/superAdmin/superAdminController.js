@@ -9,6 +9,8 @@ const { admin } = require("../../Model/adminModel/admins");
 const { usersHistory } = require("../../Model/users-history-model/model");
 const { delivery } = require("../../Model/deliveryModel/delivery");
 const { trayCategory } = require("../../Model/tray-category/tray-category");
+const { spareCategories } = require("../../Model/spareCategories/spareCategories")
+const { trayRack } = require("../../Model/tray-rack/tray-rack")
 const { audtiorFeedback } = require("../../Model/temp/auditor-feedback");
 const { vendorMaster } = require("../../Model/vendorModel/vendorModel");
 const {
@@ -76,6 +78,7 @@ module.exports = {
       count.products = await products.count({});
       count.vendor = await vendorMaster.count({});
       count.ctxCategory = await trayCategory.count({});
+      count.spcategories = await spareCategories.count({});
       count.tray = await masters.count({ prefix: "tray-master" });
       count.bag = await masters.count({ prefix: "bag-master" });
       count.partList = await partAndColor.count({ type: "part-list" });
@@ -863,6 +866,18 @@ module.exports = {
     return new Promise(async (resolve, reject) => {
       let data = await infra.find({ type_taxanomy: "Warehouse" });
       resolve(data);
+    });
+  },
+  /*--------------------------------FIND ALL SP CATEGORIES-----------------------------------*/
+
+  getAllSPCategories: () => {
+    return new Promise(async (resolve, reject) => {
+      let data = await spareCategories.find();
+      if (data) {
+        resolve(data);
+      } else {
+        resolve();
+      }
     });
   },
 
@@ -2326,6 +2341,170 @@ module.exports = {
       }
     });
   },
+
+
+  deleteSPcategory: (spcategory_id) => {
+    console.log(spcategory_id);
+    return new Promise(async (resolve, reject) => {
+        let data = await spareCategories.deleteOne({ spcategory_id: spcategory_id });
+        if (data) {
+          resolve({status:true});
+        } else {
+          resolve({status:false});
+        }
+      
+    });
+  },
+  geteditSPcategory: (spcategory_id) => {
+    console.log(spcategory_id);
+    return new Promise(async (resolve, reject) => {
+      let data = await spareCategories.findOne({ spcategory_id: spcategory_id });
+      if (data) {
+        resolve({status:true});
+      } else {
+        resolve({status:false});
+      }
+    });
+  },
+  getAllSPCategories: () => {
+    return new Promise(async (resolve, reject) => {
+      const data = await spareCategories.find();
+      resolve(data);
+    });
+  },
+  createspcategories: (spcategoriesData) => {
+    return new Promise(async (resolve, reject) => {
+      const checkAlready = await spareCategories.findOne({
+        $or: [{ spcategory_id: spcategoriesData.spcategory_id }, { category_name: spcategoriesData.category_name }],
+      });
+      if (checkAlready) {
+        resolve({ status: 2 });
+      } else {
+        spcategoriesData.creation_date = Date.now();
+        const dataa = await spareCategories.create(spcategoriesData);
+        if (dataa) {
+          resolve({ status: 1 });
+        } else {
+          resolve({ status: 3 });
+        }
+      }
+    });
+  },
+  editspcategories: (spcategoriesData) => {
+    return new Promise(async (resolve, reject) => {
+      const updatespcategories = await spareCategories.findOneAndUpdate(
+        {
+          spcategory_id: spcategoriesData.spcategory_id,
+        },
+        {
+          $set: {
+            category_name: spcategoriesData.category_name,
+            description: spcategoriesData.description
+          },
+        }
+      );
+      if (updatespcategories) {
+        resolve({ status: 1 });
+      } else {
+        resolve({ status: 2 });
+      }
+    });
+  },
+  getOneSPcategory: (spcategory_id) => {
+    return new Promise(async (resolve, reject) => {
+      const getOneSPcategory = await spareCategories.findOne({ spcategory_id: spcategory_id });
+      if (getOneSPcategory) {
+        resolve({ status: 1, data: getOneSPcategory });
+      } else {
+        resolve({ status: 2 });
+      }
+    });
+  },
+
+
+  deleteTrayRacks: (rack_id) => {
+    console.log(rack_id);
+    return new Promise(async (resolve, reject) => {
+        let data = await trayRack.deleteOne({ rack_id: rack_id });
+        if (data) {
+          resolve({status:true});
+        } else {
+          resolve({status:false});
+        }
+      
+    });
+  },
+  geteditTrayRacks: (rack_id) => {
+    console.log(rack_id);
+    return new Promise(async (resolve, reject) => {
+      let data = await trayRack.findOne({ rack_id: rack_id });
+      if (data) {
+        resolve({status:true});
+      } else {
+        resolve({status:false});
+      }
+    });
+  },
+  getAllTrayRacks: () => {
+    return new Promise(async (resolve, reject) => {
+      const data = await trayRack.find();
+      resolve(data);
+    });
+  },
+  createTrayRacks: (trayracksData) => {
+    return new Promise(async (resolve, reject) => {
+      const checkAlready = await trayRack.findOne({
+        $or: [{ rack_id: trayracksData.rack_id }, { name: trayracksData.name }],
+      });
+      if (checkAlready) {
+        resolve({ status: 2 });
+      } else {
+        // trayracksData.creation_date = Date.now();
+        const rackdata = await trayRack.create(trayracksData);
+        if (rackdata) {
+          resolve({ status: 1 });
+        } else {
+          resolve({ status: 3 });
+        }
+      }
+    });
+  },
+  editTrayRacks: (trayracksData) => {
+    return new Promise(async (resolve, reject) => {
+      const updatetrayracks = await trayRack.findOneAndUpdate(
+        {
+          rack_id: trayracksData.rack_id,
+        },
+        {
+          $set: {
+            name: trayracksData.name,
+            display: trayracksData.display,
+            parent_id: trayracksData.parent_id,
+            warehouse: trayracksData.warehouse,
+          },
+        }
+      );
+      if (updatetrayracks) {
+        resolve({ status: 1 });
+      } else {
+        resolve({ status: 2 });
+      }
+    });
+  },
+  getOneTrayRack: (rack_id) => {
+    return new Promise(async (resolve, reject) => {
+      const getOneTrayRack = await trayRack.findOne({ rack_id: rack_id });
+      if (getOneTrayRack) {
+        resolve({ status: 1, data: getOneTrayRack });
+      } else {
+        resolve({ status: 2 });
+      }
+    });
+  },
+
+
+
+
   createPartOrColor: (dataOfPartOrColor) => {
     return new Promise(async (resolve, reject) => {
       let checkDup = await partAndColor.findOne({
@@ -2787,6 +2966,9 @@ module.exports = {
       }
     });
   },
+
+
+
   getAllVendor: () => {
     return new Promise(async (resolve, reject) => {
       const data = await vendorMaster.find();
@@ -2866,6 +3048,9 @@ module.exports = {
       }
     });
   },
+
+
+
   editPartOrColor: (dataOfPartorColor) => {
     return new Promise(async (resolve, reject) => {
       let updateData = await partAndColor.updateOne(

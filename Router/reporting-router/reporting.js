@@ -136,6 +136,40 @@ router.post("/delivered/item/filter", async (req, res, next) => {
     next(error);
   }
 });
+// filter for all orders report
+router.post("/orderDateReport/item/filter", async (req, res, next) => {
+  try {
+    let { location, fromDate, toDate, page, size, type } = req.body;
+    page++;
+    const limit = parseInt(size);
+    const skip = (page - 1) * size;
+    const filterData = await reportingAgentRouter.allOrdersReportItemFilter(
+      location,
+      fromDate,
+      toDate,
+      limit,
+      skip,
+      type
+    );
+    if (filterData.allOrdersReport.length !== 0) {
+      res.status(200).json({
+        data: filterData.allOrdersReport,
+        forXlsx: filterData.forXlsxDownload,
+        count: filterData.getCount,
+      });
+    } else {
+      res.status(202).json({
+        data: filterData.allOrdersReport,
+        forXlsx: filterData.forXlsxDownload,
+        count: filterData.getCount,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
+
 // filter for month wise purchise report
 router.post("/monthWiseReport/item/filter", async (req, res, next) => {
   try {
@@ -168,6 +202,7 @@ router.post("/monthWiseReport/item/filter", async (req, res, next) => {
     next(error);
   }
 });
+
 // GET ALL ORDERS ORDER DATE WISE
 router.post(
   "/getOrders/orderDateWise/:location/:page/:size",

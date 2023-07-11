@@ -9,7 +9,7 @@ const trayCategorySchema = mongoose.Schema({
     type: String,
   },
   float: {
-    type: Number,
+    type: Number, 
   },
   sereis_start: {
     type: Number,
