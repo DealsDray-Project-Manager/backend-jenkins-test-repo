@@ -6,6 +6,44 @@ const {
 const { purchaseOrder } = require("../../Model/Purchase-order/purchase-order");
 
 module.exports = {
+  dashboardData: (location,username) => {
+    return new Promise(async (resolve, reject) => {
+      let count = {
+        precourmentCount:0
+      };
+      count.precourmentCount =await masters.aggregate([
+        {
+          $match: {
+            "items.rdl_fls_report.selected_status": "Repair Required",
+            cpc: location,
+            sort_id: "Ready to RDL-Repair",
+          },
+        },
+        {
+          $unwind: "$items",
+        },
+        {
+          $match: {
+            "items.rdl_fls_report.selected_status": "Repair Required",
+          },
+        },
+        {
+          $group: {
+            _id: {
+              model: "$items.model_name",
+              brand: "$items.brand_name",
+              muic: "$items.muic",
+            },
+            count: { $sum: 1 },
+          },
+        },
+      ]);
+      count.precourmentCount=count.precourmentCount.length
+      if (count) {
+        resolve(count);
+      }
+    });
+  },
   procureMentCreation: (location, brand, model) => {
     return new Promise(async (resolve, reject) => {
       const findItem = await masters.aggregate([

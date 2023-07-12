@@ -4259,16 +4259,21 @@ module.exports = {
           );
           if (foundPart) {
             isCheck = isCheck.map((item) => {
-              if (item?.partId === x?.part_id) {
-                const updatedItem = {
-                  ...item,
-                  selected_qty: Number(item?.selected_qty) + 1,
-                  balance_stock: Number(item?.balance_stock) - 1,
-                };
-                updatedItem.uic.push(uic);
-                return updatedItem;
+              if(Number(item?.balance_stock) > 0){
+                if (item?.partId === x?.part_id) {
+                  const updatedItem = {
+                    ...item,
+                    selected_qty: Number(item?.selected_qty) + 1,
+                    balance_stock: Number(item?.balance_stock) - 1,
+                  };
+                  updatedItem.uic.push(uic);
+                  return updatedItem;
+                }
+                return item;
               }
-              return item;
+              else{
+                resolve({ status: 0, partid: x?.part_id });
+              }
             });
           } else {
             const checkQty = await partAndColor.findOne({
