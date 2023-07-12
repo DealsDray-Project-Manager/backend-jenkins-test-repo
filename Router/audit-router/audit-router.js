@@ -123,7 +123,7 @@ router.post("/traySegrigation", async (req, res, next) => {
     const { type, stage } = req.body;
     let data = await auditController.traySegrigation(req.body);
     if (data.status == 1) {
-      if (stage == "BQC Not Done") {
+      if (stage == "BQC Not Done / Imei not verified") {
         res.status(200).json({
           message: `BQC was not done for this UIC, leave it in the WHT Tray`,
         });

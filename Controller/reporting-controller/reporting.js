@@ -1,6 +1,7 @@
 const { delivery } = require("../../Model/deliveryModel/delivery");
 const { masters } = require("../../Model/mastersModel");
 const { orders } = require("../../Model/ordersModel/ordersModel");
+const { allorders } = require("../../Model/allOrdersModel/allOrdersModel");
 const { products } = require("../../Model/productModel/product");
 const Elasticsearch = require("../../Elastic-search/elastic");
 /*--------------------------------------------------------------*/
@@ -38,6 +39,7 @@ module.exports = {
         recharging: 0,
         ctxTransferPendingToSales: 0,
         ctxTransferToSalesInProgress: 0,
+        allOrdersReport:0,
         monthWisePurchase: 0,
         rdlOneDoneUnits: 0,
       };
@@ -49,7 +51,10 @@ module.exports = {
         partner_shop: location,
         temp_delivery_status: { $ne: "Pending" },
       });
-
+      count.allOrdersReport = await allorders.count({
+        partner_shop: location,
+        temp_delivery_status: { $ne: "Pending" },
+      });
       count.allOrders = await orders.count({
         partner_shop: location,
         order_status: "NEW",
@@ -1298,6 +1303,109 @@ module.exports = {
       }
     });
   },
+  allOrdersReportItemFilter: (
+    location,
+    fromDate,
+    toDate,
+    limit,
+    skip,
+    type
+  ) => {
+    return new Promise(async (resolve, reject) => {
+      let allOrdersReport, getCount, forXlsxDownload;
+      if (type == "Order Date") {
+        const fromDateTimestamp = Date.parse(fromDate);
+        const toDateTimestamp = Date.parse(toDate);
+
+        let allOrdersReport = await allorders.aggregate([
+          {
+            $match: {
+              delivery_status: "Delivered",
+              partner_shop: location,
+              order_date: {
+                $gte: new Date(fromDateTimestamp),
+                $lte: new Date(toDateTimestamp),
+              },
+            },
+          },
+          {
+            $lookup: {
+              from: "deliveries",
+              localField: "order_id",
+              foreignField: "order_id",
+              as: "delivery",
+            },
+          },
+          {
+            $facet: {
+              results: [{ $skip: skip }, { $limit: limit }],
+              count: [{ $count: "count" }],
+            },
+          },
+        ]);
+
+        let forXlsxDownload = await allorders.aggregate([
+          {
+            $match: {
+              partner_shop: location,
+              delivery_status: "Delivered",
+              order_date: {
+                $gte: new Date(fromDateTimestamp),
+                $lte: new Date(toDateTimestamp),
+              },
+            },
+          },
+          {
+            $lookup: {
+              from: "deliveries",
+              localField: "order_id",
+              foreignField: "order_id",
+              as: "delivery",
+            },
+          },
+        ]);
+
+        let arrLimit = [];
+        for (let x of allOrdersReport?.[0].results) {
+          arrLimit.push(...x.delivery);
+        }
+        let arrWithoutLimit = [];
+        for (let y of forXlsxDownload) {
+          arrWithoutLimit.push(...y.delivery);
+        }
+        resolve({
+          getCount: arrWithoutLimit.length,
+          allOrdersReport: arrLimit,
+          forXlsxDownload: arrWithoutLimit,
+        });
+      } else {
+        const fromDateISO = new Date(fromDate).toISOString();
+        const toDateISO = new Date(toDate).toISOString();
+        allOrdersReport = await delivery
+          .find({
+            partner_shop: location,
+            order_date: { $gte: fromDateISO, $lte: toDateISO },
+          })
+          .limit(limit)
+          .skip(skip);
+        getCount = await delivery.count({
+          partner_shop: location,
+          order_date: { $gte: fromDateISO, $lte: toDateISO },
+        });
+        forXlsxDownload = await delivery.find({
+          partner_shop: location,
+          order_date: { $gte: fromDateISO, $lte: toDateISO },
+        });
+      }
+      resolve({
+        allOrdersReport: allOrdersReport,
+        forXlsxDownload: forXlsxDownload,
+        getCount: getCount,
+      });
+    });
+  },
+
+  
   monthWiseReportItemFilter: (
     location,
     fromDate,
@@ -1399,6 +1507,8 @@ module.exports = {
       });
     });
   },
+
+
   getOrdersOrderDateWaise: (location, limit, skip) => {
     return new Promise(async (resolve, reject) => {
       let allOrders = await orders.aggregate([

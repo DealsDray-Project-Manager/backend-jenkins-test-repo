@@ -118,8 +118,12 @@ router.post("/login", async (req, res, next) => {
 /*----------------------------------USER STATUS CHECKING---------------------------------*/
 router.post("/check-user-status", async (req, res, next) => {
   try {
-    const { username, jwt ,user_type} = req.body;
-    let data = await superAdminController.checkUserStatus(username, jwt,user_type);
+    const { username, jwt, user_type } = req.body;
+    let data = await superAdminController.checkUserStatus(
+      username,
+      jwt,
+      user_type
+    );
     if (data.status == 1) {
       res.status(200).json({
         message: "Active user",
@@ -737,6 +741,7 @@ router.post("/getWarehouse", async (req, res, next) => {
     next(error);
   }
 });
+
 
 /*-----------------------------BULK VALIDATION BAG--------------------------------------*/
 router.post("/bulkValidationBag", async (req, res, next) => {
@@ -1558,6 +1563,446 @@ router.post("/categoryCheck", async (req, res, next) => {
     next(error);
   }
 });
+
+
+
+/*----------------------------------------------SP CATEGORIES ----------------------------------------------------*/
+// GET ALL THE SP CATEGORIES
+router.post("/spcategories/view", async (req, res, next) => {
+  try {
+    console.log("working");
+    const spcategoriesData = await superAdminController.getAllSPCategories();
+    if (spcategoriesData) {
+      res.status(200).json({
+        data: spcategoriesData,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
+// CREATE SP CATEGORIES
+router.post("/spcategories/create", async (req, res, next) => {
+  try {
+    const spcategoriesData = await superAdminController.createspcategories(req.body);
+    if (spcategoriesData.status == 1) {
+      fs.readFile(
+        "myjsonfile.json",
+        "utf8",
+        function readFileCallback(err, datafile) {
+          if (err) {
+          } else {
+            obj = JSON.parse(datafile);
+            let num = parseInt(obj.SPCATID.substring(3)) + 1;
+            let updatedStr =
+              obj.SPCATID.substring(0, 3) + num.toString().padStart(6, "0");
+            obj.SPCATID = updatedStr;
+            json = JSON.stringify(obj);
+            fs.writeFile(
+              "myjsonfile.json",
+              json,
+              "utf8",
+              function readFileCallback(err, data) {
+                if (err) {
+                }
+              }
+            );
+          }
+        }
+      );
+      res.status(200).json({
+        message: "Successfully Created",
+      });
+    } else if (spcategoriesData.status == 2) {
+      res.status(202).json({
+        message: "Already Created",
+      });
+    } else {
+      res.status(202).json({
+        message: "Creation Failed...",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.post("/addspcategory", async (req, res, next) => {
+  try {
+    const { code, sereis_start } = req.body;
+    let data = await superAdminController.createctxcategory(req.body);
+    if (data.status == true) {
+      // fs.readFile(
+      //   "myjsonfile.json",
+      //   "utf8",
+      //   function readFileCallback(err, datafile) {
+      //     if (err) {
+      //     } else {
+      //       obj = JSON.parse(datafile);
+      //       obj["CT" + code] = sereis_start;
+      //       obj["ST" + code] = sereis_start;
+      //       json = JSON.stringify(obj);
+      //       fs.writeFile(
+      //         "myjsonfile.json",
+      //         json,
+      //         "utf8",
+      //         function readFileCallback(err, data) {
+      //           if (err) {
+      //           }
+      //         }
+      //       );
+      //     }
+      //   }
+      // );
+      res.status(200).json({
+        message: "Successfully category Added",
+      });
+    } else {
+      res.status(202).json({
+        message: "not working",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
+// SPCATID GEN
+router.post("/spcategories/idGen", async (req, res, next) => {
+  try {
+    let obj;
+    fs.readFile(
+      "myjsonfile.json",
+      "utf8",
+      async function readFileCallback(err, data) {
+        if (err) {
+        } else {
+          obj = JSON.parse(data);
+          res.status(200).json({
+            spctID: obj.SPCATID,
+          });
+        }
+      }
+    );
+  } catch (error) {
+    next(error);
+  }
+});
+
+// EDIT SP CATEGORIES
+router.post("/spcategories/edit", async (req, res, next) => {
+  try {
+    const spcategoriesData = await superAdminController.editspcategories(req.body);
+    if (spcategoriesData.status == 1) {
+      res.status(200).json({
+        message: "Successfully Updated",
+      });
+    } else {
+      res.status(202).json({
+        message: "Updation Failed...",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.get("/geteditSPcategory/:spcategory_id", async (req, res) => {
+  try {
+    let user = await superAdminController.geteditSPcategory(req.params.spcategory_id);
+    if (user) {
+      res.status(200).json({ data: user });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
+// GET ONE CATEGORY
+router.post("/spcategories/one/:categoriesId", async (req, res, next) => {
+  try {
+    const { categoriesId } = req.params;
+    const spcategoriesData = await superAdminController.getOneSPcategory(categoriesId);
+    if (spcategoriesData.status == 1) {
+      res.status(200).json({
+        data: spcategoriesData.data,
+      });
+    } else {
+      res.status(200).json({
+        message: "No data found",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.get("/getAllSPCategories", async (req, res) => {
+  try {
+    let spcategoriesData = await superAdminController.getAllSPCategories();
+    if (spcategoriesData) {
+      res.status(200).json(spcategoriesData);
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
+
+router.post("/deleteSPcategory/:spcategory_id", async (req, res, next) => {
+  try {
+    let data = await superAdminController.deleteSPcategory(req.params.spcategory_id);
+    if (data.status == true) {
+      res.status(200).json({
+        message: "Successfully Deleted",
+      });
+    } else {
+      res.status(202).json({
+        message: "Failed",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.get("/geteditSPcategory/:code", async (req, res) => {
+  try {
+    let user = await superAdminController.geteditSPcategory(req.params.code);
+    if (user) {
+      res.status(200).json({ data: user });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
+
+
+/*----------------------------------------------Tray Racks ----------------------------------------------------*/
+// GET ALL THE Tray Racks
+router.post("/trayracks/view", async (req, res, next) => {
+  try {
+    console.log("working");
+    const trayracksData = await superAdminController.getAllTrayRacks();
+    if (trayracksData) {
+      res.status(200).json({
+        data: trayracksData,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
+// CREATE Tray Racks
+router.post("/trayracks/create", async (req, res, next) => {
+  try {
+    const trayracksData = await superAdminController.createTrayRacks(req.body);
+    if (trayracksData.status == 1) {
+      fs.readFile(
+        "myjsonfile.json",
+        "utf8",
+        function readFileCallback(err, datafile) {
+          if (err) {
+          } else {
+            obj = JSON.parse(datafile);
+            let num = parseInt(obj.RACKID.substring(3)) + 1;
+            let updatedStr =
+              obj.RACKID.substring(0, 3) + num.toString().padStart(6, "0");
+            obj.RACKID = updatedStr;
+            json = JSON.stringify(obj);
+            fs.writeFile(
+              "myjsonfile.json",
+              json,
+              "utf8",
+              function readFileCallback(err, data) {
+                if (err) {
+                }
+              }
+            );
+          }
+        }
+      );
+      res.status(200).json({
+        message: "Successfully Created",
+      });
+    } else if (trayracksData.status == 2) {
+      res.status(202).json({
+        message: "Already Created",
+      });
+    } else {
+      res.status(202).json({
+        message: "Creation Failed...",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.post("/addTrayRacks", async (req, res, next) => {
+  try {
+    const { code, sereis_start } = req.body;
+    let data = await superAdminController.createctxcategory(req.body);
+    if (data.status == true) {
+      // fs.readFile(
+      //   "myjsonfile.json",
+      //   "utf8",
+      //   function readFileCallback(err, datafile) {
+      //     if (err) {
+      //     } else {
+      //       obj = JSON.parse(datafile);
+      //       obj["CT" + code] = sereis_start;
+      //       obj["ST" + code] = sereis_start;
+      //       json = JSON.stringify(obj);
+      //       fs.writeFile(
+      //         "myjsonfile.json",
+      //         json,
+      //         "utf8",
+      //         function readFileCallback(err, data) {
+      //           if (err) {
+      //           }
+      //         }
+      //       );
+      //     }
+      //   }
+      // );
+      res.status(200).json({
+        message: "Successfully category Added",
+      });
+    } else {
+      res.status(202).json({
+        message: "not working",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
+// SPCATID GEN
+router.post("/trayracks/idGen", async (req, res, next) => {
+  try {
+    let obj;
+    fs.readFile(
+      "myjsonfile.json",
+      "utf8",
+      async function readFileCallback(err, data) {
+        if (err) {
+        } else {
+          obj = JSON.parse(data);
+          res.status(200).json({
+            rackID: obj.RACKID,
+          });
+        }
+      }
+    );
+  } catch (error) {
+    next(error);
+  }
+});
+
+// EDIT Tray Racks
+router.post("/trayracks/edit", async (req, res, next) => {
+  try {
+    const trayracksData = await superAdminController.editTrayRacks(req.body);
+    if (trayracksData.status == 1) {
+      res.status(200).json({
+        message: "Successfully Updated",
+      });
+    } else {
+      res.status(202).json({
+        message: "Updation Failed...",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.get("/geteditTrayRacks/:rack_id", async (req, res) => {
+  try {
+    let user = await superAdminController.geteditTrayRacks(req.params.rack_id);
+    if (user) {
+      res.status(200).json({ data: user });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
+// GET ONE Tray Rack
+router.post("/trayracks/one/:trayRackId", async (req, res, next) => {
+  try {
+    const { trayRackId } = req.params;
+    const trayracksData = await superAdminController.getOneTrayRack(trayRackId);
+    if (trayracksData.status == 1) {
+      res.status(200).json({
+        data: trayracksData.data,
+      });
+    } else {
+      res.status(200).json({
+        message: "No data found",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.get("/getAllTrayRacks", async (req, res) => {
+  try {
+    let trayracksData = await superAdminController.getAllTrayRacks();
+    if (trayracksData) {
+      res.status(200).json(trayracksData);
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
+
+router.post("/deleteTrayRacks/:rack_id", async (req, res, next) => {
+  try {
+    let data = await superAdminController.deleteTrayRacks(req.params.rack_id);
+    if (data.status == true) {
+      res.status(200).json({
+        message: "Successfully Deleted",
+      });
+    } else {
+      res.status(202).json({
+        message: "Failed",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.get("/geteditTrayRacks/:code", async (req, res) => {
+  try {
+    let user = await superAdminController.geteditTrayRacks(req.params.code);
+    if (user) {
+      res.status(200).json({ data: user });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
+
+
+
+
+
+
+
+
+
+
+
 /*-------------------------------------------MASTER FOR PART AND COLOR--------------------------------------------*/
 //create
 router.post("/partAndColor/create", async (req, res, next) => {
@@ -2072,6 +2517,7 @@ router.post("/vendorMaster/create", async (req, res, next) => {
     next(error);
   }
 });
+
 // EDIT VENDOR
 router.post("/vendorMaster/edit", async (req, res, next) => {
   try {
@@ -2089,6 +2535,7 @@ router.post("/vendorMaster/edit", async (req, res, next) => {
     next(error);
   }
 });
+
 // VENDOR STATUS CHANGE
 router.post("/vendorMaster/statusChange", async (req, res, next) => {
   try {
@@ -2107,6 +2554,7 @@ router.post("/vendorMaster/statusChange", async (req, res, next) => {
     next(error);
   }
 });
+
 // GET ONE VENDOR
 router.post("/vendorMaster/one/:vendorId", async (req, res, next) => {
   try {
@@ -2125,6 +2573,10 @@ router.post("/vendorMaster/one/:vendorId", async (req, res, next) => {
     next(error);
   }
 });
+
+
+
+
 /*-------------------------------ADMIN FORCEFULL VALIDATION --------------------------------------*/
 // CHECK CURRENT TRAY STATUS
 router.post("/tray/checkStatus", async (req, res, next) => {
@@ -2521,6 +2973,25 @@ router.post("/extra/whClosedDateUpdation", async (req, res, next) => {
 router.post("/fixBaggingIssue", async (req, res, next) => {
   try {
     let data = await superAdminController.fixBaggingIssueWithAwbn();
+    if (data) {
+      res.status(200).json({
+        message: "Successfully updated",
+        data:data
+      });
+    } else {
+      res.status(202).json({
+        message: "Failed",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
+//WHT TRAY ISSUE
+router.post("/whtTray/recorrect", async (req, res, next) => {
+  try {
+    let data = await superAdminController.whtTrayRecorrect();
     if (data) {
       res.status(200).json({
         message: "Successfully updated",

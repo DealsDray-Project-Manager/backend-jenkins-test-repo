@@ -1620,7 +1620,7 @@ router.post("/oneTrayAssigToAudit", async (req, res, next) => {
     let data = await warehouseInController.oneTrayAssignToAudit(req.body);
     if (data) {
       res.status(200).json({
-        message: "Successfully Assigned",
+        message: "Successfully Issued",
       });
     } else {
       res.status(200).json({
@@ -1831,7 +1831,7 @@ router.post("/auditTrayIssueToAgent", async (req, res, next) => {
     const data = await warehouseInController.auditTrayAssign(req.body);
     if (data.status == 1) {
       res.status(200).json({
-        message: "Successfully Assigned to Agent",
+        message: "Successfully Issued to Agent",
       });
     } else {
       res.status(202).json({
@@ -1942,7 +1942,7 @@ router.post("/oneTrayAssigToAudit", async (req, res, next) => {
     let data = await warehouseInController.oneTrayAssignToAudit(req.body);
     if (data) {
       res.status(200).json({
-        message: "Successfully Assigned",
+        message: "Successfully Issued",
       });
     } else {
       res.status(200).json({
@@ -2133,7 +2133,7 @@ router.post("/checkRdl-flsUserStatus/:username", async (req, res, next) => {
   }
 });
 //CHECK RDL-2 USER FREE OR NOT
-router.post("/checkRdl-2/status/:username", async (req, res, next) => {
+router.post("/checkRdl-two/status/:username", async (req, res, next) => {
   try {
     const { username } = req.params;
     let data = await warehouseInController.checkRdl2UserStatus(username);

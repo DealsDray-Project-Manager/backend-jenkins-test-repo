@@ -7,6 +7,21 @@ const router = express.Router();
 const SpMisController = require("../../Controller/sp-mis/sp-mis-controller");
 /*-----------------------------------------------*/
 
+
+//DASHBOARD
+router.post("/dashboard/:location", async (req, res, next) => {
+  try {
+    const { location } = req.params;
+    let data = await SpMisController.dashboardData(location);
+    if (data) {
+      res.status(200).json({
+        data: data,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
 /*------------------------------------PROCUREMENT CREATION---------------------------------------------*/
 
 router.post("/procurment/creation", async (req, res, next) => {

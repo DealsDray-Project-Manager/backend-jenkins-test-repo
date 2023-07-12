@@ -4,10 +4,10 @@ const router = express.Router();
 const rmuserController = require("../../Controller/rm-controller/rm-controller");
 /*-----------------------------ROUTERS------------------------------------*/
 //DASHBOARD
-router.post("/dashboard/:location", async (req, res, next) => {
+router.post("/dashboard/:location/:username", async (req, res, next) => {
   try {
-    const { location } = req.params;
-    let data = await rmuserController.dashboardData(location);
+    const { location,username } = req.params;
+    let data = await rmuserController.dashboardData(location,username);
     if (data) {
       res.status(200).json({
         data: data,

@@ -54,12 +54,11 @@ exports = module.exports = () => {
   } catch (error) {
     console.log(error);
   }
+  // NIGHT 11 BLANCOO AUTOMATION
   try {
-    corn.schedule("00 23 * * *", () => {
+    corn.schedule("08 17 * * *", () => {
       /*----------------------------------------------CSV READ-----------------------------*/
       let result = [];
-      let updatedMuic = [];
-      let arrofTray = [];
       fs.createReadStream("blancco_qc_data/blancco_qc_data.csv")
         .pipe(csvParser())
         .on("data", (data) => {
@@ -67,46 +66,38 @@ exports = module.exports = () => {
           result.push(toLowerKeys(data));
         })
         .on("end", async () => {
-          for (let x of result) {
-            let updateBqcData = await delivery.findOneAndUpdate(
-              { "uic_code.code": x.uic },
-              {
-                $set: {
-                  bqc_software_report: x,
-                },
-              }
-            );
-            // if(x.tray_id !== updateBqcData?.wht_tray){
-            //   console.log(x.uic);
-            // }
+          blancooAutmation(result);
+        });
+      /*---------------------------------FOR OBJECT KEY CONVERT TO LOWER KEY ------------------*/
+      function toLowerKeys(obj) {
+        return Object.keys(obj).reduce((accumulator, key) => {
+          accumulator[
+            key
+              .toLowerCase()
+              ?.split(/[-" "./]/)
+              .join("_")
+          ] = obj[key];
 
-            if (updateBqcData) {
-              let obj = {
-                updatedUic: x.uic,
-                tray: x.tray_id,
-                brand: "",
-                model: "",
-              };
-              if (arrofTray.includes(x.tray_id) == false) {
-                arrofTray.push(x.tray_id);
-              }
-
-              let findBrandAndModel = await products.findOne({
-                vendor_sku_id: updateBqcData.item_id,
-              });
-              if (findBrandAndModel) {
-                obj.brand = findBrandAndModel.brand_name;
-                obj.model = findBrandAndModel.model_name;
-              }
-              updatedMuic.push(obj);
-            }
-          }
-          console.log(updatedMuic);
-          let check = emailNotification.blancoDataUpdateNotification(
-            updatedMuic,
-            arrofTray
-          );
-          console.log("BQC report updated");
+          return accumulator;
+        }, {});
+      }
+    });
+  } catch (error) {
+    console.log(error);
+  }
+  // MORNING 9 BLANCOO AUTOMATION
+  try {
+    corn.schedule("27 12 * * *", () => {
+      /*----------------------------------------------CSV READ-----------------------------*/
+      let result = [];
+      fs.createReadStream("blancco_qc_data/blancco_qc_data.csv")
+        .pipe(csvParser())
+        .on("data", (data) => {
+          data["device_color_one"] = data["Device_Color"];
+          result.push(toLowerKeys(data));
+        })
+        .on("end", async () => {
+          blancooAutmation(result);
         });
       /*---------------------------------FOR OBJECT KEY CONVERT TO LOWER KEY ------------------*/
       function toLowerKeys(obj) {
@@ -133,15 +124,56 @@ exports = module.exports = () => {
     //     .find({}, { _id: 0 })
     //     .sort({ updated_at: -1 })
     //     .limit(1000);
-        
     //   for (let x of lastUpdateData) {
     //     await elasticSearch.uicCodeGen(x);
     //     // Introduce a delay of 500 milliseconds (adjust as needed)
     //     await delay(500);
     //   }
     // });
-    
   } catch (error) {
     console.log(error);
   }
 };
+
+// BLANCOO AUTOMATION
+async function blancooAutmation(result) {
+  let updatedMuic = [];
+  let arrofTray = [];
+  for (let x of result) {
+    let updateBqcData = await delivery.findOneAndUpdate(
+      { "uic_code.code": x.uic },
+      {
+        $set: {
+          bqc_software_report: x,
+        },
+      }
+    );
+
+    if (updateBqcData) {
+      let obj = {
+        updatedUic: x.uic,
+        tray: x.tray_id,
+        brand: "",
+        model: "",
+      };
+      if (arrofTray.includes(x.tray_id) == false) {
+        arrofTray.push(x.tray_id);
+      }
+
+      let findBrandAndModel = await products.findOne({
+        vendor_sku_id: updateBqcData.item_id,
+      });
+      if (findBrandAndModel) {
+        obj.brand = findBrandAndModel.brand_name;
+        obj.model = findBrandAndModel.model_name;
+      }
+      updatedMuic.push(obj);
+    }
+  }
+  console.log(updatedMuic);
+  let check = emailNotification.blancoDataUpdateNotification(
+    updatedMuic,
+    arrofTray
+  );
+  console.log("BQC report updated");
+}

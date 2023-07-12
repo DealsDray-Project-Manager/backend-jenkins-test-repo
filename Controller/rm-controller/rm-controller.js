@@ -2,12 +2,28 @@ const { masters } = require("../../Model/mastersModel");
 /****************************************************************** */
 
 module.exports = {
-  dashboardData: (location) => {
+  dashboardData: (location,username) => {
     return new Promise(async (resolve, reject) => {
       let count = {
         rdl_two: 0,
         rdl2Request: 0,
+        partIssue:0,
+        issueToRdl2:0
       };
+      count.partIssue = await masters.count({
+        prefix: "tray-master",
+        type_taxanomy: "SPT",
+        issued_user_name: username,
+        sort_id: "Sent to sp warehouse",
+        cpc: location,
+      });
+      count.issueToRdl2 = await masters.count({
+        prefix: "tray-master",
+        type_taxanomy: "SPT",
+        issued_user_name: username,
+        sort_id: "Ready to RDL-Repair",
+        cpc: location,
+      });
       count.rdl_two = await masters.count({
         prefix: "tray-master",
         type_taxanomy: "WHT",
@@ -17,7 +33,7 @@ module.exports = {
       count.rdl2Request = await masters.count({
         prefix: "tray-master",
         type_taxanomy: "WHT",
-        sort_id: "Send for RDL-2",
+        sort_id: "Send for RDL-two",
         cpc: location,
       });
       if (count) {
