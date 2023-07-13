@@ -1,7 +1,6 @@
 const { delivery } = require("../../Model/deliveryModel/delivery");
 const { masters } = require("../../Model/mastersModel");
 const { orders } = require("../../Model/ordersModel/ordersModel");
-const { allorders } = require("../../Model/allOrdersModel/allOrdersModel");
 const { products } = require("../../Model/productModel/product");
 const Elasticsearch = require("../../Elastic-search/elastic");
 /*--------------------------------------------------------------*/
@@ -39,7 +38,6 @@ module.exports = {
         recharging: 0,
         ctxTransferPendingToSales: 0,
         ctxTransferToSalesInProgress: 0,
-        allOrdersReport:0,
         monthWisePurchase: 0,
         rdlOneDoneUnits: 0,
       };
@@ -48,10 +46,6 @@ module.exports = {
         rdl_fls_closed_date: { $exists: true },
       });
       count.monthWisePurchase = await delivery.count({
-        partner_shop: location,
-        temp_delivery_status: { $ne: "Pending" },
-      });
-      count.allOrdersReport = await allorders.count({
         partner_shop: location,
         temp_delivery_status: { $ne: "Pending" },
       });
@@ -1293,7 +1287,7 @@ module.exports = {
         const fromDateTimestamp = Date.parse(fromDate);
         const toDateTimestamp = Date.parse(toDate);
 
-        let allOrdersReport = await allorders.aggregate([
+        let allOrdersReport = await orders.aggregate([
           {
             $match: {
               delivery_status: "Delivered",
@@ -1320,7 +1314,7 @@ module.exports = {
           },
         ]);
 
-        let forXlsxDownload = await allorders.aggregate([
+        let forXlsxDownload = await orders.aggregate([
           {
             $match: {
               partner_shop: location,
