@@ -2637,9 +2637,6 @@ module.exports = {
     });
   },
 
-
-
-
   createPartOrColor: (dataOfPartOrColor) => {
     return new Promise(async (resolve, reject) => {
       let checkDup = await partAndColor.findOne({
@@ -2687,13 +2684,11 @@ module.exports = {
     });
   },
 
-
-
   createStorage: (dataOfStorage) => {
     return new Promise(async (resolve, reject) => {
       let checkDup = await storagemodel.findOne({
-            name: dataOfStorage.name,
-            type: "storage-list",
+        name: dataOfStorage.name,
+        type: "storage-list",
       });
       if (checkDup) {
         resolve({ status: 2 });
@@ -2708,32 +2703,30 @@ module.exports = {
       }
     });
   },
-  viewStorage: (type) => {
+  viewStorage: () => {
     return new Promise(async (resolve, reject) => {
-      if (type == "storage-list") {
-        const data = await storagemodel
-          .find({ type: type })
-          .sort({ part_code: 1 });
-        resolve(data);
+      const data = await storagemodel.find({});
+      resolve(data);
+    });
+  },
+  getStorageDataForEdit: (id) => {
+    return new Promise(async (resolve, reject) => {
+      const findData = await storagemodel.findOne({ _id: id });
+      if (findData) {
+        resolve({ storageData: findData, status: 1 });
       } else {
-        const data = await storagemodel
-          .find({ type: type })
-          .sort({ name: 1 })
-          .collation({ locale: "en_US", numericOrdering: true });
-        resolve(data);
+        resolve({ status: 0 });
       }
     });
   },
   editStorage: (dataOfStorage) => {
     return new Promise(async (resolve, reject) => {
-      let updateData = await storagemodel.updateOne(
-        {
-          $set: {
-            name: dataOfStorage.name,
-            description: dataOfStorage.description,
-          },
-        }
-      );
+      let updateData = await storagemodel.updateOne({
+        $set: {
+          name: dataOfStorage.name,
+          description: dataOfStorage.description,
+        },
+      });
       if (updateData) {
         resolve({ status: 1 });
       } else {
@@ -2741,29 +2734,22 @@ module.exports = {
       }
     });
   },
-  deleteStorage: (name) => {
-    console.log(name);
+  deleteStorage: (id) => {
     return new Promise(async (resolve, reject) => {
-      try{  
-      let data = await storagemodel.deleteOne({ name: name });
-        if (data) {
-          resolve({status:true});
-        } else {
-          resolve({status:false});
-        }
-      } catch (error) {
-        console.error(error); // Log the error for debugging
-        reject(error);
+      let data = await storagemodel.deleteOne({ _id: id });
+      if (data.deletedCount !== 0) {
+        resolve({ status: true });
+      } else {
+        resolve({ status: false });
       }
     });
   },
 
-
   createRam: (dataOfRam) => {
     return new Promise(async (resolve, reject) => {
       let checkDup = await rammodel.findOne({
-            name: dataOfRam.name,
-            type: "ram-list",
+        name: dataOfRam.name,
+        type: "ram-list",
       });
       if (checkDup) {
         resolve({ status: 2 });
@@ -2781,9 +2767,7 @@ module.exports = {
   viewRam: (type) => {
     return new Promise(async (resolve, reject) => {
       if (type == "ram-list") {
-        const data = await rammodel
-          .find({ type: type })
-          .sort({ part_code: 1 });
+        const data = await rammodel.find({ type: type }).sort({ part_code: 1 });
         resolve(data);
       } else {
         const data = await rammodel
@@ -2794,16 +2778,25 @@ module.exports = {
       }
     });
   },
+  getOneRamDataForEdit:(id)=>{
+    return new Promise(async(resolve,reject)=>{
+      const data=await rammodel.findOne({_id:id})
+      if(data){
+        resolve({status:1,ramData:data})
+      }
+      else{
+        resolve({status:0})
+      }
+    })
+  },
   editRam: (dataOfRam) => {
     return new Promise(async (resolve, reject) => {
-      let updateData = await rammodel.updateOne(
-        {
-          $set: {
-            name: dataOfRam.name,
-            description: dataOfRam.description,
-          },
-        }
-      );
+      let updateData = await rammodel.updateOne({
+        $set: {
+          name: dataOfRam.name,
+          description: dataOfRam.description,
+        },
+      });
       if (updateData) {
         resolve({ status: 1 });
       } else {
@@ -2811,15 +2804,14 @@ module.exports = {
       }
     });
   },
-  deleteRam: (name) => {
-    console.log(name);
+  deleteRam: (id) => {
     return new Promise(async (resolve, reject) => {
-      try{  
-      let data = await rammodel.deleteOne({ name: name });
-        if (data) {
-          resolve({status:true});
+      try {
+        let data = await rammodel.deleteOne({ _id:id });
+        if (data.deletedCount !==0) {
+          resolve({ status: true });
         } else {
-          resolve({status:false});
+          resolve({ status: false });
         }
       } catch (error) {
         console.error(error); // Log the error for debugging
@@ -2856,8 +2848,6 @@ module.exports = {
   //     }
   //   });
   // },
-
-
 
   bulkValidationForPartCheck: (partData) => {
     return new Promise(async (resolve, reject) => {
@@ -3376,8 +3366,6 @@ module.exports = {
       }
     });
   },
-
-
 
   partListManageBulkValidation: (dataofPartStock) => {
     return new Promise(async (resolve, reject) => {
@@ -4368,7 +4356,7 @@ module.exports = {
   resolveAllDeliveryIssue: () => {
     return new Promise(async (resolve, reject) => {
       let findDelivery = await delivery.find({});
-      let i=0
+      let i = 0;
       for (let x of findDelivery) {
         // check imei verified or not
         if (x.bqc_software_report != undefined) {
@@ -4426,7 +4414,7 @@ module.exports = {
           );
         }
         console.log(i);
-        i++
+        i++;
       }
       //2023-12-05T18:30:00.000+00:00
       //2023-11-05T18:30:00.000+00:00

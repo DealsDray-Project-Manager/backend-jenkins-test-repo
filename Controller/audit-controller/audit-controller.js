@@ -2,8 +2,13 @@ const { delivery } = require("../../Model/deliveryModel/delivery");
 const { masters } = require("../../Model/mastersModel");
 const { orders } = require("../../Model/ordersModel/ordersModel");
 const { products } = require("../../Model/productModel/product");
-const {audtiorFeedback}=require("../../Model/temp/auditor-feedback")
+const { audtiorFeedback } = require("../../Model/temp/auditor-feedback");
 const Elasticsearch = require("../../Elastic-search/elastic");
+const {
+  partAndColor,
+} = require("../../Model/Part-list-and-color/part-list-and-color");
+const { rammodel } = require("../../Model/ramModel/ram");
+const { storagemodel } = require("../../Model/storageModel/storage");
 
 module.exports = {
   getAssigendOtherTray: (username) => {
@@ -128,13 +133,13 @@ module.exports = {
               bqc_done_close: 1,
               bqc_software_report: 1,
               bot_report: 1,
-              item_id:1,
+              item_id: 1,
               charging_done_date: 1,
               audit_report: 1,
-              agent_name:1,
-              agent_name_bqc:1,
-              bqc_out_date:1,
-              tray_closed_by_bot:1
+              agent_name: 1,
+              agent_name_bqc: 1,
+              bqc_out_date: 1,
+              tray_closed_by_bot: 1,
             }
           );
           if (uicExists) {
@@ -142,14 +147,18 @@ module.exports = {
               let getOrder = await orders.findOne({
                 order_id: uicExists.order_id,
               });
-              let muicFind=await products.findOne({vendor_sku_id:uicExists.item_id})
-              let otherAudFeedBackData=await audtiorFeedback.findOne({uic:uicExists.uic_code.code})
-            
+              let muicFind = await products.findOne({
+                vendor_sku_id: uicExists.item_id,
+              });
+              let otherAudFeedBackData = await audtiorFeedback.findOne({
+                uic: uicExists.uic_code.code,
+              });
+
               obj.delivery = uicExists;
               obj.order = getOrder;
               obj.checkIntray = checkIntray;
-              obj.muic=muicFind.muic
-              obj.otherAudFeedBack=otherAudFeedBackData
+              obj.muic = muicFind.muic;
+              obj.otherAudFeedBack = otherAudFeedBackData;
 
               resolve({ status: 1, data: obj });
             } else {
@@ -188,6 +197,9 @@ module.exports = {
           description: itemData.description,
           orgGrade: itemData.orgGrade,
           wht_tray: itemData.trayId,
+          color:itemData.color,
+          storage_verification:itemData.storage_verification,
+          ram_verification:itemData.ram_verification,
         };
         let findTray = await masters.findOne({
           $or: [
@@ -363,29 +375,51 @@ module.exports = {
           }
         );
       }
-    
-        for (let x of data.items) {
-          let updateDelivery = await delivery.findOneAndUpdate(
-            { tracking_id: x.tracking_id },
-            {
-              $set: {
-                audit_done_date: Date.now(),
-                tray_location: "Warehouse",
-                tray_status: "Audit Done",
-                updated_at: Date.now(),
-              },
+
+      for (let x of data.items) {
+        let updateDelivery = await delivery.findOneAndUpdate(
+          { tracking_id: x.tracking_id },
+          {
+            $set: {
+              audit_done_date: Date.now(),
+              tray_location: "Warehouse",
+              tray_status: "Audit Done",
+              updated_at: Date.now(),
             },
-            {
-              new: true,
-              projection: { _id: 0 },
-            }
-          );
-          // let updateElasticSearch = await Elasticsearch.uicCodeGen(
-          //   updateDelivery
-          // );
-        }
-        resolve(data);
-     
+          },
+          {
+            new: true,
+            projection: { _id: 0 },
+          }
+        );
+        // let updateElasticSearch = await Elasticsearch.uicCodeGen(
+        //   updateDelivery
+        // );
+      }
+      resolve(data);
+    });
+  },
+  getAllStorageAndRamAndColor: () => {
+    return new Promise(async (resolve, reject) => {
+      let obj = {
+        color: [],
+        ram: [],
+        storage: [],
+      };
+      obj.color = await partAndColor
+        .find({ type: "color-list" })
+        .sort({ name: 1 })
+        .collation({ locale: "en_US", numericOrdering: true });
+      obj.ram = await rammodel
+        .find({})
+        .sort({ name: 1 })
+        .collation({ locale: "en_US", numericOrdering: true });
+      obj.storage = await storagemodel
+        .find({})
+        .sort({ name: 1 })
+        .collation({ locale: "en_US", numericOrdering: true });
+        console.log(obj);
+      resolve(obj);
     });
   },
 };

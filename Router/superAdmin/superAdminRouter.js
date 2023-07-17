@@ -2075,7 +2075,6 @@ router.post("/partAndColor/view/:type", async (req, res, next) => {
   }
 });
 
-
 /*-------------------------------------------MASTER FOR STORAGE--------------------------------------------*/
 //create
 router.post("/storage/create", async (req, res, next) => {
@@ -2126,7 +2125,7 @@ router.post("/storage/create", async (req, res, next) => {
   }
 });
 //VIEW
-router.post("/storage/view/:type", async (req, res, next) => {
+router.post("/storage/view", async (req, res, next) => {
   try {
     const { type } = req.params;
     const data = await superAdminController.viewStorage(type);
@@ -2157,12 +2156,11 @@ router.post("/storage/edit", async (req, res, next) => {
   }
 });
 //delete storage
-router.post("/storage/delete", async (req, res, next) => {
-  
+router.post("/storage/delete/:id", async (req, res, next) => {
   try {
-    console.log(req.params);
-    let data = await superAdminController.deleteStorage(req.params.name);
-    
+    const {id}=req.params
+    let data = await superAdminController.deleteStorage(id);
+
     if (data.status == true) {
       res.status(200).json({
         message: "Successfully Deleted",
@@ -2177,9 +2175,6 @@ router.post("/storage/delete", async (req, res, next) => {
   }
 });
 
-
-
-
 /*-------------------------------------------MASTER FOR RAM--------------------------------------------*/
 //create
 router.post("/ram/create", async (req, res, next) => {
@@ -2187,32 +2182,7 @@ router.post("/ram/create", async (req, res, next) => {
     const { type } = req.body;
     const data = await superAdminController.createRam(req.body);
     if (data.status == 1) {
-      if (type == "ram-list") {
-        fs.readFile(
-          "myjsonfile.json",
-          "utf8",
-          function readFileCallback(err, datafile) {
-            if (err) {
-            } else {
-              obj = JSON.parse(datafile);
-              // let num = parseInt(obj.PARTID.substring(3)) + 1;
-              // let updatedStr =
-              //   obj.PARTID.substring(0, 3) + num.toString().padStart(6, "0");
-              // obj.PARTID = updatedStr;
-              json = JSON.stringify(obj);
-              fs.writeFile(
-                "myjsonfile.json",
-                json,
-                "utf8",
-                function readFileCallback(err, data) {
-                  if (err) {
-                  }
-                }
-              );
-            }
-          }
-        );
-      }
+    
       res.status(200).json({
         message: "Successfully Added",
       });
@@ -2243,6 +2213,24 @@ router.post("/ram/view/:type", async (req, res, next) => {
     next(error);
   }
 });
+// TAKE ONE RAM DATA FOR EDIT AND CHECK
+router.post("/ram/oneData/:id", async (req, res, next) => {
+  try {
+    const {id}=req.params
+    const data = await superAdminController.getOneRamDataForEdit(id);
+    if (data.status == 1) {
+      res.status(200).json({
+       data:data.ramData
+      });
+    } else {
+      res.status(202).json({
+        message: "Data not found",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
 // EDIT STORAGE
 router.post("/ram/edit", async (req, res, next) => {
   try {
@@ -2261,12 +2249,11 @@ router.post("/ram/edit", async (req, res, next) => {
   }
 });
 //delete storage
-router.post("/ram/delete", async (req, res, next) => {
-  
+router.post("/ram/delete/:id", async (req, res, next) => {
   try {
-    console.log(req.params);
-    let data = await superAdminController.deleteRam(req.params.name);
-    
+     const {id}=req.params
+    let data = await superAdminController.deleteRam(id);
+
     if (data.status == true) {
       res.status(200).json({
         message: "Successfully Deleted",
@@ -2280,14 +2267,6 @@ router.post("/ram/delete", async (req, res, next) => {
     next(error);
   }
 });
-
-
-
-
-
-
-
-
 // BULK VALIDATON FOR PART
 router.post("/bulkvalidationForPart", async (req, res, next) => {
   try {
@@ -2503,37 +2482,25 @@ router.post("/partAndColor/edit", async (req, res, next) => {
   }
 });
 
-
-
 // get one data only for storage
-router.post("/storage/oneData/:id/:type", async (req, res, next) => {
+router.post("/storage/oneData/:id", async (req, res, next) => {
   try {
-    const { id, type } = req.params;
-    const data = await superAdminController.viewStorage(id, type);
+    const { id } = req.params;
+    const data = await superAdminController.getStorageDataForEdit(id);
     if (data.status == 1) {
       res.status(200).json({
-        data: data.masterData,
+        data: data.storageData,
       });
-    } else if (data.status == 3 && type == "storage-list") {
+    }
+    else{
       res.status(202).json({
-        message: "This Part Already used for process",
-      });
-    } else if (data.status == 3) {
-      res.status(202).json({
-        message: "This Color Already used for process",
-      });
-    } else {
-      res.status(202).json({
-        message: "No Data found",
+        message:"Data not found"
       });
     }
   } catch (error) {
     next(error);
   }
 });
-
-
-
 
 // GET ONE PART
 // router.post("/partList/oneData/:id/:type", async (req, res, next) => {
@@ -2556,12 +2523,6 @@ router.post("/storage/oneData/:id/:type", async (req, res, next) => {
 //     next(error);
 //   }
 // });
-
-
-
-
-
-
 
 // MANAGE STOCK
 router.post("/partlist/manageStock/bulkValidation", async (req, res, next) => {
@@ -3284,7 +3245,7 @@ router.post("/whtTray/recorrect", async (req, res, next) => {
     next(error);
   }
 });
-// ALL DELIVERY ISSUE RESOLVE 
+// ALL DELIVERY ISSUE RESOLVE
 router.post("/extra/allDeliveryIssue", async (req, res, next) => {
   try {
     let data = await superAdminController.resolveAllDeliveryIssue();

@@ -204,4 +204,18 @@ router.post("/trayClose/:trayId", async (req, res, next) => {
     next(error);
   }
 });
+// GET COLOR AND STORAGE AND RAM
+router.post("/getColorStorageRam", async (req, res, next) => {
+  try {
+    
+    let data = await auditController.getAllStorageAndRamAndColor();
+    if (data) {
+      res.status(200).json({
+        data: data
+      });
+    } 
+  } catch (error) {
+    next(error);
+  }
+});
 module.exports = router;

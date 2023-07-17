@@ -1587,6 +1587,7 @@ module.exports = {
           {
             $set: {
               sort_id: "Closed By Warehouse",
+              rack_id:trayData.rackId,
               closed_time_wharehouse_from_bot: new Date(
                 new Date().toISOString().split("T")[0]
               ),
