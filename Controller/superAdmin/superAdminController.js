@@ -13,6 +13,8 @@ const { spareCategories } = require("../../Model/spareCategories/spareCategories
 const { trayRack } = require("../../Model/tray-rack/tray-rack")
 const { audtiorFeedback } = require("../../Model/temp/auditor-feedback");
 const { vendorMaster } = require("../../Model/vendorModel/vendorModel");
+const { storagemodel } = require("../../Model/storageModel/storage");
+const { rammodel } = require("../../Model/ramModel/ram");
 const {
   partAndColor,
 } = require("../../Model/Part-list-and-color/part-list-and-color");
@@ -83,6 +85,8 @@ module.exports = {
       count.bag = await masters.count({ prefix: "bag-master" });
       count.partList = await partAndColor.count({ type: "part-list" });
       count.colorList = await partAndColor.count({ type: "color-list" });
+      count.storageList = await storagemodel.count({ type: "storage-list" });
+      count.ramList = await rammodel.count({ type: "ram-list" });
       count.readyForTransferSales = await masters.count({
         prefix: "tray-master",
         sort_id: "Audit Done Closed By Warehouse",
@@ -2502,6 +2506,15 @@ module.exports = {
     });
   },
 
+  /*--------------------------------FIND Rack ID-----------------------------------*/
+
+  getRackID: () => {
+    return new Promise(async (resolve, reject) => {
+      let allRacksid = await trayRack.find();
+      resolve(allRacksid);
+    });
+  },
+
 
 
 
@@ -2551,6 +2564,179 @@ module.exports = {
       }
     });
   },
+
+
+
+  createStorage: (dataOfStorage) => {
+    return new Promise(async (resolve, reject) => {
+      let checkDup = await storagemodel.findOne({
+            name: dataOfStorage.name,
+            type: "storage-list",
+      });
+      if (checkDup) {
+        resolve({ status: 2 });
+      } else {
+        dataOfStorage.created_at = Date.now();
+        const data = await storagemodel.create(dataOfStorage);
+        if (data) {
+          resolve({ status: 1 });
+        } else {
+          resolve({ status: 3 });
+        }
+      }
+    });
+  },
+  viewStorage: (type) => {
+    return new Promise(async (resolve, reject) => {
+      if (type == "storage-list") {
+        const data = await storagemodel
+          .find({ type: type })
+          .sort({ part_code: 1 });
+        resolve(data);
+      } else {
+        const data = await storagemodel
+          .find({ type: type })
+          .sort({ name: 1 })
+          .collation({ locale: "en_US", numericOrdering: true });
+        resolve(data);
+      }
+    });
+  },
+  editStorage: (dataOfStorage) => {
+    return new Promise(async (resolve, reject) => {
+      let updateData = await storagemodel.updateOne(
+        {
+          $set: {
+            name: dataOfStorage.name,
+            description: dataOfStorage.description,
+          },
+        }
+      );
+      if (updateData) {
+        resolve({ status: 1 });
+      } else {
+        resolve({ status: 0 });
+      }
+    });
+  },
+  deleteStorage: (name) => {
+    console.log(name);
+    return new Promise(async (resolve, reject) => {
+      try{  
+      let data = await storagemodel.deleteOne({ name: name });
+        if (data) {
+          resolve({status:true});
+        } else {
+          resolve({status:false});
+        }
+      } catch (error) {
+        console.error(error); // Log the error for debugging
+        reject(error);
+      }
+    });
+  },
+
+
+  createRam: (dataOfRam) => {
+    return new Promise(async (resolve, reject) => {
+      let checkDup = await rammodel.findOne({
+            name: dataOfRam.name,
+            type: "ram-list",
+      });
+      if (checkDup) {
+        resolve({ status: 2 });
+      } else {
+        dataOfRam.created_at = Date.now();
+        const data = await rammodel.create(dataOfRam);
+        if (data) {
+          resolve({ status: 1 });
+        } else {
+          resolve({ status: 3 });
+        }
+      }
+    });
+  },
+  viewRam: (type) => {
+    return new Promise(async (resolve, reject) => {
+      if (type == "ram-list") {
+        const data = await rammodel
+          .find({ type: type })
+          .sort({ part_code: 1 });
+        resolve(data);
+      } else {
+        const data = await rammodel
+          .find({ type: type })
+          .sort({ name: 1 })
+          .collation({ locale: "en_US", numericOrdering: true });
+        resolve(data);
+      }
+    });
+  },
+  editRam: (dataOfRam) => {
+    return new Promise(async (resolve, reject) => {
+      let updateData = await rammodel.updateOne(
+        {
+          $set: {
+            name: dataOfRam.name,
+            description: dataOfRam.description,
+          },
+        }
+      );
+      if (updateData) {
+        resolve({ status: 1 });
+      } else {
+        resolve({ status: 0 });
+      }
+    });
+  },
+  deleteRam: (name) => {
+    console.log(name);
+    return new Promise(async (resolve, reject) => {
+      try{  
+      let data = await rammodel.deleteOne({ name: name });
+        if (data) {
+          resolve({status:true});
+        } else {
+          resolve({status:false});
+        }
+      } catch (error) {
+        console.error(error); // Log the error for debugging
+        reject(error);
+      }
+    });
+  },
+
+  // deleteStorage: (id, type, page) => {
+  //   return new Promise(async (resolve, reject) => {
+  //     if (page == "storage-list") {
+  //       const activateOrDeactiveate = await storagemodel.findOneAndUpdate(
+  //         {
+  //           _id: id,
+  //         },
+  //         {
+  //           $set: {
+  //             status: type,
+  //           },
+  //         }
+  //       );
+  //       if (activateOrDeactiveate) {
+  //         resolve({ status: 1 });
+  //       } else {
+  //         resolve({ status: 2 });
+  //       }
+  //     } else {
+  //       let deleteData = await storagemodel.deleteOne({ _id: id });
+  //       if (deleteData.deletedCount !== 0) {
+  //         resolve({ status: 1 });
+  //       } else {
+  //         resolve({ status: 2 });
+  //       }
+  //     }
+  //   });
+  // },
+
+
+
   bulkValidationForPartCheck: (partData) => {
     return new Promise(async (resolve, reject) => {
       let err = {};
@@ -3072,6 +3258,9 @@ module.exports = {
       }
     });
   },
+
+
+
   partListManageBulkValidation: (dataofPartStock) => {
     return new Promise(async (resolve, reject) => {
       let err = {};

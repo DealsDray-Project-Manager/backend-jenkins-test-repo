@@ -1759,6 +1759,97 @@ router.get("/geteditSPcategory/:code", async (req, res) => {
 
 
 
+/*----------------------------------------------STORAGE ----------------------------------------------------*/
+// GET ALL THE SP CATEGORIES
+// router.post("/spcategories/view", async (req, res, next) => {
+//   try {
+//     console.log("working");
+//     const spcategoriesData = await superAdminController.getAllSPCategories();
+//     if (spcategoriesData) {
+//       res.status(200).json({
+//         data: spcategoriesData,
+//       });
+//     }
+//   } catch (error) {
+//     next(error);
+//   }
+// });
+
+// // EDIT SP CATEGORIES
+// router.post("/spcategories/edit", async (req, res, next) => {
+//   try {
+//     const spcategoriesData = await superAdminController.editspcategories(req.body);
+//     if (spcategoriesData.status == 1) {
+//       res.status(200).json({
+//         message: "Successfully Updated",
+//       });
+//     } else {
+//       res.status(202).json({
+//         message: "Updation Failed...",
+//       });
+//     }
+//   } catch (error) {
+//     next(error);
+//   }
+// });
+
+// router.get("/geteditSPcategory/:spcategory_id", async (req, res) => {
+//   try {
+//     let user = await superAdminController.geteditSPcategory(req.params.spcategory_id);
+//     if (user) {
+//       res.status(200).json({ data: user });
+//     }
+//   } catch (error) {
+//     next(error);
+//   }
+// });
+
+// // GET ONE CATEGORY
+// router.post("/spcategories/one/:categoriesId", async (req, res, next) => {
+//   try {
+//     const { categoriesId } = req.params;
+//     const spcategoriesData = await superAdminController.getOneSPcategory(categoriesId);
+//     if (spcategoriesData.status == 1) {
+//       res.status(200).json({
+//         data: spcategoriesData.data,
+//       });
+//     } else {
+//       res.status(200).json({
+//         message: "No data found",
+//       });
+//     }
+//   } catch (error) {
+//     next(error);
+//   }
+// });
+
+// router.get("/getAllSPCategories", async (req, res) => {
+//   try {
+//     let spcategoriesData = await superAdminController.getAllSPCategories();
+//     if (spcategoriesData) {
+//       res.status(200).json(spcategoriesData);
+//     }
+//   } catch (error) {
+//     next(error);
+//   }
+// });
+
+
+
+
+// router.get("/geteditSPcategory/:code", async (req, res) => {
+//   try {
+//     let user = await superAdminController.geteditSPcategory(req.params.code);
+//     if (user) {
+//       res.status(200).json({ data: user });
+//     }
+//   } catch (error) {
+//     next(error);
+//   }
+// });
+
+
+
 /*----------------------------------------------Tray Racks ----------------------------------------------------*/
 // GET ALL THE Tray Racks
 router.post("/trayracks/view", async (req, res, next) => {
@@ -1768,6 +1859,22 @@ router.post("/trayracks/view", async (req, res, next) => {
     if (trayracksData) {
       res.status(200).json({
         data: trayracksData,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
+/*-----------------------------GET Rack ID--------------------------------------*/
+
+router.post("/getRackID", async (req, res, next) => {
+  try {
+    let rackid = await superAdminController.getRackID();
+    if (rackid) {
+      res.status(200).json({
+        data: rackid,
+        message: "Success",
       });
     }
   } catch (error) {
@@ -2045,6 +2152,220 @@ router.post("/partAndColor/view/:type", async (req, res, next) => {
     next(error);
   }
 });
+
+
+/*-------------------------------------------MASTER FOR STORAGE--------------------------------------------*/
+//create
+router.post("/storage/create", async (req, res, next) => {
+  try {
+    const { type } = req.body;
+    const data = await superAdminController.createStorage(req.body);
+    if (data.status == 1) {
+      if (type == "storage-list") {
+        fs.readFile(
+          "myjsonfile.json",
+          "utf8",
+          function readFileCallback(err, datafile) {
+            if (err) {
+            } else {
+              obj = JSON.parse(datafile);
+              // let num = parseInt(obj.PARTID.substring(3)) + 1;
+              // let updatedStr =
+              //   obj.PARTID.substring(0, 3) + num.toString().padStart(6, "0");
+              // obj.PARTID = updatedStr;
+              json = JSON.stringify(obj);
+              fs.writeFile(
+                "myjsonfile.json",
+                json,
+                "utf8",
+                function readFileCallback(err, data) {
+                  if (err) {
+                  }
+                }
+              );
+            }
+          }
+        );
+      }
+      res.status(200).json({
+        message: "Successfully Added",
+      });
+    } else if (data.status == 2) {
+      res.status(202).json({
+        message: "Already Created",
+      });
+    } else {
+      res.status(202).json({
+        message: "Failed Please Tray again...",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+//VIEW
+router.post("/storage/view/:type", async (req, res, next) => {
+  try {
+    const { type } = req.params;
+    const data = await superAdminController.viewStorage(type);
+    if (data) {
+      res.status(200).json({
+        data: data,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+// EDIT STORAGE
+router.post("/storage/edit", async (req, res, next) => {
+  try {
+    const data = await superAdminController.editStorage(req.body);
+    if (data.status == 1) {
+      res.status(200).json({
+        message: "Successfully Updated",
+      });
+    } else {
+      res.status(202).json({
+        message: "Updation Failed",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+//delete storage
+router.post("/storage/delete", async (req, res, next) => {
+  
+  try {
+    console.log(req.params);
+    let data = await superAdminController.deleteStorage(req.params.name);
+    
+    if (data.status == true) {
+      res.status(200).json({
+        message: "Successfully Deleted",
+      });
+    } else {
+      res.status(202).json({
+        message: "Failed",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
+
+
+
+/*-------------------------------------------MASTER FOR RAM--------------------------------------------*/
+//create
+router.post("/ram/create", async (req, res, next) => {
+  try {
+    const { type } = req.body;
+    const data = await superAdminController.createRam(req.body);
+    if (data.status == 1) {
+      if (type == "ram-list") {
+        fs.readFile(
+          "myjsonfile.json",
+          "utf8",
+          function readFileCallback(err, datafile) {
+            if (err) {
+            } else {
+              obj = JSON.parse(datafile);
+              // let num = parseInt(obj.PARTID.substring(3)) + 1;
+              // let updatedStr =
+              //   obj.PARTID.substring(0, 3) + num.toString().padStart(6, "0");
+              // obj.PARTID = updatedStr;
+              json = JSON.stringify(obj);
+              fs.writeFile(
+                "myjsonfile.json",
+                json,
+                "utf8",
+                function readFileCallback(err, data) {
+                  if (err) {
+                  }
+                }
+              );
+            }
+          }
+        );
+      }
+      res.status(200).json({
+        message: "Successfully Added",
+      });
+    } else if (data.status == 2) {
+      res.status(202).json({
+        message: "Already Created",
+      });
+    } else {
+      res.status(202).json({
+        message: "Failed Please Tray again...",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+//VIEW
+router.post("/ram/view/:type", async (req, res, next) => {
+  try {
+    const { type } = req.params;
+    const data = await superAdminController.viewRam(type);
+    if (data) {
+      res.status(200).json({
+        data: data,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+// EDIT STORAGE
+router.post("/ram/edit", async (req, res, next) => {
+  try {
+    const data = await superAdminController.editRam(req.body);
+    if (data.status == 1) {
+      res.status(200).json({
+        message: "Successfully Updated",
+      });
+    } else {
+      res.status(202).json({
+        message: "Updation Failed",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+//delete storage
+router.post("/ram/delete", async (req, res, next) => {
+  
+  try {
+    console.log(req.params);
+    let data = await superAdminController.deleteRam(req.params.name);
+    
+    if (data.status == true) {
+      res.status(200).json({
+        message: "Successfully Deleted",
+      });
+    } else {
+      res.status(202).json({
+        message: "Failed",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
+
+
+
+
+
+
+
 // BULK VALIDATON FOR PART
 router.post("/bulkvalidationForPart", async (req, res, next) => {
   try {
@@ -2259,6 +2580,66 @@ router.post("/partAndColor/edit", async (req, res, next) => {
     next(error);
   }
 });
+
+
+
+// get one data only for storage
+router.post("/storage/oneData/:id/:type", async (req, res, next) => {
+  try {
+    const { id, type } = req.params;
+    const data = await superAdminController.viewStorage(id, type);
+    if (data.status == 1) {
+      res.status(200).json({
+        data: data.masterData,
+      });
+    } else if (data.status == 3 && type == "storage-list") {
+      res.status(202).json({
+        message: "This Part Already used for process",
+      });
+    } else if (data.status == 3) {
+      res.status(202).json({
+        message: "This Color Already used for process",
+      });
+    } else {
+      res.status(202).json({
+        message: "No Data found",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
+
+
+
+// GET ONE PART
+// router.post("/partList/oneData/:id/:type", async (req, res, next) => {
+//   try {
+//     const { id, type } = req.params;
+//     const data = await superAdminController.onePartDatWithMuicAssosiation(
+//       id,
+//       type
+//     );
+//     if (data.status == 1) {
+//       res.status(200).json({
+//         data: data.masterData,
+//       });
+//     } else {
+//       res.status(202).json({
+//         message: "No Data found",
+//       });
+//     }
+//   } catch (error) {
+//     next(error);
+//   }
+// });
+
+
+
+
+
+
 
 // MANAGE STOCK
 router.post("/partlist/manageStock/bulkValidation", async (req, res, next) => {
