@@ -37,7 +37,6 @@ module.exports = {
         recharging: 0,
         ctxTransferPendingToSales: 0,
         ctxTransferToSalesInProgress: 0,
-        allOrdersReport: 0,
         monthWisePurchase: 0,
         rdlOneDoneUnits: 0,
       };
@@ -49,7 +48,6 @@ module.exports = {
         partner_shop: location,
         temp_delivery_status: { $ne: "Pending" },
       });
-    
       count.allOrders = await orders.count({
         partner_shop: location,
         order_status: "NEW",
@@ -1328,7 +1326,7 @@ module.exports = {
         const fromDateTimestamp = Date.parse(fromDate);
         const toDateTimestamp = Date.parse(toDate);
 
-        let allOrdersReport = await allorders.aggregate([
+        let allOrdersReport = await orders.aggregate([
           {
             $match: {
               delivery_status: "Delivered",
@@ -1355,7 +1353,7 @@ module.exports = {
           },
         ]);
 
-        let forXlsxDownload = await allorders.aggregate([
+        let forXlsxDownload = await orders.aggregate([
           {
             $match: {
               partner_shop: location,
@@ -1415,6 +1413,7 @@ module.exports = {
       });
     });
   },
+
 
   monthWiseReportItemFilter: (
     location,

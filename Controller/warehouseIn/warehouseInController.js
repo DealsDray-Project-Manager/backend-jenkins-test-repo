@@ -1530,6 +1530,7 @@ module.exports = {
           {
             $set: {
               sort_id: "Closed By Warehouse",
+              rack_id: trayData.rackId,
               closed_time_wharehouse: Date.now(),
               "track_tray.bot_done_tray_close_wh": Date.now(),
             },
@@ -3467,10 +3468,12 @@ module.exports = {
           {
             sort_id: "Sorting Request Sent To Warehouse",
             issued_user_name: username,
+            
           },
           {
             sort_id: "Assigned to sorting agent",
             issued_user_name: username,
+            
           },
         ],
       });
@@ -3519,6 +3522,7 @@ module.exports = {
           { code: x.code },
           {
             $set: {
+              
               sort_id: trayData.type,
               status_change_time: Date.now(),
               issued_user_name: trayData.username,
@@ -3539,12 +3543,15 @@ module.exports = {
                   tray_status: "Issued to Sorting",
                   sorting_agent_name: trayData.username,
                   handover_sorting_date: Date.now(),
+                  
                   updated_at: Date.now(),
                 },
               },
               {
+                
                 new: true,
                 projection: { _id: 0 },
+                
               }
             );
             // let updateElasticSearch = await elasticsearch.uicCodeGen(
@@ -3574,6 +3581,7 @@ module.exports = {
               sort_id: "Closed",
               closed_time_wharehouse: Date.now(),
               actual_items: [],
+              
               issued_user_name: null,
               sorting_done_close_wh: Date.now(),
             },
@@ -3590,6 +3598,7 @@ module.exports = {
                   tray_status: "Closed",
                   tray_location: "Warehouse",
                   closed_from_sorting: Date.now(),
+                  
                   updated_at: Date.now(),
                 },
               },
@@ -3613,6 +3622,7 @@ module.exports = {
               closed_time_wharehouse: Date.now(),
               actual_items: [],
               issued_user_name: null,
+              
             },
           }
         );
@@ -3628,6 +3638,7 @@ module.exports = {
                   tray_location: "Warehouse",
                   closed_from_sorting: Date.now(),
                   updated_at: Date.now(),
+
                 },
               },
               {

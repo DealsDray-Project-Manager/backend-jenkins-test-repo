@@ -2663,6 +2663,7 @@ module.exports = {
         let data = await masters.find({
           sort_id: "Sorting Request Sent To Warehouse",
           cpc: location,
+          
           type_taxanomy: "BOT",
         });
         if (data) {
@@ -2676,11 +2677,13 @@ module.exports = {
                 {
                   sort_id: "Sorting Request Sent To Warehouse",
                   cpc: location,
+                  
                   // type_taxanomy: "BOT",
                 },
                 {
                   sort_id: "Assigned to sorting agent",
                   cpc: location,
+                  
                   // type_taxanomy: "BOT",
                 },
               ],
