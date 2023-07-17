@@ -1754,6 +1754,41 @@ router.post("/assignForRepiar/stockCheck", async (req, res, next) => {
     next(error);
   }
 });
+
+// PLANNER PAGE
+router.post("/plannerPage/charging", async (req, res, next) => {
+  try {
+    const {location,type,type1}=req.body
+    let data = await misUserController.plannerPageCharging(
+      location,type,type1
+    );
+    if (data) {
+      res.status(200).json({
+        data: data,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
+// ASSIGNE TO CHARGING PAGE
+router.post("/assignToChargingScreen", async (req, res, next) => {
+  try {
+    const {type,type1,location,brand,model,jack}=req.body
+    console.log(req.body);
+    let data = await misUserController.assigneToChargingScreen(
+       location,brand,model,jack,type,type1
+    );
+    if (data) {
+      res.status(200).json({
+        data: data,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
 // ASSIGN TO SORTING WHT TO RP
 router.post("/assignForRepiar/getTheRequrements", async (req, res, next) => {
   try {

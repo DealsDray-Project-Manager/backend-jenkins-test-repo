@@ -2064,14 +2064,15 @@ module.exports = {
   getWhtTrayWareHouse: (location, type) => {
     return new Promise(async (resolve, reject) => {
       if (type == "all-wht-tray") {
-        let data = await masters.find({
-          prefix: "tray-master",
-          type_taxanomy: "WHT",
-          cpc: location,
-        },
-        {
-          temp_array:0,
-        }
+        let data = await masters.find(
+          {
+            prefix: "tray-master",
+            type_taxanomy: "WHT",
+            cpc: location,
+          },
+          {
+            temp_array: 0,
+          }
         );
         resolve(data);
       } else {
@@ -3005,6 +3006,7 @@ module.exports = {
             $set: {
               description: trayData.description,
               sort_id: "Ready to Audit",
+         
               closed_time_wharehouse: Date.now(),
               issued_user_name: null,
               "track_tray.bqc_done_close_by_wh": Date.now(),
@@ -4534,7 +4536,7 @@ module.exports = {
             {
               issued_user_name: username,
               sort_id: "Issued to sorting (Wht to rp)",
-              type_taxanomy:"WHT"
+              type_taxanomy: "WHT",
             },
             {
               issued_user_name: username,
@@ -5880,7 +5882,7 @@ module.exports = {
                   $set: {
                     ctx_tray_receive_and_close_wh: Date.now(),
                     tray_location: "Sales-warehouse",
-                    partner_shop: data.cpc,
+
                     updated_at: Date.now(),
                   },
                 },

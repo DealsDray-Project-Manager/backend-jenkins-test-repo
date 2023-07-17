@@ -188,6 +188,46 @@ module.exports = {
             },
           }
         );
+        if (trayItemData.rdl_repair_report.used_parts?.length !== 0) {
+          const updateSpTray = await masters.findOneAndUpdate(
+            {
+              code: trayItemData.spTray,
+              "items.partId": {
+                $in: trayItemData.rdl_repair_report.used_parts.map(
+                  (part) => part.part_id
+                ),
+              },
+              "items.selected_qty": { $ne: 1 },
+            },
+            {
+              $inc: { "items.$.selected_qty": -1 },
+            }
+          );
+          if (updateSpTray == null) {
+            const updateSpTray = await masters.findOneAndUpdate(
+              {
+                code: trayItemData.spTray,
+                "items.partId": {
+                  $in: trayItemData.rdl_repair_report.used_parts.map(
+                    (part) => part.part_id
+                  ),
+                },
+                "items.selected_qty": 1,
+              },
+              {
+                $pull: {
+                  items: {
+                    partId: {
+                      $in: trayItemData.rdl_repair_report.used_parts.map(
+                        (part) => part.part_id
+                      ),
+                    },
+                  },
+                },
+              }
+            );
+          }
+        }
         checkAlreadyAdded.items[0].rdl_repair_report =
           trayItemData.rdl_repair_report;
         let data = await masters.updateOne(
@@ -215,15 +255,21 @@ module.exports = {
     return new Promise(async (resolve, reject) => {
       const getTheTray = await masters.findOne({ code: trayId });
       if (getTheTray.sort_id == "Rdl-two inprogress") {
+    
         if (getTheTray.issued_user_name == user_name) {
+         
           if (getTheTray.items.length == 0) {
+           
             let obj = {
               morePartRequred: [],
               partNotAvailable: [],
               usedParts: [],
               partFaulty: [],
               notReapairable: [],
+              spTray:{}
             };
+            obj.spTray=await masters.findOne({sort_id:"Rdl-two inprogress",type_taxanomy:"SPT",issued_user_name:user_name})
+            console.log(obj.spTray);
             for (let x of getTheTray.actual_items) {
               if (x.rdl_repair_report.more_part_required.length !== 0) {
                 obj.morePartRequred.push(x);

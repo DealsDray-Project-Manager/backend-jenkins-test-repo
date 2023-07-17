@@ -236,10 +236,5 @@ module.exports = {
       }
     });
   },
-  procurementRequestView: () => {
-    return new Promise(async (resolve, reject) => {
-      const data = await purchaseOrder.find({});
-      resolve(data);
-    });
-  },
+ 
 };

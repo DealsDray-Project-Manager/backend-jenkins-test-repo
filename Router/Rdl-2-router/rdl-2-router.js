@@ -127,11 +127,12 @@ router.post("/repairDone/action", async (req, res, next) => {
 });
 
 // REPAIR DONE CLOSE THE TRAY 
-router.post("/traySummery/:trayId/:username", async (req, res, next) => {
+router.post("/traySummery", async (req, res, next) => {
   try {
-    const {trayId,username}=req.params
-    let data = await Rdl2Controller.traySummery(trayId,username);
-    console.log(data);
+    console.log(req.body);
+    const {trayId,user_name}=req.body
+    let data = await Rdl2Controller.traySummery(trayId,user_name);
+    
     if (data.status === 1) {
       res.status(200).json({
         data:data.tray,

@@ -742,7 +742,6 @@ router.post("/getWarehouse", async (req, res, next) => {
   }
 });
 
-
 /*-----------------------------BULK VALIDATION BAG--------------------------------------*/
 router.post("/bulkValidationBag", async (req, res, next) => {
   try {
@@ -1231,7 +1230,7 @@ router.post("/search-admin-track-item", async (req, res, next) => {
   try {
     const { type, searchData, location, rowsPerPage, page } = req.body;
 
-    let data = await elasticsearch.superAdminTrackItemSearchData(
+    let data = await elasticsearch.bulkImportToElastic(
       searchData,
       page,
       rowsPerPage
@@ -1564,8 +1563,6 @@ router.post("/categoryCheck", async (req, res, next) => {
   }
 });
 
-
-
 /*----------------------------------------------SP CATEGORIES ----------------------------------------------------*/
 // GET ALL THE SP CATEGORIES
 router.post("/spcategories/view", async (req, res, next) => {
@@ -1585,7 +1582,9 @@ router.post("/spcategories/view", async (req, res, next) => {
 // CREATE SP CATEGORIES
 router.post("/spcategories/create", async (req, res, next) => {
   try {
-    const spcategoriesData = await superAdminController.createspcategories(req.body);
+    const spcategoriesData = await superAdminController.createspcategories(
+      req.body
+    );
     if (spcategoriesData.status == 1) {
       fs.readFile(
         "myjsonfile.json",
@@ -1693,7 +1692,9 @@ router.post("/spcategories/idGen", async (req, res, next) => {
 // EDIT SP CATEGORIES
 router.post("/spcategories/edit", async (req, res, next) => {
   try {
-    const spcategoriesData = await superAdminController.editspcategories(req.body);
+    const spcategoriesData = await superAdminController.editspcategories(
+      req.body
+    );
     if (spcategoriesData.status == 1) {
       res.status(200).json({
         message: "Successfully Updated",
@@ -1710,7 +1711,9 @@ router.post("/spcategories/edit", async (req, res, next) => {
 
 router.get("/geteditSPcategory/:spcategory_id", async (req, res) => {
   try {
-    let user = await superAdminController.geteditSPcategory(req.params.spcategory_id);
+    let user = await superAdminController.geteditSPcategory(
+      req.params.spcategory_id
+    );
     if (user) {
       res.status(200).json({ data: user });
     }
@@ -1723,7 +1726,9 @@ router.get("/geteditSPcategory/:spcategory_id", async (req, res) => {
 router.post("/spcategories/one/:categoriesId", async (req, res, next) => {
   try {
     const { categoriesId } = req.params;
-    const spcategoriesData = await superAdminController.getOneSPcategory(categoriesId);
+    const spcategoriesData = await superAdminController.getOneSPcategory(
+      categoriesId
+    );
     if (spcategoriesData.status == 1) {
       res.status(200).json({
         data: spcategoriesData.data,
@@ -1749,10 +1754,11 @@ router.get("/getAllSPCategories", async (req, res) => {
   }
 });
 
-
 router.post("/deleteSPcategory/:spcategory_id", async (req, res, next) => {
   try {
-    let data = await superAdminController.deleteSPcategory(req.params.spcategory_id);
+    let data = await superAdminController.deleteSPcategory(
+      req.params.spcategory_id
+    );
     if (data.status == true) {
       res.status(200).json({
         message: "Successfully Deleted",
@@ -1777,8 +1783,6 @@ router.get("/geteditSPcategory/:code", async (req, res) => {
     next(error);
   }
 });
-
-
 
 /*----------------------------------------------Tray Racks ----------------------------------------------------*/
 // GET ALL THE Tray Racks
@@ -1963,7 +1967,6 @@ router.get("/getAllTrayRacks", async (req, res) => {
   }
 });
 
-
 router.post("/deleteTrayRacks/:rack_id", async (req, res, next) => {
   try {
     let data = await superAdminController.deleteTrayRacks(req.params.rack_id);
@@ -1991,17 +1994,6 @@ router.get("/geteditTrayRacks/:code", async (req, res) => {
     next(error);
   }
 });
-
-
-
-
-
-
-
-
-
-
-
 
 /*-------------------------------------------MASTER FOR PART AND COLOR--------------------------------------------*/
 //create
@@ -2574,9 +2566,6 @@ router.post("/vendorMaster/one/:vendorId", async (req, res, next) => {
   }
 });
 
-
-
-
 /*-------------------------------ADMIN FORCEFULL VALIDATION --------------------------------------*/
 // CHECK CURRENT TRAY STATUS
 router.post("/tray/checkStatus", async (req, res, next) => {
@@ -2976,7 +2965,7 @@ router.post("/fixBaggingIssue", async (req, res, next) => {
     if (data) {
       res.status(200).json({
         message: "Successfully updated",
-        data:data
+        data: data,
       });
     } else {
       res.status(202).json({
@@ -2995,6 +2984,23 @@ router.post("/whtTray/recorrect", async (req, res, next) => {
     if (data) {
       res.status(200).json({
         message: "Successfully updated",
+      });
+    } else {
+      res.status(202).json({
+        message: "Failed",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+// ALL DELIVERY ISSUE RESOLVE 
+router.post("/extra/allDeliveryIssue", async (req, res, next) => {
+  try {
+    let data = await superAdminController.resolveAllDeliveryIssue();
+    if (data.status == true) {
+      res.status(200).json({
+        message: "done",
       });
     } else {
       res.status(202).json({

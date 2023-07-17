@@ -1,5 +1,5 @@
 /*------------------------------EXPRESS------------------------------------*/
-const express = require("express");
+const express = require("express")
 const router = express.Router();
 const rmuserController = require("../../Controller/rm-controller/rm-controller");
 /*-----------------------------ROUTERS------------------------------------*/

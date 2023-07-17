@@ -1164,8 +1164,7 @@ router.post("/recieved-from-bqc", async (req, res, next) => {
       res.status(200).json({
         message: "Successfully Received",
       });
-    }
-   else if (data.status == 3) {
+    } else if (data.status == 3) {
       res.status(202).json({
         message: "Please Enter Valid Count",
       });

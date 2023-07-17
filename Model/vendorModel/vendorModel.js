@@ -23,7 +23,7 @@ const vendorShcema = mongoose.Schema({
     type: String,
   },
   deals: {
-    type: String,
+    type: Array,
   },
   reference: {
     type: String,

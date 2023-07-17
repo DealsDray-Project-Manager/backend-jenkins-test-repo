@@ -35,13 +35,12 @@ module.exports = {
       const imeiRegex = /^\d{15}$/; // Regex pattern for 15 digits
       for (let x of ordersData.item) {
         if (x.order_status == "NEW") {
-        
           if (x?.imei.match(/[0-9]/g).join("").length !== 15) {
             // IMEI length is correct
             console.log(x.imei);
             imei.push(x.imei);
             err["imei_number_is_duplicate"] = imei;
-          } 
+          }
           const orderDate = x?.order_date; // Assuming `data` is available
           const parsedDate = new Date(orderDate);
           if (isNaN(parsedDate)) {
@@ -292,10 +291,10 @@ module.exports = {
         sort_id: "Ready to RDL",
         cpc: location,
       });
-      count.rdl_two =await masters.countDocuments({
+      count.rdl_two = await masters.countDocuments({
         cpc: location,
         sort_id: "Ready to RDL-Repair",
-        type_taxanomy:"RPT"
+        type_taxanomy: "RPT",
       });
       count.botToWht = await masters.count({
         type_taxanomy: "BOT",
@@ -4127,7 +4126,12 @@ module.exports = {
                 type_taxanomy: "ST",
                 brand: brand,
                 model: model,
-                $expr: { $ne: [{ $size: "$items" }, { $toInt: "$limit" }] },
+                $expr: {
+                  $and: [
+                    { $ne: [{ $ifNull: ["$items", null] }, null] },
+                    { $ne: [{ $size: "$items" }, { $toInt: "$limit" }] },
+                  ],
+                },
                 tray_grade: getCtxGrade.code,
                 cpc: location,
                 sort_id: "Inuse",
@@ -4135,7 +4139,7 @@ module.exports = {
             ],
           })
           .catch((err) => reject(err));
-
+        console.log(stxTray);
         if (stxTray.length !== 0) {
           for (let x of stxTray) {
             if (parseInt(x.limit) > parseInt(x.items.length)) {
@@ -4259,7 +4263,7 @@ module.exports = {
           );
           if (foundPart) {
             isCheck = isCheck.map((item) => {
-              if(Number(item?.balance_stock) > 0){
+              if (Number(item?.balance_stock) > 0) {
                 if (item?.partId === x?.part_id) {
                   const updatedItem = {
                     ...item,
@@ -4270,8 +4274,7 @@ module.exports = {
                   return updatedItem;
                 }
                 return item;
-              }
-              else{
+              } else {
                 resolve({ status: 0, partid: x?.part_id });
               }
             });
@@ -4291,7 +4294,7 @@ module.exports = {
                   partName: x?.part_name,
                   partId: x?.part_id,
                   avl_stock: checkQty?.avl_stock,
-                  selected_qty: "1",
+                  selected_qty: 1,
                   balance_stock: check,
                   status: "Pending",
                 };
@@ -4304,6 +4307,70 @@ module.exports = {
         }
       }
       resolve({ status: 1, isCheck });
+    });
+  },
+  plannerPageCharging: (location,type,type1) => {
+    return new Promise(async (resolve, reject) => {
+      const plannerData = await masters.aggregate([
+        {
+          $match: {
+            $or: [
+              {
+                cpc: location,
+                sort_id: type,
+                type_taxanomy: "WHT",
+                prefix: "tray-master",
+              },
+              {
+                cpc: location,
+                prefix: "tray-master",
+                type_taxanomy: "WHT",
+                sort_id: type1,
+              },
+            ],
+          },
+        },
+        {
+          $group: {
+            _id: {
+              brand: "$brand",
+              model: "$model",
+              charging_jack_type: "$items.charging.charging_jack_type",
+            },
+            count: { $sum: 1 },
+          },
+        },
+      ]);
+      console.log(plannerData);
+      resolve(plannerData);
+    });
+  },
+ 
+  assigneToChargingScreen: (location, brand, model, jack,type,type1) => {
+    console.log(type);
+    return new Promise(async (resolve, reject) => {
+      const data = await masters.find({
+        $or: [
+          {
+            cpc: location,
+            prefix: "tray-master",
+            sort_id: type,
+            type_taxanomy: "WHT",
+            brand: brand,
+            model: model,
+            "items.charging.charging_jack_type": jack,
+          },
+          {
+            cpc: location,
+            prefix: "tray-master",
+            type_taxanomy: "WHT",
+            sort_id:type1,
+            "items.charging.charging_jack_type": jack,
+          },
+        ],
+      });
+      
+      resolve(data);
     });
   },
   assignForRepairSortingGetTheRequrements: (
@@ -4550,14 +4617,24 @@ module.exports = {
       let tray = await masters.find({
         $or: [
           {
-            $expr: { $ne: [{ $size: "$items" }, { $toInt: "$limit" }] },
+            $expr: {
+              $and: [
+                { $ne: [{ $ifNull: ["$items", null] }, null] },
+                { $ne: [{ $size: "$items" }, { $toInt: "$limit" }] },
+              ],
+            },
             cpc: location,
             prefix: "tray-master",
             sort_id: "Open",
             type_taxanomy: "BOT",
           },
           {
-            $expr: { $ne: [{ $size: "$items" }, { $toInt: "$limit" }] },
+            $expr: {
+              $and: [
+                { $ne: [{ $ifNull: ["$items", null] }, null] },
+                { $ne: [{ $size: "$items" }, { $toInt: "$limit" }] },
+              ],
+            },
             cpc: location,
             prefix: "tray-master",
             sort_id: "Wht-utility-work",

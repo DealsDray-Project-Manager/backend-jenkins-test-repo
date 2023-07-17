@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+
 const deliverySchema = mongoose.Schema({
   tracking_id: {
     type: String,
@@ -281,6 +282,12 @@ const deliverySchema = mongoose.Schema({
   },
   wht_to_rp_sorting_done_wh_closed:{
     type:Date
+  },
+  unverified_imei_status:{
+    type:String
+  },
+  final_grade:{
+     type:String
   }
 
 });

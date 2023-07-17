@@ -105,6 +105,9 @@ const ordersSchema = mongoose.Schema({
   created_at: {
     type: Date,
   },
+  imei_verification_status:{
+    type:String
+  }
 });
 
 const orders = mongoose.model("orders", ordersSchema);

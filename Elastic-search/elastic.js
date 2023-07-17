@@ -243,16 +243,24 @@ module.exports = {
     console.log(data);
   },
   bulkImportToElastic: async () => {
-    let findDeliveryData = await delivery.find({}, { _id: 0, __v: 0 });
-    let i=0
+    let findDeliveryData = await delivery.find(
+      {},
+      { _id: 0, __v: 0 }
+    );
+    console.log(findDeliveryData[0]);
+    
     for (let x of findDeliveryData) {
+      if(x.bqc_software_report !== undefined){
+        let obj={
+          _ro_ril_miui_imei0: x?.bqc_software_report?._ro_ril_miui_imei0,
+          mobile_imei: x?.bqc_software_report?.mobile_imei,
+          mobile_imei2: x?.bqc_software_report?.mobile_imei2
+        }
+        x.bqc_software_report = obj
+  
+      }
       const checkOrder = await orders.findOne({ order_id: x.order_id });
       if (checkOrder) {
-        
-        // if(x.uic_code.code =="93050011743"){
-         
-         
-        // }
         x.delivery_status = "Delivered";
         x.order_date = checkOrder?.order_date;
         let bulk = await client.index({
@@ -261,7 +269,6 @@ module.exports = {
           body: x,
         });
         console.log(bulk);
-      
       } else {
         x.delivery_status = "Pending";
       }
@@ -439,7 +446,83 @@ module.exports = {
     for (let result of dataForDownload.hits.hits) {
       arr1.push(result["_source"]);
     }
+    let arr = [];
+    let count = data?.hits?.total?.value;
 
+    for (let result of data.hits.hits) {
+      console.log(result["_source"]);
+
+      arr.push(result["_source"]);
+    }
+
+    return { searchResult: arr, count: count, dataForDownload: arr1 };
+  },
+  searchUnverifiedImei: async (searchInput, limit, skip, location) => {
+    let data = await client.search({
+      index: "prexo-delivery",
+      // type: '_doc', // uncomment for Elasticsearch ≤ 6
+      body: {
+        from: skip,
+        size: limit,
+        query: {
+          bool: {
+            must: [
+              {
+                multi_match: {
+                  query: searchInput,
+                  fields: ["*"],
+                },
+              },
+              {
+                match: {
+                  partner_shop: location,
+                },
+              },
+              {
+                match: {
+                  unverified_imei_status: "Unverified",
+                },
+              },
+            ],
+          },
+        },
+      },
+      track_total_hits: true,
+    });
+    let dataForDownload = await client.search({
+      index: "prexo-delivery",
+      size: 10000,
+      // type: '_doc', // uncomment for Elasticsearch ≤ 6
+      body: {
+        query: {
+          bool: {
+            must: [
+              {
+                multi_match: {
+                  query: searchInput,
+                  fields: ["*"],
+                },
+              },
+              {
+                match: {
+                  partner_shop: location,
+                },
+              },
+              {
+                match: {
+                  unverified_imei_status: "Unverified",
+                },
+              },
+            ],
+          },
+        },
+      },
+      track_total_hits: true,
+    });
+    let arr1 = [];
+    for (let result of dataForDownload.hits.hits) {
+      arr1.push(result["_source"]);
+    }
     let arr = [];
     let count = data?.hits?.total?.value;
 

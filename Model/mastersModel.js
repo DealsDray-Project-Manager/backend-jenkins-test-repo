@@ -160,6 +160,9 @@ const mastersSchema = mongoose.Schema({
     wht_to_rp_sorting_issued: Date,
     issued_to_rdl_two:Date
   },
+  rack_id :{
+    type:String
+  }
 });
 const masters = mongoose.model("masters", mastersSchema);
 module.exports = {
