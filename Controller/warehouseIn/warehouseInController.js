@@ -4156,6 +4156,7 @@ module.exports = {
               { code: toTray },
               {
                 $set: {
+                  rack_id: trayData.rackId,
                   sort_id: "Ready to Pricing",
                   actual_items: [],
                   issued_user_name: null,
