@@ -44,7 +44,7 @@ module.exports = {
       if (getTheTray) {
         if (getTheTray.sort_id == "Sent to sp warehouse") {
           if (getTheTray.issued_user_name == userName) {
-            resolve({ status: 2, tray: getTheTray });
+            resolve({ status: 2, tray: getTheTray }); 
           } else {
             resolve({ status: 2 });
           }
@@ -83,6 +83,7 @@ module.exports = {
         {
           $set: {
             sort_id: "Ready to RDL-Repair",
+            rack_id:trayid.rack_id,
             actual_items: [],
           },
         }

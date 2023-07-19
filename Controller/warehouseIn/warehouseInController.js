@@ -3025,6 +3025,7 @@ module.exports = {
           { code: trayData.trayId },
           {
             $set: {
+              rack_id: trayData.rackId,
               sort_id: "Ready to RDL",
               closed_time_wharehouse: Date.now(),
               actual_items: [],
@@ -3486,7 +3487,7 @@ module.exports = {
               sort_id: "Closed",
               closed_time_wharehouse: Date.now(),
               actual_items: [],
-              
+              rack_id: trayData.rackId,
               issued_user_name: null,
               sorting_done_close_wh: Date.now(),
             },
@@ -4156,7 +4157,7 @@ module.exports = {
               { code: toTray },
               {
                 $set: {
-                  rack_id: trayData.rackId,
+                  rack_id: toTray.rackId,
                   sort_id: "Ready to Pricing",
                   actual_items: [],
                   issued_user_name: null,
@@ -4172,6 +4173,7 @@ module.exports = {
               { code: toTray },
               {
                 $set: {
+                  rack_id: toTray.rackId,
                   sort_id: "Ready to Transfer to Sales",
                   actual_items: [],
                   issued_user_name: null,
@@ -4188,6 +4190,7 @@ module.exports = {
             { code: toTray },
             {
               $set: {
+                rack_id: toTray.rackId,
                 sort_id: "Open",
                 actual_items: [],
                 track_tray: {},
@@ -4210,6 +4213,7 @@ module.exports = {
             { code: toTray },
             {
               $set: {
+                rack_id: toTray.rackId,
                 sort_id: "Inuse",
                 actual_items: [],
                 issued_user_name: null,
@@ -4225,6 +4229,7 @@ module.exports = {
             { code: toTray },
             {
               $set: {
+                rack_id: toTray.rackId,
                 sort_id: "Audit Done Closed By Warehouse",
                 actual_items: [],
                 issued_user_name: null,
@@ -4242,6 +4247,7 @@ module.exports = {
             { code: toTray },
             {
               $set: {
+                rack_id: toTray.rackId,
                 sort_id: "Open",
                 actual_items: [],
                 temp_array: [],
@@ -4264,6 +4270,7 @@ module.exports = {
                 { code: toTray },
                 {
                   $set: {
+                    rack_id: toTray.rackId,
                     sort_id: "Ready to RDL",
                     actual_items: [],
                     issued_user_name: null,
@@ -4279,6 +4286,7 @@ module.exports = {
                 { code: toTray },
                 {
                   $set: {
+                    rack_id: toTray.rackId,
                     sort_id: "Audit Done Closed By Warehouse",
                     actual_items: [],
                     issued_user_name: null,
@@ -4295,6 +4303,7 @@ module.exports = {
               { code: toTray },
               {
                 $set: {
+                  rack_id: toTray.rackId,
                   sort_id: "Ready to RDL-Repair",
                   actual_items: [],
                   issued_user_name: null,
@@ -4310,6 +4319,7 @@ module.exports = {
               { code: toTray },
               {
                 $set: {
+                  rack_id: toTray.rackId,
                   sort_id: "Ready to Audit",
                   actual_items: [],
                   issued_user_name: null,
@@ -4325,6 +4335,7 @@ module.exports = {
               { code: toTray },
               {
                 $set: {
+                  rack_id: toTray.rackId,
                   sort_id: "Ready to BQC",
                   actual_items: [],
                   issued_user_name: null,
@@ -4342,6 +4353,7 @@ module.exports = {
                   { code: toTray },
                   {
                     $set: {
+                      rack_id: toTray.rackId,
                       sort_id: "Closed",
                       actual_items: [],
                       issued_user_name: null,
@@ -4357,6 +4369,7 @@ module.exports = {
                   { code: toTray },
                   {
                     $set: {
+                      rack_id: toTray.rackId,
                       sort_id: "Inuse",
                       actual_items: [],
                       issued_user_name: null,
@@ -4373,6 +4386,7 @@ module.exports = {
                 { code: toTray },
                 {
                   $set: {
+                    rack_id: toTray.rackId,
                     sort_id: "Closed By Warehouse",
                     from_merge: null,
                     to_merge: null,
@@ -4413,6 +4427,7 @@ module.exports = {
             { code: fromTray },
             {
               $set: {
+                rack_id: fromTray.rackId,
                 sort_id: "Open",
                 actual_items: [],
                 temp_array: [],
@@ -5294,6 +5309,7 @@ module.exports = {
           { code: trayData.trayId },
           {
             $set: {
+              rack_id: trayData.rackId,
               sort_id: "Open",
               issued_user_name: null,
               actual_items: [],
@@ -5312,6 +5328,7 @@ module.exports = {
             { code: trayData.trayId },
             {
               $set: {
+                rack_id: trayData.rackId,
                 sort_id: "Ready to BQC",
                 closed_time_wharehouse: Date.now(),
                 issued_user_name: null,
@@ -5328,6 +5345,7 @@ module.exports = {
             { code: trayData.trayId },
             {
               $set: {
+                rack_id: trayData.rackId,
                 sort_id: "Ready to Audit",
                 issued_user_name: null,
                 closed_time_wharehouse: Date.now(),
@@ -5344,6 +5362,7 @@ module.exports = {
             { code: trayData.trayId },
             {
               $set: {
+                rack_id: trayData.rackId,
                 sort_id: "Closed",
                 issued_user_name: null,
                 actual_items: [],
@@ -5359,6 +5378,7 @@ module.exports = {
             { code: trayData.trayId },
             {
               $set: {
+                rack_id: trayData.rackId,
                 sort_id: "Inuse",
                 issued_user_name: null,
                 actual_items: [],
@@ -5374,6 +5394,7 @@ module.exports = {
             { code: trayData.trayId },
             {
               $set: {
+                rack_id: trayData.rackId,
                 sort_id: "Ready to RDL-Repair",
                 issued_user_name: null,
                 actual_items: [],
@@ -5389,6 +5410,7 @@ module.exports = {
             { code: trayData.trayId },
             {
               $set: {
+                rack_id: trayData.rackId,
                 sort_id: "Ready to RDL",
                 closed_time_wharehouse: Date.now(),
                 issued_user_name: null,
@@ -5691,6 +5713,7 @@ module.exports = {
         { code: trayData.trayId },
         {
           $set: {
+            rack_id: trayData.rackId,
             actual_items: [],
             description: trayData.description,
             temp_array: [],
@@ -6001,6 +6024,7 @@ module.exports = {
             { code: trayData.trayId },
             {
               $set: {
+                rack_id: trayData.rackId,
                 issued_user_name: null,
                 actual_items: [],
                 temp_array: [],
@@ -6022,6 +6046,7 @@ module.exports = {
             { code: trayData.trayId },
             {
               $set: {
+                rack_id: trayData.rackId,
                 issued_user_name: null,
                 actual_items: [],
                 temp_array: [],
@@ -6044,6 +6069,7 @@ module.exports = {
             { code: trayData.trayId },
             {
               $set: {
+                rack_id: trayData.rackId,
                 issued_user_name: null,
                 actual_items: [],
                 temp_array: [],
@@ -6068,6 +6094,7 @@ module.exports = {
             { code: trayData.trayId },
             {
               $set: {
+                rack_id: trayData.rackId,
                 issued_user_name: null,
                 actual_items: [],
                 temp_array: [],
@@ -6089,6 +6116,7 @@ module.exports = {
             { code: trayData.trayId },
             {
               $set: {
+                rack_id: trayData.rackId,
                 issued_user_name: null,
                 actual_items: [],
                 temp_array: [],
