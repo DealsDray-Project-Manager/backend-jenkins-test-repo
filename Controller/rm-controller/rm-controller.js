@@ -83,7 +83,6 @@ module.exports = {
         {
           $set: {
             sort_id: "Ready to RDL-Repair",
-            rack_id:trayid.rack_id,
             actual_items: [],
           },
         }

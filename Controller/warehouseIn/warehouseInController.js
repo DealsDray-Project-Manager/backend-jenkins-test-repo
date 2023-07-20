@@ -6283,6 +6283,7 @@ module.exports = {
         sort_id: "Assigned to sorting (Wht to rp)",
       });
       resolve(getTray);
+      console.log(getTray);
     });
   },
   whtToRpWhtTrayScan: (location, whtTray) => {

@@ -11,6 +11,9 @@ const { delivery } = require("../../Model/deliveryModel/delivery");
 const { trayCategory } = require("../../Model/tray-category/tray-category");
 const { spareCategories } = require("../../Model/spareCategories/spareCategories")
 const { trayRack } = require("../../Model/tray-rack/tray-rack")
+const { box } = require("../../Model/boxModel/box")
+const { payment } = require("../../Model/paymentModel/payment")
+const { warranty } = require("../../Model/warrantyModel/warranty")
 const { audtiorFeedback } = require("../../Model/temp/auditor-feedback");
 const { vendorMaster } = require("../../Model/vendorModel/vendorModel");
 const { storagemodel } = require("../../Model/storageModel/storage");
@@ -2514,6 +2517,114 @@ module.exports = {
       resolve(allRacksid);
     });
   },
+
+
+
+
+  deleteBoxes: (box_id) => {
+    console.log(box_id);
+    return new Promise(async (resolve, reject) => {
+        let data = await box.deleteOne({ box_id: box_id });
+        if (data) {
+          resolve({status:true});
+        } else {
+          resolve({status:false});
+        }
+      
+    });
+  },
+  geteditBoxes: (box_id) => {
+    console.log(box_id);
+    return new Promise(async (resolve, reject) => {
+      let data = await box.findOne({ box_id: box_id });
+      if (data) {
+        resolve({status:true});
+      } else {
+        resolve({status:false});
+      }
+    });
+  },
+  getAllBoxes: () => {
+    return new Promise(async (resolve, reject) => {
+      const data = await box.find();
+      resolve(data);
+    });
+  },
+  createBoxes: (boxesData) => {
+    return new Promise(async (resolve, reject) => {
+      const checkAlready = await box.findOne({
+        $or: [{ box_id: boxesData.box_id }, { name: boxesData.name }],
+      });
+      if (checkAlready) {
+        resolve({ status: 2 });
+      } else {
+        const boxdata = await box.create(boxesData);
+        if (boxdata) {
+          resolve({ status: 1 });
+        } else {
+          resolve({ status: 3 });
+        }
+      }
+    });
+  },
+  editBoxes: (boxesData) => {
+    return new Promise(async (resolve, reject) => {
+      const updateboxes = await box.findOneAndUpdate(
+        {
+          box_id: boxesData.box_id,
+        },
+        {
+          $set: {
+            name: boxesData.name,
+            display: boxesData.display,
+            description: boxesData.description,
+          },
+        }
+      );
+      if (updateboxes) {
+        resolve({ status: 1 });
+      } else {
+        resolve({ status: 2 });
+      }
+    });
+  },
+  getOneBox: (box_id) => {
+    return new Promise(async (resolve, reject) => {
+      const getOneBox = await box.findOne({ box_id: box_id });
+      if (getOneBox) {
+        resolve({ status: 1, data: getOneBox });
+      } else {
+        resolve({ status: 2 });
+      }
+    });
+  },
+
+  /*--------------------------------FIND Box ID-----------------------------------*/
+
+  getBoxID: () => {
+    return new Promise(async (resolve, reject) => {
+      let allBoxesid = await box.find();
+      resolve(allBoxesid);
+    });
+  },
+
+
+
+
+
+  getAllPayments: () => {
+    return new Promise(async (resolve, reject) => {
+      const data = await payment.find();
+      resolve(data);
+    });
+  },
+
+
+
+
+
+
+
 
 
 
