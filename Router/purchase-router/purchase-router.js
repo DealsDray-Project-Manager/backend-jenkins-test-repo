@@ -4,6 +4,7 @@ const router = express.Router();
 const purchaseController = require("../../Controller/purchase-controller/purchase-controller");
 
 /*-----------------------------ROUTERS------------------------------------*/
+
 // DASBOARD
 router.post("/dashboard/:location", async (req, res, next) => {
   try {

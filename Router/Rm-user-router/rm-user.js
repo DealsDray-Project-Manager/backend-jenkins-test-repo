@@ -1,13 +1,13 @@
 /*------------------------------EXPRESS------------------------------------*/
-const express = require("express")
+const express = require("express");
 const router = express.Router();
 const rmuserController = require("../../Controller/rm-controller/rm-controller");
 /*-----------------------------ROUTERS------------------------------------*/
 //DASHBOARD
 router.post("/dashboard/:location/:username", async (req, res, next) => {
   try {
-    const { location,username } = req.params;
-    let data = await rmuserController.dashboardData(location,username);
+    const { location, username } = req.params;
+    let data = await rmuserController.dashboardData(location, username);
     if (data) {
       res.status(200).json({
         data: data,
@@ -35,10 +35,12 @@ router.post("/spTray/:user_name", async (req, res, next) => {
   }
 });
 // PARTS ISSUE PAGE
-router.post("/spTray/part-issue/:trayId/:username", async (req, res, next) => {
+router.post("/spTrayPartIssue", async (req, res, next) => {
   try {
-    const { trayId, username } = req.params;
-    let data = await rmuserController.spTrayPartIssuePage(trayId, username);
+    console.log(req.body);
+    const { trayId, username,status } = req.body;
+    let data = await rmuserController.spTrayPartIssuePage(trayId, username,status);
+    console.log(data);
     if (data.status == 2) {
       res.status(200).json({
         data: data.tray,
@@ -99,6 +101,20 @@ router.post("/spTray/readyToRdlRepair/:user_name", async (req, res, next) => {
     let data = await rmuserController.getSpTrayForRdlRepair(user_name);
     if (data) {
       console.log(data);
+      res.status(200).json({
+        data: data,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+/*------------------------------------------------------SP TRAY ---------------------------------------------*/
+router.post("/spTrayReturnFromRdlTwo/:location", async (req, res, next) => {
+  try {
+    const { location } = req.params;
+    let data = await rmuserController.getSpTrayAfterRdlTwo(location);
+    if (data) {
       res.status(200).json({
         data: data,
       });

@@ -418,7 +418,7 @@ module.exports = {
         .find({})
         .sort({ name: 1 })
         .collation({ locale: "en_US", numericOrdering: true });
-        console.log(obj);
+       
       resolve(obj);
     });
   },

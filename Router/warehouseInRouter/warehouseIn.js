@@ -663,7 +663,7 @@ router.post("/closeBotTray/:location", async (req, res, next) => {
 
 /*--------------------------SUMMERY OF BAG AFTER BOT DONE--------------------------*/
 
-router.post("/summeryBotTrayBag/:bagId", async (req, res, next) => {
+router.post("/summaryBotTrayBag/:bagId", async (req, res, next) => {
   try {
     let data = await warehouseInController.getSummeryBotTray(req.params.bagId);
     if (data) {
@@ -752,6 +752,24 @@ router.post("/whtTray/:location/:type", async (req, res, next) => {
   try {
     const { location, type } = req.params;
     let data = await warehouseInController.getWhtTrayWareHouse(location, type);
+    if (data) {
+      res.status(200).json({
+        data: data,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+/*-----------------------GET RPT TRAY BASED ON THE STATUS -----------------------------*/
+router.post("/rptTray", async (req, res, next) => {
+  try {
+    const { location, type, status } = req.body;
+    let data = await warehouseInController.getRptTrayBasedOnStatus(
+      location,
+      type,
+      status
+    );
     if (data) {
       res.status(200).json({
         data: data,
@@ -927,6 +945,21 @@ router.post("/wht-return-from-charging/:location", async (req, res, next) => {
     let data = await warehouseInController.returnFromChargingWht(
       req.params.location
     );
+    if (data) {
+      res.status(200).json({
+        data: data,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
+/*----------------------------TRAY RETURN FROM RL-TWO-----------------------------------------*/
+router.post("/rptReturnFromRdlTwo/:location", async (req, res, next) => {
+  try {
+    const { location } = req.params;
+    let data = await warehouseInController.getRpTrayRetunrFromRdlTwo(location);
     if (data) {
       res.status(200).json({
         data: data,
@@ -2325,6 +2358,23 @@ router.post("/check-uic-RDL-done", async (req, res, next) => {
 router.post("/rdl-fls/closedByWh", async (req, res, next) => {
   try {
     let data = await warehouseInController.rdlFlsDoneClose(req.body);
+    if (data) {
+      res.status(200).json({
+        message: "Tray Closed Succcessfully",
+      });
+    } else {
+      res.status(202).json({
+        message: "Failed",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+/*---------------------------RDL-TWO DONE CLOSE ---------------------------------------------------------*/
+router.post("/rdl-two/closedByWh", async (req, res, next) => {
+  try {
+    let data = await warehouseInController.rdlTwoDoneClose(req.body);
     if (data) {
       res.status(200).json({
         message: "Tray Closed Succcessfully",

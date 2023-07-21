@@ -2663,7 +2663,7 @@ module.exports = {
         let data = await masters.find({
           sort_id: "Sorting Request Sent To Warehouse",
           cpc: location,
-          
+
           type_taxanomy: "BOT",
         });
         if (data) {
@@ -2677,13 +2677,13 @@ module.exports = {
                 {
                   sort_id: "Sorting Request Sent To Warehouse",
                   cpc: location,
-                  
+
                   // type_taxanomy: "BOT",
                 },
                 {
                   sort_id: "Assigned to sorting agent",
                   cpc: location,
-                  
+
                   // type_taxanomy: "BOT",
                 },
               ],
@@ -4230,9 +4230,9 @@ module.exports = {
       }
     });
   },
-  assignForRepairStockCheck: (partId, uic, isCheck, checked) => {
+  assignForRepairStockCheck: (partId, uic, isCheck, checked, selectedQtySp) => {
     return new Promise(async (resolve, reject) => {
-      let arr = [];
+      let countofStock = selectedQtySp;
       let flag = false;
       for (let x of partId) {
         if (!checked) {
@@ -4240,6 +4240,7 @@ module.exports = {
             .map((item) => {
               let updated;
               if (item?.partId === x?.part_id) {
+                countofStock = countofStock - 1;
                 updated = {
                   ...item,
                   uic: item?.uic.filter((uicData) => uicData !== uic),
@@ -4273,6 +4274,7 @@ module.exports = {
                     selected_qty: Number(item?.selected_qty) + 1,
                     balance_stock: Number(item?.balance_stock) - 1,
                   };
+                  countofStock = countofStock + 1;
                   updatedItem.uic.push(uic);
                   return updatedItem;
                 }
@@ -4292,6 +4294,7 @@ module.exports = {
               if (check < 0) {
                 resolve({ status: 0, partid: x?.part_id });
               } else {
+                countofStock = countofStock + 1;
                 let obj = {
                   uic: [uic],
                   partName: x?.part_name,
@@ -4309,10 +4312,10 @@ module.exports = {
           }
         }
       }
-      resolve({ status: 1, isCheck });
+      resolve({ status: 1, isCheck, countofStock: countofStock });
     });
   },
-  plannerPageCharging: (location,type,type1) => {
+  plannerPageCharging: (location, type, type1) => {
     return new Promise(async (resolve, reject) => {
       const plannerData = await masters.aggregate([
         {
@@ -4348,8 +4351,8 @@ module.exports = {
       resolve(plannerData);
     });
   },
- 
-  assigneToChargingScreen: (location, brand, model, jack,type,type1) => {
+
+  assigneToChargingScreen: (location, brand, model, jack, type, type1) => {
     console.log(type);
     return new Promise(async (resolve, reject) => {
       const data = await masters.find({
@@ -4367,12 +4370,12 @@ module.exports = {
             cpc: location,
             prefix: "tray-master",
             type_taxanomy: "WHT",
-            sort_id:type1,
+            sort_id: type1,
             "items.charging.charging_jack_type": jack,
           },
         ],
       });
-      
+
       resolve(data);
     });
   },
@@ -4381,8 +4384,10 @@ module.exports = {
     uicLength,
     brand,
     model,
-    isCheck
+    isCheck,
+    selectedQtySp
   ) => {
+    console.log(selectedQtySp);
     return new Promise(async (resolve, reject) => {
       const getSortingAgent = await user.find({
         user_type: "Sorting Agent",
@@ -4405,8 +4410,6 @@ module.exports = {
       const rpArr = [];
       if (getRpTray.length !== 0) {
         for (let rpt of getRpTray) {
-          console.log(rpt.limit);
-          console.log(uicLength);
           if (parseInt(rpt.limit) >= uicLength) {
             rpArr.push(rpt);
           }
@@ -4417,6 +4420,7 @@ module.exports = {
         type_taxanomy: "SPT",
         sort_id: "Open",
         cpc: location,
+        limit: { $gte: selectedQtySp.toString() },
       });
       const spArr = [];
       if (getSpTray.length !== 0) {
@@ -4456,6 +4460,7 @@ module.exports = {
               requested_date: Date.now(),
               issued_user_name: sortingUser,
               sort_id: "Assigned to sorting (Wht to rp)",
+              "track_tray.wht_to_rp_assigned_to_sorting":Date.now()  
             },
           }
         );
@@ -4476,6 +4481,7 @@ module.exports = {
               temp_array: selectedUic,
               sp_tray: spTray,
               sort_id: "Assigned to sorting (Wht to rp)",
+              "track_tray.wht_to_rp_assigned_to_sorting":Date.now()
             },
           }
         );
@@ -4487,12 +4493,27 @@ module.exports = {
                 issued_user_name: spwhuser,
                 requested_date: Date.now(),
                 items: spDetails,
-                sort_id: "Sent to sp warehouse",
+                sort_id: "Assigned to sp warehouse",
                 rp_tray: rpTray,
               },
             }
           );
+
           if (spTrayUpdation) {
+            for (let x of spDetails) {
+              let limit=x.selected_qty
+              for (let i = 1; i <= limit ; i++) {
+                x.selected_qty = 1;
+                const spTrayUpdation = await masters.findOneAndUpdate(
+                  { code: spTray },
+                  {
+                    $push: {
+                      actual_items: x,
+                    },
+                  }
+                );
+              }
+            }
             resolve({ status: 1 });
           } else {
             resolve({ status: 0 });

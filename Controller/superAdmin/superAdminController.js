@@ -607,7 +607,12 @@ module.exports = {
       let vendor_sku_id = [];
       let brand = [];
       let model = [];
+      let jack_type=[]
       for (let i = 0; i < productsData.length; i++) {
+        if(productsData[i]?.jack_type !== "Micro USB" && productsData[i]?.jack_type !== "Type C" && productsData[i]?.jack_type !== "lightning"){
+          jack_type.push(productsData[i]?.jack_type)
+          err["jack_type"] = jack_type;
+        }
         let skuIdExists = await products.findOne({
           vendor_sku_id: productsData[i].vendor_sku_id,
         });
@@ -776,11 +781,13 @@ module.exports = {
   /*--------------------------------EDIT PRODUCT-----------------------------------*/
 
   editproduct: (productData) => {
+    console.log(productData.jack_type);
     return new Promise(async (resolve, reject) => {
       let data = await products.updateOne(
         { _id: productData._id },
         {
           $set: {
+            jack_type:productData.jack_type,
             brand_name: productData.brand_name,
             model_name: productData.model_name,
             vendor_sku_id: productData.vendor_sku_id,
@@ -788,6 +795,7 @@ module.exports = {
           },
         }
       );
+      console.log(data);
       if (data.modifiedCount != 0) {
         resolve(data);
       } else {
@@ -2855,11 +2863,17 @@ module.exports = {
       let partName = [];
       let color = [];
       let technical_qc = [];
+      let sp_category=[]
       let dup = false;
       let i = 0;
       const duplicates = [];
 
       for (let x of partData) {
+        let checkCategory=await spareCategories.findOne({category_name:x.sp_category})
+        if(checkCategory == null){
+          sp_category.push(x.sp_category)
+          err["sp_category_not_exists"] = sp_category;
+        }
         if (x.technical_qc !== "Y" && x.technical_qc !== "N") {
           technical_qc.push(x.technical_qc);
           err["technical_qc"] = technical_qc;
@@ -2923,6 +2937,7 @@ module.exports = {
           description: description,
           code: part_code,
           created_by: created_by,
+          sp_category:sp_category,
           created_at: created_at,
           ...rest
         }) => ({
@@ -2932,6 +2947,7 @@ module.exports = {
           technical_qc,
           description,
           created_by,
+          sp_category,
           created_at,
           ...rest,
         })
@@ -3356,6 +3372,7 @@ module.exports = {
             description: dataOfPartorColor.description,
             color: dataOfPartorColor?.color,
             technical_qc: dataOfPartorColor?.technical_qc,
+            sp_category:dataOfPartorColor.sp_category
           },
         }
       );
@@ -3968,6 +3985,181 @@ module.exports = {
       resolve(arr);
     });
   },
+  botTrayTransfer:()=>{
+    return new Promise(async(resolve,reject)=>{
+
+      let arr=[
+        "92030002461",
+        "91010000529",
+        "92030003416",
+        "92030001259",
+        "92030004345",
+        "92030000259",
+        "92030000480",
+        "92030000657",
+        "92030001960",
+        "92030000186",
+        "92030000232",
+        "92030004784",
+        "91010002425",
+        "92030001725",
+        "92030003086",
+        "91010000954",
+        "91010001244",
+        "91010005426",
+        "91010005358",
+        "91010001177",
+        "91010001151",
+        "91010005393",
+        "91010002514",
+        "91010003194",
+        "91010006162",
+        "92030000212",
+        "91010003474",
+        "91010001009",
+        "91010000775",
+        "91010005416",
+        "91010005353",
+        "92030004061",
+        "91010005567",
+        "91010005433",
+        "92030002725",
+        "92030003573",
+        "91010000706",
+        "91010000760",
+        "91010000608",
+              ]
+
+        let arr2=[]
+
+      for(let x of arr){
+        let findTray=await masters.findOne({"items.uic":x})
+         if(findTray){
+          for(let y of findTray.items){
+            if(y.uic==x){
+              y.tray_id ="BOT2051"
+              let updateTheTray=await masters.updateOne({code:"BOT2051"},{
+                $push:{
+                  items:y
+                },
+                $set:{
+                  sort_id:"Closed By Warehouse",
+                  closed_time_wharehouse_from_bot: new Date(
+                    new Date().toISOString().split("T")[0]
+                  ),
+                  actual_items: [],
+                  "track_tray.bot_done_tray_close_wh": Date.now(),
+                }
+              })
+              if(updateTheTray.modifiedCount!== 0){
+              
+                let updateRemove=await masters.findOneAndUpdate({code:findTray.code},{
+                 $pull:{
+                  items:{
+                    uic:x
+                  },
+                 },
+                 $set:{
+                  temp_array:[]
+                 }
+                })
+                if(arr2.includes(updateRemove.code) ==  false){
+
+                  arr2.push(updateRemove.code) 
+                }
+              
+              }
+            }
+          }
+         }
+      }
+      arr2.push("BOT2051")
+     for(let tray of arr2){
+       let take=await masters.findOne({code:tray})
+       for (let x of take.items) {
+         let getItemId = await delivery.findOneAndUpdate(
+           {
+             tracking_id: x.awbn_number,
+           },
+           {
+             $set: {
+               tray_close_wh_date: Date.now(),
+               tray_status: "Closed By Warehouse",
+               tray_location: "Warehouse",
+               updated_at: Date.now(),
+             },
+           },
+           {
+             new: true,
+             projection: { _id: 0 },
+           }
+         );
+         // let updateElastic = await elasticsearch.uicCodeGen(getItemId);
+         let findProduct = await products.findOne({
+           vendor_sku_id: getItemId.item_id,
+         });
+         let obj = {
+           item: [],
+           muic: findProduct.muic,
+           model: findProduct.model_name,
+           brand: findProduct.brand_name,
+           vendor_sku_id: findProduct.vendor_sku_id,
+           assigned_count: 0,
+           close_date: Date.now(),
+         };
+         obj.item.push(x);
+         let updateToMuic = await masters.updateOne(
+           {
+             code: take.code,
+             items: {
+               $elemMatch: {
+                 awbn_number: x.awbn_number,
+               },
+             },
+           },
+           {
+             $set: {
+               "items.$.muic": findProduct.muic,
+               "items.$.model": findProduct.model_name,
+               "items.$.brand": findProduct.brand_name,
+               "items.$.wht_tray": null,
+             },
+           }
+         );
+         let checkAlreadyClub = await masters.findOne({
+           code: take.code,
+           "temp_array.vendor_sku_id": findProduct.vendor_sku_id,
+         });
+         x.wht_tray = null;
+         if (checkAlreadyClub) {
+           let updateTempArrayClub = await masters.updateOne(
+             {
+               code: take.code,
+               "temp_array.vendor_sku_id": findProduct.vendor_sku_id,
+             },
+             {
+               $push: {
+                 "temp_array.$.item": x,
+               },
+             }
+           );
+         } else {
+           let updateTempArrayClub = await masters.updateOne(
+             {
+               code: take.code,
+             },
+             {
+               $push: {
+                 temp_array: obj,
+               },
+             }
+           );
+         }
+       }
+     }
+       resolve({status:true})
+    })
+  },
   rollBackTrayToAuditStage: () => {
     return new Promise(async (resolve, reject) => {
       // const findTray=await masters.findOne({code:"CTB2008"})
@@ -4355,67 +4547,67 @@ module.exports = {
 
   resolveAllDeliveryIssue: () => {
     return new Promise(async (resolve, reject) => {
-      let findDelivery = await delivery.find({});
-      let i = 0;
-      for (let x of findDelivery) {
-        // check imei verified or not
-        if (x.bqc_software_report != undefined) {
-          let status = "Unverified";
-          if (
-            x.imei?.match(/[0-9]/g)?.join("") ==
-              x.bqc_software_report.mobile_imei ||
-            x.imei?.match(/[0-9]/g)?.join("") ==
-              x.bqc_software_report.mobile_imei2 ||
-            x.imei?.match(/[0-9]/g)?.join("") ==
-              x.bqc_software_report._ro_ril_miui_imei0
-          ) {
-            status = "Verified";
-          }
-          let updateDelivery = await delivery.findOneAndUpdate(
-            {
-              "uic_code.code": x.uic_code?.code,
-            },
-            {
-              $set: {
-                unverified_imei_status: status,
-              },
-            }
-          );
-          let updateOrder = await orders.findOneAndUpdate(
-            { order_id: x.order_id },
-            {
-              $set: {
-                imei_verification_status: status,
-              },
-            }
-          );
-        }
+      // let findDelivery = await delivery.find({});
+      // let i = 0;
+      // for (let x of findDelivery) {
+      //   // check imei verified or not
+      //   if (x.bqc_software_report != undefined) {
+      //     let status = "Unverified";
+      //     if (
+      //       x.imei?.match(/[0-9]/g)?.join("") ==
+      //         x.bqc_software_report.mobile_imei ||
+      //       x.imei?.match(/[0-9]/g)?.join("") ==
+      //         x.bqc_software_report.mobile_imei2 ||
+      //       x.imei?.match(/[0-9]/g)?.join("") ==
+      //         x.bqc_software_report._ro_ril_miui_imei0
+      //     ) {
+      //       status = "Verified";
+      //     }
+      //     let updateDelivery = await delivery.findOneAndUpdate(
+      //       {
+      //         "uic_code.code": x.uic_code?.code,
+      //       },
+      //       {
+      //         $set: {
+      //           unverified_imei_status: status,
+      //         },
+      //       }
+      //     );
+      //     let updateOrder = await orders.findOneAndUpdate(
+      //       { order_id: x.order_id },
+      //       {
+      //         $set: {
+      //           imei_verification_status: status,
+      //         },
+      //       }
+      //     );
+      //   }
 
-        if (x.partner_shop == "Sales_Gurgaon_122016") {
-          let updateDeliveryTwo = await delivery.findOneAndUpdate(
-            { "uic_code.code": x.uic_code?.code },
-            {
-              $set: {
-                partner_shop: "Gurgaon_122016",
-              },
-            }
-          );
-        } else if (
-          x.partner_shop == "Gurgaon_122016" ||
-          x.partner_shop == "Sales_Gurgaon_122016"
-        ) {
-          let updateOrder = await orders.findOneAndUpdate(
-            { order_id: x.order_id },
-            {
-              $set: {
-                partner_shop: "Gurgaon_122016",
-              },
-            }
-          );
-        }
-        console.log(i);
-        i++;
-      }
+      //   if (x.partner_shop == "Sales_Gurgaon_122016") {
+      //     let updateDeliveryTwo = await delivery.findOneAndUpdate(
+      //       { "uic_code.code": x.uic_code?.code },
+      //       {
+      //         $set: {
+      //           partner_shop: "Gurgaon_122016",
+      //         },
+      //       }
+      //     );
+      //   } else if (
+      //     x.partner_shop == "Gurgaon_122016" ||
+      //     x.partner_shop == "Sales_Gurgaon_122016"
+      //   ) {
+      //     let updateOrder = await orders.findOneAndUpdate(
+      //       { order_id: x.order_id },
+      //       {
+      //         $set: {
+      //           partner_shop: "Gurgaon_122016",
+      //         },
+      //       }
+      //     );
+      //   }
+      //   console.log(i);
+      //   i++;
+      // }
       //2023-12-05T18:30:00.000+00:00
       //2023-11-05T18:30:00.000+00:00
       //2023-12-04T18:30:00.000+00:00
@@ -4457,6 +4649,22 @@ module.exports = {
       //   i++;
       //   console.log(i);
       // }
+      let findTheTray=await masters.findOne({code:"SPT18024"})
+
+      for (let x of findTheTray.items) {
+        let limit=x.selected_qty
+        for (let i = 1; i <= limit ; i++) {
+          x.selected_qty = 1;
+          const spTrayUpdation = await masters.findOneAndUpdate(
+            { code: "SPT18024" },
+            {
+              $push: {
+                actual_items: x,
+              },
+            }
+          );
+        }
+      }
       resolve({ status: true });
     });
   },

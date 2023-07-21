@@ -1410,6 +1410,43 @@ module.exports = {
         } else {
           resolve({ status: 3 });
         }
+      } else if (trayData.type == "Closed by RDL-two") {
+        let checkCount = await masters.findOne({ code: trayData.trayId });
+        if (checkCount.items.length == trayData.counts) {
+          let data = await masters.findOneAndUpdate(
+            { code: trayData.trayId },
+            {
+              $set: {
+                sort_id: "Received from RDL-two",
+                "track_tray.tray_received_from_bot": Date.now(),
+              },
+            }
+          );
+          if (data) {
+            for (let x of data.items) {
+              let deliveryTrack = await delivery.findOneAndUpdate(
+                { "uic_code.code": x.uic },
+                {
+                  $set: {
+                    tray_status: "Received from RDL-two",
+                    tray_location: "Warehouse",
+                    received_from_rdl_two: Date.now(),
+                    updated_at: Date.now(),
+                  },
+                },
+                {
+                  new: true,
+                  projection: { _id: 0 },
+                }
+              );
+            }
+            resolve({ status: 1 });
+          } else {
+            resolve({ status: 2 });
+          }
+        } else {
+          resolve({ status: 3 });
+        }
       } else {
         let checkCount = await masters.findOne({ code: trayData.trayId });
         if (checkCount.items.length == trayData.count) {
@@ -1587,7 +1624,7 @@ module.exports = {
           {
             $set: {
               sort_id: "Closed By Warehouse",
-              rack_id:trayData.rackId,
+              rack_id: trayData.rackId,
               closed_time_wharehouse_from_bot: new Date(
                 new Date().toISOString().split("T")[0]
               ),
@@ -2088,7 +2125,18 @@ module.exports = {
       }
     });
   },
-
+  /*-------------------------GET RPT TRAY ----------------------------------------------*/
+  getRptTrayBasedOnStatus: (location, type, status) => {
+    return new Promise(async (resolve, reject) => {
+      if (status == "All") {
+        let data = await masters.find({
+          cpc: location,
+          type_taxanomy: "RPT",
+        });
+        resolve(data);
+      }
+    });
+  },
   /*--------------------FIND WHT TRAY BASED ON THE STATUS----------------------------*/
 
   getInUseWhtTray: (status, location) => {
@@ -2844,6 +2892,26 @@ module.exports = {
       }
     });
   },
+  /*----------------------------RPT TRAY RETURN FROM RDL-TWO---------------------*/
+  getRpTrayRetunrFromRdlTwo: (location) => {
+    return new Promise(async (resolve, reject) => {
+      const data = await masters.find({
+        $or: [
+          {
+            type_taxanomy: "RPT",
+            location: location,
+            sort_id: "Closed by RDL-two",
+          },
+          {
+            type_taxanomy: "RPT",
+            location: location,
+            sort_id: "Received from RDL-two",
+          },
+        ],
+      });
+      resolve(data);
+    });
+  },
 
   /*-----------------WHT TRAY  CHARGING DONE RECEIVED --------------------------*/
 
@@ -3008,7 +3076,6 @@ module.exports = {
             $set: {
               description: trayData.description,
               sort_id: "Ready to Audit",
-         
               closed_time_wharehouse: Date.now(),
               issued_user_name: null,
               "track_tray.bqc_done_close_by_wh": Date.now(),
@@ -3065,6 +3132,7 @@ module.exports = {
               $set: {
                 description: trayData.description,
                 sort_id: "Ready to BQC",
+                rack_id: trayData.rackId,
                 closed_time_wharehouse: Date.now(),
                 issued_user_name: null,
                 "track_tray.charging_done_close_wh": Date.now(),
@@ -3469,12 +3537,10 @@ module.exports = {
           {
             sort_id: "Sorting Request Sent To Warehouse",
             issued_user_name: username,
-            
           },
           {
             sort_id: "Assigned to sorting agent",
             issued_user_name: username,
-            
           },
         ],
       });
@@ -3523,7 +3589,6 @@ module.exports = {
           { code: x.code },
           {
             $set: {
-              
               sort_id: trayData.type,
               status_change_time: Date.now(),
               issued_user_name: trayData.username,
@@ -3544,15 +3609,13 @@ module.exports = {
                   tray_status: "Issued to Sorting",
                   sorting_agent_name: trayData.username,
                   handover_sorting_date: Date.now(),
-                  
+
                   updated_at: Date.now(),
                 },
               },
               {
-                
                 new: true,
                 projection: { _id: 0 },
-                
               }
             );
             // let updateElasticSearch = await elasticsearch.uicCodeGen(
@@ -3582,7 +3645,7 @@ module.exports = {
               sort_id: "Closed",
               closed_time_wharehouse: Date.now(),
               actual_items: [],
-              
+
               issued_user_name: null,
               sorting_done_close_wh: Date.now(),
             },
@@ -3599,7 +3662,7 @@ module.exports = {
                   tray_status: "Closed",
                   tray_location: "Warehouse",
                   closed_from_sorting: Date.now(),
-                  
+
                   updated_at: Date.now(),
                 },
               },
@@ -3623,7 +3686,6 @@ module.exports = {
               closed_time_wharehouse: Date.now(),
               actual_items: [],
               issued_user_name: null,
-              
             },
           }
         );
@@ -3639,7 +3701,6 @@ module.exports = {
                   tray_location: "Warehouse",
                   closed_from_sorting: Date.now(),
                   updated_at: Date.now(),
-
                 },
               },
               {
@@ -5557,6 +5618,7 @@ module.exports = {
           $or: [
             { issued_user_name: username, sort_id: "Issued to RDL-two" },
             { issued_user_name: username, sort_id: "Closed By RDL-2" },
+            { issued_user_name: username, sort_id: "Rdl-two inprogress" },
           ],
         });
 
@@ -5839,6 +5901,47 @@ module.exports = {
           // let elasticSearchUpdate = await elasticsearch.uicCodeGen(
           //   deliveryUpdate
           // );
+        }
+      }
+
+      if (data) {
+        resolve(data);
+      } else {
+        resolve();
+      }
+    });
+  },
+  rdlTwoDoneClose: (trayData) => {
+    return new Promise(async (resolve, reject) => {
+      let data;
+      data = await masters.findOneAndUpdate(
+        { code: trayData.trayId },
+        {
+          $set: {
+            actual_items: [],
+            description: trayData.description,
+            temp_array: [],
+            sort_id: "RDL two done closed by warehouse",
+          },
+        }
+      );
+      if (data) {
+        for (let x of data.items) {
+          let deliveryUpdate = await delivery.findOneAndUpdate(
+            { tracking_id: x.tracking_id },
+            {
+              $set: {
+                tray_status: "RDL two done closed by warehouse",
+                rdl_two_done_close_by_warehouse: Date.now(),
+                tray_location: "Warehouse",
+                updated_at: Date.now(),
+              },
+            },
+            {
+              new: true,
+              projection: { _id: 0 },
+            }
+          );
         }
       }
 
@@ -6381,6 +6484,7 @@ module.exports = {
               sort_id: "Issued to sorting (Wht to rp)",
               assigned_date: Date.now(),
               "track_tray.wht_to_rp_sorting_issued": Date.now(),
+              "track_tray.wht_to_rp_issued_to_sorting":Date.now(),
               actual_items: [],
             },
           }

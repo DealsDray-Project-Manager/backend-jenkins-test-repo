@@ -125,7 +125,7 @@ const mastersSchema = mongoose.Schema({
     type: String,
   },
   sp_tray: String,
-  rdl_2_user_temp:String,
+  rdl_2_user_temp: String,
   rp_tray: String,
   track_tray: {
     bag_wh_added_item_close_fv_1: Date,
@@ -158,11 +158,18 @@ const mastersSchema = mongoose.Schema({
     ctx_issued_sorting: Date,
     ctx_sorting_done: Date,
     wht_to_rp_sorting_issued: Date,
-    issued_to_rdl_two:Date
+    issued_to_rdl_two: Date,
+    wht_to_rp_assigned_to_sorting:Date,
+    wht_to_rp_issued_to_sorting:Date,
+    wht_to_rp_sorting_done_sorting:Date,
+    rdl_two_done_closed_by_agent:Date
   },
-  rack_id:{
-    type:String
-  }
+  rack_id: {
+    type: String,
+  },
+  jack: {
+    type: String,
+  },
 });
 const masters = mongoose.model("masters", mastersSchema);
 module.exports = {

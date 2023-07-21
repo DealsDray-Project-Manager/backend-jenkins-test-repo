@@ -256,40 +256,48 @@ const deliverySchema = mongoose.Schema({
   temp_delivery_status: {
     type: String,
   },
-  item_moved_to_billed_bin:{
-    type:String
+  item_moved_to_billed_bin: {
+    type: String,
   },
-  item_moved_to_billed_bin_date:{
-    type:Date
+  item_moved_to_billed_bin_date: {
+    type: Date,
   },
-  item_moved_to_billed_bin_done_username:{
-    type:String
+  item_moved_to_billed_bin_done_username: {
+    type: String,
   },
-  issued_to_wht_to_rp:{
-    type:Date
+  issued_to_wht_to_rp: {
+    type: Date,
   },
-  wht_to_rp_sorting_agent:{
-    type:String
+  wht_to_rp_sorting_agent: {
+    type: String,
   },
-  rp_tray:{
-    type:String
+  rp_tray: {
+    type: String,
   },
-  wht_to_rp_sorting_done:{
-    type:Date
+  wht_to_rp_sorting_done: {
+    type: Date,
   },
-  wht_to_rp_sorting_done_received:{
-    type:Date
+  wht_to_rp_sorting_done_received: {
+    type: Date,
   },
-  wht_to_rp_sorting_done_wh_closed:{
-    type:Date
+  wht_to_rp_sorting_done_wh_closed: {
+    type: Date,
   },
-  unverified_imei_status:{
-    type:String
+  unverified_imei_status: {
+    type: String,
   },
-  final_grade:{
-     type:String
-  }
-
+  rdl_two_closed_date: {
+    type: Date,
+  },
+  rdl_two_report: {
+    type: Object,
+  },
+  received_from_rdl_two: {
+    type: Date,
+  },
+  rdl_two_done_close_by_warehouse: {
+    type: Date,
+  },
 });
 
 const delivery = mongoose.model("delivery", deliverySchema);

@@ -75,6 +75,7 @@ module.exports = {
             {
               $set: {
                 sort_id: "Rdl-two inprogress",
+                actual_items: [],
               },
             }
           );
@@ -188,46 +189,32 @@ module.exports = {
             },
           }
         );
-        if (trayItemData.rdl_repair_report.used_parts?.length !== 0) {
+        if (trayItemData.rdl_repair_report.used_parts?.length == 0) {
           const updateSpTray = await masters.findOneAndUpdate(
             {
               code: trayItemData.spTray,
-              "items.partId": {
-                $in: trayItemData.rdl_repair_report.used_parts.map(
-                  (part) => part.part_id
-                ),
-              },
-              "items.selected_qty": { $ne: 1 },
             },
             {
-              $inc: { "items.$.selected_qty": -1 },
+              $push: {
+                temp_array: {
+                  $each: trayItemData.rdl_repair_report.rdl_two_part_status,
+                },
+              },
             }
           );
-          if (updateSpTray == null) {
-            const updateSpTray = await masters.findOneAndUpdate(
-              {
-                code: trayItemData.spTray,
-                "items.partId": {
-                  $in: trayItemData.rdl_repair_report.used_parts.map(
-                    (part) => part.part_id
-                  ),
-                },
-                "items.selected_qty": 1,
-              },
-              {
-                $pull: {
-                  items: {
-                    partId: {
-                      $in: trayItemData.rdl_repair_report.used_parts.map(
-                        (part) => part.part_id
-                      ),
-                    },
-                  },
-                },
-              }
-            );
-          }
         }
+        const updateSpTray = await masters.updateOne(
+          {
+            code: trayItemData.spTray,
+          },
+          {
+            $push: {
+              actual_items: {
+                $each: trayItemData.rdl_repair_report.rdl_two_part_status,
+              },
+            },
+          }
+        );
         checkAlreadyAdded.items[0].rdl_repair_report =
           trayItemData.rdl_repair_report;
         let data = await masters.updateOne(
@@ -251,43 +238,26 @@ module.exports = {
       }
     });
   },
-  traySummery: (trayId, user_name) => {
+  traySummary: (trayId, user_name) => {
     return new Promise(async (resolve, reject) => {
       const getTheTray = await masters.findOne({ code: trayId });
       if (getTheTray.sort_id == "Rdl-two inprogress") {
-    
         if (getTheTray.issued_user_name == user_name) {
-         
           if (getTheTray.items.length == 0) {
-           
             let obj = {
               morePartRequred: [],
-              partNotAvailable: [],
-              usedParts: [],
-              partFaulty: [],
-              notReapairable: [],
-              spTray:{}
             };
-            obj.spTray=await masters.findOne({sort_id:"Rdl-two inprogress",type_taxanomy:"SPT",issued_user_name:user_name})
-            console.log(obj.spTray);
+            obj.spTray = await masters.findOne({
+              sort_id: "Rdl-two inprogress",
+              type_taxanomy: "SPT",
+              issued_user_name: user_name,
+            });
             for (let x of getTheTray.actual_items) {
               if (x.rdl_repair_report.more_part_required.length !== 0) {
                 obj.morePartRequred.push(x);
               }
-              if (x.rdl_repair_report.part_not_available.length !== 0) {
-                obj.partNotAvailable.push(x);
-              }
-              if (x.rdl_repair_report.used_parts.length !== 0) {
-                obj.usedParts.push(x);
-              }
-              if (x.rdl_repair_report.part_faulty.length !== 0) {
-                obj.partFaulty.push(x);
-              }
-              if (x.rdl_repair_report.part_not_available.length !== 0) {
-                obj.notReapairable.push(x);
-              }
             }
-            resolve({ status: 1, tray: getTheTray, summery: obj });
+            resolve({ status: 1, tray: getTheTray, summary: obj });
           } else {
             resolve({ status: 2 });
           }
@@ -296,6 +266,59 @@ module.exports = {
         }
       } else {
         resolve({ status: 3 });
+      }
+    });
+  },
+  closeSpAndRp: (trayData) => {
+    return new Promise(async (resolve, reject) => {
+      const getRpTray = await masters.findOne({ code: trayData.rpTrayId });
+      if (getRpTray.sort_id == "Rdl-two inprogress") {
+        let updateSpTray = await masters.updateOne(
+          { code: trayData.sptrayId },
+          {
+            $set: {
+              sort_id: "Closed by RDL-two",
+              "track_tray.rdl_two_done_closed_by_agent":Date.now
+            },
+          }
+        );
+        if (updateSpTray.modifiedCount != 0) {
+          let updateRpTray = await masters.findOneAndUpdate(
+            { code: trayData.rpTrayId },
+            {
+              $set: {
+                items: getRpTray.actual_items,
+                actual_items: [],
+                temp_array: [],
+                sort_id: "Closed by RDL-two",
+                "track_tray.rdl_two_done_closed_by_agent":Date.now
+              },
+            }
+          );
+          if (updateRpTray) {
+            for (let x of getRpTray.actual_items) {
+              let updateDelivery = await delivery.findOneAndUpdate(
+                { "uic_code.code": x.uic },
+                {
+                  $set: {
+                    rdl_two_closed_date: Date.now(),
+                    rdl_two_report: x.rdl_repair_report,
+                    tray_status: "Closed by RDL-two",
+                    tray_type: "RPT",
+                    updated_at: Date.now(),
+                  },
+                }
+              );
+            }
+            resolve({ status: 1 });
+          } else {
+            resolve({ status: 5 });
+          }
+        } else {
+          resolve({ status: 5 });
+        }
+      } else {
+        resolve({ status: 0 });
       }
     });
   },

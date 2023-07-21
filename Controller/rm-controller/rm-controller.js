@@ -2,19 +2,19 @@ const { masters } = require("../../Model/mastersModel");
 /****************************************************************** */
 
 module.exports = {
-  dashboardData: (location,username) => {
+  dashboardData: (location, username) => {
     return new Promise(async (resolve, reject) => {
       let count = {
         rdl_two: 0,
         rdl2Request: 0,
-        partIssue:0,
-        issueToRdl2:0
+        partIssue: 0,
+        issueToRdl2: 0,
       };
       count.partIssue = await masters.count({
         prefix: "tray-master",
         type_taxanomy: "SPT",
         issued_user_name: username,
-        sort_id: "Sent to sp warehouse",
+        sort_id: "Assigned to sp warehouse",
         cpc: location,
       });
       count.issueToRdl2 = await masters.count({
@@ -46,25 +46,28 @@ module.exports = {
     return new Promise(async (resolve, reject) => {
       const getTray = await masters.find({
         prefix: "tray-master",
-        sort_id: "Sent to sp warehouse",
+        sort_id: "Assigned to sp warehouse",
         type_taxanomy: "SPT",
         issued_user_name: username,
       });
       resolve(getTray);
     });
   },
-  spTrayPartIssuePage: (trayid, userName) => {
+  spTrayPartIssuePage: (trayid, userName,status) => {
     return new Promise(async (resolve, reject) => {
       const getTheTray = await masters.findOne({ code: trayid });
-      console.log(getTheTray);
       if (getTheTray) {
-        if (getTheTray.sort_id == "Sent to sp warehouse") {
+        if (getTheTray.sort_id == "Assigned to sp warehouse") {
           if (getTheTray.issued_user_name == userName) {
             resolve({ status: 2, tray: getTheTray });
           } else {
             resolve({ status: 2 });
           }
-        } else {
+        }
+        else if (getTheTray.sort_id == status){
+          resolve({ status: 2, tray: getTheTray });
+        }
+         else {
           resolve({ status: 1 });
         }
       } else {
@@ -78,7 +81,7 @@ module.exports = {
         { code: trayId, "items.partId": partId },
         {
           $push: {
-            actual_items: partId,
+            temp_array: partId,
           },
           $set: {
             "items.$.status": "Added",
@@ -99,7 +102,7 @@ module.exports = {
         {
           $set: {
             sort_id: "Ready to RDL-Repair",
-            actual_items: [],
+            temp_array: [],
           },
         }
       );
@@ -119,6 +122,16 @@ module.exports = {
         issued_user_name: username,
       });
       resolve(getTray);
+    });
+  },
+  getSpTrayAfterRdlTwo: (location) => {
+    return new Promise(async (resolve, reject) => {
+      const data = await masters.find({
+        sort_id: "Closed by RDL-two",
+        type_taxanomy: "SPT",
+        cpc: location,
+      });
+      resolve(data);
     });
   },
 };

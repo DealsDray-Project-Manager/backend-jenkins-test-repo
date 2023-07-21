@@ -1730,16 +1730,19 @@ router.post("/whToRpAssignForRepair", async (req, res, next) => {
 //ASSIGN FOR REPAIR AND CHECK THE STOCK AVAILABILTY
 router.post("/assignForRepiar/stockCheck", async (req, res, next) => {
   try {
-    const { partList, uic, isCheck, checked } = req.body;
+    const { partList, uic, isCheck, checked,selectedQtySp } = req.body;
     let data = await misUserController.assignForRepairStockCheck(
       partList,
       uic,
       isCheck,
-      checked
+      checked,
+      selectedQtySp
     );
+    console.log(data.countofStock);
     if (data.status == 1) {
       res.status(200).json({
         data: data.isCheck,
+        countofStock:data.countofStock
       });
     } else if (data.status == 0) {
       res.status(202).json({
@@ -1792,13 +1795,14 @@ router.post("/assignToChargingScreen", async (req, res, next) => {
 // ASSIGN TO SORTING WHT TO RP
 router.post("/assignForRepiar/getTheRequrements", async (req, res, next) => {
   try {
-    const { location, uicLength, brand, model, isCheck } = req.body;
+    const { location, uicLength, brand, model, isCheck,selectedQtySp } = req.body;
     let data = await misUserController.assignForRepairSortingGetTheRequrements(
       location,
       uicLength,
       brand,
       model,
-      isCheck
+      isCheck,
+      selectedQtySp
     );
     if (data) {
       res.status(200).json({

@@ -3177,6 +3177,23 @@ router.post("/extra/addBotTray", async (req, res, next) => {
     next(error);
   }
 });
+// ITEMS TRANSFER ONE TRAY TO ANOTHER
+router.post("/extra/botTrayTransfer", async (req, res, next) => {
+  try {
+    let data = await superAdminController.botTrayTransfer();
+    if (data.status == true) {
+      res.status(200).json({
+        message: "done",
+      });
+    } else {
+      res.status(202).json({
+        message: "Failed",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
 //05062023 SUMIT SIR REQUEST
 router.post("/extra/rollBackTray", async (req, res, next) => {
   try {
