@@ -8,10 +8,6 @@ const mastersSchema = mongoose.Schema({
     type: String,
     index: true,
   },
-  rack_id:{
-    type:String,
-    default:""
-  },
   type_taxanomy: {
     type: String,
   },
@@ -119,6 +115,12 @@ const mastersSchema = mongoose.Schema({
   pickup_type: {
     type: String,
   },
+  pickup_next_stage: {
+    type: String,
+  },
+  recommend_location: {
+    type: String,
+  },
   tray_grade: {
     type: String,
   },
@@ -158,7 +160,9 @@ const mastersSchema = mongoose.Schema({
     wht_to_rp_sorting_issued: Date,
     issued_to_rdl_two:Date
   },
- 
+  rack_id:{
+    type:String
+  }
 });
 const masters = mongoose.model("masters", mastersSchema);
 module.exports = {

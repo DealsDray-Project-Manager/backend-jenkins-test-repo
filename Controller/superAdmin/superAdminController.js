@@ -2619,8 +2619,111 @@ module.exports = {
     });
   },
 
+  createPayment: (paymentsData) => {
+    return new Promise(async (resolve, reject) => {
+      let checkDup = await payment.findOne({
+            name: dataOfStorage.name
+      });
+      if (checkDup) {
+        resolve({ status: 2 });
+      } else {
+        paymentsData.created_at = Date.now();
+        const data = await payment.create(paymentsData);
+        if (data) {
+          resolve({ status: 1 });
+        } else {
+          resolve({ status: 3 });
+        }
+      }
+    });
+  },
 
+  editPayment: (paymentsData) => {
+    return new Promise(async (resolve, reject) => {
+      const updatepayment = await payment.findOneAndUpdate(
+        {
+          name: paymentsData.name,
+        },
+        {
+          $set: {
+            name: paymentsData.name,
+            display: paymentsData.display,
+          },
+        }
+      );
+      if (updatepayment) {
+        resolve({ status: 1 });
+      } else {
+        resolve({ status: 2 });
+      }
+    });
+  },
 
+  geteditPayment: (name) => {
+    console.log(name);
+    return new Promise(async (resolve, reject) => {
+      let data = await payment.findOne({ name: name });
+      if (data) {
+        resolve({status:true});
+      } else {
+        resolve({status:false});
+      }
+    });
+  },
+
+  deletePayment: (name) => {
+    console.log(name);
+    return new Promise(async (resolve, reject) => {
+        let data = await payment.deleteOne({ name: name });
+        if (data) {
+          resolve({status:true});
+        } else {
+          resolve({status:false});
+        }
+      
+    });
+  },
+
+  // viewOnePayment: (id, type) => {
+  //   return new Promise(async (resolve, reject) => {
+  //     let findData = await partAndColor.findOne({ name: id });
+  //     if (findData) {
+  //       if (type == "part-list") {
+  //         let checkUsed = await delivery.findOne({
+  //           $or: [
+  //             { "rdl_fls_one_report.part_list_1": findData.name },
+  //             { "rdl_fls_one_report.part_list_2": findData.name },
+  //             { "rdl_fls_one_report.part_list_3": findData.name },
+  //             { "rdl_fls_one_report.part_list_4": findData.name },
+  //             { "rdl_fls_one_report.part_list_5": findData.name },
+  //           ],
+  //         });
+  //         if (checkUsed) {
+  //           resolve({ status: 3 });
+  //         } else {
+  //           resolve({ status: 1, masterData: findData });
+  //         }
+  //       } else {
+  //         let checkUsed = await delivery.findOne({
+  //           "rdl_fls_one_report.color": findData.name,
+  //         });
+  //         if (checkUsed) {
+  //           resolve({ status: 3 });
+  //         } else {
+  //           let checkInPart = await partAndColor.findOne({
+  //             type: "part-list",
+  //             color: findData.name,
+  //           });
+  //           if (checkInPart) {
+  //             resolve({ status: 3 });
+  //           } else {
+  //             resolve({ status: 1, masterData: findData });
+  //           }
+  //         }
+  //       }
+  //     }
+  //   });
+  // },
 
 
 

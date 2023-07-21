@@ -2189,7 +2189,7 @@ router.get("/geteditBoxes/:code", async (req, res) => {
 
 /*-------------------------------------------Payments--------------------------------------------*/
 
-// GET ALL THE boxes
+// GET ALL THE payments
 router.post("/payments/view", async (req, res, next) => {
   try {
     console.log("working");
@@ -2204,7 +2204,121 @@ router.post("/payments/view", async (req, res, next) => {
   }
 });
 
+//create
+router.post("/payments/create", async (req, res, next) => {
+  try {
+    // const { type } = req.body;
+    const paymentsData = await superAdminController.createPayment(req.body);
+    if (paymentsData.status == 1) {
+        fs.readFile(
+          "myjsonfile.json",
+          "utf8",
+          function readFileCallback(err, datafile) {
+            if (err) {
+            } else {
+              obj = JSON.parse(datafile);
+              // let num = parseInt(obj.PARTID.substring(3)) + 1;
+              // let updatedStr =
+              //   obj.PARTID.substring(0, 3) + num.toString().padStart(6, "0");
+              // obj.PARTID = updatedStr;
+              json = JSON.stringify(obj);
+              fs.writeFile(
+                "myjsonfile.json",
+                json,
+                "utf8",
+                function readFileCallback(err, data) {
+                  if (err) {
+                  }
+                }
+              );
+            }
+          }
+        );
+      res.status(200).json({
+        message: "Successfully Added",
+      });
+    } else if (data.status == 2) {
+      res.status(202).json({
+        message: "Already Created",
+      });
+    } else {
+      res.status(202).json({
+        message: "Failed Please Tray again...",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
 
+// EDIT Box
+router.post("/payments/edit", async (req, res, next) => {
+  try {
+    const paymentsData = await superAdminController.editPayment(req.body);
+    if (paymentsData.status == 1) {
+      res.status(200).json({
+        message: "Successfully Updated",
+      });
+    } else {
+      res.status(202).json({
+        message: "Updation Failed...",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.get("/geteditPayment/:name", async (req, res) => {
+  try {
+    let user = await superAdminController.geteditPayment(req.params.name);
+    if (user) {
+      res.status(200).json({ data: user });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.post("/deletePayments/", async (req, res, next) => {
+  try {
+    let data = await superAdminController.deletePayment(req.params.name);
+    if (data.status == true) {
+      res.status(200).json({
+        message: "Successfully Deleted",
+      });
+    } else {
+      res.status(202).json({
+        message: "Failed",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
+// get one data only for edit or delete
+// router.post("/payment/one/:payment", async (req, res, next) => {
+//   try {
+//     const { payment } = req.params;
+//     const data = await superAdminController.viewOnePayment(payment);
+//     if (data.status == 1) {
+//       res.status(200).json({
+//         data: data.masterData,
+//       });
+//     } else if (data.status == 3) {
+//       res.status(202).json({
+//         message: "This Payment is Already used for process",
+//       });
+//     } else {
+//       res.status(202).json({
+//         message: "No Data found",
+//       });
+//     }
+//   } catch (error) {
+//     next(error);
+//   }
+// });
 
 
 
