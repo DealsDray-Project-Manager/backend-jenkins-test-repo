@@ -2227,22 +2227,323 @@ router.get("/geteditBoxes/:code", async (req, res) => {
   }
 });
 
+
+
+
+
+
+
+
 /*-------------------------------------------Payments--------------------------------------------*/
 
 // GET ALL THE boxes
 router.post("/payments/view", async (req, res, next) => {
   try {
     console.log("working");
-    const paymentsData = await superAdminController.getAllPayments();
-    if (paymentsData) {
+    const warrantyData = await superAdminController.getAllWarranty();
+    if (warrantyData) {
       res.status(200).json({
-        data: paymentsData,
+        data: warrantyData,
       });
     }
   } catch (error) {
     next(error);
   }
 });
+
+//create
+router.post("/payments/create", async (req, res, next) => {
+  try {
+    const { type } = req.body;
+    const data = await superAdminController.createPayment(req.body);
+    if (data.status == 1) {
+      if (type == "payment-list") {
+        fs.readFile(
+          "myjsonfile.json",
+          "utf8",
+          function readFileCallback(err, datafile) {
+            if (err) {
+            } else {
+              obj = JSON.parse(datafile);
+              // let num = parseInt(obj.PARTID.substring(3)) + 1;
+              // let updatedStr =
+              //   obj.PARTID.substring(0, 3) + num.toString().padStart(6, "0");
+              // obj.PARTID = updatedStr;
+              json = JSON.stringify(obj);
+              fs.writeFile(
+                "myjsonfile.json",
+                json,
+                "utf8",
+                function readFileCallback(err, data) {
+                  if (err) {
+                  }
+                }
+              );
+            }
+          }
+        );
+      }
+      res.status(200).json({
+        message: "Successfully Added",
+      });
+    } else if (data.status == 2) {
+      res.status(202).json({
+        message: "Already Created",
+      });
+    } else {
+      res.status(202).json({
+        message: "Failed Please Tray again...",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
+//VIEW
+router.post("/payments/view/:type", async (req, res, next) => {
+  try {
+    const { type } = req.params;
+    const data = await superAdminController.viewPayment(type);
+    if (data) {
+      res.status(200).json({
+        data: data,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
+// EDIT Payment
+router.post("/payments/edit", async (req, res, next) => {
+  try {
+    const paymentsData = await superAdminController.editPayment(req.body);
+    if (paymentsData.status == 1) {
+      res.status(200).json({
+        message: "Successfully Updated",
+      });
+    } else {
+      res.status(202).json({
+        message: "Updation Failed...",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.get("/geteditPayment/:name", async (req, res) => {
+  try {
+    let user = await superAdminController.geteditPayment(req.params.name);
+    if (user) {
+      res.status(200).json({ data: user });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.post("/deletePayments/:name", async (req, res, next) => {
+  try {
+    // const { id, type, page } = req.body;
+    const data = await superAdminController.deletePayment(req.params.name);
+    if (data.status == true) {
+      res.status(200).json({
+        message: "Successfully Deleted",
+      });
+    } else {
+      res.status(202).json({
+        message: "Failed",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
+// get one data only for payment
+router.post("/payments/one/:id/:type", async (req, res, next) => {
+  try {
+    const { id, type } = req.params;
+    const data = await superAdminController.viewOnePayment(id, type);
+    if (data.status == 1) {
+      res.status(200).json({
+        data: data.data,
+      });
+    } else {
+      res.status(202).json({
+        message: "No Data found",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
+
+
+
+
+
+/*-------------------------------------------Warranty--------------------------------------------*/
+
+// GET ALL THE Warranties
+router.post("/warranty/view/", async (req, res, next) => {
+  try {
+    console.log("working");
+    const warrantyData = await superAdminController.getAllWarranty();
+    if (warrantyData) {
+      res.status(200).json({
+        data: warrantyData,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
+//create
+router.post("/warranty/create", async (req, res, next) => {
+  try {
+    const { type } = req.body;
+    const data = await superAdminController.createWarranty(req.body);
+    if (data.status == 1) {
+      if (type == "warranty-list") {
+        fs.readFile(
+          "myjsonfile.json",
+          "utf8",
+          function readFileCallback(err, datafile) {
+            if (err) {
+            } else {
+              obj = JSON.parse(datafile);
+              // let num = parseInt(obj.PARTID.substring(3)) + 1;
+              // let updatedStr =
+              //   obj.PARTID.substring(0, 3) + num.toString().padStart(6, "0");
+              // obj.PARTID = updatedStr;
+              json = JSON.stringify(obj);
+              fs.writeFile(
+                "myjsonfile.json",
+                json,
+                "utf8",
+                function readFileCallback(err, data) {
+                  if (err) {
+                  }
+                }
+              );
+            }
+          }
+        );
+      }
+      res.status(200).json({
+        message: "Successfully Added",
+      });
+    } else if (data.status == 2) {
+      res.status(202).json({
+        message: "Already Created",
+      });
+    } else {
+      res.status(202).json({
+        message: "Failed Please Tray again...",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
+//VIEW
+router.post("/warranty/view/:type", async (req, res, next) => {
+  try {
+    const { type } = req.params;
+    const data = await superAdminController.viewWarranty(type);
+    if (data) {
+      res.status(200).json({
+        data: data,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
+// EDIT Warranty
+router.post("/warranty/edit", async (req, res, next) => {
+  try {
+    const warrantyData = await superAdminController.editWarranty(req.body);
+    if (warrantyData.status == 1) {
+      res.status(200).json({
+        message: "Successfully Updated",
+      });
+    } else {
+      res.status(202).json({
+        message: "Updation Failed...",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.get("/geteditWarranty/:name", async (req, res) => {
+  try {
+    let user = await superAdminController.geteditWarranty(req.params.name);
+    if (user) {
+      res.status(200).json({ data: user });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.post("/deleteWarranty/:name", async (req, res, next) => {
+  try {
+    // const { id, type, page } = req.body;
+    const data = await superAdminController.deleteWarranty(req.params.name);
+    if (data.status == true) {
+      res.status(200).json({
+        message: "Successfully Deleted",
+      });
+    } else {
+      res.status(202).json({
+        message: "Failed",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
+// get one data only for Warranty
+router.post("/warranty/one/:id/:type", async (req, res, next) => {
+  try {
+    const { id, type } = req.params;
+    const data = await superAdminController.viewOneWarranty(id, type);
+    if (data.status == 1) {
+      res.status(200).json({
+        data: data.data,
+      });
+    } else {
+      res.status(202).json({
+        message: "No Data found",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
+
+
+
+
+
+
+
+
+
+
+
 
 /*-------------------------------------------MASTER FOR PART AND COLOR--------------------------------------------*/
 //create

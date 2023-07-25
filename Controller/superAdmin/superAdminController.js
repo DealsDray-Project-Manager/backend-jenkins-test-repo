@@ -123,6 +123,8 @@ module.exports = {
       count.partList = await partAndColor.count({ type: "part-list" });
       count.colorList = await partAndColor.count({ type: "color-list" });
       count.storageList = await storagemodel.count({ type: "storage-list" });
+      count.warrantyList = await warranty.count({ type: "warranty-list" });
+      count.paymentList = await payment.count({ type: "payment-list" });
       count.ramList = await rammodel.count({ type: "ram-list" });
       count.readyForTransferSales = await masters.count({
         prefix: "tray-master",
@@ -2768,6 +2770,215 @@ module.exports = {
       resolve(data);
     });
   },
+
+  createPayment: (paymentsData) => {
+    return new Promise(async (resolve, reject) => {
+      let checkDup = await payment.findOne({
+            name: paymentsData.name,
+            type: "payment-list",
+      });
+      if (checkDup) {
+        resolve({ status: 2 });
+      } else {
+        paymentsData.created_at = Date.now();
+        const data = await payment.create(paymentsData);
+        if (data) {
+          resolve({ status: 1 });
+        } else {
+          resolve({ status: 3 });
+        }
+      }
+    });
+  },
+
+  editPayment: (paymentsData) => {
+    return new Promise(async (resolve, reject) => {
+      const updatepayment = await payment.findOneAndUpdate(
+        // {
+        //   name: paymentsData.name,
+        // },
+        {
+          $set: {
+            name: paymentsData.name,
+            description: paymentsData.description,
+          },
+        }
+      );
+      if (updatepayment) {
+        resolve({ status: 1 });
+      } else {
+        resolve({ status: 0 });
+      }
+    });
+  },
+
+  geteditPayment: (name) => {
+    console.log(name);
+    return new Promise(async (resolve, reject) => {
+      let data = await payment.findOne({ name: name });
+      if (data) {
+        resolve({status:true});
+      } else {
+        resolve({status:false});
+      }
+    });
+  },
+
+  deletePayment: (name) => {
+    console.log(name);
+    return new Promise(async (resolve, reject) => {
+        let data = await payment.deleteOne({ name: name });
+        if (data) {
+          resolve({status:true});
+        } else {
+          resolve({status:false});
+        }
+      
+    });
+  },
+  
+
+  viewPayment: (type) => {
+    return new Promise(async (resolve, reject) => {
+      if (type == "payment-list") {
+        const data = await payment
+          .find({ type: type })
+          .sort({ part_code: 1 });
+        resolve(data);
+      } else {
+        const data = await payment
+          .find({ type: type })
+          .sort({ name: 1 })
+          .collation({ locale: "en_US", numericOrdering: true });
+        resolve(data);
+      }
+    });
+  },
+  viewOnePayment: (id, type) => {
+    return new Promise(async (resolve, reject) => {
+      const getonepayment = await payment.findOne({ name:id });
+      // if (type == "payment-list") { 
+      if (getonepayment) {
+        resolve({ status: 1, data: getonepayment });
+      } else {
+        resolve({ status: 2 });
+      }
+    // }
+    });
+  },
+
+
+
+
+  getAllWarranty: () => {
+    return new Promise(async (resolve, reject) => {
+      const data = await warranty.find();
+      resolve(data);
+    });
+  },
+
+  createWarranty: (warrantyData) => {
+    return new Promise(async (resolve, reject) => {
+      let checkDup = await warranty.findOne({
+            name: warrantyData.name,
+            type: "warranty-list",
+      });
+      if (checkDup) {
+        resolve({ status: 2 });
+      } else {
+        warrantyData.created_at = Date.now();
+        const data = await warranty.create(warrantyData);
+        if (data) {
+          resolve({ status: 1 });
+        } else {
+          resolve({ status: 3 });
+        }
+      }
+    });
+  },
+
+  editWarranty: (warrantyData) => {
+    return new Promise(async (resolve, reject) => {
+      const updatewarranty = await warranty.findOneAndUpdate(
+        // {
+        //   name: paymentsData.name,
+        // },
+        {
+          $set: {
+            name: warrantyData.name,
+            description: warrantyData.description,
+          },
+        }
+      );
+      if (updatewarranty) {
+        resolve({ status: 1 });
+      } else {
+        resolve({ status: 0 });
+      }
+    });
+  },
+
+  geteditWarranty: (name) => {
+    console.log(name);
+    return new Promise(async (resolve, reject) => {
+      let data = await warranty.findOne({ name: name });
+      if (data) {
+        resolve({status:true});
+      } else {
+        resolve({status:false});
+      }
+    });
+  },
+
+  deleteWarranty: (name) => {
+    console.log(name);
+    return new Promise(async (resolve, reject) => {
+        let data = await warranty.deleteOne({ name: name });
+        if (data) {
+          resolve({status:true});
+        } else {
+          resolve({status:false});
+        }
+      
+    });
+  },
+  
+
+  viewWarranty: (type) => {
+    return new Promise(async (resolve, reject) => {
+      if (type == "warranty-list") {
+        const data = await warranty
+          .find({ type: type })
+          .sort({ part_code: 1 });
+        resolve(data);
+      } else {
+        const data = await warranty
+          .find({ type: type })
+          .sort({ name: 1 })
+          .collation({ locale: "en_US", numericOrdering: true });
+        resolve(data);
+      }
+    });
+  },
+  viewOneWarranty: (id, type) => {
+    return new Promise(async (resolve, reject) => {
+      const getonewarranty = await warranty.findOne({ name:id });
+      // if (type == "payment-list") { 
+      if (getonewarranty) {
+        resolve({ status: 1, data: getonewarranty });
+      } else {
+        resolve({ status: 2 });
+      }
+    // }
+    });
+  },
+
+
+
+
+
+
+
 
   createPartOrColor: (dataOfPartOrColor) => {
     return new Promise(async (resolve, reject) => {

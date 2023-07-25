@@ -167,7 +167,9 @@ const mastersSchema = mongoose.Schema({
   rack_id: {
     type: String,
   },
- 
+  rack_id:{
+    type:String
+  }
 });
 const masters = mongoose.model("masters", mastersSchema);
 module.exports = {
