@@ -14,6 +14,12 @@ const trayRackSchema = mongoose.Schema({
   parent_id: {
     type: String,
   },
+  limit:{
+    type:Number
+  },
+  bag_or_tray:{
+    type:Array
+  },
   warehouse: {
     type: String,
   }

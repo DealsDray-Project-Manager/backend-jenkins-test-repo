@@ -798,6 +798,24 @@ router.post("/wht-tray/:status/:location", async (req, res, next) => {
   }
 });
 
+/*---------------------------FOR PLANNER -------------------------------*/
+router.post("/plannerPage/:status/:location", async (req, res, next) => {
+  try {
+    const { status, location } = req.params;
+    let data = await warehouseInController.plannerPageDataFetch(
+      status,
+      location
+    );
+    if (data) {
+      res.status(200).json({
+        data: data,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
 /*--------------------------FIND WHT TRAY ITEM--------------------------*/
 router.post(
   "/getWhtTrayItem/:trayId/:sortId/:location",
@@ -2618,7 +2636,6 @@ router.post("/returnFromWhtToRpSorting/:location", async (req, res, next) => {
     let data = await warehouseInController.getReturnFromSortingWhtToRp(
       req.params.location
     );
-
     if (data) {
       res.status(200).json({
         data: data,

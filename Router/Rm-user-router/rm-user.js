@@ -38,9 +38,13 @@ router.post("/spTray/:user_name", async (req, res, next) => {
 router.post("/spTrayPartIssue", async (req, res, next) => {
   try {
     console.log(req.body);
-    const { trayId, username,status } = req.body;
-    let data = await rmuserController.spTrayPartIssuePage(trayId, username,status);
-    console.log(data);
+    const { trayId, username, status } = req.body;
+    let data = await rmuserController.spTrayPartIssuePage(
+      trayId,
+      username,
+      status
+    );
+
     if (data.status == 2) {
       res.status(200).json({
         data: data.tray,
@@ -117,6 +121,48 @@ router.post("/spTrayReturnFromRdlTwo/:location", async (req, res, next) => {
     if (data) {
       res.status(200).json({
         data: data,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+/*------------------------------------------------------SP TRAY ---------------------------------------------*/
+router.post("/addIntoBox", async (req, res, next) => {
+  try {
+    console.log(req.body);
+    const { partDetails, spTrayId, boxName } = req.body;
+    let data = await rmuserController.partAddIntoBox(
+      partDetails,
+      spTrayId,
+      boxName,
+    
+    );
+    if (data.status == 1) {
+      res.status(200).json({
+        message: "Successfully added",
+      });
+    } else {
+      res.status(202).json({
+        message: "Failed please try again",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+/*----------------------------------CLOSED SP TRAY-----------------------------------------------------*/
+router.post("/rdlTwoDoneCloseSP", async (req, res, next) => {
+  try {
+    const { spTrayId } = req.body;
+    let data = await rmuserController.rdlTwoDoneCloseSpTray(spTrayId);
+    if (data.status == 1) {
+      res.status(200).json({
+        message: "Successfully Closed",
+      });
+    } else {
+      res.status(202).json({
+        message: "Failed please try again",
       });
     }
   } catch (error) {

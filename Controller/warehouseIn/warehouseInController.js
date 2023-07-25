@@ -7,6 +7,7 @@ var mongoose = require("mongoose");
 const { products } = require("../../Model/productModel/product");
 const moment = require("moment");
 const elasticsearch = require("../../Elastic-search/elastic");
+const { trayRack } = require("../../Model/tray-rack/tray-rack");
 
 /********************************************************************/
 /* 
@@ -52,7 +53,57 @@ module.exports = {
         allStxtray: 0,
         ctxToStxSortRequest: 0,
         sortingDoneCtxToStx: 0,
+        whtToRpSortingRequest: 0,
+        returnFromWhtToRpSorting: 0,
+        rdlTwoRequests: 0,
+        returnFromRdlTwo: 0,
+        allRpTray: 0,
       };
+      count.allRpTray = await masters.count({
+        prefix: "tray-master",
+        cpc: location,
+        type_taxanomy: "RPT",
+      });
+      count.returnFromRdlTwo = await masters.count({
+        $or: [
+          {
+            type_taxanomy: "RPT",
+            location: location,
+            sort_id: "Closed by RDL-two",
+          },
+          {
+            type_taxanomy: "RPT",
+            location: location,
+            sort_id: "Received from RDL-two",
+          },
+        ],
+      });
+      count.rdlTwoRequests = await masters.count({
+        prefix: "tray-master",
+        type_taxanomy: "RPT",
+        sort_id: "Send for RDL-two",
+        cpc: location,
+      });
+      count.returnFromWhtToRpSorting = await masters.count({
+        $or: [
+          {
+            prefix: "tray-master",
+            sort_id: "Sorting done (Wht to rp)",
+            cpc: location,
+          },
+          {
+            prefix: "tray-master",
+            sort_id: "Received from sorting (Wht to rp)",
+            cpc: location,
+          },
+        ],
+      });
+      count.whtToRpSortingRequest = await masters.count({
+        prefix: "tray-master",
+        type_taxanomy: "RPT",
+        cpc: location,
+        sort_id: "Assigned to sorting (Wht to rp)",
+      });
       count.bagIssueRequest = await masters.count({
         $or: [
           {
@@ -1573,6 +1624,14 @@ module.exports = {
             },
           }
         );
+        let updateRack = await trayRack.findOneAndUpdate(
+          { rack_id: trayData.rackId },
+          {
+            $push: {
+              bag_or_tray: data.code,
+            },
+          }
+        );
       } else {
         data = await masters.findOneAndUpdate(
           { code: trayData.trayId },
@@ -1582,6 +1641,14 @@ module.exports = {
               track_tray: {},
               closed_time_wharehouse: Date.now(),
               issued_user_name: null,
+            },
+          }
+        );
+        let updateRack = await trayRack.findOneAndUpdate(
+          { rack_id: trayData.rackId },
+          {
+            $push: {
+              bag_or_tray: data.code,
             },
           }
         );
@@ -1633,6 +1700,14 @@ module.exports = {
             },
           }
         );
+        let updateRack = await trayRack.findOneAndUpdate(
+          { rack_id: trayData.rackId },
+          {
+            $push: {
+              bag_or_tray: data.code,
+            },
+          }
+        );
       } else {
         data = await masters.findOneAndUpdate(
           { code: trayData.trayId },
@@ -1642,6 +1717,14 @@ module.exports = {
               track_tray: {},
               closed_time_wharehouse: Date.now(),
               issued_user_name: null,
+            },
+          }
+        );
+        let updateRack = await trayRack.findOneAndUpdate(
+          { rack_id: trayData.rackId },
+          {
+            $push: {
+              bag_or_tray: data.code,
             },
           }
         );
@@ -2111,6 +2194,8 @@ module.exports = {
           },
           {
             temp_array: 0,
+            wht_tray: 0,
+            track_tray: 0,
           }
         );
         resolve(data);
@@ -2327,6 +2412,38 @@ module.exports = {
             },
           ],
         });
+      }
+      resolve(data);
+    });
+  },
+  /*-----------------------PLANNER FOR CHARGING AND BQC-------------------------------*/
+  plannerPageDataFetch: (status, location) => {
+    return new Promise(async (resolve, reject) => {
+      const data = await masters.aggregate([
+        {
+          $match: {
+            sort_id: status,
+            cpc: location,
+            prefix: "tray-master",
+            type_taxanomy: "WHT",
+          },
+        },
+        {
+          $lookup: {
+            from: "products",
+            localField: "items.muic",
+            foreignField: "muic",
+            as: "products",
+          },
+        },
+      ]);
+      if (data.length !== 0) {
+        for (let x of data) {
+          x["jack_type"] = "";
+          if (x?.products?.length !== 0) {
+            x["jack_type"] = x?.products?.[0]?.jack_type;
+          }
+        }
       }
       resolve(data);
     });
@@ -2648,6 +2765,14 @@ module.exports = {
             },
           }
         );
+        let updateRack = await trayRack.findOneAndUpdate(
+          { rack_id: data.rack_id },
+          {
+            $pull: {
+              bag_or_tray: data.code,
+            },
+          }
+        );
       } else if (trayData.sortId == "Send for BQC") {
         data = await masters.findOneAndUpdate(
           { code: trayData.trayId },
@@ -2663,6 +2788,14 @@ module.exports = {
           }
         );
         if (data) {
+          let updateRack = await trayRack.findOneAndUpdate(
+            { rack_id: data.rack_id },
+            {
+              $pull: {
+                bag_or_tray: data.code,
+              },
+            }
+          );
           for (let x of data.items) {
             let deliveryUpdate = await delivery.findOneAndUpdate(
               { tracking_id: x.tracking_id },
@@ -2701,6 +2834,14 @@ module.exports = {
         );
         if (data) {
           for (let x of data.items) {
+            let updateRack = await trayRack.findOneAndUpdate(
+              { rack_id: data.rack_id },
+              {
+                $pull: {
+                  bag_or_tray: data.code,
+                },
+              }
+            );
             let deliveryUpdate = await delivery.findOneAndUpdate(
               { tracking_id: x.tracking_id },
               {
@@ -2739,6 +2880,14 @@ module.exports = {
           }
         );
         if (data) {
+          let updateRack = await trayRack.findOneAndUpdate(
+            { rack_id: data.rack_id },
+            {
+              $pull: {
+                bag_or_tray: data.code,
+              },
+            }
+          );
           for (let x of data.items) {
             let deliveryUpdate = await delivery.findOneAndUpdate(
               { tracking_id: x.tracking_id },
@@ -2783,6 +2932,14 @@ module.exports = {
         );
         if (data) {
           for (let x of data.items) {
+            let updateRack = await trayRack.findOneAndUpdate(
+              { rack_id: data.rack_id },
+              {
+                $pull: {
+                  bag_or_tray: data.code,
+                },
+              }
+            );
             let deliveryUpdate = await delivery.findOneAndUpdate(
               { tracking_id: x.tracking_id },
               {
@@ -2823,6 +2980,14 @@ module.exports = {
           }
         );
         if (data) {
+          let updateRack = await trayRack.findOneAndUpdate(
+            { rack_id: data.rack_id },
+            {
+              $pull: {
+                bag_or_tray: data.code,
+              },
+            }
+          );
           for (let x of data.items) {
             let deliveryUpdate = await delivery.findOneAndUpdate(
               { tracking_id: x.tracking_id },
@@ -3076,6 +3241,7 @@ module.exports = {
             $set: {
               description: trayData.description,
               sort_id: "Ready to Audit",
+              rack_id: trayData.rackId,
               closed_time_wharehouse: Date.now(),
               issued_user_name: null,
               "track_tray.bqc_done_close_by_wh": Date.now(),
@@ -3084,6 +3250,14 @@ module.exports = {
           }
         );
         if (data) {
+          let updateRack = await trayRack.findOneAndUpdate(
+            { rack_id: trayData.rackId },
+            {
+              $push: {
+                bag_or_tray: data.code,
+              },
+            }
+          );
           for (let x of data.items) {
             let deliveryUpdate = await delivery.findOneAndUpdate(
               {
@@ -3118,6 +3292,7 @@ module.exports = {
               $set: {
                 description: trayData.description,
                 sort_id: "Ready to BQC",
+                rack_id: trayData.rackId,
                 closed_time_wharehouse: Date.now(),
                 issued_user_name: null,
                 "track_tray.recharging_done_close_wh": Date.now(),
@@ -3143,6 +3318,14 @@ module.exports = {
         }
         if (data) {
           for (let x of data.items) {
+            let updateRack = await trayRack.findOneAndUpdate(
+              { rack_id: trayData.rackId },
+              {
+                $push: {
+                  bag_or_tray: data.code,
+                },
+              }
+            );
             let deliveryUpdate = await delivery.findOneAndUpdate(
               {
                 tracking_id: x.tracking_id,
@@ -3186,6 +3369,7 @@ module.exports = {
           { code: trayData.trayId },
           {
             $set: {
+              rack_id: trayData.rackId,
               sort_id: "Ready to RDL",
               closed_time_wharehouse: Date.now(),
               actual_items: [],
@@ -3208,6 +3392,7 @@ module.exports = {
                 items: [],
                 temp_array: [],
                 track_tray: {},
+                rack_id: trayData.rackId,
                 issued_user_name: null,
               },
             }
@@ -3224,6 +3409,7 @@ module.exports = {
                 sort_id: "Ready to Transfer to Sales",
                 actual_items: [],
                 issued_user_name: null,
+                rack_id: trayData.rackId,
                 "track_tray.audit_done_close_wh": Date.now(),
                 from_merge: null,
                 to_merge: null,
@@ -3238,6 +3424,7 @@ module.exports = {
               $set: {
                 description: trayData.description,
                 sort_id: trayData.type,
+                rack_id: trayData.rackId,
                 "track_tray.audit_done_close_wh": Date.now(),
                 actual_items: [],
                 issued_user_name: null,
@@ -3247,6 +3434,14 @@ module.exports = {
         }
       }
       if (data) {
+        let updateRack = await trayRack.findOneAndUpdate(
+          { rack_id: trayData.rackId },
+          {
+            $push: {
+              bag_or_tray: data.code,
+            },
+          }
+        );
         for (let x of data.items) {
           let deliveryUpdate = await delivery.findOneAndUpdate(
             {
@@ -3601,6 +3796,14 @@ module.exports = {
           x.type_taxanomy == "BOT"
         ) {
           for (let x of data.items) {
+            let updateRack = await trayRack.findOneAndUpdate(
+              { rack_id: data?.rack_id },
+              {
+                $pull: {
+                  bag_or_tray: data.code,
+                },
+              }
+            );
             let deliveryUpdate = await delivery.findOneAndUpdate(
               { tracking_id: x.awbn_number },
               {
@@ -3645,13 +3848,21 @@ module.exports = {
               sort_id: "Closed",
               closed_time_wharehouse: Date.now(),
               actual_items: [],
-
+              rack_id: trayData.rackId,
               issued_user_name: null,
               sorting_done_close_wh: Date.now(),
             },
           }
         );
         if (data) {
+          let updateRack = await trayRack.findOneAndUpdate(
+            { rack_id: trayData.rackId },
+            {
+              $push: {
+                bag_or_tray: data.code,
+              },
+            }
+          );
           for (let x of data.items) {
             let updateDelivery = await delivery.findOneAndUpdate(
               {
@@ -3683,6 +3894,7 @@ module.exports = {
           {
             $set: {
               sort_id: "Inuse",
+              rack_id: trayData.rackId,
               closed_time_wharehouse: Date.now(),
               actual_items: [],
               issued_user_name: null,
@@ -3690,6 +3902,14 @@ module.exports = {
           }
         );
         if (data) {
+          let updateRack = await trayRack.findOneAndUpdate(
+            { rack_id: trayData.rackId },
+            {
+              $push: {
+                bag_or_tray: data.code,
+              },
+            }
+          );
           for (let x of data.items) {
             let updateDelivery = await delivery.findOneAndUpdate(
               {
@@ -4021,7 +4241,6 @@ module.exports = {
     return new Promise(async (resolve, reject) => {
       let checkFromTray = await masters.findOne({ code: fromTray });
       let updaFromTray, updaToTray;
-
       if (
         checkFromTray.sort_id == "Audit Done Merge Request Sent To Wharehouse"
       ) {
@@ -4035,6 +4254,14 @@ module.exports = {
             },
           }
         );
+        let updateRack = await trayRack.findOneAndUpdate(
+          { rack_id: updaFromTray?.rack_id },
+          {
+            $pull: {
+              bag_or_tray: updaFromTray.code,
+            },
+          }
+        );
         if (updaFromTray) {
           updaToTray = await masters.updateOne(
             { code: toTray },
@@ -4043,6 +4270,14 @@ module.exports = {
                 assigned_date: Date.now(),
                 sort_id: "Audit Done Issued to Merging",
                 "track_tray.issue_to_merging": Date.now(),
+              },
+            }
+          );
+          let updateRack = await trayRack.findOneAndUpdate(
+            { rack_id: updaToTray?.rack_id },
+            {
+              $pull: {
+                bag_or_tray: updaToTray.code,
               },
             }
           );
@@ -4063,6 +4298,14 @@ module.exports = {
           }
         );
         if (updaFromTray) {
+          let updateRack = await trayRack.findOneAndUpdate(
+            { rack_id: updaFromTray?.rack_id },
+            {
+              $pull: {
+                bag_or_tray: updaFromTray.code,
+              },
+            }
+          );
           updaToTray = await masters.findOneAndUpdate(
             { code: toTray },
             {
@@ -4070,6 +4313,14 @@ module.exports = {
                 assigned_date: Date.now(),
                 sort_id: "Ready to BQC Issued to Merging",
                 "track_tray.issue_to_merging": Date.now(),
+              },
+            }
+          );
+          let updaToTrayRack = await trayRack.findOneAndUpdate(
+            { rack_id: updaToTray?.rack_id },
+            {
+              $pull: {
+                bag_or_tray: updaToTray.code,
               },
             }
           );
@@ -4091,6 +4342,14 @@ module.exports = {
           }
         );
         if (updaFromTray) {
+          let updaFromTray = await trayRack.findOneAndUpdate(
+            { rack_id: updaFromTray?.rack_id },
+            {
+              $pull: {
+                bag_or_tray: updaFromTray.code,
+              },
+            }
+          );
           updaToTray = await masters.findOneAndUpdate(
             { code: toTray },
             {
@@ -4098,6 +4357,14 @@ module.exports = {
                 assigned_date: Date.now(),
                 sort_id: "Ready to Audit Issued to Merging",
                 "track_tray.issue_to_merging": Date.now(),
+              },
+            }
+          );
+          let updaToTrayRack = await trayRack.findOneAndUpdate(
+            { rack_id: updaToTray?.rack_id },
+            {
+              $pull: {
+                bag_or_tray: updaToTray.code,
               },
             }
           );
@@ -4119,6 +4386,14 @@ module.exports = {
           }
         );
         if (updaFromTray) {
+          let updaFromTrayRack = await trayRack.findOneAndUpdate(
+            { rack_id: updaFromTray?.rack_id },
+            {
+              $pull: {
+                bag_or_tray: updaFromTray.code,
+              },
+            }
+          );
           updaToTray = await masters.findOneAndUpdate(
             { code: toTray },
             {
@@ -4126,6 +4401,14 @@ module.exports = {
                 assigned_date: Date.now(),
                 sort_id: "Ready to RDL-Repair Issued to Merging",
                 "track_tray.issue_to_merging": Date.now(),
+              },
+            }
+          );
+          let updaToTrayRack = await trayRack.findOneAndUpdate(
+            { rack_id: updaToTray?.rack_id },
+            {
+              $pull: {
+                bag_or_tray: updaToTray.code,
               },
             }
           );
@@ -4144,6 +4427,14 @@ module.exports = {
           }
         );
         if (updaFromTray) {
+          let updaToTrayRack = await trayRack.findOneAndUpdate(
+            { rack_id: updaFromTray?.rack_id },
+            {
+              $pull: {
+                bag_or_tray: updaFromTray.code,
+              },
+            }
+          );
           updaToTray = await masters.findOneAndUpdate(
             { code: toTray },
             {
@@ -4151,6 +4442,14 @@ module.exports = {
                 assigned_date: Date.now(),
                 sort_id: "Issued to Sorting for Ctx to Stx",
                 "track_tray.ctx_issued_sorting": Date.now(),
+              },
+            }
+          );
+          let updaTrayRack = await trayRack.findOneAndUpdate(
+            { rack_id: updaToTray?.rack_id },
+            {
+              $pull: {
+                bag_or_tray: updaToTray.code,
               },
             }
           );
@@ -4169,6 +4468,14 @@ module.exports = {
           }
         );
         if (updaFromTray) {
+          let updaFromTrayRack = await trayRack.findOneAndUpdate(
+            { rack_id: updaFromTray?.rack_id },
+            {
+              $pull: {
+                bag_or_tray: updaFromTray.code,
+              },
+            }
+          );
           updaToTray = await masters.findOneAndUpdate(
             { code: toTray },
             {
@@ -4176,6 +4483,14 @@ module.exports = {
                 assigned_date: Date.now(),
                 sort_id: "Issued to Merging",
                 "track_tray.issue_to_merging": Date.now(),
+              },
+            }
+          );
+          let updaFromToRack = await trayRack.findOneAndUpdate(
+            { rack_id: updaToTray?.rack_id },
+            {
+              $pull: {
+                bag_or_tray: updaToTray.code,
               },
             }
           );
@@ -4313,6 +4628,7 @@ module.exports = {
               { code: toTray },
               {
                 $set: {
+                  rack_id: toTray.rackId,
                   sort_id: "Ready to Pricing",
                   actual_items: [],
                   issued_user_name: null,
@@ -4328,6 +4644,7 @@ module.exports = {
               { code: toTray },
               {
                 $set: {
+                  rack_id: toTray.rackId,
                   sort_id: "Ready to Transfer to Sales",
                   actual_items: [],
                   issued_user_name: null,
@@ -4344,6 +4661,7 @@ module.exports = {
             { code: toTray },
             {
               $set: {
+                rack_id: toTray.rackId,
                 sort_id: "Open",
                 actual_items: [],
                 track_tray: {},
@@ -4366,6 +4684,7 @@ module.exports = {
             { code: toTray },
             {
               $set: {
+                rack_id: toTray.rackId,
                 sort_id: "Inuse",
                 actual_items: [],
                 issued_user_name: null,
@@ -4381,6 +4700,7 @@ module.exports = {
             { code: toTray },
             {
               $set: {
+                rack_id: toTray.rackId,
                 sort_id: "Audit Done Closed By Warehouse",
                 actual_items: [],
                 issued_user_name: null,
@@ -4398,6 +4718,7 @@ module.exports = {
             { code: toTray },
             {
               $set: {
+                rack_id: toTray.rackId,
                 sort_id: "Open",
                 actual_items: [],
                 temp_array: [],
@@ -4420,6 +4741,7 @@ module.exports = {
                 { code: toTray },
                 {
                   $set: {
+                    rack_id: toTray.rackId,
                     sort_id: "Ready to RDL",
                     actual_items: [],
                     issued_user_name: null,
@@ -4435,6 +4757,7 @@ module.exports = {
                 { code: toTray },
                 {
                   $set: {
+                    rack_id: toTray.rackId,
                     sort_id: "Audit Done Closed By Warehouse",
                     actual_items: [],
                     issued_user_name: null,
@@ -4451,6 +4774,7 @@ module.exports = {
               { code: toTray },
               {
                 $set: {
+                  rack_id: toTray.rackId,
                   sort_id: "Ready to RDL-Repair",
                   actual_items: [],
                   issued_user_name: null,
@@ -4466,6 +4790,7 @@ module.exports = {
               { code: toTray },
               {
                 $set: {
+                  rack_id: toTray.rackId,
                   sort_id: "Ready to Audit",
                   actual_items: [],
                   issued_user_name: null,
@@ -4481,6 +4806,7 @@ module.exports = {
               { code: toTray },
               {
                 $set: {
+                  rack_id: toTray.rackId,
                   sort_id: "Ready to BQC",
                   actual_items: [],
                   issued_user_name: null,
@@ -4498,6 +4824,7 @@ module.exports = {
                   { code: toTray },
                   {
                     $set: {
+                      rack_id: toTray.rackId,
                       sort_id: "Closed",
                       actual_items: [],
                       issued_user_name: null,
@@ -4513,6 +4840,7 @@ module.exports = {
                   { code: toTray },
                   {
                     $set: {
+                      rack_id: toTray.rackId,
                       sort_id: "Inuse",
                       actual_items: [],
                       issued_user_name: null,
@@ -4529,6 +4857,7 @@ module.exports = {
                 { code: toTray },
                 {
                   $set: {
+                    rack_id: toTray.rackId,
                     sort_id: "Closed By Warehouse",
                     from_merge: null,
                     to_merge: null,
@@ -4542,6 +4871,14 @@ module.exports = {
       }
       if (data) {
         for (let x of data.items) {
+          let updateRack = await trayRack.findOneAndUpdate(
+            { rack_id: toTray.rackId },
+            {
+              $push: {
+                bag_or_tray: data.code,
+              },
+            }
+          );
           let update = await delivery.findOneAndUpdate(
             {
               $or: [
@@ -4569,6 +4906,7 @@ module.exports = {
             { code: fromTray },
             {
               $set: {
+                rack_id: fromTray.rackId,
                 sort_id: "Open",
                 actual_items: [],
                 temp_array: [],
@@ -5455,6 +5793,7 @@ module.exports = {
           { code: trayData.trayId },
           {
             $set: {
+              rack_id: trayData.rackId,
               sort_id: "Open",
               issued_user_name: null,
               actual_items: [],
@@ -5473,6 +5812,7 @@ module.exports = {
             { code: trayData.trayId },
             {
               $set: {
+                rack_id: trayData.rackId,
                 sort_id: "Ready to BQC",
                 closed_time_wharehouse: Date.now(),
                 issued_user_name: null,
@@ -5489,6 +5829,7 @@ module.exports = {
             { code: trayData.trayId },
             {
               $set: {
+                rack_id: trayData.rackId,
                 sort_id: "Ready to Audit",
                 issued_user_name: null,
                 closed_time_wharehouse: Date.now(),
@@ -5505,6 +5846,7 @@ module.exports = {
             { code: trayData.trayId },
             {
               $set: {
+                rack_id: trayData.rackId,
                 sort_id: "Closed",
                 issued_user_name: null,
                 actual_items: [],
@@ -5520,6 +5862,7 @@ module.exports = {
             { code: trayData.trayId },
             {
               $set: {
+                rack_id: trayData.rackId,
                 sort_id: "Inuse",
                 issued_user_name: null,
                 actual_items: [],
@@ -5535,6 +5878,7 @@ module.exports = {
             { code: trayData.trayId },
             {
               $set: {
+                rack_id: trayData.rackId,
                 sort_id: "Ready to RDL-Repair",
                 issued_user_name: null,
                 actual_items: [],
@@ -5550,6 +5894,7 @@ module.exports = {
             { code: trayData.trayId },
             {
               $set: {
+                rack_id: trayData.rackId,
                 sort_id: "Ready to RDL",
                 closed_time_wharehouse: Date.now(),
                 issued_user_name: null,
@@ -5616,9 +5961,21 @@ module.exports = {
       if (userActive.status == "Active") {
         let data = await masters.findOne({
           $or: [
-            { issued_user_name: username, sort_id: "Issued to RDL-two" },
-            { issued_user_name: username, sort_id: "Closed By RDL-2" },
-            { issued_user_name: username, sort_id: "Rdl-two inprogress" },
+            {
+              issued_user_name: username,
+              sort_id: "Issued to RDL-two",
+              type_taxanomy: "RPT",
+            },
+            {
+              issued_user_name: username,
+              sort_id: "Closed By RDL-2",
+              type_taxanomy: "RPT",
+            },
+            {
+              issued_user_name: username,
+              sort_id: "Rdl-two inprogress",
+              type_taxanomy: "RPT",
+            },
           ],
         });
 
@@ -5853,17 +6210,27 @@ module.exports = {
         { code: trayData.trayId },
         {
           $set: {
+            rack_id: trayData.rackId,
             actual_items: [],
             description: trayData.description,
             temp_array: [],
             sort_id: "Ready to RDL-Repair",
             closed_time_wharehouse: Date.now(),
+            rack_id: trayData.rackId,
             assigned_date: Date.now(),
             "track_tray.rdl_1_done_close_by_wh": Date.now(),
           },
         }
       );
       if (data) {
+        let updateRack = await trayRack.findOneAndUpdate(
+          { rack_id: trayData.rackId },
+          {
+            $push: {
+              bag_or_tray: data.code,
+            },
+          }
+        );
         for (let x of data.items) {
           if (trayData.screen == "return-from-wht-to-rp-sorting") {
             let deliveryUpdate = await delivery.findOneAndUpdate(
@@ -5921,11 +6288,20 @@ module.exports = {
             actual_items: [],
             description: trayData.description,
             temp_array: [],
+            rack_id: trayData.rackId,
             sort_id: "RDL two done closed by warehouse",
           },
         }
       );
       if (data) {
+        let updateRack = await trayRack.findOneAndUpdate(
+          { rack_id: trayData.rackId },
+          {
+            $push: {
+              bag_or_tray: data.code,
+            },
+          }
+        );
         for (let x of data.items) {
           let deliveryUpdate = await delivery.findOneAndUpdate(
             { tracking_id: x.tracking_id },
@@ -5984,12 +6360,21 @@ module.exports = {
               $set: {
                 sort_id: trayData.sortId,
                 recommend_location: null,
+                rack_id: trayData.rackId,
                 actual_items: [],
                 temp_array: [],
               },
             }
           );
           if (data) {
+            let updateRack = await trayRack.findOneAndUpdate(
+              { rack_id: trayData.rackId },
+              {
+                $push: {
+                  bag_or_tray: data.code,
+                },
+              }
+            );
             for (let x of data.items) {
               let updateTrack = await delivery.findOneAndUpdate(
                 { tracking_id: x.tracking_id },
@@ -5997,7 +6382,6 @@ module.exports = {
                   $set: {
                     ctx_tray_receive_and_close_wh: Date.now(),
                     tray_location: "Sales-warehouse",
-
                     updated_at: Date.now(),
                   },
                 },
@@ -6015,13 +6399,14 @@ module.exports = {
             resolve({ status: 0 });
           }
         } else {
-          data = await masters.updateOne(
+          data = await masters.findOneAndUpdate(
             { code: trayData.trayId },
             {
               $set: {
                 sort_id: "Open",
                 recommend_location: null,
                 issued_user_name: null,
+                rack_id: trayData.rackId,
                 actual_items: [],
                 temp_array: [],
                 track_tray: {},
@@ -6030,6 +6415,17 @@ module.exports = {
               },
             }
           );
+          let updateRack = await trayRack.findOneAndUpdate(
+            { rack_id: trayData.rackId },
+            {
+              $push: {
+                bag_or_tray: data.code,
+              },
+            }
+          );
+          if (data) {
+            resolve({ status: 5 });
+          }
         }
         if (data.modifiedCount != 0) {
           resolve({ status: 5 });
@@ -6053,6 +6449,14 @@ module.exports = {
               },
             }
           );
+          let updateRack = await trayRack.findOneAndUpdate(
+            { rack_id: data.rackId },
+            {
+              $pull: {
+                bag_or_tray: data.code,
+              },
+            }
+          );
         } else {
           data = await masters.findOneAndUpdate(
             { code: trayData.trayId },
@@ -6065,6 +6469,14 @@ module.exports = {
                 actual_items: [],
                 "track_tray.ctx_transfer_to_processing": Date.now(),
                 temp_array: [],
+              },
+            }
+          );
+          let updateRack = await trayRack.findOneAndUpdate(
+            { rack_id: data.rackId },
+            {
+              $pull: {
+                bag_or_tray: data.code,
               },
             }
           );
@@ -6204,11 +6616,13 @@ module.exports = {
             { code: trayData.trayId },
             {
               $set: {
+                rack_id: trayData.rackId,
                 issued_user_name: null,
                 actual_items: [],
                 temp_array: [],
                 from_merge: null,
                 to_merge: null,
+                rack_id: trayData.rackId,
                 sort_id: "Ready to Pricing",
                 "track_tray.ctx_sorting_done": Date.now(),
                 description: trayData.description,
@@ -6216,6 +6630,14 @@ module.exports = {
             }
           );
           if (dataUpdate) {
+            let updateRack = await trayRack.findOneAndUpdate(
+              { rack_id: trayData.rackId },
+              {
+                $push: {
+                  bag_or_tray: dataUpdate.code,
+                },
+              }
+            );
             resolve({ status: 1 });
           } else {
             resolve({ status: 0 });
@@ -6225,6 +6647,7 @@ module.exports = {
             { code: trayData.trayId },
             {
               $set: {
+                rack_id: trayData.rackId,
                 issued_user_name: null,
                 actual_items: [],
                 temp_array: [],
@@ -6238,6 +6661,14 @@ module.exports = {
             }
           );
           if (dataUpdate) {
+            let updateRack = await trayRack.findOneAndUpdate(
+              { rack_id: trayData.rackId },
+              {
+                $push: {
+                  bag_or_tray: dataUpdate.code,
+                },
+              }
+            );
             resolve({ status: 3 });
           } else {
             resolve({ status: 0 });
@@ -6247,12 +6678,14 @@ module.exports = {
             { code: trayData.trayId },
             {
               $set: {
+                rack_id: trayData.rackId,
                 issued_user_name: null,
                 actual_items: [],
                 temp_array: [],
                 from_merge: null,
                 to_merge: null,
                 sort_id: "Inuse",
+                rack_id: trayData.rackId,
                 "track_tray.ctx_sorting_done": Date.now(),
                 closed_time_wharehouse: Date.now(),
                 description: trayData.description,
@@ -6261,6 +6694,14 @@ module.exports = {
           );
         }
         if (dataUpdate) {
+          let updateRack = await trayRack.findOneAndUpdate(
+            { rack_id: trayData.rackId },
+            {
+              $push: {
+                bag_or_tray: dataUpdate.code,
+              },
+            }
+          );
           resolve({ status: 3 });
         } else {
           resolve({ status: 0 });
@@ -6271,6 +6712,7 @@ module.exports = {
             { code: trayData.trayId },
             {
               $set: {
+                rack_id: trayData.rackId,
                 issued_user_name: null,
                 actual_items: [],
                 temp_array: [],
@@ -6283,6 +6725,14 @@ module.exports = {
             }
           );
           if (dataUpdate) {
+            let updateRack = await trayRack.findOneAndUpdate(
+              { rack_id: trayData.rackId },
+              {
+                $push: {
+                  bag_or_tray: dataUpdate.code,
+                },
+              }
+            );
             resolve({ status: 2 });
           } else {
             resolve({ status: 0 });
@@ -6292,6 +6742,7 @@ module.exports = {
             { code: trayData.trayId },
             {
               $set: {
+                rack_id: trayData.rackId,
                 issued_user_name: null,
                 actual_items: [],
                 temp_array: [],
@@ -6304,6 +6755,14 @@ module.exports = {
             }
           );
           if (dataUpdate) {
+            let updateRack = await trayRack.findOneAndUpdate(
+              { rack_id: trayData.rackId },
+              {
+                $push: {
+                  bag_or_tray: dataUpdate.code,
+                },
+              }
+            );
             resolve({ status: 3 });
           } else {
             resolve({ status: 0 });
@@ -6458,6 +6917,7 @@ module.exports = {
         sort_id: "Assigned to sorting (Wht to rp)",
       });
       resolve(getTray);
+      console.log(getTray);
     });
   },
   whtToRpWhtTrayScan: (location, whtTray) => {
@@ -6484,7 +6944,7 @@ module.exports = {
               sort_id: "Issued to sorting (Wht to rp)",
               assigned_date: Date.now(),
               "track_tray.wht_to_rp_sorting_issued": Date.now(),
-              "track_tray.wht_to_rp_issued_to_sorting":Date.now(),
+              "track_tray.wht_to_rp_issued_to_sorting": Date.now(),
               actual_items: [],
             },
           }

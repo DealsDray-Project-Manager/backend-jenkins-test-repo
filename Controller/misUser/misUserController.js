@@ -2231,6 +2231,7 @@ module.exports = {
   },
   addUicCode: (uicData) => {
     return new Promise(async (resolve, reject) => {
+      // Step 1: Find the highest UIC code in the database collection "delivery."
       let codeHighst = await delivery.aggregate([
         {
           $group: {
@@ -2242,36 +2243,29 @@ module.exports = {
         },
       ]);
 
+      // Step 2: Determine the count part of the new UIC code.
       let count = "";
       if (codeHighst[0].Max == null) {
-        count = "0000001";
+        count = "00001";
       } else {
-        let number = Number(codeHighst[0].Max.slice(-7)).toString();
+        let number = Number(codeHighst[0].Max.slice(-5)).toString();
         let total = (Number(number) + 1).toString();
-        if (total.length == 1) {
-          count = "000000" + total;
-        } else if (total.length == 2) {
-          count = "00000" + total;
-        } else if (total.length == 3) {
-          count = "0000" + total;
-        } else if (total.length == 4) {
-          count = "000" + total;
-        } else if (total.length == 5) {
-          count = "00" + total;
-        } else if (total.length == 6) {
-          count = "0" + total;
-        }
+        count = total.padStart(5, "0");
       }
 
-      var date = new Date();
+      // Step 3: Get today's date and extract the day of the month as "DD".
+      const today = new Date();
+      const dayOfMonth = today.getDate().toString().padStart(2, "0");
+
+      // Step 4: Generate the UIC code.
       let uic_code =
         "9" +
         new Date().getFullYear().toString().slice(-1) +
-        (date.getMonth() + 1).toLocaleString("en-US", {
-          minimumIntegerDigits: 2,
-          useGrouping: false,
-        }) +
+        (today.getMonth() + 1).toString().padStart(2, "0") +
+        dayOfMonth +
         count;
+
+      // Step 5: Update the database with the new UIC code and other data.
       let data = await delivery.findOneAndUpdate(
         { _id: uicData._id },
         {
@@ -2288,7 +2282,6 @@ module.exports = {
           projection: { _id: 0 },
         }
       );
-
       if (data) {
         // let updateElastic = await elasticsearch.uicCodeGen(data);
         resolve(data);
@@ -4231,6 +4224,8 @@ module.exports = {
     });
   },
   assignForRepairStockCheck: (partId, uic, isCheck, checked, selectedQtySp) => {
+    console.log(isCheck);
+    console.log(partId);
     return new Promise(async (resolve, reject) => {
       let countofStock = selectedQtySp;
       let flag = false;
@@ -4267,8 +4262,8 @@ module.exports = {
           );
           if (foundPart) {
             isCheck = isCheck.map((item) => {
+              if (item?.partId === x?.part_id) {
               if (Number(item?.balance_stock) > 0) {
-                if (item?.partId === x?.part_id) {
                   const updatedItem = {
                     ...item,
                     selected_qty: Number(item?.selected_qty) + 1,
@@ -4278,10 +4273,11 @@ module.exports = {
                   updatedItem.uic.push(uic);
                   return updatedItem;
                 }
-                return item;
-              } else {
-                resolve({ status: 0, partid: x?.part_id });
+                else {
+                  resolve({ status: 0, partid: x?.part_id });
+                }
               }
+              return item;
             });
           } else {
             const checkQty = await partAndColor.findOne({
@@ -4460,7 +4456,7 @@ module.exports = {
               requested_date: Date.now(),
               issued_user_name: sortingUser,
               sort_id: "Assigned to sorting (Wht to rp)",
-              "track_tray.wht_to_rp_assigned_to_sorting":Date.now()  
+              "track_tray.wht_to_rp_assigned_to_sorting": Date.now(),
             },
           }
         );
@@ -4481,7 +4477,7 @@ module.exports = {
               temp_array: selectedUic,
               sp_tray: spTray,
               sort_id: "Assigned to sorting (Wht to rp)",
-              "track_tray.wht_to_rp_assigned_to_sorting":Date.now()
+              "track_tray.wht_to_rp_assigned_to_sorting": Date.now(),
             },
           }
         );
@@ -4501,17 +4497,29 @@ module.exports = {
 
           if (spTrayUpdation) {
             for (let x of spDetails) {
-              let limit=x.selected_qty
-              for (let i = 1; i <= limit ; i++) {
-                x.selected_qty = 1;
-                const spTrayUpdation = await masters.findOneAndUpdate(
-                  { code: spTray },
-                  {
-                    $push: {
-                      actual_items: x,
-                    },
-                  }
-                );
+              let updateParts = await partAndColor.updateOne(
+                { part_code: x.partId },
+                {
+                  $set: {
+                    avl_stock: x.balance_stock,
+                  },
+                }
+              );
+              if (updateParts.modifiedCount !== 0) {
+                let limit = x.selected_qty;
+                for (let i = 1; i <= limit; i++) {
+                  x.selected_qty = 1;
+                  const spTrayUpdation = await masters.findOneAndUpdate(
+                    { code: spTray },
+                    {
+                      $push: {
+                        actual_items: x,
+                      },
+                    }
+                  );
+                }
+              } else {
+                resolve({ status: 0 });
               }
             }
             resolve({ status: 1 });

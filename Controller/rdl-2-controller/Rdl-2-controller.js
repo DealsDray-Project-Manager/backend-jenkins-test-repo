@@ -278,7 +278,7 @@ module.exports = {
           {
             $set: {
               sort_id: "Closed by RDL-two",
-              "track_tray.rdl_two_done_closed_by_agent":Date.now
+              "track_tray.rdl_two_done_closed_by_agent": Date.now(),
             },
           }
         );
@@ -291,7 +291,7 @@ module.exports = {
                 actual_items: [],
                 temp_array: [],
                 sort_id: "Closed by RDL-two",
-                "track_tray.rdl_two_done_closed_by_agent":Date.now
+                "track_tray.rdl_two_done_closed_by_agent": Date.now(),
               },
             }
           );

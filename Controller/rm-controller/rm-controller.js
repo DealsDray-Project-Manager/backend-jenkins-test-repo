@@ -1,3 +1,4 @@
+const { box } = require("../../Model/boxModel/box");
 const { masters } = require("../../Model/mastersModel");
 /****************************************************************** */
 
@@ -53,7 +54,7 @@ module.exports = {
       resolve(getTray);
     });
   },
-  spTrayPartIssuePage: (trayid, userName,status) => {
+  spTrayPartIssuePage: (trayid, userName, status) => {
     return new Promise(async (resolve, reject) => {
       const getTheTray = await masters.findOne({ code: trayid });
       if (getTheTray) {
@@ -63,11 +64,9 @@ module.exports = {
           } else {
             resolve({ status: 2 });
           }
-        }
-        else if (getTheTray.sort_id == status){
+        } else if (getTheTray.sort_id == status) {
           resolve({ status: 2, tray: getTheTray });
-        }
-         else {
+        } else {
           resolve({ status: 1 });
         }
       } else {
@@ -134,4 +133,59 @@ module.exports = {
       resolve(data);
     });
   },
+  partAddIntoBox: (partDetails, spTrayId, boxName,objId) => {
+    return new Promise(async (resolve, reject) => {
+      const addIntoBot = await box.findOneAndUpdate(
+        { name: boxName },
+        {
+          $push: {
+            sp_items: partDetails,
+          },
+        }
+      );
+      if (addIntoBot) {
+        const removeFromSpTray = await masters.findOneAndUpdate(
+          { code: spTrayId },
+          {
+            $pull: {
+              temp_array: {
+                part_id: partDetails,
+                rdl_two_status: objId,
+              },
+            },
+          },
+          {
+            returnOriginal: false,
+          }
+        );
+        
+        if (removeFromSpTray) {
+          resolve({ status: 1 });
+        } else {
+          resolve({ status: 0 });
+        }
+      } else {
+        resolve({ status: 0 });
+      }
+    });
+  },
+  rdlTwoDoneCloseSpTray:(trayId)=>{
+    return new Promise(async(resolve,reject)=>{
+      const closeSpTray=await masters.updateOne({code:trayId},{
+        $set:{
+          sort_id:"Open",
+          actual_items:[],
+          temp_array:[],
+          items:[]
+        }
+      })
+      if(closeSpTray.modifiedCount !== 0){
+        resolve({status:1})
+      }
+      else{
+        resolve({status:0})
+      }
+    
+    })
+  }
 };

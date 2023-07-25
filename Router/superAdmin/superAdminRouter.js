@@ -686,6 +686,22 @@ router.post("/getLocation", async (req, res, next) => {
   }
 });
 
+/* GET ONLY PROCESSING WAREHOUSE */
+router.post("/getLocationProcessing/:type", async (req, res, next) => {
+  try {
+    const { type } = req.params;
+    let location = await superAdminController.getProcessingLocationFetch(type);
+    if (location) {
+      res.status(200).json({
+        data: location,
+        message: "Success",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
 /*-----------------------------EDIT INFRA--------------------------------------*/
 router.post("/editInfra", async (req, res, next) => {
   try {
@@ -1230,7 +1246,7 @@ router.post("/search-admin-track-item", async (req, res, next) => {
   try {
     const { type, searchData, location, rowsPerPage, page } = req.body;
 
-    let data = await elasticsearch.bulkImportToElastic(
+    let data = await elasticsearch.superAdminTrackItemSearchData(
       searchData,
       page,
       rowsPerPage
@@ -1788,7 +1804,6 @@ router.get("/geteditSPcategory/:code", async (req, res) => {
 // GET ALL THE Tray Racks
 router.post("/trayracks/view", async (req, res, next) => {
   try {
-    console.log("working");
     const trayracksData = await superAdminController.getAllTrayRacks();
     if (trayracksData) {
       res.status(200).json({
@@ -1800,6 +1815,20 @@ router.post("/trayracks/view", async (req, res, next) => {
   }
 });
 
+/* ---------------------------GET RACK BASED ON THE WAREHOUSE ------------------*/
+router.post("/trayracks/view/:warehouse", async (req, res, next) => {
+  try {
+    const {warehouse}=req.params
+    const trayracksData = await superAdminController.getRackBasedOnTheWarehouse(warehouse);
+    if (trayracksData) {
+      res.status(200).json({
+        data: trayracksData,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
 /*-----------------------------GET Rack ID--------------------------------------*/
 
 router.post("/getRackID", async (req, res, next) => {
@@ -1902,7 +1931,7 @@ router.post("/addTrayRacks", async (req, res, next) => {
   }
 });
 
-// SPCATID GEN
+// RACKID GEN
 router.post("/trayracks/idGen", async (req, res, next) => {
   try {
     let obj;
@@ -2005,6 +2034,210 @@ router.get("/geteditTrayRacks/:code", async (req, res) => {
     let user = await superAdminController.geteditTrayRacks(req.params.code);
     if (user) {
       res.status(200).json({ data: user });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
+/*----------------------------------------------Boxes ----------------------------------------------------*/
+// GET ALL THE boxes
+router.post("/boxes/view", async (req, res, next) => {
+  try {
+    console.log("working");
+    const boxesData = await superAdminController.getAllBoxes();
+    if (boxesData) {
+      res.status(200).json({
+        data: boxesData,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
+/*-----------------------------GET Box ID--------------------------------------*/
+
+router.post("/getBoxID", async (req, res, next) => {
+  try {
+    let boxid = await superAdminController.getBoxID();
+    if (boxid) {
+      res.status(200).json({
+        data: boxid,
+        message: "Success",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
+// CREATE Boxes
+router.post("/boxes/create", async (req, res, next) => {
+  try {
+    const boxesData = await superAdminController.createBoxes(req.body);
+    if (boxesData.status == 1) {
+      fs.readFile(
+        "myjsonfile.json",
+        "utf8",
+        function readFileCallback(err, datafile) {
+          if (err) {
+          } else {
+            obj = JSON.parse(datafile);
+            let num = parseInt(obj.BOXID.substring(3)) + 1;
+            let updatedStr =
+              obj.BOXID.substring(0, 3) + num.toString().padStart(6, "0");
+            obj.BOXID = updatedStr;
+            json = JSON.stringify(obj);
+            fs.writeFile(
+              "myjsonfile.json",
+              json,
+              "utf8",
+              function readFileCallback(err, data) {
+                if (err) {
+                }
+              }
+            );
+          }
+        }
+      );
+      res.status(200).json({
+        message: "Successfully Created",
+      });
+    } else if (boxesData.status == 2) {
+      res.status(202).json({
+        message: "Already Created",
+      });
+    } else {
+      res.status(202).json({
+        message: "Creation Failed...",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
+// BOXID GEN
+router.post("/boxes/idGen", async (req, res, next) => {
+  try {
+    let obj;
+    fs.readFile(
+      "myjsonfile.json",
+      "utf8",
+      async function readFileCallback(err, data) {
+        if (err) {
+        } else {
+          obj = JSON.parse(data);
+          res.status(200).json({
+            boxID: obj.BOXID,
+          });
+        }
+      }
+    );
+  } catch (error) {
+    next(error);
+  }
+});
+
+// EDIT Box
+router.post("/boxes/edit", async (req, res, next) => {
+  try {
+    const boxesData = await superAdminController.editBoxes(req.body);
+    if (boxesData.status == 1) {
+      res.status(200).json({
+        message: "Successfully Updated",
+      });
+    } else {
+      res.status(202).json({
+        message: "Updation Failed...",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.get("/geteditBoxes/:box_id", async (req, res) => {
+  try {
+    let user = await superAdminController.geteditBoxes(req.params.box_id);
+    if (user) {
+      res.status(200).json({ data: user });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
+// GET ONE Box
+router.post("/boxes/one/:boxId", async (req, res, next) => {
+  try {
+    const { boxId } = req.params;
+    const boxesData = await superAdminController.getOneBox(boxId);
+    if (boxesData.status == 1) {
+      res.status(200).json({
+        data: boxesData.data,
+      });
+    } else {
+      res.status(200).json({
+        message: "No data found",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.get("/getAllBoxes", async (req, res) => {
+  try {
+    let boxesData = await superAdminController.getAllBoxes();
+    if (boxesData) {
+      res.status(200).json(boxesData);
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.post("/deleteBoxes/:box_id", async (req, res, next) => {
+  try {
+    let data = await superAdminController.deleteBoxes(req.params.box_id);
+    if (data.status == true) {
+      res.status(200).json({
+        message: "Successfully Deleted",
+      });
+    } else {
+      res.status(202).json({
+        message: "Failed",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.get("/geteditBoxes/:code", async (req, res) => {
+  try {
+    let user = await superAdminController.geteditBoxes(req.params.code);
+    if (user) {
+      res.status(200).json({ data: user });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
+/*-------------------------------------------Payments--------------------------------------------*/
+
+// GET ALL THE boxes
+router.post("/payments/view", async (req, res, next) => {
+  try {
+    console.log("working");
+    const paymentsData = await superAdminController.getAllPayments();
+    if (paymentsData) {
+      res.status(200).json({
+        data: paymentsData,
+      });
     }
   } catch (error) {
     next(error);
@@ -2158,7 +2391,7 @@ router.post("/storage/edit", async (req, res, next) => {
 //delete storage
 router.post("/storage/delete/:id", async (req, res, next) => {
   try {
-    const {id}=req.params
+    const { id } = req.params;
     let data = await superAdminController.deleteStorage(id);
 
     if (data.status == true) {
@@ -2182,7 +2415,6 @@ router.post("/ram/create", async (req, res, next) => {
     const { type } = req.body;
     const data = await superAdminController.createRam(req.body);
     if (data.status == 1) {
-    
       res.status(200).json({
         message: "Successfully Added",
       });
@@ -2216,11 +2448,11 @@ router.post("/ram/view/:type", async (req, res, next) => {
 // TAKE ONE RAM DATA FOR EDIT AND CHECK
 router.post("/ram/oneData/:id", async (req, res, next) => {
   try {
-    const {id}=req.params
+    const { id } = req.params;
     const data = await superAdminController.getOneRamDataForEdit(id);
     if (data.status == 1) {
       res.status(200).json({
-       data:data.ramData
+        data: data.ramData,
       });
     } else {
       res.status(202).json({
@@ -2251,7 +2483,7 @@ router.post("/ram/edit", async (req, res, next) => {
 //delete storage
 router.post("/ram/delete/:id", async (req, res, next) => {
   try {
-     const {id}=req.params
+    const { id } = req.params;
     let data = await superAdminController.deleteRam(id);
 
     if (data.status == true) {
@@ -2491,10 +2723,9 @@ router.post("/storage/oneData/:id", async (req, res, next) => {
       res.status(200).json({
         data: data.storageData,
       });
-    }
-    else{
+    } else {
       res.status(202).json({
-        message:"Data not found"
+        message: "Data not found",
       });
     }
   } catch (error) {
