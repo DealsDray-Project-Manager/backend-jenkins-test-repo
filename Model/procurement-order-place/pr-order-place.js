@@ -32,9 +32,19 @@ const prOrderPlacedSchema = mongoose.Schema({
   updated_at: {
     type: Date,
   },
+  spn_number:{
+    type:String
+  },
+  muic:{
+    type:String
+  },
+  quanitity:{
+    type:String
+  }
 });
 
-const purchaseOrder = mongoose.model("PrOrderPlaced", prOrderPlacedSchema);
+const purchaseOrderPlaced = mongoose.model("PrOrderPlaced", prOrderPlacedSchema);
 module.exports = {
-  prOrderPlacedSchema: prOrderPlacedSchema,
+    purchaseOrderPlaced: purchaseOrderPlaced
+    
 };

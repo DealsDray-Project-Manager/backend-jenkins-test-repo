@@ -63,7 +63,7 @@ module.exports = {
 
       const mailOptions = {
         from: "prexo-no-reply@dealsdray.com",
-        to: "rafnaszzz8164@gmail.com",
+        to: "girish.kumar@dealsdray.com",
         subject: `[${new Date(Date.now()).toLocaleString("en-GB", {
           year: "numeric",
           month: "2-digit",

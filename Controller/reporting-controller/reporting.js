@@ -1321,15 +1321,12 @@ module.exports = {
     type
   ) => {
     return new Promise(async (resolve, reject) => {
-      let allOrdersReport, getCount, forXlsxDownload;
-      if (type == "Order Date") {
         const fromDateTimestamp = Date.parse(fromDate);
         const toDateTimestamp = Date.parse(toDate);
-
         let allOrdersReport = await orders.aggregate([
           {
             $match: {
-              delivery_status: "Delivered",
+              order_status: "NEW",
               partner_shop: location,
               order_date: {
                 $gte: new Date(fromDateTimestamp),
@@ -1339,10 +1336,10 @@ module.exports = {
           },
           {
             $lookup: {
-              from: "deliveries",
-              localField: "order_id",
-              foreignField: "order_id",
-              as: "delivery",
+              from: "products",
+              localField: `item_id`,
+              foreignField: "vendor_sku_id",
+              as: "products",
             },
           },
           {
@@ -1357,7 +1354,7 @@ module.exports = {
           {
             $match: {
               partner_shop: location,
-              delivery_status: "Delivered",
+              order_status: "NEW",
               order_date: {
                 $gte: new Date(fromDateTimestamp),
                 $lte: new Date(toDateTimestamp),
@@ -1366,51 +1363,18 @@ module.exports = {
           },
           {
             $lookup: {
-              from: "deliveries",
-              localField: "order_id",
-              foreignField: "order_id",
-              as: "delivery",
+              from: "products",
+              localField: `item_id`,
+              foreignField: "vendor_sku_id",
+              as: "products",
             },
           },
-        ]);
-
-        let arrLimit = [];
-        for (let x of allOrdersReport?.[0].results) {
-          arrLimit.push(...x.delivery);
-        }
-        let arrWithoutLimit = [];
-        for (let y of forXlsxDownload) {
-          arrWithoutLimit.push(...y.delivery);
-        }
+        ])
         resolve({
-          getCount: arrWithoutLimit.length,
-          allOrdersReport: arrLimit,
-          forXlsxDownload: arrWithoutLimit,
+          getCount: allOrdersReport[0]?.count[0]?.count,
+          allOrdersReport: allOrdersReport[0]?.results,
+          forXlsxDownload: forXlsxDownload
         });
-      } else {
-        const fromDateISO = new Date(fromDate).toISOString();
-        const toDateISO = new Date(toDate).toISOString();
-        allOrdersReport = await delivery
-          .find({
-            partner_shop: location,
-            order_date: { $gte: fromDateISO, $lte: toDateISO },
-          })
-          .limit(limit)
-          .skip(skip);
-        getCount = await delivery.count({
-          partner_shop: location,
-          order_date: { $gte: fromDateISO, $lte: toDateISO },
-        });
-        forXlsxDownload = await delivery.find({
-          partner_shop: location,
-          order_date: { $gte: fromDateISO, $lte: toDateISO },
-        });
-      }
-      resolve({
-        allOrdersReport: allOrdersReport,
-        forXlsxDownload: forXlsxDownload,
-        getCount: getCount,
-      });
     });
   },
 

@@ -306,7 +306,6 @@ module.exports = {
     });
     let arr = [];
     let count = data?.hits?.total?.value;
-
     for (let result of data.hits.hits) {
       console.log(result["_source"].delivery_status);
       result.delivery_status = "Delivered";

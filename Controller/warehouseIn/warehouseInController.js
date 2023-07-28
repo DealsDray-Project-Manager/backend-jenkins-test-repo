@@ -1238,7 +1238,27 @@ module.exports = {
 
   trayReceived: (trayData) => {
     return new Promise(async (resolve, reject) => {
-      if (trayData.type === "charging") {
+      if (trayData.type == "Closed by RDL-two-sp") {
+        let data;
+        let tray = await masters.findOne({ code: trayData.trayId });
+        if (tray.temp_array?.length == trayData.counts) {
+          if (tray.sort_id == "Closed by RDL-two") {
+            data = await masters.findOneAndUpdate(
+              { code: trayData.trayId },
+              {
+                $set: {
+                  sort_id: "Received from RDL-two",
+                },
+              }
+            );
+            if (data) {
+              resolve({ status: 1 });
+            }
+          }
+        } else {
+          resolve({ status: 3 });
+        }
+      } else if (trayData.type === "charging") {
         let data;
         let tray = await masters.findOne({ code: trayData.trayId });
         if (tray.actual_items?.length == trayData.counts) {
@@ -3898,6 +3918,7 @@ module.exports = {
               closed_time_wharehouse: Date.now(),
               actual_items: [],
               issued_user_name: null,
+              sorting_done_close_wh: Date.now(),
             },
           }
         );
@@ -4616,7 +4637,15 @@ module.exports = {
       }
     });
   },
-  mergeDoneTrayClose: (fromTray, toTray, type, length, limit, status) => {
+  mergeDoneTrayClose: (
+    fromTray,
+    toTray,
+    type,
+    length,
+    limit,
+    status,
+    rackId
+  ) => {
     let data;
     let stage;
     return new Promise(async (resolve, reject) => {
@@ -4628,7 +4657,7 @@ module.exports = {
               { code: toTray },
               {
                 $set: {
-                  rack_id: toTray.rackId,
+                  rack_id: rackId,
                   sort_id: "Ready to Pricing",
                   actual_items: [],
                   issued_user_name: null,
@@ -4644,7 +4673,7 @@ module.exports = {
               { code: toTray },
               {
                 $set: {
-                  rack_id: toTray.rackId,
+                  rack_id: rackId,
                   sort_id: "Ready to Transfer to Sales",
                   actual_items: [],
                   issued_user_name: null,
@@ -4661,7 +4690,7 @@ module.exports = {
             { code: toTray },
             {
               $set: {
-                rack_id: toTray.rackId,
+                rack_id: rackId,
                 sort_id: "Open",
                 actual_items: [],
                 track_tray: {},
@@ -4684,7 +4713,7 @@ module.exports = {
             { code: toTray },
             {
               $set: {
-                rack_id: toTray.rackId,
+                rack_id: rackId,
                 sort_id: "Inuse",
                 actual_items: [],
                 issued_user_name: null,
@@ -4700,7 +4729,7 @@ module.exports = {
             { code: toTray },
             {
               $set: {
-                rack_id: toTray.rackId,
+                rack_id: rackId,
                 sort_id: "Audit Done Closed By Warehouse",
                 actual_items: [],
                 issued_user_name: null,
@@ -4718,7 +4747,7 @@ module.exports = {
             { code: toTray },
             {
               $set: {
-                rack_id: toTray.rackId,
+                rack_id: rackId,
                 sort_id: "Open",
                 actual_items: [],
                 temp_array: [],
@@ -4741,7 +4770,7 @@ module.exports = {
                 { code: toTray },
                 {
                   $set: {
-                    rack_id: toTray.rackId,
+                    rack_id: rackId,
                     sort_id: "Ready to RDL",
                     actual_items: [],
                     issued_user_name: null,
@@ -4757,7 +4786,7 @@ module.exports = {
                 { code: toTray },
                 {
                   $set: {
-                    rack_id: toTray.rackId,
+                    rack_id: rackId,
                     sort_id: "Audit Done Closed By Warehouse",
                     actual_items: [],
                     issued_user_name: null,
@@ -4774,7 +4803,7 @@ module.exports = {
               { code: toTray },
               {
                 $set: {
-                  rack_id: toTray.rackId,
+                  rack_id: rackId,
                   sort_id: "Ready to RDL-Repair",
                   actual_items: [],
                   issued_user_name: null,
@@ -4790,7 +4819,7 @@ module.exports = {
               { code: toTray },
               {
                 $set: {
-                  rack_id: toTray.rackId,
+                  rack_id: rackId,
                   sort_id: "Ready to Audit",
                   actual_items: [],
                   issued_user_name: null,
@@ -4806,7 +4835,7 @@ module.exports = {
               { code: toTray },
               {
                 $set: {
-                  rack_id: toTray.rackId,
+                  rack_id: rackId,
                   sort_id: "Ready to BQC",
                   actual_items: [],
                   issued_user_name: null,
@@ -4824,7 +4853,7 @@ module.exports = {
                   { code: toTray },
                   {
                     $set: {
-                      rack_id: toTray.rackId,
+                      rack_id: rackId,
                       sort_id: "Closed",
                       actual_items: [],
                       issued_user_name: null,
@@ -4840,7 +4869,7 @@ module.exports = {
                   { code: toTray },
                   {
                     $set: {
-                      rack_id: toTray.rackId,
+                      rack_id: rackId,
                       sort_id: "Inuse",
                       actual_items: [],
                       issued_user_name: null,
@@ -4857,7 +4886,7 @@ module.exports = {
                 { code: toTray },
                 {
                   $set: {
-                    rack_id: toTray.rackId,
+                    rack_id: rackId,
                     sort_id: "Closed By Warehouse",
                     from_merge: null,
                     to_merge: null,
@@ -4872,7 +4901,7 @@ module.exports = {
       if (data) {
         for (let x of data.items) {
           let updateRack = await trayRack.findOneAndUpdate(
-            { rack_id: toTray.rackId },
+            { rack_id: rackId },
             {
               $push: {
                 bag_or_tray: data.code,
@@ -4906,7 +4935,7 @@ module.exports = {
             { code: fromTray },
             {
               $set: {
-                rack_id: fromTray.rackId,
+                rack_id: rackId,
                 sort_id: "Open",
                 actual_items: [],
                 temp_array: [],
@@ -4915,6 +4944,14 @@ module.exports = {
                 issued_user_name: null,
                 from_merge: null,
                 to_merge: null,
+              },
+            }
+          );
+          let updateRackmmT = await trayRack.findOneAndUpdate(
+            { rack_id: rackId },
+            {
+              $push: {
+                bag_or_tray: data.code,
               },
             }
           );
@@ -5678,7 +5715,16 @@ module.exports = {
             requested_date: Date.now(),
             actual_items: [],
             temp_array: [],
+            rack_id: null,
             sort_id: "Issued to Sorting for Pickup",
+          },
+        }
+      );
+      let updateRackOne = await trayRack.findOneAndUpdate(
+        { rack_id: fromTray },
+        {
+          $pull: {
+            bag_or_tray: updateFromTray.code,
           },
         }
       );
@@ -5692,6 +5738,14 @@ module.exports = {
             requested_date: Date.now(),
             actual_items: [],
             sort_id: "Issued to Sorting for Pickup",
+          },
+        }
+      );
+      let updateRack = await trayRack.findOneAndUpdate(
+        { rack_id: toTray },
+        {
+          $pull: {
+            bag_or_tray: updateToTray.code,
           },
         }
       );
@@ -5908,6 +5962,14 @@ module.exports = {
         }
       }
       if (data) {
+        let updateRack = await trayRack.findOneAndUpdate(
+          { rack_id: trayData.rackId },
+          {
+            $push: {
+              bag_or_tray: data.code,
+            },
+          }
+        );
         for (let x of data?.items) {
           let deliveryTrack = await delivery.findOneAndUpdate(
             { tracking_id: x.tracking_id },

@@ -2774,8 +2774,7 @@ module.exports = {
   createPayment: (paymentsData) => {
     return new Promise(async (resolve, reject) => {
       let checkDup = await payment.findOne({
-            name: paymentsData.name,
-            type: "payment-list",
+        name: paymentsData.name,
       });
       if (checkDup) {
         resolve({ status: 2 });
@@ -2794,9 +2793,9 @@ module.exports = {
   editPayment: (paymentsData) => {
     return new Promise(async (resolve, reject) => {
       const updatepayment = await payment.findOneAndUpdate(
-        // {
-        //   name: paymentsData.name,
-        // },
+        {
+          _id: paymentsData._id,
+        },
         {
           $set: {
             name: paymentsData.name,
@@ -2817,9 +2816,9 @@ module.exports = {
     return new Promise(async (resolve, reject) => {
       let data = await payment.findOne({ name: name });
       if (data) {
-        resolve({status:true});
+        resolve({ status: true });
       } else {
-        resolve({status:false});
+        resolve({ status: false });
       }
     });
   },
@@ -2827,23 +2826,19 @@ module.exports = {
   deletePayment: (name) => {
     console.log(name);
     return new Promise(async (resolve, reject) => {
-        let data = await payment.deleteOne({ name: name });
-        if (data) {
-          resolve({status:true});
-        } else {
-          resolve({status:false});
-        }
-      
+      let data = await payment.deleteOne({ _id: name });
+      if (data) {
+        resolve({ status: true });
+      } else {
+        resolve({ status: false });
+      }
     });
   },
-  
 
   viewPayment: (type) => {
     return new Promise(async (resolve, reject) => {
       if (type == "payment-list") {
-        const data = await payment
-          .find({ type: type })
-          .sort({ part_code: 1 });
+        const data = await payment.find({ type: type }).sort({ part_code: 1 });
         resolve(data);
       } else {
         const data = await payment
@@ -2854,21 +2849,18 @@ module.exports = {
       }
     });
   },
-  viewOnePayment: (id, type) => {
+  viewOnePayment: (id) => {
     return new Promise(async (resolve, reject) => {
-      const getonepayment = await payment.findOne({ name:id });
-      // if (type == "payment-list") { 
+      const getonepayment = await payment.findOne({ _id: id });
+      // if (type == "payment-list") {
       if (getonepayment) {
         resolve({ status: 1, data: getonepayment });
       } else {
         resolve({ status: 2 });
       }
-    // }
+      // }
     });
   },
-
-
-
 
   getAllWarranty: () => {
     return new Promise(async (resolve, reject) => {
@@ -2880,8 +2872,7 @@ module.exports = {
   createWarranty: (warrantyData) => {
     return new Promise(async (resolve, reject) => {
       let checkDup = await warranty.findOne({
-            name: warrantyData.name,
-            type: "warranty-list",
+        name: warrantyData.name,
       });
       if (checkDup) {
         resolve({ status: 2 });
@@ -2898,11 +2889,12 @@ module.exports = {
   },
 
   editWarranty: (warrantyData) => {
+    console.log(warrantyData);
     return new Promise(async (resolve, reject) => {
       const updatewarranty = await warranty.findOneAndUpdate(
-        // {
-        //   name: paymentsData.name,
-        // },
+        {
+          _id: warrantyData._id,
+        },
         {
           $set: {
             name: warrantyData.name,
@@ -2923,9 +2915,9 @@ module.exports = {
     return new Promise(async (resolve, reject) => {
       let data = await warranty.findOne({ name: name });
       if (data) {
-        resolve({status:true});
+        resolve({ status: true });
       } else {
-        resolve({status:false});
+        resolve({ status: false });
       }
     });
   },
@@ -2933,23 +2925,19 @@ module.exports = {
   deleteWarranty: (name) => {
     console.log(name);
     return new Promise(async (resolve, reject) => {
-        let data = await warranty.deleteOne({ name: name });
-        if (data) {
-          resolve({status:true});
-        } else {
-          resolve({status:false});
-        }
-      
+      let data = await warranty.deleteOne({ _id: name });
+      if (data) {
+        resolve({ status: true });
+      } else {
+        resolve({ status: false });
+      }
     });
   },
-  
 
   viewWarranty: (type) => {
     return new Promise(async (resolve, reject) => {
       if (type == "warranty-list") {
-        const data = await warranty
-          .find({ type: type })
-          .sort({ part_code: 1 });
+        const data = await warranty.find({ type: type }).sort({ part_code: 1 });
         resolve(data);
       } else {
         const data = await warranty
@@ -2960,25 +2948,17 @@ module.exports = {
       }
     });
   },
-  viewOneWarranty: (id, type) => {
+  viewOneWarranty: (id) => {
     return new Promise(async (resolve, reject) => {
-      const getonewarranty = await warranty.findOne({ name:id });
-      // if (type == "payment-list") { 
+      const getonewarranty = await warranty.findOne({ _id: id });
+
       if (getonewarranty) {
         resolve({ status: 1, data: getonewarranty });
       } else {
         resolve({ status: 2 });
       }
-    // }
     });
   },
-
-
-
-
-
-
-
 
   createPartOrColor: (dataOfPartOrColor) => {
     return new Promise(async (resolve, reject) => {
@@ -3709,6 +3689,7 @@ module.exports = {
             color: dataOfPartorColor?.color,
             technical_qc: dataOfPartorColor?.technical_qc,
             sp_category: dataOfPartorColor.sp_category,
+            box_id: dataOfPartorColor.box_id,
           },
         }
       );
@@ -3976,22 +3957,25 @@ module.exports = {
   },
   addCpcType: () => {
     return new Promise(async (resolve, reject) => {
-      let findAllUsers=await user.find()
-      let updateUserWh
-      for(let x of findAllUsers){
-        let findWarehouse=await infra.findOne({type_taxanomy:"Warehouse",parent_id:x.cpc})
-        if(findWarehouse){
-           updateUserWh=await user.findOneAndUpdate({
-            user_name:x.user_name
-          },
-          {
-            $set:{
-              warehouse:findWarehouse.code
+      let findAllUsers = await user.find();
+      let updateUserWh;
+      for (let x of findAllUsers) {
+        let findWarehouse = await infra.findOne({
+          type_taxanomy: "Warehouse",
+          parent_id: x.cpc,
+        });
+        if (findWarehouse) {
+          updateUserWh = await user.findOneAndUpdate(
+            {
+              user_name: x.user_name,
+            },
+            {
+              $set: {
+                warehouse: findWarehouse.code,
+              },
             }
-          }
-          )
+          );
         }
-        
       }
       // let updateProcessing = await user.updateMany(
       //   { cpc: "Gurgaon_122016" },
@@ -4371,7 +4355,7 @@ module.exports = {
         "92030004043",
         "92030004952",
         "91010006034",
-        "92030004775",       
+        "92030004775",
       ];
 
       let arr2 = [];
@@ -4891,70 +4875,69 @@ module.exports = {
       }
     });
   },
-
   resolveAllDeliveryIssue: () => {
     return new Promise(async (resolve, reject) => {
-      // let findDelivery = await delivery.find({});
-      // let i = 0;
-      // for (let x of findDelivery) {
-      //   // check imei verified or not
-      //   if (x.bqc_software_report != undefined) {
-      //     let status = "Unverified";
-      //     if (
-      //       x.imei?.match(/[0-9]/g)?.join("") ==
-      //         x.bqc_software_report.mobile_imei ||
-      //       x.imei?.match(/[0-9]/g)?.join("") ==
-      //         x.bqc_software_report.mobile_imei2 ||
-      //       x.imei?.match(/[0-9]/g)?.join("") ==
-      //         x.bqc_software_report._ro_ril_miui_imei0
-      //     ) {
-      //       status = "Verified";
-      //     }
-      //     let updateDelivery = await delivery.findOneAndUpdate(
-      //       {
-      //         "uic_code.code": x.uic_code?.code,
-      //       },
-      //       {
-      //         $set: {
-      //           unverified_imei_status: status,
-      //         },
-      //       }
-      //     );
-      //     let updateOrder = await orders.findOneAndUpdate(
-      //       { order_id: x.order_id },
-      //       {
-      //         $set: {
-      //           imei_verification_status: status,
-      //         },
-      //       }
-      //     );
-      //   }
+      let findDelivery = await delivery.find({});
+      let i = 0;
+      for (let x of findDelivery) {
+        // check imei verified or not
+        if (x.bqc_software_report != undefined) {
+          let status = "Unverified";
+          if (
+            x.imei?.match(/[0-9]/g)?.join("") ==
+              x.bqc_software_report.mobile_imei ||
+            x.imei?.match(/[0-9]/g)?.join("") ==
+              x.bqc_software_report.mobile_imei2 ||
+            x.imei?.match(/[0-9]/g)?.join("") ==
+              x.bqc_software_report._ro_ril_miui_imei0
+          ) {
+            status = "Verified";
+          }
+          let updateDelivery = await delivery.findOneAndUpdate(
+            {
+              "uic_code.code": x.uic_code?.code,
+            },
+            {
+              $set: {
+                unverified_imei_status: status,
+              },
+            }
+          );
+          let updateOrder = await orders.findOneAndUpdate(
+            { order_id: x.order_id },
+            {
+              $set: {
+                imei_verification_status: status,
+              },
+            }
+          );
+        }
 
-      //   if (x.partner_shop == "Sales_Gurgaon_122016") {
-      //     let updateDeliveryTwo = await delivery.findOneAndUpdate(
-      //       { "uic_code.code": x.uic_code?.code },
-      //       {
-      //         $set: {
-      //           partner_shop: "Gurgaon_122016",
-      //         },
-      //       }
-      //     );
-      //   } else if (
-      //     x.partner_shop == "Gurgaon_122016" ||
-      //     x.partner_shop == "Sales_Gurgaon_122016"
-      //   ) {
-      //     let updateOrder = await orders.findOneAndUpdate(
-      //       { order_id: x.order_id },
-      //       {
-      //         $set: {
-      //           partner_shop: "Gurgaon_122016",
-      //         },
-      //       }
-      //     );
-      //   }
-      //   console.log(i);
-      //   i++;
-      // }
+        if (x.partner_shop == "Sales_Gurgaon_122016") {
+          let updateDeliveryTwo = await delivery.findOneAndUpdate(
+            { "uic_code.code": x.uic_code?.code },
+            {
+              $set: {
+                partner_shop: "Gurgaon_122016",
+              },
+            }
+          );
+        } else if (
+          x.partner_shop == "Gurgaon_122016" ||
+          x.partner_shop == "Sales_Gurgaon_122016"
+        ) {
+          let updateOrder = await orders.findOneAndUpdate(
+            { order_id: x.order_id },
+            {
+              $set: {
+                partner_shop: "Gurgaon_122016",
+              },
+            }
+          );
+        }
+        console.log(i);
+        i++;
+      }
       //2023-12-05T18:30:00.000+00:00
       //2023-11-05T18:30:00.000+00:00
       //2023-12-04T18:30:00.000+00:00
@@ -4972,26 +4955,27 @@ module.exports = {
       //     order_date:new Date("2023-05-08T18:30:00.000+00:00")
       //   }
       // })
+      // let arr=[]
+      // for (let x of arr) {
+      //   let updatjackMuic = await products.findOneAndUpdate(
+      //     { muic: x.muic },
+      //     {
+      //       $set: {
+      //         jack_type: x.jack_type,
+      //       },
+      //     }
 
-      for (let x of arr) {
-        let updatjackMuic = await products.findOneAndUpdate(
-          { muic: x.muic },
-          {
-            $set: {
-              jack_type: x.jack_type,
-            },
-          }
-        );
-        console.log(updatjackMuic);
-        let tray = await masters.updateMany(
-          { brand: x.brand_name, model: x.model_name },
-          {
-            $set: {
-              jack: x.jack_type,
-            },
-          }
-        );
-      }
+      //     );
+      //     console.log(updatjackMuic)
+      //   let tray = await masters.updateMany(
+      //     { brand: x.brand_name, model: x.model_name },
+      //     {
+      //       $set: {
+      //         jack: x.jack_type,
+      //       },
+      //     }
+      //   );
+      // }
 
       // FINAL GRADE UPDATION
       // let i = 0;
@@ -5017,6 +5001,120 @@ module.exports = {
       //   console.log(i);
       // }
 
+      resolve({ status: true });
+    });
+  },
+  addCategoryExtra: () => {
+    return new Promise(async (resolve, reject) => {
+      let arr =[]
+      let str = "SPC000000";
+      let str2 = "BOX000000";
+      for (let x of arr) {
+        let checkBoxId = await box.findOne({ name: x.box_id });
+        if (
+          checkBoxId == null &&
+          x.box_id !== undefined &&
+          x.box_id !== "" &&
+          x.box_id !== "BOX-99"
+        ) {
+          let num1 = parseInt(str2.substring(3)) + 1;
+          let updatedStr2 =
+            str2.substring(0, 3) + num1.toString().padStart(6, "0");
+          str2 = updatedStr2;
+          let createBox = await box.create({
+            box_id: str2,
+            name: x.box_id,
+            description: x.box_id,
+            display: str2,
+            created_at: Date.now(),
+          });
+          x.box_id=createBox.box_id
+        }
+        else{
+          if(checkBoxId){
+            x.box_id=checkBoxId.box_id
+          }
+        }
+        let findCategory = await spareCategories.findOne({
+          category_name: x.sp_category,
+        });
+
+        if (
+          findCategory == null &&
+          x.sp_category !== undefined &&
+          x.sp_category !== ""
+        ) {
+          let num = parseInt(str.substring(3)) + 1;
+          let updatedStr =
+            str.substring(0, 3) + num.toString().padStart(6, "0");
+          str = updatedStr;
+          let createCategory = await spareCategories.create({
+            spcategory_id: str,
+            category_name: x.sp_category,
+            description: x.sp_category,
+            creation_date: Date.now(),
+          });
+        }
+        let updateSp = await partAndColor.findOneAndUpdate(
+          {
+            part_code: x.part_code,
+            type: "part-list",
+          },
+          {
+            $set: {
+              sp_category: x.sp_category,
+              box_id: x.box_id,
+            },
+          }
+        );
+      }
+      resolve({ status: true });
+    });
+  },
+  /* ------------------------------OLD SPN MANGE-----------------------------*/
+  manageOldSpnData: () => {
+    return new Promise(async (resolve, reject) => {
+      let arr = []
+      for (let x of arr) {
+        const spnArray = x.spn.split(",");
+
+        let array = [];
+        for (let y of spnArray) {
+          let findSpn = await partAndColor.findOne({ part_code: y });
+          let obj = {
+            part_id: findSpn.part_code,
+            part_name: findSpn.name,
+            quantity: 1,
+          };
+          array.push(obj);
+        }
+
+        let checkTray = await masters.findOne({
+          "items.uic": x.uic?.toString(),
+        });
+
+        if (checkTray) {
+          if (checkTray.sort_id == "Ready to RDL-Repair") {
+            let updateDelivery = await delivery.updateOne(
+              { "uic_code.code": x.uic?.toString() },
+              {
+                $set: {
+                  "rdl_fls_one_report.partRequired": array,
+                },
+              }
+            );
+
+            let updateOneTray = await masters.updateOne(
+              { "items.uic": x.uic?.toString() },
+              {
+                $set: {
+                  "items.$.rdl_fls_report.partRequired": array,
+                },
+              }
+            );
+          }
+        }
+      }
       resolve({ status: true });
     });
   },

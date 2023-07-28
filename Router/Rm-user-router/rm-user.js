@@ -81,10 +81,12 @@ router.post("/spTray/addParts/:partId/:trayId", async (req, res, next) => {
   }
 });
 // CLOSE THE SP TRAY
-router.post("/spTray/close/:trayId", async (req, res, next) => {
+router.post("/spTrayClose", async (req, res, next) => {
   try {
-    const { trayId } = req.params;
-    let data = await rmuserController.spTrayClose(trayId);
+    console.log(req.body);
+    const { trayId, rackId } = req.body;
+    let data = await rmuserController.spTrayClose(trayId, rackId);
+    console.log(data);
     if (data.status == 1) {
       res.status(200).json({
         message: "Successfully Closed & Ready to RDL-Repair",
@@ -131,12 +133,13 @@ router.post("/spTrayReturnFromRdlTwo/:location", async (req, res, next) => {
 router.post("/addIntoBox", async (req, res, next) => {
   try {
     console.log(req.body);
-    const { partDetails, spTrayId, boxName } = req.body;
+    const { partDetails, spTrayId, boxName,uniqueid,objId } = req.body;
     let data = await rmuserController.partAddIntoBox(
       partDetails,
       spTrayId,
       boxName,
-    
+      uniqueid,
+      objId
     );
     if (data.status == 1) {
       res.status(200).json({
@@ -163,6 +166,25 @@ router.post("/rdlTwoDoneCloseSP", async (req, res, next) => {
     } else {
       res.status(202).json({
         message: "Failed please try again",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+/*----------------------------------GET BOX ID ------------------------------------------------------------*/
+// GET ALL THE boxes
+router.post("/boxesView/:partId", async (req, res, next) => {
+  try {
+    const {partId}=req.params
+    const boxesData = await rmuserController.getBoxData(partId);
+    if (boxesData.status == 1) {
+      res.status(200).json({
+        data: boxesData.boxData,
+      });
+    } else {
+      res.status(200).json({
+        message: "Part data not found",
       });
     }
   } catch (error) {

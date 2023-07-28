@@ -21,9 +21,11 @@ router.post("/dashboard/:location", async (req, res, next) => {
 });
 
 // PROCUREMENT VIEW
-router.post("/procurment/view", async (req, res, next) => {
+router.post("/procurment/view/:status", async (req, res, next) => {
   try {
-    let data = await purchaseController.procurementRequestView();
+    const {status}=req.params
+    let data = await purchaseController.procurementRequestView(status);
+    console.log(data);
     if (data) {
       res.status(200).json({
         data: data,
@@ -66,7 +68,24 @@ router.post("/placeOrder", async (req, res, next) => {
     let data = await purchaseController.placeOrder(req.body);
     if (data.status == 1) {
       res.status(200).json({
-        data: "Order places successfully",
+        message: "successfully order placed",
+      });
+    } else {
+      res.status(202).json({
+        message: "Failed please try again..",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+// GET WARRANTY TERMS AND PAYMENTS TERMS
+router.post("/getWarrantyAndTerms", async (req, res, next) => {
+  try {
+    let data = await purchaseController.fetchWarrantyAndTerms(req.body);
+    if (data) {
+      res.status(200).json({
+        data: data,
       });
     } else {
       res.status(202).json({

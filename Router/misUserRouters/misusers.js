@@ -1589,6 +1589,8 @@ router.post(
     }
   }
 );
+
+
 router.post("/RDLoneDoneTray/:location", async (req, res, next) => {
   try {
     const { location } = req.params;
@@ -1730,7 +1732,7 @@ router.post("/whToRpAssignForRepair", async (req, res, next) => {
 //ASSIGN FOR REPAIR AND CHECK THE STOCK AVAILABILTY
 router.post("/assignForRepiar/stockCheck", async (req, res, next) => {
   try {
-    const { partList, uic, isCheck, checked,selectedQtySp } = req.body;
+    const { partList, uic, isCheck, checked, selectedQtySp } = req.body;
     let data = await misUserController.assignForRepairStockCheck(
       partList,
       uic,
@@ -1742,7 +1744,7 @@ router.post("/assignForRepiar/stockCheck", async (req, res, next) => {
     if (data.status == 1) {
       res.status(200).json({
         data: data.isCheck,
-        countofStock:data.countofStock
+        countofStock: data.countofStock,
       });
     } else if (data.status == 0) {
       res.status(202).json({
@@ -1761,9 +1763,11 @@ router.post("/assignForRepiar/stockCheck", async (req, res, next) => {
 // PLANNER PAGE
 router.post("/plannerPage/charging", async (req, res, next) => {
   try {
-    const {location,type,type1}=req.body
+    const { location, type, type1 } = req.body;
     let data = await misUserController.plannerPageCharging(
-      location,type,type1
+      location,
+      type,
+      type1
     );
     if (data) {
       res.status(200).json({
@@ -1778,10 +1782,15 @@ router.post("/plannerPage/charging", async (req, res, next) => {
 // ASSIGNE TO CHARGING PAGE
 router.post("/assignToChargingScreen", async (req, res, next) => {
   try {
-    const {type,type1,location,brand,model,jack}=req.body
+    const { type, type1, location, brand, model, jack } = req.body;
     console.log(req.body);
     let data = await misUserController.assigneToChargingScreen(
-       location,brand,model,jack,type,type1
+      location,
+      brand,
+      model,
+      jack,
+      type,
+      type1
     );
     if (data) {
       res.status(200).json({
@@ -1795,7 +1804,8 @@ router.post("/assignToChargingScreen", async (req, res, next) => {
 // ASSIGN TO SORTING WHT TO RP
 router.post("/assignForRepiar/getTheRequrements", async (req, res, next) => {
   try {
-    const { location, uicLength, brand, model, isCheck,selectedQtySp } = req.body;
+    const { location, uicLength, brand, model, isCheck, selectedQtySp } =
+      req.body;
     let data = await misUserController.assignForRepairSortingGetTheRequrements(
       location,
       uicLength,

@@ -42,6 +42,9 @@ const partAndcolorSchema = mongoose.Schema({
   },
   sp_category:{
     type:String
+  },
+  box_id:{
+    type:String
   }
 });
 

@@ -1,5 +1,9 @@
+const {
+  partAndColor,
+} = require("../../Model/Part-list-and-color/part-list-and-color");
 const { box } = require("../../Model/boxModel/box");
 const { masters } = require("../../Model/mastersModel");
+const { trayRack } = require("../../Model/tray-rack/tray-rack");
 /****************************************************************** */
 
 module.exports = {
@@ -94,7 +98,7 @@ module.exports = {
       }
     });
   },
-  spTrayClose: (trayid) => {
+  spTrayClose: (trayid, rackId) => {
     return new Promise(async (resolve, reject) => {
       const updateTheTray = await masters.findOneAndUpdate(
         { code: trayid },
@@ -102,10 +106,19 @@ module.exports = {
           $set: {
             sort_id: "Ready to RDL-Repair",
             temp_array: [],
+            rack_id: rackId,
           },
         }
       );
       if (updateTheTray) {
+        let updateRack = await trayRack.findOneAndUpdate(
+          { rack_id: rackId },
+          {
+            $push: {
+              bag_or_tray: updateTheTray.code,
+            },
+          }
+        );
         resolve({ status: 1 });
       } else {
         resolve({ status: 0 });
@@ -126,14 +139,23 @@ module.exports = {
   getSpTrayAfterRdlTwo: (location) => {
     return new Promise(async (resolve, reject) => {
       const data = await masters.find({
-        sort_id: "Closed by RDL-two",
-        type_taxanomy: "SPT",
-        cpc: location,
+        $or: [
+          {
+            sort_id: "Received from RDL-two",
+            type_taxanomy: "SPT",
+            cpc: location,
+          },
+          {
+            sort_id: "Closed by RDL-two",
+            type_taxanomy: "SPT",
+            cpc: location,
+          },
+        ],
       });
       resolve(data);
     });
   },
-  partAddIntoBox: (partDetails, spTrayId, boxName,objId) => {
+  partAddIntoBox: (partDetails, spTrayId, boxName, uniqueid,objId) => {
     return new Promise(async (resolve, reject) => {
       const addIntoBot = await box.findOneAndUpdate(
         { name: boxName },
@@ -149,8 +171,7 @@ module.exports = {
           {
             $pull: {
               temp_array: {
-                part_id: partDetails,
-                rdl_two_status: objId,
+                unique_id_gen:uniqueid
               },
             },
           },
@@ -158,7 +179,16 @@ module.exports = {
             returnOriginal: false,
           }
         );
-        
+        if(objId == "Not used" || objId == "Not required"){
+          const updateStock = await partAndColor.findOneAndUpdate(
+            { part_code: partDetails },
+            {
+              $inc: {
+                avl_stock: 1
+              },
+            }
+          );
+        }
         if (removeFromSpTray) {
           resolve({ status: 1 });
         } else {
@@ -169,23 +199,35 @@ module.exports = {
       }
     });
   },
-  rdlTwoDoneCloseSpTray:(trayId)=>{
-    return new Promise(async(resolve,reject)=>{
-      const closeSpTray=await masters.updateOne({code:trayId},{
-        $set:{
-          sort_id:"Open",
-          actual_items:[],
-          temp_array:[],
-          items:[]
+  rdlTwoDoneCloseSpTray: (trayId) => {
+    return new Promise(async (resolve, reject) => {
+      const closeSpTray = await masters.updateOne(
+        { code: trayId },
+        {
+          $set: {
+            sort_id: "Open",
+            actual_items: [],
+            temp_array: [],
+            items: [],
+          },
         }
-      })
-      if(closeSpTray.modifiedCount !== 0){
-        resolve({status:1})
+      );
+      if (closeSpTray.modifiedCount !== 0) {
+        resolve({ status: 1 });
+      } else {
+        resolve({ status: 0 });
       }
-      else{
-        resolve({status:0})
+    });
+  },
+  getBoxData: (partId) => {
+    return new Promise(async (resolve, reject) => {
+      const findPart = await partAndColor.findOne({ part_code: partId });
+      if (findPart) {
+        let findBox = await box.find({ box_id: findPart?.box_id });
+        resolve({ status: 1, boxData: findBox });
+      } else {
+        resolve({ status: 0 });
       }
-    
-    })
-  }
+    });
+  },
 };

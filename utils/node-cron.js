@@ -54,7 +54,7 @@ exports = module.exports = () => {
   }
   // NIGHT 11 BLANCOO AUTOMATION
   try {
-    corn.schedule("01 19 * * *", () => {
+    corn.schedule("21 14 * * *", () => {
       /*----------------------------------------------CSV READ-----------------------------*/
       let result = [];
       fs.createReadStream("blancco_qc_data/blancco_qc_data.csv")

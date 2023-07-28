@@ -3486,6 +3486,28 @@ module.exports = {
             },
           },
         ]);
+      } else if (type == "RDL two done closed by warehouse") {
+        items = await masters.aggregate([
+          {
+            $match: {
+              "track_tray.rdl_two_done_closed_by_agent": { $gte: threeDaysAgo },
+              sort_id: type,
+              cpc: location,
+            },
+          },
+          {
+            $unwind: "$items",
+          },
+          {
+            $project: {
+              items: 1,
+              brand: 1,
+              model: 1,
+              code: 1,
+              "track_tray.rdl_two_done_closed_by_agent": 1,
+            },
+          },
+        ]);
       } else {
         items = await masters.aggregate([
           {
@@ -3931,21 +3953,43 @@ module.exports = {
               },
             }
           );
-          sendtoPickupRequest = await masters.updateOne(
-            { "items.uic": x, type_taxanomy: "WHT" },
-            {
-              $set: {
-                sort_id: "Pickup Request sent to Warehouse",
-                issued_user_name: itemData.user_name,
-                requested_date: Date.now(),
-                actual_items: [],
-                temp_array: [],
-                pickup_type: itemData.value,
-                "items.$.pickup_toTray": itemData.toTray,
-                to_tray_for_pickup: itemData.toTray,
+          if (itemData.value == "RDL two done closed by warehouse") {
+            sendtoPickupRequest = await masters.updateOne(
+              {
+                $or: [{ "items.uic": x, type_taxanomy: "RPT" }],
               },
-            }
-          );
+              {
+                $set: {
+                  sort_id: "Pickup Request sent to Warehouse",
+                  issued_user_name: itemData.user_name,
+                  requested_date: Date.now(),
+                  actual_items: [],
+                  temp_array: [],
+                  pickup_type: itemData.value,
+                  "items.$.pickup_toTray": itemData.toTray,
+                  to_tray_for_pickup: itemData.toTray,
+                },
+              }
+            );
+          } else {
+            sendtoPickupRequest = await masters.updateOne(
+              {
+                $or: [{ "items.uic": x, type_taxanomy: "WHT" }],
+              },
+              {
+                $set: {
+                  sort_id: "Pickup Request sent to Warehouse",
+                  issued_user_name: itemData.user_name,
+                  requested_date: Date.now(),
+                  actual_items: [],
+                  temp_array: [],
+                  pickup_type: itemData.value,
+                  "items.$.pickup_toTray": itemData.toTray,
+                  to_tray_for_pickup: itemData.toTray,
+                },
+              }
+            );
+          }
         }
         let updateDelivery = await delivery.updateOne(
           { "uic_code.code": x },
@@ -3957,6 +4001,7 @@ module.exports = {
           }
         );
       }
+      console.log(sendtoPickupRequest);
       if (sendtoPickupRequest.matchedCount != 0) {
         resolve(sendtoPickupRequest);
       } else {
@@ -4263,7 +4308,7 @@ module.exports = {
           if (foundPart) {
             isCheck = isCheck.map((item) => {
               if (item?.partId === x?.part_id) {
-              if (Number(item?.balance_stock) > 0) {
+                if (Number(item?.balance_stock) > 0) {
                   const updatedItem = {
                     ...item,
                     selected_qty: Number(item?.selected_qty) + 1,
@@ -4272,8 +4317,7 @@ module.exports = {
                   countofStock = countofStock + 1;
                   updatedItem.uic.push(uic);
                   return updatedItem;
-                }
-                else {
+                } else {
                   resolve({ status: 0, partid: x?.part_id });
                 }
               }
@@ -4293,6 +4337,7 @@ module.exports = {
                 countofStock = countofStock + 1;
                 let obj = {
                   uic: [uic],
+                  box_id: checkQty.box_id,
                   partName: x?.part_name,
                   partId: x?.part_id,
                   avl_stock: checkQty?.avl_stock,

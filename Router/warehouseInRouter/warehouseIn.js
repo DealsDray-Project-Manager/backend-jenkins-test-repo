@@ -1547,14 +1547,15 @@ router.post("/returnFromMerging/:location", async (req, res, next) => {
 /*--------------------- AFTER MERGE IS DONE CLOSE MMT TRAY--------------------------------*/
 router.post("/mergeDoneMmttrayClose", async (req, res, next) => {
   try {
-    const { toTray, fromTray, type, length, limit, status } = req.body;
+    const { toTray, fromTray, type, length, limit, status,rackId } = req.body;
     let data = await warehouseInController.mergeDoneTrayClose(
       fromTray,
       toTray,
       type,
       length,
       limit,
-      status
+      status,
+      rackId
     );
     if (data.status == 1) {
       res.status(200).json({

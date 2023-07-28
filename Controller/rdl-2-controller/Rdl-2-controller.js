@@ -65,10 +65,12 @@ module.exports = {
     return new Promise(async (resolve, reject) => {
       let selectedQtySum = 0;
       let tray = await masters.findOne({ code: trayData.trayId });
+
       if (tray) {
         for (const item of tray.items) {
           selectedQtySum += parseInt(item.selected_qty);
         }
+        console.log(selectedQtySum);
         if (selectedQtySum == trayData.counts) {
           let data = await masters.findOneAndUpdate(
             { code: trayData.trayId },
@@ -168,76 +170,118 @@ module.exports = {
       }
     });
   },
-  repairDoneAction: (trayItemData) => {
-    return new Promise(async (resolve, reject) => {
-      let dupEntrey = await masters.findOne({
+  repairDoneAction: async (trayItemData) => {
+    try {
+      let dupEntry = await masters.findOne({
         code: trayItemData.trayId,
         "actual_items.uic": trayItemData.uic,
       });
-      if (dupEntrey) {
-        resolve({ status: 3 });
-      } else {
-        let checkAlreadyAdded = await masters.findOne(
-          {
-            code: trayItemData.trayId,
-            "items.uic": trayItemData.uic,
-          },
-          {
-            _id: 0,
-            items: {
-              $elemMatch: { uic: trayItemData.uic },
-            },
-          }
-        );
-        if (trayItemData.rdl_repair_report.used_parts?.length == 0) {
-          const updateSpTray = await masters.findOneAndUpdate(
+
+      if (dupEntry) {
+        return { status: 3 };
+      }
+
+      for (let x of trayItemData.rdl_repair_report.rdl_two_part_status) {
+        console.log(x);
+        if (
+          x.rdl_two_status !== "Used" 
+        ) {
+          await masters.updateOne(
             {
               code: trayItemData.spTray,
             },
             {
               $push: {
-                temp_array: {
-                  $each: trayItemData.rdl_repair_report.rdl_two_part_status,
-                },
+                temp_array: x,
+              },
+            }
+          );
+        } 
+
+         if(x.rdl_two_status == "Used" || x.rdl_two_status == "Not used" || x.rdl_two_status == "Not required") {
+          await masters.updateOne(
+            {
+              code: trayItemData.trayId,
+              "items.uic": trayItemData.uic,
+            },
+            {
+              $pull: {
+                "items.$.rdl_fls_report.partRequired": { part_id: x.part_id },
               },
             }
           );
         }
-        const updateSpTray = await masters.updateOne(
+      }
+
+      if (trayItemData.rdl_repair_report.more_part_required?.length !== 0) {
+        await masters.updateOne(
           {
-            code: trayItemData.spTray,
+            code: trayItemData.trayId,
+            "items.uic": trayItemData.uic,
           },
           {
             $push: {
-              actual_items: {
-                $each: trayItemData.rdl_repair_report.rdl_two_part_status,
+              "items.$.rdl_fls_report.partRequired": {
+                $each: trayItemData.rdl_repair_report.more_part_required,
               },
             },
           }
         );
-        checkAlreadyAdded.items[0].rdl_repair_report =
-          trayItemData.rdl_repair_report;
-        let data = await masters.updateOne(
-          { code: trayItemData.trayId },
-          {
-            $push: {
-              actual_items: checkAlreadyAdded.items[0],
-            },
-            $pull: {
-              items: {
-                uic: trayItemData.uic,
-              },
-            },
-          }
-        );
-        if (data.matchedCount != 0) {
-          resolve({ status: 1 });
-        } else {
-          resolve({ status: 2 });
-        }
       }
-    });
+
+      await masters.updateOne(
+        {
+          code: trayItemData.spTray,
+        },
+        {
+          $push: {
+            actual_items: {
+              $each: trayItemData.rdl_repair_report.rdl_two_part_status,
+            },
+          },
+        }
+      );
+      let checkAlreadyAdded = await masters.findOne(
+        {
+          code: trayItemData.trayId,
+          "items.uic": trayItemData.uic,
+        },
+        {
+          _id: 0,
+          items: {
+            $elemMatch: { uic: trayItemData.uic },
+          },
+        }
+      );
+
+      checkAlreadyAdded.items[0].rdl_repair_report =
+        trayItemData.rdl_repair_report;
+
+      let data = await masters.updateOne(
+        { code: trayItemData.trayId },
+        {
+          $push: {
+            actual_items: checkAlreadyAdded.items[0],
+          },
+          $pull: {
+            items: {
+              uic: trayItemData.uic,
+            },
+          },
+        }
+      );
+
+      if (data.matchedCount !== 0) {
+        return { status: 1 };
+      } else {
+        return { status: 2 };
+      }
+    } catch (error) {
+      console.error("Error in repairDoneAction:", error);
+      throw error;
+    }
   },
+
   traySummary: (trayId, user_name) => {
     return new Promise(async (resolve, reject) => {
       const getTheTray = await masters.findOne({ code: trayId });
@@ -302,6 +346,7 @@ module.exports = {
                 {
                   $set: {
                     rdl_two_closed_date: Date.now(),
+                    rdl_fls_one_report: x.rdl_fls_report,
                     rdl_two_report: x.rdl_repair_report,
                     tray_status: "Closed by RDL-two",
                     tray_type: "RPT",

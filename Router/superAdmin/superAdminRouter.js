@@ -1818,8 +1818,10 @@ router.post("/trayracks/view", async (req, res, next) => {
 /* ---------------------------GET RACK BASED ON THE WAREHOUSE ------------------*/
 router.post("/trayracks/view/:warehouse", async (req, res, next) => {
   try {
-    const {warehouse}=req.params
-    const trayracksData = await superAdminController.getRackBasedOnTheWarehouse(warehouse);
+    const { warehouse } = req.params;
+    const trayracksData = await superAdminController.getRackBasedOnTheWarehouse(
+      warehouse
+    );
     if (trayracksData) {
       res.status(200).json({
         data: trayracksData,
@@ -2227,13 +2229,6 @@ router.get("/geteditBoxes/:code", async (req, res) => {
   }
 });
 
-
-
-
-
-
-
-
 /*-------------------------------------------Payments--------------------------------------------*/
 
 // GET ALL THE boxes
@@ -2254,35 +2249,8 @@ router.post("/payments/view", async (req, res, next) => {
 //create
 router.post("/payments/create", async (req, res, next) => {
   try {
-    const { type } = req.body;
     const data = await superAdminController.createPayment(req.body);
     if (data.status == 1) {
-      if (type == "payment-list") {
-        fs.readFile(
-          "myjsonfile.json",
-          "utf8",
-          function readFileCallback(err, datafile) {
-            if (err) {
-            } else {
-              obj = JSON.parse(datafile);
-              // let num = parseInt(obj.PARTID.substring(3)) + 1;
-              // let updatedStr =
-              //   obj.PARTID.substring(0, 3) + num.toString().padStart(6, "0");
-              // obj.PARTID = updatedStr;
-              json = JSON.stringify(obj);
-              fs.writeFile(
-                "myjsonfile.json",
-                json,
-                "utf8",
-                function readFileCallback(err, data) {
-                  if (err) {
-                  }
-                }
-              );
-            }
-          }
-        );
-      }
       res.status(200).json({
         message: "Successfully Added",
       });
@@ -2363,10 +2331,10 @@ router.post("/deletePayments/:name", async (req, res, next) => {
 });
 
 // get one data only for payment
-router.post("/payments/one/:id/:type", async (req, res, next) => {
+router.post("/payments/one/:id", async (req, res, next) => {
   try {
-    const { id, type } = req.params;
-    const data = await superAdminController.viewOnePayment(id, type);
+    const { id } = req.params;
+    const data = await superAdminController.viewOnePayment(id);
     if (data.status == 1) {
       res.status(200).json({
         data: data.data,
@@ -2380,11 +2348,6 @@ router.post("/payments/one/:id/:type", async (req, res, next) => {
     next(error);
   }
 });
-
-
-
-
-
 
 /*-------------------------------------------Warranty--------------------------------------------*/
 
@@ -2515,10 +2478,10 @@ router.post("/deleteWarranty/:name", async (req, res, next) => {
 });
 
 // get one data only for Warranty
-router.post("/warranty/one/:id/:type", async (req, res, next) => {
+router.post("/warranty/one/:id", async (req, res, next) => {
   try {
-    const { id, type } = req.params;
-    const data = await superAdminController.viewOneWarranty(id, type);
+    const { id } = req.params;
+    const data = await superAdminController.viewOneWarranty(id);
     if (data.status == 1) {
       res.status(200).json({
         data: data.data,
@@ -2532,18 +2495,6 @@ router.post("/warranty/one/:id/:type", async (req, res, next) => {
     next(error);
   }
 });
-
-
-
-
-
-
-
-
-
-
-
-
 
 /*-------------------------------------------MASTER FOR PART AND COLOR--------------------------------------------*/
 //create
@@ -3798,6 +3749,40 @@ router.post("/whtTray/recorrect", async (req, res, next) => {
 router.post("/extra/allDeliveryIssue", async (req, res, next) => {
   try {
     let data = await superAdminController.resolveAllDeliveryIssue();
+    if (data.status == true) {
+      res.status(200).json({
+        message: "done",
+      });
+    } else {
+      res.status(202).json({
+        message: "Failed",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+// ADDING CATEGORY  V8.4
+router.post("/extra/addCategory", async (req, res, next) => {
+  try {
+    let data = await superAdminController.addCategoryExtra();
+    if (data.status == true) {
+      res.status(200).json({
+        message: "done",
+      });
+    } else {
+      res.status(202).json({
+        message: "Failed",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+// MANAGE OLD SPN0000 PARTID  V8.4
+router.post("/extra/manageOldSpn", async (req, res, next) => {
+  try {
+    let data = await superAdminController.manageOldSpnData();
     if (data.status == true) {
       res.status(200).json({
         message: "done",
