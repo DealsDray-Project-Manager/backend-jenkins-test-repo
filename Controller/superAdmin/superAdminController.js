@@ -9,10 +9,17 @@ const { admin } = require("../../Model/adminModel/admins");
 const { usersHistory } = require("../../Model/users-history-model/model");
 const { delivery } = require("../../Model/deliveryModel/delivery");
 const { trayCategory } = require("../../Model/tray-category/tray-category");
-const { spareCategories } = require("../../Model/spareCategories/spareCategories")
-const { trayRack } = require("../../Model/tray-rack/tray-rack")
+const {
+  spareCategories,
+} = require("../../Model/spareCategories/spareCategories");
+const { trayRack } = require("../../Model/tray-rack/tray-rack");
+const { box } = require("../../Model/boxModel/box");
+const { payment } = require("../../Model/paymentModel/payment");
+const { warranty } = require("../../Model/warrantyModel/warranty");
 const { audtiorFeedback } = require("../../Model/temp/auditor-feedback");
 const { vendorMaster } = require("../../Model/vendorModel/vendorModel");
+const { storagemodel } = require("../../Model/storageModel/storage");
+const { rammodel } = require("../../Model/ramModel/ram");
 const {
   partAndColor,
 } = require("../../Model/Part-list-and-color/part-list-and-color");
@@ -115,6 +122,10 @@ module.exports = {
       count.bag = await masters.count({ prefix: "bag-master" });
       count.partList = await partAndColor.count({ type: "part-list" });
       count.colorList = await partAndColor.count({ type: "color-list" });
+      count.storageList = await storagemodel.count({ type: "storage-list" });
+      count.warrantyList = await warranty.count({ type: "warranty-list" });
+      count.paymentList = await payment.count({ type: "payment-list" });
+      count.ramList = await rammodel.count({ type: "ram-list" });
       count.readyForTransferSales = await masters.count({
         prefix: "tray-master",
         sort_id: "Audit Done Closed By Warehouse",
@@ -601,7 +612,16 @@ module.exports = {
       let vendor_sku_id = [];
       let brand = [];
       let model = [];
+      let jack_type = [];
       for (let i = 0; i < productsData.length; i++) {
+        if (
+          productsData[i]?.jack_type !== "Micro USB" &&
+          productsData[i]?.jack_type !== "Type C" &&
+          productsData[i]?.jack_type !== "lightning"
+        ) {
+          jack_type.push(productsData[i]?.jack_type);
+          err["jack_type"] = jack_type;
+        }
         let skuIdExists = await products.findOne({
           vendor_sku_id: productsData[i].vendor_sku_id,
         });
@@ -770,11 +790,13 @@ module.exports = {
   /*--------------------------------EDIT PRODUCT-----------------------------------*/
 
   editproduct: (productData) => {
+    console.log(productData.jack_type);
     return new Promise(async (resolve, reject) => {
       let data = await products.updateOne(
         { _id: productData._id },
         {
           $set: {
+            jack_type: productData.jack_type,
             brand_name: productData.brand_name,
             model_name: productData.model_name,
             vendor_sku_id: productData.vendor_sku_id,
@@ -782,6 +804,7 @@ module.exports = {
           },
         }
       );
+      console.log(data);
       if (data.modifiedCount != 0) {
         resolve(data);
       } else {
@@ -913,6 +936,16 @@ module.exports = {
   getLocation: () => {
     return new Promise(async (resolve, reject) => {
       let allLocation = await infra.find({ type_taxanomy: "CPC" });
+      resolve(allLocation);
+    });
+  },
+  /*--------------------------------GET PROCESSING LOCATION ------------------------------*/
+  getProcessingLocationFetch: (type) => {
+    return new Promise(async (resolve, reject) => {
+      let allLocation = await infra.find({
+        type_taxanomy: "CPC",
+        location_type: type,
+      });
       resolve(allLocation);
     });
   },
@@ -2457,27 +2490,29 @@ module.exports = {
     });
   },
 
-
   deleteSPcategory: (spcategory_id) => {
     console.log(spcategory_id);
     return new Promise(async (resolve, reject) => {
-        let data = await spareCategories.deleteOne({ spcategory_id: spcategory_id });
-        if (data) {
-          resolve({status:true});
-        } else {
-          resolve({status:false});
-        }
-      
+      let data = await spareCategories.deleteOne({
+        spcategory_id: spcategory_id,
+      });
+      if (data) {
+        resolve({ status: true });
+      } else {
+        resolve({ status: false });
+      }
     });
   },
   geteditSPcategory: (spcategory_id) => {
     console.log(spcategory_id);
     return new Promise(async (resolve, reject) => {
-      let data = await spareCategories.findOne({ spcategory_id: spcategory_id });
+      let data = await spareCategories.findOne({
+        spcategory_id: spcategory_id,
+      });
       if (data) {
-        resolve({status:true});
+        resolve({ status: true });
       } else {
-        resolve({status:false});
+        resolve({ status: false });
       }
     });
   },
@@ -2490,7 +2525,10 @@ module.exports = {
   createspcategories: (spcategoriesData) => {
     return new Promise(async (resolve, reject) => {
       const checkAlready = await spareCategories.findOne({
-        $or: [{ spcategory_id: spcategoriesData.spcategory_id }, { category_name: spcategoriesData.category_name }],
+        $or: [
+          { spcategory_id: spcategoriesData.spcategory_id },
+          { category_name: spcategoriesData.category_name },
+        ],
       });
       if (checkAlready) {
         resolve({ status: 2 });
@@ -2514,7 +2552,7 @@ module.exports = {
         {
           $set: {
             category_name: spcategoriesData.category_name,
-            description: spcategoriesData.description
+            description: spcategoriesData.description,
           },
         }
       );
@@ -2527,7 +2565,9 @@ module.exports = {
   },
   getOneSPcategory: (spcategory_id) => {
     return new Promise(async (resolve, reject) => {
-      const getOneSPcategory = await spareCategories.findOne({ spcategory_id: spcategory_id });
+      const getOneSPcategory = await spareCategories.findOne({
+        spcategory_id: spcategory_id,
+      });
       if (getOneSPcategory) {
         resolve({ status: 1, data: getOneSPcategory });
       } else {
@@ -2536,17 +2576,15 @@ module.exports = {
     });
   },
 
-
   deleteTrayRacks: (rack_id) => {
     console.log(rack_id);
     return new Promise(async (resolve, reject) => {
-        let data = await trayRack.deleteOne({ rack_id: rack_id });
-        if (data) {
-          resolve({status:true});
-        } else {
-          resolve({status:false});
-        }
-      
+      let data = await trayRack.deleteOne({ rack_id: rack_id });
+      if (data) {
+        resolve({ status: true });
+      } else {
+        resolve({ status: false });
+      }
     });
   },
   geteditTrayRacks: (rack_id) => {
@@ -2554,9 +2592,9 @@ module.exports = {
     return new Promise(async (resolve, reject) => {
       let data = await trayRack.findOne({ rack_id: rack_id });
       if (data) {
-        resolve({status:true});
+        resolve({ status: true });
       } else {
-        resolve({status:false});
+        resolve({ status: false });
       }
     });
   },
@@ -2564,6 +2602,19 @@ module.exports = {
     return new Promise(async (resolve, reject) => {
       const data = await trayRack.find();
       resolve(data);
+    });
+  },
+  /*--------------------GET RACK BASED ON THE LIMIT AND WAREHOUSE---------------------------*/
+  getRackBasedOnTheWarehouse: (warehouse) => {
+    return new Promise(async (resolve, reject) => {
+      let arr = [];
+      const rackIdData = await trayRack.find({ warehouse: warehouse });
+      for (let x of rackIdData) {
+        if (x.limit > x?.bag_or_tray?.length) {
+          arr.push(x);
+        }
+      }
+      resolve(arr);
     });
   },
   createTrayRacks: (trayracksData) => {
@@ -2609,6 +2660,7 @@ module.exports = {
   getOneTrayRack: (rack_id) => {
     return new Promise(async (resolve, reject) => {
       const getOneTrayRack = await trayRack.findOne({ rack_id: rack_id });
+      console.log(getOneTrayRack);
       if (getOneTrayRack) {
         resolve({ status: 1, data: getOneTrayRack });
       } else {
@@ -2617,8 +2669,296 @@ module.exports = {
     });
   },
 
+  /*--------------------------------FIND Rack ID-----------------------------------*/
 
+  getRackID: () => {
+    return new Promise(async (resolve, reject) => {
+      let allRacksid = await trayRack.find();
+      resolve(allRacksid);
+    });
+  },
 
+  deleteBoxes: (box_id) => {
+    console.log(box_id);
+    return new Promise(async (resolve, reject) => {
+      let data = await box.deleteOne({ box_id: box_id });
+      if (data) {
+        resolve({ status: true });
+      } else {
+        resolve({ status: false });
+      }
+    });
+  },
+  geteditBoxes: (box_id) => {
+    console.log(box_id);
+    return new Promise(async (resolve, reject) => {
+      let data = await box.findOne({ box_id: box_id });
+      if (data) {
+        resolve({ status: true });
+      } else {
+        resolve({ status: false });
+      }
+    });
+  },
+  getAllBoxes: () => {
+    return new Promise(async (resolve, reject) => {
+      const data = await box.find();
+      resolve(data);
+    });
+  },
+  createBoxes: (boxesData) => {
+    return new Promise(async (resolve, reject) => {
+      const checkAlready = await box.findOne({
+        $or: [{ box_id: boxesData.box_id }, { name: boxesData.name }],
+      });
+      if (checkAlready) {
+        resolve({ status: 2 });
+      } else {
+        const boxdata = await box.create(boxesData);
+        if (boxdata) {
+          resolve({ status: 1 });
+        } else {
+          resolve({ status: 3 });
+        }
+      }
+    });
+  },
+  editBoxes: (boxesData) => {
+    return new Promise(async (resolve, reject) => {
+      const updateboxes = await box.findOneAndUpdate(
+        {
+          box_id: boxesData.box_id,
+        },
+        {
+          $set: {
+            name: boxesData.name,
+            display: boxesData.display,
+            description: boxesData.description,
+          },
+        }
+      );
+      if (updateboxes) {
+        resolve({ status: 1 });
+      } else {
+        resolve({ status: 2 });
+      }
+    });
+  },
+  getOneBox: (box_id) => {
+    return new Promise(async (resolve, reject) => {
+      const getOneBox = await box.findOne({ box_id: box_id });
+      if (getOneBox) {
+        resolve({ status: 1, data: getOneBox });
+      } else {
+        resolve({ status: 2 });
+      }
+    });
+  },
+
+  /*--------------------------------FIND Box ID-----------------------------------*/
+
+  getBoxID: () => {
+    return new Promise(async (resolve, reject) => {
+      let allBoxesid = await box.find();
+      resolve(allBoxesid);
+    });
+  },
+
+  getAllPayments: () => {
+    return new Promise(async (resolve, reject) => {
+      const data = await payment.find();
+      resolve(data);
+    });
+  },
+
+  createPayment: (paymentsData) => {
+    return new Promise(async (resolve, reject) => {
+      let checkDup = await payment.findOne({
+        name: paymentsData.name,
+      });
+      if (checkDup) {
+        resolve({ status: 2 });
+      } else {
+        paymentsData.created_at = Date.now();
+        const data = await payment.create(paymentsData);
+        if (data) {
+          resolve({ status: 1 });
+        } else {
+          resolve({ status: 3 });
+        }
+      }
+    });
+  },
+
+  editPayment: (paymentsData) => {
+    return new Promise(async (resolve, reject) => {
+      const updatepayment = await payment.findOneAndUpdate(
+        {
+          _id: paymentsData._id,
+        },
+        {
+          $set: {
+            name: paymentsData.name,
+            description: paymentsData.description,
+          },
+        }
+      );
+      if (updatepayment) {
+        resolve({ status: 1 });
+      } else {
+        resolve({ status: 0 });
+      }
+    });
+  },
+
+  geteditPayment: (name) => {
+    console.log(name);
+    return new Promise(async (resolve, reject) => {
+      let data = await payment.findOne({ name: name });
+      if (data) {
+        resolve({ status: true });
+      } else {
+        resolve({ status: false });
+      }
+    });
+  },
+
+  deletePayment: (name) => {
+    console.log(name);
+    return new Promise(async (resolve, reject) => {
+      let data = await payment.deleteOne({ _id: name });
+      if (data) {
+        resolve({ status: true });
+      } else {
+        resolve({ status: false });
+      }
+    });
+  },
+
+  viewPayment: (type) => {
+    return new Promise(async (resolve, reject) => {
+      if (type == "payment-list") {
+        const data = await payment.find({ type: type }).sort({ part_code: 1 });
+        resolve(data);
+      } else {
+        const data = await payment
+          .find({ type: type })
+          .sort({ name: 1 })
+          .collation({ locale: "en_US", numericOrdering: true });
+        resolve(data);
+      }
+    });
+  },
+  viewOnePayment: (id) => {
+    return new Promise(async (resolve, reject) => {
+      const getonepayment = await payment.findOne({ _id: id });
+      // if (type == "payment-list") {
+      if (getonepayment) {
+        resolve({ status: 1, data: getonepayment });
+      } else {
+        resolve({ status: 2 });
+      }
+      // }
+    });
+  },
+
+  getAllWarranty: () => {
+    return new Promise(async (resolve, reject) => {
+      const data = await warranty.find();
+      resolve(data);
+    });
+  },
+
+  createWarranty: (warrantyData) => {
+    return new Promise(async (resolve, reject) => {
+      let checkDup = await warranty.findOne({
+        name: warrantyData.name,
+      });
+      if (checkDup) {
+        resolve({ status: 2 });
+      } else {
+        warrantyData.created_at = Date.now();
+        const data = await warranty.create(warrantyData);
+        if (data) {
+          resolve({ status: 1 });
+        } else {
+          resolve({ status: 3 });
+        }
+      }
+    });
+  },
+
+  editWarranty: (warrantyData) => {
+    console.log(warrantyData);
+    return new Promise(async (resolve, reject) => {
+      const updatewarranty = await warranty.findOneAndUpdate(
+        {
+          _id: warrantyData._id,
+        },
+        {
+          $set: {
+            name: warrantyData.name,
+            description: warrantyData.description,
+          },
+        }
+      );
+      if (updatewarranty) {
+        resolve({ status: 1 });
+      } else {
+        resolve({ status: 0 });
+      }
+    });
+  },
+
+  geteditWarranty: (name) => {
+    console.log(name);
+    return new Promise(async (resolve, reject) => {
+      let data = await warranty.findOne({ name: name });
+      if (data) {
+        resolve({ status: true });
+      } else {
+        resolve({ status: false });
+      }
+    });
+  },
+
+  deleteWarranty: (name) => {
+    console.log(name);
+    return new Promise(async (resolve, reject) => {
+      let data = await warranty.deleteOne({ _id: name });
+      if (data) {
+        resolve({ status: true });
+      } else {
+        resolve({ status: false });
+      }
+    });
+  },
+
+  viewWarranty: (type) => {
+    return new Promise(async (resolve, reject) => {
+      if (type == "warranty-list") {
+        const data = await warranty.find({ type: type }).sort({ part_code: 1 });
+        resolve(data);
+      } else {
+        const data = await warranty
+          .find({ type: type })
+          .sort({ name: 1 })
+          .collation({ locale: "en_US", numericOrdering: true });
+        resolve(data);
+      }
+    });
+  },
+  viewOneWarranty: (id) => {
+    return new Promise(async (resolve, reject) => {
+      const getonewarranty = await warranty.findOne({ _id: id });
+
+      if (getonewarranty) {
+        resolve({ status: 1, data: getonewarranty });
+      } else {
+        resolve({ status: 2 });
+      }
+    });
+  },
 
   createPartOrColor: (dataOfPartOrColor) => {
     return new Promise(async (resolve, reject) => {
@@ -2666,17 +3006,190 @@ module.exports = {
       }
     });
   },
+
+  createStorage: (dataOfStorage) => {
+    return new Promise(async (resolve, reject) => {
+      let checkDup = await storagemodel.findOne({
+        name: dataOfStorage.name,
+        type: "storage-list",
+      });
+      if (checkDup) {
+        resolve({ status: 2 });
+      } else {
+        dataOfStorage.created_at = Date.now();
+        const data = await storagemodel.create(dataOfStorage);
+        if (data) {
+          resolve({ status: 1 });
+        } else {
+          resolve({ status: 3 });
+        }
+      }
+    });
+  },
+  viewStorage: () => {
+    return new Promise(async (resolve, reject) => {
+      const data = await storagemodel.find({});
+      resolve(data);
+    });
+  },
+  getStorageDataForEdit: (id) => {
+    return new Promise(async (resolve, reject) => {
+      const findData = await storagemodel.findOne({ _id: id });
+      if (findData) {
+        resolve({ storageData: findData, status: 1 });
+      } else {
+        resolve({ status: 0 });
+      }
+    });
+  },
+  editStorage: (dataOfStorage) => {
+    return new Promise(async (resolve, reject) => {
+      let updateData = await storagemodel.updateOne({
+        $set: {
+          name: dataOfStorage.name,
+          description: dataOfStorage.description,
+        },
+      });
+      if (updateData) {
+        resolve({ status: 1 });
+      } else {
+        resolve({ status: 0 });
+      }
+    });
+  },
+  deleteStorage: (id) => {
+    return new Promise(async (resolve, reject) => {
+      let data = await storagemodel.deleteOne({ _id: id });
+      if (data.deletedCount !== 0) {
+        resolve({ status: true });
+      } else {
+        resolve({ status: false });
+      }
+    });
+  },
+
+  createRam: (dataOfRam) => {
+    return new Promise(async (resolve, reject) => {
+      let checkDup = await rammodel.findOne({
+        name: dataOfRam.name,
+        type: "ram-list",
+      });
+      if (checkDup) {
+        resolve({ status: 2 });
+      } else {
+        dataOfRam.created_at = Date.now();
+        const data = await rammodel.create(dataOfRam);
+        if (data) {
+          resolve({ status: 1 });
+        } else {
+          resolve({ status: 3 });
+        }
+      }
+    });
+  },
+  viewRam: (type) => {
+    return new Promise(async (resolve, reject) => {
+      if (type == "ram-list") {
+        const data = await rammodel.find({ type: type }).sort({ part_code: 1 });
+        resolve(data);
+      } else {
+        const data = await rammodel
+          .find({ type: type })
+          .sort({ name: 1 })
+          .collation({ locale: "en_US", numericOrdering: true });
+        resolve(data);
+      }
+    });
+  },
+  getOneRamDataForEdit: (id) => {
+    return new Promise(async (resolve, reject) => {
+      const data = await rammodel.findOne({ _id: id });
+      if (data) {
+        resolve({ status: 1, ramData: data });
+      } else {
+        resolve({ status: 0 });
+      }
+    });
+  },
+  editRam: (dataOfRam) => {
+    return new Promise(async (resolve, reject) => {
+      let updateData = await rammodel.updateOne({
+        $set: {
+          name: dataOfRam.name,
+          description: dataOfRam.description,
+        },
+      });
+      if (updateData) {
+        resolve({ status: 1 });
+      } else {
+        resolve({ status: 0 });
+      }
+    });
+  },
+  deleteRam: (id) => {
+    return new Promise(async (resolve, reject) => {
+      try {
+        let data = await rammodel.deleteOne({ _id: id });
+        if (data.deletedCount !== 0) {
+          resolve({ status: true });
+        } else {
+          resolve({ status: false });
+        }
+      } catch (error) {
+        console.error(error); // Log the error for debugging
+        reject(error);
+      }
+    });
+  },
+
+  // deleteStorage: (id, type, page) => {
+  //   return new Promise(async (resolve, reject) => {
+  //     if (page == "storage-list") {
+  //       const activateOrDeactiveate = await storagemodel.findOneAndUpdate(
+  //         {
+  //           _id: id,
+  //         },
+  //         {
+  //           $set: {
+  //             status: type,
+  //           },
+  //         }
+  //       );
+  //       if (activateOrDeactiveate) {
+  //         resolve({ status: 1 });
+  //       } else {
+  //         resolve({ status: 2 });
+  //       }
+  //     } else {
+  //       let deleteData = await storagemodel.deleteOne({ _id: id });
+  //       if (deleteData.deletedCount !== 0) {
+  //         resolve({ status: 1 });
+  //       } else {
+  //         resolve({ status: 2 });
+  //       }
+  //     }
+  //   });
+  // },
+
   bulkValidationForPartCheck: (partData) => {
     return new Promise(async (resolve, reject) => {
       let err = {};
       let partName = [];
       let color = [];
       let technical_qc = [];
+      let sp_category = [];
       let dup = false;
       let i = 0;
       const duplicates = [];
 
       for (let x of partData) {
+        let checkCategory = await spareCategories.findOne({
+          category_name: x.sp_category,
+        });
+        if (checkCategory == null) {
+          sp_category.push(x.sp_category);
+          err["sp_category_not_exists"] = sp_category;
+        }
         if (x.technical_qc !== "Y" && x.technical_qc !== "N") {
           technical_qc.push(x.technical_qc);
           err["technical_qc"] = technical_qc;
@@ -2740,6 +3253,7 @@ module.exports = {
           description: description,
           code: part_code,
           created_by: created_by,
+          sp_category: sp_category,
           created_at: created_at,
           ...rest
         }) => ({
@@ -2749,6 +3263,7 @@ module.exports = {
           technical_qc,
           description,
           created_by,
+          sp_category,
           created_at,
           ...rest,
         })
@@ -3082,8 +3597,6 @@ module.exports = {
     });
   },
 
-
-
   getAllVendor: () => {
     return new Promise(async (resolve, reject) => {
       const data = await vendorMaster.find();
@@ -3164,8 +3677,6 @@ module.exports = {
     });
   },
 
-
-
   editPartOrColor: (dataOfPartorColor) => {
     return new Promise(async (resolve, reject) => {
       let updateData = await partAndColor.updateOne(
@@ -3177,6 +3688,8 @@ module.exports = {
             description: dataOfPartorColor.description,
             color: dataOfPartorColor?.color,
             technical_qc: dataOfPartorColor?.technical_qc,
+            sp_category: dataOfPartorColor.sp_category,
+            box_id: dataOfPartorColor.box_id,
           },
         }
       );
@@ -3187,6 +3700,7 @@ module.exports = {
       }
     });
   },
+
   partListManageBulkValidation: (dataofPartStock) => {
     return new Promise(async (resolve, reject) => {
       let err = {};
@@ -3443,23 +3957,43 @@ module.exports = {
   },
   addCpcType: () => {
     return new Promise(async (resolve, reject) => {
-      let updateProcessing = await user.updateMany(
-        { cpc: "Gurgaon_122016" },
-        {
-          $set: {
-            cpc_type: "Processing",
-          },
+      let findAllUsers = await user.find();
+      let updateUserWh;
+      for (let x of findAllUsers) {
+        let findWarehouse = await infra.findOne({
+          type_taxanomy: "Warehouse",
+          parent_id: x.cpc,
+        });
+        if (findWarehouse) {
+          updateUserWh = await user.findOneAndUpdate(
+            {
+              user_name: x.user_name,
+            },
+            {
+              $set: {
+                warehouse: findWarehouse.code,
+              },
+            }
+          );
         }
-      );
-      let updateDock = await user.updateMany(
-        { cpc: "Bangalore_560067" },
-        {
-          $set: {
-            cpc_type: "Dock",
-          },
-        }
-      );
-      if (updateDock) {
+      }
+      // let updateProcessing = await user.updateMany(
+      //   { cpc: "Gurgaon_122016" },
+      //   {
+      //     $set: {
+      //       cpc_type: "Processing",
+      //     },
+      //   }
+      // );
+      // let updateDock = await user.updateMany(
+      //   { cpc: "Bangalore_560067" },
+      //   {
+      //     $set: {
+      //       cpc_type: "Dock",
+      //     },
+      //   }
+      // );
+      if (updateUserWh) {
         resolve({ status: 1 });
       } else {
         resolve({ status: 0 });
@@ -3788,6 +4322,175 @@ module.exports = {
       resolve(arr);
     });
   },
+  botTrayTransfer: () => {
+    return new Promise(async (resolve, reject) => {
+      let arr = [
+        "91010004259",
+        "92030003380",
+        "91010004256",
+        "90010000726",
+        "91010006115",
+        "91010006055",
+        "90010000037",
+        "91010006052",
+        "90010001122",
+        "92030003383",
+        "92030000136",
+        "92030004000",
+        "92030004444",
+        "91010005538",
+        "90010002163",
+        "91010002254",
+        "91010002379",
+        "91010005383",
+        "92030002271",
+        "90010000542",
+        "92030000851",
+        "90010000057",
+        "92030000394",
+        "92030000068",
+        "92030000641",
+        "90010001135",
+        "91010006045",
+        "92030004043",
+        "92030004952",
+        "91010006034",
+        "92030004775",
+      ];
+
+      let arr2 = [];
+
+      for (let x of arr) {
+        let findTray = await masters.findOne({ "items.uic": x });
+        if (findTray) {
+          for (let y of findTray.items) {
+            if (y.uic == x) {
+              y.tray_id = "BOT2177";
+              let updateTheTray = await masters.updateOne(
+                { code: "BOT2177" },
+                {
+                  $push: {
+                    items: y,
+                  },
+                  $set: {
+                    sort_id: "Closed By Warehouse",
+                    closed_time_wharehouse_from_bot: new Date(
+                      new Date().toISOString().split("T")[0]
+                    ),
+                    actual_items: [],
+                    "track_tray.bot_done_tray_close_wh": Date.now(),
+                  },
+                }
+              );
+              if (updateTheTray.modifiedCount !== 0) {
+                let updateRemove = await masters.findOneAndUpdate(
+                  { code: findTray.code },
+                  {
+                    $pull: {
+                      items: {
+                        uic: x,
+                      },
+                    },
+                    $set: {
+                      temp_array: [],
+                    },
+                  }
+                );
+                if (arr2.includes(updateRemove.code) == false) {
+                  arr2.push(updateRemove.code);
+                }
+              }
+            }
+          }
+        }
+      }
+      arr2.push("BOT2177");
+      for (let tray of arr2) {
+        let take = await masters.findOne({ code: tray });
+        for (let x of take.items) {
+          let getItemId = await delivery.findOneAndUpdate(
+            {
+              tracking_id: x.awbn_number,
+            },
+            {
+              $set: {
+                tray_close_wh_date: Date.now(),
+                tray_status: "Closed By Warehouse",
+                tray_location: "Warehouse",
+                updated_at: Date.now(),
+              },
+            },
+            {
+              new: true,
+              projection: { _id: 0 },
+            }
+          );
+          // let updateElastic = await elasticsearch.uicCodeGen(getItemId);
+          let findProduct = await products.findOne({
+            vendor_sku_id: getItemId.item_id,
+          });
+          let obj = {
+            item: [],
+            muic: findProduct.muic,
+            model: findProduct.model_name,
+            brand: findProduct.brand_name,
+            vendor_sku_id: findProduct.vendor_sku_id,
+            assigned_count: 0,
+            close_date: Date.now(),
+          };
+          obj.item.push(x);
+          let updateToMuic = await masters.updateOne(
+            {
+              code: take.code,
+              items: {
+                $elemMatch: {
+                  awbn_number: x.awbn_number,
+                },
+              },
+            },
+            {
+              $set: {
+                "items.$.muic": findProduct.muic,
+                "items.$.model": findProduct.model_name,
+                "items.$.brand": findProduct.brand_name,
+                "items.$.wht_tray": null,
+              },
+            }
+          );
+          let checkAlreadyClub = await masters.findOne({
+            code: take.code,
+            "temp_array.vendor_sku_id": findProduct.vendor_sku_id,
+          });
+          x.wht_tray = null;
+          if (checkAlreadyClub) {
+            let updateTempArrayClub = await masters.updateOne(
+              {
+                code: take.code,
+                "temp_array.vendor_sku_id": findProduct.vendor_sku_id,
+              },
+              {
+                $push: {
+                  "temp_array.$.item": x,
+                },
+              }
+            );
+          } else {
+            let updateTempArrayClub = await masters.updateOne(
+              {
+                code: take.code,
+              },
+              {
+                $push: {
+                  temp_array: obj,
+                },
+              }
+            );
+          }
+        }
+      }
+      resolve({ status: true });
+    });
+  },
   rollBackTrayToAuditStage: () => {
     return new Promise(async (resolve, reject) => {
       // const findTray=await masters.findOne({code:"CTB2008"})
@@ -3959,23 +4662,26 @@ module.exports = {
   },
   fixBaggingIssueWithAwbn: () => {
     return new Promise(async (resolve, reject) => {
-      let i=0
-      let arr=[]
-      let findDelivery=await delivery.find({})
-      for(let x of findDelivery){
-        if(x.wht_tray){
-          let findTray=await masters.findOne({code:x.wht_tray,"items.uic":x?.uic_code?.code})
-          if(findTray == null){
-            if(x.sales_bin_status == undefined && x.ctx_tray_id == undefined){
-              if(arr.includes(x.wht_tray)== false){
-                arr.push(x.wht_tray)
+      let i = 0;
+      let arr = [];
+      let findDelivery = await delivery.find({});
+      for (let x of findDelivery) {
+        if (x.wht_tray) {
+          let findTray = await masters.findOne({
+            code: x.wht_tray,
+            "items.uic": x?.uic_code?.code,
+          });
+          if (findTray == null) {
+            if (x.sales_bin_status == undefined && x.ctx_tray_id == undefined) {
+              if (arr.includes(x.wht_tray) == false) {
+                arr.push(x.wht_tray);
               }
             }
           }
         }
       }
       console.log(arr.length);
-      resolve(arr)
+      resolve(arr);
     });
   },
   changeWHLocation: () => {
@@ -4023,10 +4729,26 @@ module.exports = {
   bugFixOfSpecOfTray: () => {
     return new Promise(async (resolve, reject) => {
       let getTrayZeroUnits = await masters.find({
-        $or: [{ code: "WHT1100" }, { code: "WHT1084" }, { code: "WHT1057" },{ code: "WHT1054" },{ code: "WHT1036" },{ code: "WHT1149" }, { code: "WHT1218" }, { code: "WHT1255" },{ code: "WHT1532" },{ code: "WHT1481" },{ code: "WHT1526" }],
+        $or: [
+          { code: "WHT1100" },
+          { code: "WHT1084" },
+          { code: "WHT1057" },
+          { code: "WHT1054" },
+          { code: "WHT1036" },
+          { code: "WHT1149" },
+          { code: "WHT1218" },
+          { code: "WHT1255" },
+          { code: "WHT1532" },
+          { code: "WHT1481" },
+          { code: "WHT1526" },
+        ],
       });
       for (let x of getTrayZeroUnits) {
-        let getDelivery = await delivery.find({ wht_tray: x.code,sales_bin_status:{$exists:false},ctx_tray_id:{$exists:false} });
+        let getDelivery = await delivery.find({
+          wht_tray: x.code,
+          sales_bin_status: { $exists: false },
+          ctx_tray_id: { $exists: false },
+        });
         let findMuic = await products.findOne({
           brand_name: x.brand,
           model_name: x.model,
@@ -4046,7 +4768,7 @@ module.exports = {
             status: "Valid",
             bot_eval_result: y.bot_report,
             charging: y.charging,
-            bqc_report:y.bqc_report
+            bqc_report: y.bqc_report,
           };
           let addToTray = await masters.findOneAndUpdate(
             { code: x.code },
@@ -4141,20 +4863,259 @@ module.exports = {
       resolve(BqcDoneUnits);
     });
   },
-  whtTrayRecorrect:()=>{
-    let arr=[
-      "WHT1100",
-      "WHT1084",
-      "WHT1057",
-      "WHT1054",
-      "WHT1036"
-    ]
-    return new Promise(async(resolve,reject)=>{
-      for(let x of arr){
-        let findTray=await delivery.find({wht_tray:x,sales_bin_status:{$exists:false},ctx_tray_id:{$exists:false}})
-        
-        
+  whtTrayRecorrect: () => {
+    let arr = ["WHT1100", "WHT1084", "WHT1057", "WHT1054", "WHT1036"];
+    return new Promise(async (resolve, reject) => {
+      for (let x of arr) {
+        let findTray = await delivery.find({
+          wht_tray: x,
+          sales_bin_status: { $exists: false },
+          ctx_tray_id: { $exists: false },
+        });
       }
-    })
-  }
+    });
+  },
+  resolveAllDeliveryIssue: () => {
+    return new Promise(async (resolve, reject) => {
+      let findDelivery = await delivery.find({});
+      let i = 0;
+      for (let x of findDelivery) {
+        // check imei verified or not
+        if (x.bqc_software_report != undefined) {
+          let status = "Unverified";
+          if (
+            x.imei?.match(/[0-9]/g)?.join("") ==
+              x.bqc_software_report.mobile_imei ||
+            x.imei?.match(/[0-9]/g)?.join("") ==
+              x.bqc_software_report.mobile_imei2 ||
+            x.imei?.match(/[0-9]/g)?.join("") ==
+              x.bqc_software_report._ro_ril_miui_imei0
+          ) {
+            status = "Verified";
+          }
+          let updateDelivery = await delivery.findOneAndUpdate(
+            {
+              "uic_code.code": x.uic_code?.code,
+            },
+            {
+              $set: {
+                unverified_imei_status: status,
+              },
+            }
+          );
+          let updateOrder = await orders.findOneAndUpdate(
+            { order_id: x.order_id },
+            {
+              $set: {
+                imei_verification_status: status,
+              },
+            }
+          );
+        }
+
+        if (x.partner_shop == "Sales_Gurgaon_122016") {
+          let updateDeliveryTwo = await delivery.findOneAndUpdate(
+            { "uic_code.code": x.uic_code?.code },
+            {
+              $set: {
+                partner_shop: "Gurgaon_122016",
+              },
+            }
+          );
+        } else if (
+          x.partner_shop == "Gurgaon_122016" ||
+          x.partner_shop == "Sales_Gurgaon_122016"
+        ) {
+          let updateOrder = await orders.findOneAndUpdate(
+            { order_id: x.order_id },
+            {
+              $set: {
+                partner_shop: "Gurgaon_122016",
+              },
+            }
+          );
+        }
+        console.log(i);
+        i++;
+      }
+      //2023-12-05T18:30:00.000+00:00
+      //2023-11-05T18:30:00.000+00:00
+      //2023-12-04T18:30:00.000+00:00
+      //2023-10-05T18:30:00.000+00:00
+      //2023-10-06T18:30:00.000+00:00
+      //2023-09-06T18:30:00.000+00:00
+      //2023-11-04T18:30:00.000+00:00
+      //2023-10-04T18:30:00.000+00:00
+      //2023-09-05T18:30:00.000+00:00
+      //2023-08-06T18:30:00.000+00:00
+      //2023-08-05T18:30:00.000+00:00
+
+      // let updateOrders=await orders.updateMany({order_date:new Date("2023-08-05T18:30:00.000+00:00")},{
+      //   $set:{
+      //     order_date:new Date("2023-05-08T18:30:00.000+00:00")
+      //   }
+      // })
+      // let arr=[]
+      // for (let x of arr) {
+      //   let updatjackMuic = await products.findOneAndUpdate(
+      //     { muic: x.muic },
+      //     {
+      //       $set: {
+      //         jack_type: x.jack_type,
+      //       },
+      //     }
+
+      //     );
+      //     console.log(updatjackMuic)
+      //   let tray = await masters.updateMany(
+      //     { brand: x.brand_name, model: x.model_name },
+      //     {
+      //       $set: {
+      //         jack: x.jack_type,
+      //       },
+      //     }
+      //   );
+      // }
+
+      // FINAL GRADE UPDATION
+      // let i = 0;
+      // let findAllDeliveryData = await delivery.find({});
+      // for (let x of findAllDeliveryData) {
+      //   let grade = "";
+      //   if (x?.sales_bin_grade !== undefined) {
+      //     grade = x.sales_bin_grade;
+      //   } else if (x?.audit_report?.stage == "Accept") {
+      //     grade = x?.audit_report.orgGrade;
+      //   } else if (x?.audit_report?.grade !== undefined) {
+      //     grade = x?.audit_report?.grade;
+      //   }
+      //   let update = await delivery.findOneAndUpdate(
+      //     { "uic_code.code": x?.uic_code?.code },
+      //     {
+      //       $set: {
+      //         final_grade: grade,
+      //       },
+      //     }
+      //   );
+      //   i++;
+      //   console.log(i);
+      // }
+
+      resolve({ status: true });
+    });
+  },
+  addCategoryExtra: () => {
+    return new Promise(async (resolve, reject) => {
+      let arr =[]
+      let str = "SPC000000";
+      let str2 = "BOX000000";
+      for (let x of arr) {
+        let checkBoxId = await box.findOne({ name: x.box_id });
+        if (
+          checkBoxId == null &&
+          x.box_id !== undefined &&
+          x.box_id !== "" &&
+          x.box_id !== "BOX-99"
+        ) {
+          let num1 = parseInt(str2.substring(3)) + 1;
+          let updatedStr2 =
+            str2.substring(0, 3) + num1.toString().padStart(6, "0");
+          str2 = updatedStr2;
+          let createBox = await box.create({
+            box_id: str2,
+            name: x.box_id,
+            description: x.box_id,
+            display: str2,
+            created_at: Date.now(),
+          });
+          x.box_id=createBox.box_id
+        }
+        else{
+          if(checkBoxId){
+            x.box_id=checkBoxId.box_id
+          }
+        }
+        let findCategory = await spareCategories.findOne({
+          category_name: x.sp_category,
+        });
+
+        if (
+          findCategory == null &&
+          x.sp_category !== undefined &&
+          x.sp_category !== ""
+        ) {
+          let num = parseInt(str.substring(3)) + 1;
+          let updatedStr =
+            str.substring(0, 3) + num.toString().padStart(6, "0");
+          str = updatedStr;
+          let createCategory = await spareCategories.create({
+            spcategory_id: str,
+            category_name: x.sp_category,
+            description: x.sp_category,
+            creation_date: Date.now(),
+          });
+        }
+        let updateSp = await partAndColor.findOneAndUpdate(
+          {
+            part_code: x.part_code,
+            type: "part-list",
+          },
+          {
+            $set: {
+              sp_category: x.sp_category,
+              box_id: x.box_id,
+            },
+          }
+        );
+      }
+      resolve({ status: true });
+    });
+  },
+  /* ------------------------------OLD SPN MANGE-----------------------------*/
+  manageOldSpnData: () => {
+    return new Promise(async (resolve, reject) => {
+      let arr = []
+      for (let x of arr) {
+        const spnArray = x.spn.split(",");
+
+        let array = [];
+        for (let y of spnArray) {
+          let findSpn = await partAndColor.findOne({ part_code: y });
+          let obj = {
+            part_id: findSpn.part_code,
+            part_name: findSpn.name,
+            quantity: 1,
+          };
+          array.push(obj);
+        }
+
+        let checkTray = await masters.findOne({
+          "items.uic": x.uic?.toString(),
+        });
+
+        if (checkTray) {
+          if (checkTray.sort_id == "Ready to RDL-Repair") {
+            let updateDelivery = await delivery.updateOne(
+              { "uic_code.code": x.uic?.toString() },
+              {
+                $set: {
+                  "rdl_fls_one_report.partRequired": array,
+                },
+              }
+            );
+
+            let updateOneTray = await masters.updateOne(
+              { "items.uic": x.uic?.toString() },
+              {
+                $set: {
+                  "items.$.rdl_fls_report.partRequired": array,
+                },
+              }
+            );
+          }
+        }
+      }
+      resolve({ status: true });
+    });
+  },
 };

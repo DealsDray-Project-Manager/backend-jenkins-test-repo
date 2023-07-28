@@ -686,6 +686,22 @@ router.post("/getLocation", async (req, res, next) => {
   }
 });
 
+/* GET ONLY PROCESSING WAREHOUSE */
+router.post("/getLocationProcessing/:type", async (req, res, next) => {
+  try {
+    const { type } = req.params;
+    let location = await superAdminController.getProcessingLocationFetch(type);
+    if (location) {
+      res.status(200).json({
+        data: location,
+        message: "Success",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
 /*-----------------------------EDIT INFRA--------------------------------------*/
 router.post("/editInfra", async (req, res, next) => {
   try {
@@ -741,7 +757,6 @@ router.post("/getWarehouse", async (req, res, next) => {
     next(error);
   }
 });
-
 
 /*-----------------------------BULK VALIDATION BAG--------------------------------------*/
 router.post("/bulkValidationBag", async (req, res, next) => {
@@ -1564,8 +1579,6 @@ router.post("/categoryCheck", async (req, res, next) => {
   }
 });
 
-
-
 /*----------------------------------------------SP CATEGORIES ----------------------------------------------------*/
 // GET ALL THE SP CATEGORIES
 router.post("/spcategories/view", async (req, res, next) => {
@@ -1585,7 +1598,9 @@ router.post("/spcategories/view", async (req, res, next) => {
 // CREATE SP CATEGORIES
 router.post("/spcategories/create", async (req, res, next) => {
   try {
-    const spcategoriesData = await superAdminController.createspcategories(req.body);
+    const spcategoriesData = await superAdminController.createspcategories(
+      req.body
+    );
     if (spcategoriesData.status == 1) {
       fs.readFile(
         "myjsonfile.json",
@@ -1693,7 +1708,9 @@ router.post("/spcategories/idGen", async (req, res, next) => {
 // EDIT SP CATEGORIES
 router.post("/spcategories/edit", async (req, res, next) => {
   try {
-    const spcategoriesData = await superAdminController.editspcategories(req.body);
+    const spcategoriesData = await superAdminController.editspcategories(
+      req.body
+    );
     if (spcategoriesData.status == 1) {
       res.status(200).json({
         message: "Successfully Updated",
@@ -1710,7 +1727,9 @@ router.post("/spcategories/edit", async (req, res, next) => {
 
 router.get("/geteditSPcategory/:spcategory_id", async (req, res) => {
   try {
-    let user = await superAdminController.geteditSPcategory(req.params.spcategory_id);
+    let user = await superAdminController.geteditSPcategory(
+      req.params.spcategory_id
+    );
     if (user) {
       res.status(200).json({ data: user });
     }
@@ -1723,7 +1742,9 @@ router.get("/geteditSPcategory/:spcategory_id", async (req, res) => {
 router.post("/spcategories/one/:categoriesId", async (req, res, next) => {
   try {
     const { categoriesId } = req.params;
-    const spcategoriesData = await superAdminController.getOneSPcategory(categoriesId);
+    const spcategoriesData = await superAdminController.getOneSPcategory(
+      categoriesId
+    );
     if (spcategoriesData.status == 1) {
       res.status(200).json({
         data: spcategoriesData.data,
@@ -1749,10 +1770,11 @@ router.get("/getAllSPCategories", async (req, res) => {
   }
 });
 
-
 router.post("/deleteSPcategory/:spcategory_id", async (req, res, next) => {
   try {
-    let data = await superAdminController.deleteSPcategory(req.params.spcategory_id);
+    let data = await superAdminController.deleteSPcategory(
+      req.params.spcategory_id
+    );
     if (data.status == true) {
       res.status(200).json({
         message: "Successfully Deleted",
@@ -1778,17 +1800,46 @@ router.get("/geteditSPcategory/:code", async (req, res) => {
   }
 });
 
-
-
 /*----------------------------------------------Tray Racks ----------------------------------------------------*/
 // GET ALL THE Tray Racks
 router.post("/trayracks/view", async (req, res, next) => {
   try {
-    console.log("working");
     const trayracksData = await superAdminController.getAllTrayRacks();
     if (trayracksData) {
       res.status(200).json({
         data: trayracksData,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
+/* ---------------------------GET RACK BASED ON THE WAREHOUSE ------------------*/
+router.post("/trayracks/view/:warehouse", async (req, res, next) => {
+  try {
+    const { warehouse } = req.params;
+    const trayracksData = await superAdminController.getRackBasedOnTheWarehouse(
+      warehouse
+    );
+    if (trayracksData) {
+      res.status(200).json({
+        data: trayracksData,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+/*-----------------------------GET Rack ID--------------------------------------*/
+
+router.post("/getRackID", async (req, res, next) => {
+  try {
+    let rackid = await superAdminController.getRackID();
+    if (rackid) {
+      res.status(200).json({
+        data: rackid,
+        message: "Success",
       });
     }
   } catch (error) {
@@ -1882,7 +1933,7 @@ router.post("/addTrayRacks", async (req, res, next) => {
   }
 });
 
-// SPCATID GEN
+// RACKID GEN
 router.post("/trayracks/idGen", async (req, res, next) => {
   try {
     let obj;
@@ -1963,7 +2014,6 @@ router.get("/getAllTrayRacks", async (req, res) => {
   }
 });
 
-
 router.post("/deleteTrayRacks/:rack_id", async (req, res, next) => {
   try {
     let data = await superAdminController.deleteTrayRacks(req.params.rack_id);
@@ -1992,16 +2042,459 @@ router.get("/geteditTrayRacks/:code", async (req, res) => {
   }
 });
 
+/*----------------------------------------------Boxes ----------------------------------------------------*/
+// GET ALL THE boxes
+router.post("/boxes/view", async (req, res, next) => {
+  try {
+    console.log("working");
+    const boxesData = await superAdminController.getAllBoxes();
+    if (boxesData) {
+      res.status(200).json({
+        data: boxesData,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
 
+/*-----------------------------GET Box ID--------------------------------------*/
 
+router.post("/getBoxID", async (req, res, next) => {
+  try {
+    let boxid = await superAdminController.getBoxID();
+    if (boxid) {
+      res.status(200).json({
+        data: boxid,
+        message: "Success",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
 
+// CREATE Boxes
+router.post("/boxes/create", async (req, res, next) => {
+  try {
+    const boxesData = await superAdminController.createBoxes(req.body);
+    if (boxesData.status == 1) {
+      fs.readFile(
+        "myjsonfile.json",
+        "utf8",
+        function readFileCallback(err, datafile) {
+          if (err) {
+          } else {
+            obj = JSON.parse(datafile);
+            let num = parseInt(obj.BOXID.substring(3)) + 1;
+            let updatedStr =
+              obj.BOXID.substring(0, 3) + num.toString().padStart(6, "0");
+            obj.BOXID = updatedStr;
+            json = JSON.stringify(obj);
+            fs.writeFile(
+              "myjsonfile.json",
+              json,
+              "utf8",
+              function readFileCallback(err, data) {
+                if (err) {
+                }
+              }
+            );
+          }
+        }
+      );
+      res.status(200).json({
+        message: "Successfully Created",
+      });
+    } else if (boxesData.status == 2) {
+      res.status(202).json({
+        message: "Already Created",
+      });
+    } else {
+      res.status(202).json({
+        message: "Creation Failed...",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
 
+// BOXID GEN
+router.post("/boxes/idGen", async (req, res, next) => {
+  try {
+    let obj;
+    fs.readFile(
+      "myjsonfile.json",
+      "utf8",
+      async function readFileCallback(err, data) {
+        if (err) {
+        } else {
+          obj = JSON.parse(data);
+          res.status(200).json({
+            boxID: obj.BOXID,
+          });
+        }
+      }
+    );
+  } catch (error) {
+    next(error);
+  }
+});
 
+// EDIT Box
+router.post("/boxes/edit", async (req, res, next) => {
+  try {
+    const boxesData = await superAdminController.editBoxes(req.body);
+    if (boxesData.status == 1) {
+      res.status(200).json({
+        message: "Successfully Updated",
+      });
+    } else {
+      res.status(202).json({
+        message: "Updation Failed...",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
 
+router.get("/geteditBoxes/:box_id", async (req, res) => {
+  try {
+    let user = await superAdminController.geteditBoxes(req.params.box_id);
+    if (user) {
+      res.status(200).json({ data: user });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
 
+// GET ONE Box
+router.post("/boxes/one/:boxId", async (req, res, next) => {
+  try {
+    const { boxId } = req.params;
+    const boxesData = await superAdminController.getOneBox(boxId);
+    if (boxesData.status == 1) {
+      res.status(200).json({
+        data: boxesData.data,
+      });
+    } else {
+      res.status(200).json({
+        message: "No data found",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
 
+router.get("/getAllBoxes", async (req, res) => {
+  try {
+    let boxesData = await superAdminController.getAllBoxes();
+    if (boxesData) {
+      res.status(200).json(boxesData);
+    }
+  } catch (error) {
+    next(error);
+  }
+});
 
+router.post("/deleteBoxes/:box_id", async (req, res, next) => {
+  try {
+    let data = await superAdminController.deleteBoxes(req.params.box_id);
+    if (data.status == true) {
+      res.status(200).json({
+        message: "Successfully Deleted",
+      });
+    } else {
+      res.status(202).json({
+        message: "Failed",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
 
+router.get("/geteditBoxes/:code", async (req, res) => {
+  try {
+    let user = await superAdminController.geteditBoxes(req.params.code);
+    if (user) {
+      res.status(200).json({ data: user });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
+/*-------------------------------------------Payments--------------------------------------------*/
+
+// GET ALL THE boxes
+router.post("/payments/view", async (req, res, next) => {
+  try {
+    console.log("working");
+    const warrantyData = await superAdminController.getAllWarranty();
+    if (warrantyData) {
+      res.status(200).json({
+        data: warrantyData,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
+//create
+router.post("/payments/create", async (req, res, next) => {
+  try {
+    const data = await superAdminController.createPayment(req.body);
+    if (data.status == 1) {
+      res.status(200).json({
+        message: "Successfully Added",
+      });
+    } else if (data.status == 2) {
+      res.status(202).json({
+        message: "Already Created",
+      });
+    } else {
+      res.status(202).json({
+        message: "Failed Please Tray again...",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
+//VIEW
+router.post("/payments/view/:type", async (req, res, next) => {
+  try {
+    const { type } = req.params;
+    const data = await superAdminController.viewPayment(type);
+    if (data) {
+      res.status(200).json({
+        data: data,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
+// EDIT Payment
+router.post("/payments/edit", async (req, res, next) => {
+  try {
+    const paymentsData = await superAdminController.editPayment(req.body);
+    if (paymentsData.status == 1) {
+      res.status(200).json({
+        message: "Successfully Updated",
+      });
+    } else {
+      res.status(202).json({
+        message: "Updation Failed...",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.get("/geteditPayment/:name", async (req, res) => {
+  try {
+    let user = await superAdminController.geteditPayment(req.params.name);
+    if (user) {
+      res.status(200).json({ data: user });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.post("/deletePayments/:name", async (req, res, next) => {
+  try {
+    // const { id, type, page } = req.body;
+    const data = await superAdminController.deletePayment(req.params.name);
+    if (data.status == true) {
+      res.status(200).json({
+        message: "Successfully Deleted",
+      });
+    } else {
+      res.status(202).json({
+        message: "Failed",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
+// get one data only for payment
+router.post("/payments/one/:id", async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const data = await superAdminController.viewOnePayment(id);
+    if (data.status == 1) {
+      res.status(200).json({
+        data: data.data,
+      });
+    } else {
+      res.status(202).json({
+        message: "No Data found",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
+/*-------------------------------------------Warranty--------------------------------------------*/
+
+// GET ALL THE Warranties
+router.post("/warranty/view/", async (req, res, next) => {
+  try {
+    console.log("working");
+    const warrantyData = await superAdminController.getAllWarranty();
+    if (warrantyData) {
+      res.status(200).json({
+        data: warrantyData,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
+//create
+router.post("/warranty/create", async (req, res, next) => {
+  try {
+    const { type } = req.body;
+    const data = await superAdminController.createWarranty(req.body);
+    if (data.status == 1) {
+      if (type == "warranty-list") {
+        fs.readFile(
+          "myjsonfile.json",
+          "utf8",
+          function readFileCallback(err, datafile) {
+            if (err) {
+            } else {
+              obj = JSON.parse(datafile);
+              // let num = parseInt(obj.PARTID.substring(3)) + 1;
+              // let updatedStr =
+              //   obj.PARTID.substring(0, 3) + num.toString().padStart(6, "0");
+              // obj.PARTID = updatedStr;
+              json = JSON.stringify(obj);
+              fs.writeFile(
+                "myjsonfile.json",
+                json,
+                "utf8",
+                function readFileCallback(err, data) {
+                  if (err) {
+                  }
+                }
+              );
+            }
+          }
+        );
+      }
+      res.status(200).json({
+        message: "Successfully Added",
+      });
+    } else if (data.status == 2) {
+      res.status(202).json({
+        message: "Already Created",
+      });
+    } else {
+      res.status(202).json({
+        message: "Failed Please Tray again...",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
+//VIEW
+router.post("/warranty/view/:type", async (req, res, next) => {
+  try {
+    const { type } = req.params;
+    const data = await superAdminController.viewWarranty(type);
+    if (data) {
+      res.status(200).json({
+        data: data,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
+// EDIT Warranty
+router.post("/warranty/edit", async (req, res, next) => {
+  try {
+    const warrantyData = await superAdminController.editWarranty(req.body);
+    if (warrantyData.status == 1) {
+      res.status(200).json({
+        message: "Successfully Updated",
+      });
+    } else {
+      res.status(202).json({
+        message: "Updation Failed...",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.get("/geteditWarranty/:name", async (req, res) => {
+  try {
+    let user = await superAdminController.geteditWarranty(req.params.name);
+    if (user) {
+      res.status(200).json({ data: user });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.post("/deleteWarranty/:name", async (req, res, next) => {
+  try {
+    // const { id, type, page } = req.body;
+    const data = await superAdminController.deleteWarranty(req.params.name);
+    if (data.status == true) {
+      res.status(200).json({
+        message: "Successfully Deleted",
+      });
+    } else {
+      res.status(202).json({
+        message: "Failed",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
+// get one data only for Warranty
+router.post("/warranty/one/:id", async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const data = await superAdminController.viewOneWarranty(id);
+    if (data.status == 1) {
+      res.status(200).json({
+        data: data.data,
+      });
+    } else {
+      res.status(202).json({
+        message: "No Data found",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
 
 /*-------------------------------------------MASTER FOR PART AND COLOR--------------------------------------------*/
 //create
@@ -2060,6 +2553,198 @@ router.post("/partAndColor/view/:type", async (req, res, next) => {
     if (data) {
       res.status(200).json({
         data: data,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
+/*-------------------------------------------MASTER FOR STORAGE--------------------------------------------*/
+//create
+router.post("/storage/create", async (req, res, next) => {
+  try {
+    const { type } = req.body;
+    const data = await superAdminController.createStorage(req.body);
+    if (data.status == 1) {
+      if (type == "storage-list") {
+        fs.readFile(
+          "myjsonfile.json",
+          "utf8",
+          function readFileCallback(err, datafile) {
+            if (err) {
+            } else {
+              obj = JSON.parse(datafile);
+              // let num = parseInt(obj.PARTID.substring(3)) + 1;
+              // let updatedStr =
+              //   obj.PARTID.substring(0, 3) + num.toString().padStart(6, "0");
+              // obj.PARTID = updatedStr;
+              json = JSON.stringify(obj);
+              fs.writeFile(
+                "myjsonfile.json",
+                json,
+                "utf8",
+                function readFileCallback(err, data) {
+                  if (err) {
+                  }
+                }
+              );
+            }
+          }
+        );
+      }
+      res.status(200).json({
+        message: "Successfully Added",
+      });
+    } else if (data.status == 2) {
+      res.status(202).json({
+        message: "Already Created",
+      });
+    } else {
+      res.status(202).json({
+        message: "Failed Please Tray again...",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+//VIEW
+router.post("/storage/view", async (req, res, next) => {
+  try {
+    const { type } = req.params;
+    const data = await superAdminController.viewStorage(type);
+    if (data) {
+      res.status(200).json({
+        data: data,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+// EDIT STORAGE
+router.post("/storage/edit", async (req, res, next) => {
+  try {
+    const data = await superAdminController.editStorage(req.body);
+    if (data.status == 1) {
+      res.status(200).json({
+        message: "Successfully Updated",
+      });
+    } else {
+      res.status(202).json({
+        message: "Updation Failed",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+//delete storage
+router.post("/storage/delete/:id", async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    let data = await superAdminController.deleteStorage(id);
+
+    if (data.status == true) {
+      res.status(200).json({
+        message: "Successfully Deleted",
+      });
+    } else {
+      res.status(202).json({
+        message: "Failed",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
+/*-------------------------------------------MASTER FOR RAM--------------------------------------------*/
+//create
+router.post("/ram/create", async (req, res, next) => {
+  try {
+    const { type } = req.body;
+    const data = await superAdminController.createRam(req.body);
+    if (data.status == 1) {
+      res.status(200).json({
+        message: "Successfully Added",
+      });
+    } else if (data.status == 2) {
+      res.status(202).json({
+        message: "Already Created",
+      });
+    } else {
+      res.status(202).json({
+        message: "Failed Please Tray again...",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+//VIEW
+router.post("/ram/view/:type", async (req, res, next) => {
+  try {
+    const { type } = req.params;
+    const data = await superAdminController.viewRam(type);
+    if (data) {
+      res.status(200).json({
+        data: data,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+// TAKE ONE RAM DATA FOR EDIT AND CHECK
+router.post("/ram/oneData/:id", async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const data = await superAdminController.getOneRamDataForEdit(id);
+    if (data.status == 1) {
+      res.status(200).json({
+        data: data.ramData,
+      });
+    } else {
+      res.status(202).json({
+        message: "Data not found",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+// EDIT STORAGE
+router.post("/ram/edit", async (req, res, next) => {
+  try {
+    const data = await superAdminController.editRam(req.body);
+    if (data.status == 1) {
+      res.status(200).json({
+        message: "Successfully Updated",
+      });
+    } else {
+      res.status(202).json({
+        message: "Updation Failed",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+//delete storage
+router.post("/ram/delete/:id", async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    let data = await superAdminController.deleteRam(id);
+
+    if (data.status == true) {
+      res.status(200).json({
+        message: "Successfully Deleted",
+      });
+    } else {
+      res.status(202).json({
+        message: "Failed",
       });
     }
   } catch (error) {
@@ -2280,6 +2965,47 @@ router.post("/partAndColor/edit", async (req, res, next) => {
     next(error);
   }
 });
+
+// get one data only for storage
+router.post("/storage/oneData/:id", async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const data = await superAdminController.getStorageDataForEdit(id);
+    if (data.status == 1) {
+      res.status(200).json({
+        data: data.storageData,
+      });
+    } else {
+      res.status(202).json({
+        message: "Data not found",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
+// GET ONE PART
+// router.post("/partList/oneData/:id/:type", async (req, res, next) => {
+//   try {
+//     const { id, type } = req.params;
+//     const data = await superAdminController.onePartDatWithMuicAssosiation(
+//       id,
+//       type
+//     );
+//     if (data.status == 1) {
+//       res.status(200).json({
+//         data: data.masterData,
+//       });
+//     } else {
+//       res.status(202).json({
+//         message: "No Data found",
+//       });
+//     }
+//   } catch (error) {
+//     next(error);
+//   }
+// });
 
 // MANAGE STOCK
 router.post("/partlist/manageStock/bulkValidation", async (req, res, next) => {
@@ -2573,9 +3299,6 @@ router.post("/vendorMaster/one/:vendorId", async (req, res, next) => {
     next(error);
   }
 });
-
-
-
 
 /*-------------------------------ADMIN FORCEFULL VALIDATION --------------------------------------*/
 // CHECK CURRENT TRAY STATUS
@@ -2937,6 +3660,23 @@ router.post("/extra/addBotTray", async (req, res, next) => {
     next(error);
   }
 });
+// ITEMS TRANSFER ONE TRAY TO ANOTHER
+router.post("/extra/botTrayTransfer", async (req, res, next) => {
+  try {
+    let data = await superAdminController.botTrayTransfer();
+    if (data.status == true) {
+      res.status(200).json({
+        message: "done",
+      });
+    } else {
+      res.status(202).json({
+        message: "Failed",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
 //05062023 SUMIT SIR REQUEST
 router.post("/extra/rollBackTray", async (req, res, next) => {
   try {
@@ -2976,7 +3716,7 @@ router.post("/fixBaggingIssue", async (req, res, next) => {
     if (data) {
       res.status(200).json({
         message: "Successfully updated",
-        data:data
+        data: data,
       });
     } else {
       res.status(202).json({
@@ -2995,6 +3735,57 @@ router.post("/whtTray/recorrect", async (req, res, next) => {
     if (data) {
       res.status(200).json({
         message: "Successfully updated",
+      });
+    } else {
+      res.status(202).json({
+        message: "Failed",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+// ALL DELIVERY ISSUE RESOLVE
+router.post("/extra/allDeliveryIssue", async (req, res, next) => {
+  try {
+    let data = await superAdminController.resolveAllDeliveryIssue();
+    if (data.status == true) {
+      res.status(200).json({
+        message: "done",
+      });
+    } else {
+      res.status(202).json({
+        message: "Failed",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+// ADDING CATEGORY  V8.4
+router.post("/extra/addCategory", async (req, res, next) => {
+  try {
+    let data = await superAdminController.addCategoryExtra();
+    if (data.status == true) {
+      res.status(200).json({
+        message: "done",
+      });
+    } else {
+      res.status(202).json({
+        message: "Failed",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+// MANAGE OLD SPN0000 PARTID  V8.4
+router.post("/extra/manageOldSpn", async (req, res, next) => {
+  try {
+    let data = await superAdminController.manageOldSpnData();
+    if (data.status == true) {
+      res.status(200).json({
+        message: "done",
       });
     } else {
       res.status(202).json({

@@ -23,6 +23,9 @@ const productSchema = mongoose.Schema({
   created_at: {
     type: Date,
   },
+  jack_type:{
+    type:String
+  },
   created_by:{
     type:String
   }

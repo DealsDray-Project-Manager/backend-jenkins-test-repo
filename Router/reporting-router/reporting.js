@@ -99,6 +99,31 @@ router.post("/getDelivery/:location/:page/:size", async (req, res, next) => {
     next(error);
   }
 });
+// FOR UNVERIFIED IMEI
+router.post(
+  "/unverifiedImeiReport/:location/:page/:size",
+  async (req, res, next) => {
+    try {
+      let { location, page, size } = req.params;
+      page++;
+      const limit = parseInt(size);
+      const skip = (page - 1) * size;
+      let data = await reportingAgentRouter.getUnverifiedImeiReport(
+        location,
+        limit,
+        skip
+      );
+      if (data) {
+        res.status(200).json({
+          data: data.unverifiedImei,
+          count: data.count,
+        });
+      }
+    } catch (error) {
+      next(error);
+    }
+  }
+);
 // DELIVERY PAGE SORTING
 router.post("/delivered/item/filter", async (req, res, next) => {
   try {
@@ -139,6 +164,7 @@ router.post("/delivered/item/filter", async (req, res, next) => {
 // filter for all orders report
 router.post("/orderDateReport/item/filter", async (req, res, next) => {
   try {
+    console.log(req.body);
     let { location, fromDate, toDate, page, size, type } = req.body;
     page++;
     const limit = parseInt(size);
@@ -151,6 +177,7 @@ router.post("/orderDateReport/item/filter", async (req, res, next) => {
       skip,
       type
     );
+    console.log(filterData.forXlsxDownload.length);
     if (filterData.allOrdersReport.length !== 0) {
       res.status(200).json({
         data: filterData.allOrdersReport,
@@ -169,7 +196,6 @@ router.post("/orderDateReport/item/filter", async (req, res, next) => {
   }
 });
 
-
 // filter for month wise purchise report
 router.post("/monthWiseReport/item/filter", async (req, res, next) => {
   try {
@@ -178,6 +204,39 @@ router.post("/monthWiseReport/item/filter", async (req, res, next) => {
     const limit = parseInt(size);
     const skip = (page - 1) * size;
     const filterData = await reportingAgentRouter.monthWiseReportItemFilter(
+      location,
+      fromDate,
+      toDate,
+      limit,
+      skip,
+      type
+    );
+    if (filterData.monthWiseReport.length !== 0) {
+      res.status(200).json({
+        data: filterData.monthWiseReport,
+        forXlsx: filterData.forXlsxDownload,
+        count: filterData.getCount,
+      });
+    } else {
+      res.status(202).json({
+        data: filterData.monthWiseReport,
+        forXlsx: filterData.forXlsxDownload,
+        count: filterData.getCount,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+// FILTER FOR UNVERIFIED IMEI
+router.post("/unverifiedImei/item/filter", async (req, res, next) => {
+  try {
+    console.log(req.body);
+    let { location, fromDate, toDate, page, size, type } = req.body;
+    page++;
+    const limit = parseInt(size);
+    const skip = (page - 1) * size;
+    const filterData = await reportingAgentRouter.unVerifiedReportItemFilter(
       location,
       fromDate,
       toDate,
@@ -232,6 +291,7 @@ router.post(
     }
   }
 );
+
 // find last order date
 router.post("/order/lastOrderDate/:location", async (req, res, next) => {
   try {
@@ -309,6 +369,36 @@ router.post("/search-delivery-item", async (req, res, next) => {
     const limit = parseInt(rowsPerPage);
     const skip = (page - 1) * rowsPerPage;
     let data = await Elasticsearch.searchDataOfDeliveryReporting(
+      searchData,
+      limit,
+      skip,
+      location
+    );
+    if (data.searchResult.length !== 0) {
+      res.status(200).json({
+        data: data.searchResult,
+        count: data.count,
+        allMatchedResult: data.dataForDownload,
+      });
+    } else {
+      res.status(202).json({
+        data: data.searchResult,
+        count: data.count,
+        allMatchedResult: data.dataForDownload,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+// SEARCH UNVERIFIED IMEI
+router.post("/search/unverifiedImei", async (req, res, next) => {
+  try {
+    let { searchData, location, rowsPerPage, page } = req.body;
+    page++;
+    const limit = parseInt(rowsPerPage);
+    const skip = (page - 1) * rowsPerPage;
+    let data = await Elasticsearch.searchUnverifiedImei(
       searchData,
       limit,
       skip,

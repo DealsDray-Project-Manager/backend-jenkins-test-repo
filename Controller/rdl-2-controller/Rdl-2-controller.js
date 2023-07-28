@@ -65,16 +65,19 @@ module.exports = {
     return new Promise(async (resolve, reject) => {
       let selectedQtySum = 0;
       let tray = await masters.findOne({ code: trayData.trayId });
+
       if (tray) {
         for (const item of tray.items) {
           selectedQtySum += parseInt(item.selected_qty);
         }
+        console.log(selectedQtySum);
         if (selectedQtySum == trayData.counts) {
           let data = await masters.findOneAndUpdate(
             { code: trayData.trayId },
             {
               $set: {
                 sort_id: "Rdl-two inprogress",
+                actual_items: [],
               },
             }
           );
@@ -167,51 +170,119 @@ module.exports = {
       }
     });
   },
-  repairDoneAction: (trayItemData) => {
-    return new Promise(async (resolve, reject) => {
-      let dupEntrey = await masters.findOne({
+  repairDoneAction: async (trayItemData) => {
+    try {
+      let dupEntry = await masters.findOne({
         code: trayItemData.trayId,
         "actual_items.uic": trayItemData.uic,
       });
-      if (dupEntrey) {
-        resolve({ status: 3 });
-      } else {
-        let checkAlreadyAdded = await masters.findOne(
+
+      if (dupEntry) {
+        return { status: 3 };
+      }
+
+      for (let x of trayItemData.rdl_repair_report.rdl_two_part_status) {
+        console.log(x);
+        if (
+          x.rdl_two_status !== "Used" 
+        ) {
+          await masters.updateOne(
+            {
+              code: trayItemData.spTray,
+            },
+            {
+              $push: {
+                temp_array: x,
+              },
+            }
+          );
+        } 
+
+         if(x.rdl_two_status == "Used" || x.rdl_two_status == "Not used" || x.rdl_two_status == "Not required") {
+          await masters.updateOne(
+            {
+              code: trayItemData.trayId,
+              "items.uic": trayItemData.uic,
+            },
+            {
+              $pull: {
+                "items.$.rdl_fls_report.partRequired": { part_id: x.part_id },
+              },
+            }
+          );
+        }
+      }
+
+      if (trayItemData.rdl_repair_report.more_part_required?.length !== 0) {
+        await masters.updateOne(
           {
             code: trayItemData.trayId,
             "items.uic": trayItemData.uic,
           },
           {
-            _id: 0,
-            items: {
-              $elemMatch: { uic: trayItemData.uic },
-            },
-          }
-        );
-        checkAlreadyAdded.items[0].rdl_repair_report =
-          trayItemData.rdl_repair_report;
-        let data = await masters.updateOne(
-          { code: trayItemData.trayId },
-          {
             $push: {
-              actual_items: checkAlreadyAdded.items[0],
-            },
-            $pull: {
-              items: {
-                uic: trayItemData.uic,
+              "items.$.rdl_fls_report.partRequired": {
+                $each: trayItemData.rdl_repair_report.more_part_required,
               },
             },
           }
         );
-        if (data.matchedCount != 0) {
-          resolve({ status: 1 });
-        } else {
-          resolve({ status: 2 });
-        }
       }
-    });
+
+      await masters.updateOne(
+        {
+          code: trayItemData.spTray,
+        },
+        {
+          $push: {
+            actual_items: {
+              $each: trayItemData.rdl_repair_report.rdl_two_part_status,
+            },
+          },
+        }
+      );
+      let checkAlreadyAdded = await masters.findOne(
+        {
+          code: trayItemData.trayId,
+          "items.uic": trayItemData.uic,
+        },
+        {
+          _id: 0,
+          items: {
+            $elemMatch: { uic: trayItemData.uic },
+          },
+        }
+      );
+
+      checkAlreadyAdded.items[0].rdl_repair_report =
+        trayItemData.rdl_repair_report;
+
+      let data = await masters.updateOne(
+        { code: trayItemData.trayId },
+        {
+          $push: {
+            actual_items: checkAlreadyAdded.items[0],
+          },
+          $pull: {
+            items: {
+              uic: trayItemData.uic,
+            },
+          },
+        }
+      );
+
+      if (data.matchedCount !== 0) {
+        return { status: 1 };
+      } else {
+        return { status: 2 };
+      }
+    } catch (error) {
+      console.error("Error in repairDoneAction:", error);
+      throw error;
+    }
   },
-  traySummery: (trayId, user_name) => {
+
+  traySummary: (trayId, user_name) => {
     return new Promise(async (resolve, reject) => {
       const getTheTray = await masters.findOne({ code: trayId });
       if (getTheTray.sort_id == "Rdl-two inprogress") {
@@ -219,29 +290,18 @@ module.exports = {
           if (getTheTray.items.length == 0) {
             let obj = {
               morePartRequred: [],
-              partNotAvailable: [],
-              usedParts: [],
-              partFaulty: [],
-              notReapairable: [],
             };
+            obj.spTray = await masters.findOne({
+              sort_id: "Rdl-two inprogress",
+              type_taxanomy: "SPT",
+              issued_user_name: user_name,
+            });
             for (let x of getTheTray.actual_items) {
               if (x.rdl_repair_report.more_part_required.length !== 0) {
                 obj.morePartRequred.push(x);
               }
-              if (x.rdl_repair_report.part_not_available.length !== 0) {
-                obj.partNotAvailable.push(x);
-              }
-              if (x.rdl_repair_report.used_parts.length !== 0) {
-                obj.usedParts.push(x);
-              }
-              if (x.rdl_repair_report.part_faulty.length !== 0) {
-                obj.partFaulty.push(x);
-              }
-              if (x.rdl_repair_report.part_not_available.length !== 0) {
-                obj.notReapairable.push(x);
-              }
             }
-            resolve({ status: 1, tray: getTheTray, summery: obj });
+            resolve({ status: 1, tray: getTheTray, summary: obj });
           } else {
             resolve({ status: 2 });
           }
@@ -250,6 +310,60 @@ module.exports = {
         }
       } else {
         resolve({ status: 3 });
+      }
+    });
+  },
+  closeSpAndRp: (trayData) => {
+    return new Promise(async (resolve, reject) => {
+      const getRpTray = await masters.findOne({ code: trayData.rpTrayId });
+      if (getRpTray.sort_id == "Rdl-two inprogress") {
+        let updateSpTray = await masters.updateOne(
+          { code: trayData.sptrayId },
+          {
+            $set: {
+              sort_id: "Closed by RDL-two",
+              "track_tray.rdl_two_done_closed_by_agent": Date.now(),
+            },
+          }
+        );
+        if (updateSpTray.modifiedCount != 0) {
+          let updateRpTray = await masters.findOneAndUpdate(
+            { code: trayData.rpTrayId },
+            {
+              $set: {
+                items: getRpTray.actual_items,
+                actual_items: [],
+                temp_array: [],
+                sort_id: "Closed by RDL-two",
+                "track_tray.rdl_two_done_closed_by_agent": Date.now(),
+              },
+            }
+          );
+          if (updateRpTray) {
+            for (let x of getRpTray.actual_items) {
+              let updateDelivery = await delivery.findOneAndUpdate(
+                { "uic_code.code": x.uic },
+                {
+                  $set: {
+                    rdl_two_closed_date: Date.now(),
+                    rdl_fls_one_report: x.rdl_fls_report,
+                    rdl_two_report: x.rdl_repair_report,
+                    tray_status: "Closed by RDL-two",
+                    tray_type: "RPT",
+                    updated_at: Date.now(),
+                  },
+                }
+              );
+            }
+            resolve({ status: 1 });
+          } else {
+            resolve({ status: 5 });
+          }
+        } else {
+          resolve({ status: 5 });
+        }
+      } else {
+        resolve({ status: 0 });
       }
     });
   },

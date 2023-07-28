@@ -30,6 +30,7 @@ const ReportingPanel=require("./Router/reporting-router/reporting");
 const Rdl2Panel=require("./Router/Rdl-2-router/rdl-2-router");
 const RmUserPanel=require("./Router/Rm-user-router/rm-user");
 const SpMispanel=require("./Router/sp-mis/sp-mis-router");
+const SpPurchasePanel=require("./Router/purchase-router/purchase-router");
 
 app.use(logger("dev"));
 app.use(express.json({ limit: "25mb" }));
@@ -67,6 +68,8 @@ app.use("/api/v7/rdl-two", Rdl2Panel);
 app.use("/api/v7/rm-user", RmUserPanel);
 /* API FOR RM PANEL */
 app.use("/api/v7/sp-mis", SpMispanel);
+/* API FOR RM PANEL */
+app.use("/api/v7/purchase-user", SpPurchasePanel);
 /* User-profile */
 app.use("/user/profile", express.static(__dirname + "/public/user-profile"));
 /* Product Image */

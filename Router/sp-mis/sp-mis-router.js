@@ -69,21 +69,6 @@ router.post("/procurment/request", async (req, res, next) => {
   }
 });
 // ---
-router.post("/procurment/view", async (req, res, next) => {
-  try {
-    let data = await SpMisController.procurementRequestView();
-    if (data) {
-      res.status(200).json({
-        data: data,
-      });
-    } else {
-      res.status(202).json({
-        message: "Failed please try again...",
-      });
-    }
-  } catch (error) {
-    next(error);
-  }
-});
+
 
 module.exports = router;

@@ -111,8 +111,7 @@ router.post("/repairDone/action", async (req, res, next) => {
       res.status(200).json({
         message: "Succssully submited",
       });
-    }
-   else if (data.status === 3) {
+    } else if (data.status === 3) {
       res.status(202).json({
         message: "Already added",
       });
@@ -126,25 +125,47 @@ router.post("/repairDone/action", async (req, res, next) => {
   }
 });
 
-// REPAIR DONE CLOSE THE TRAY 
-router.post("/traySummery/:trayId/:username", async (req, res, next) => {
+// REPAIR DONE CLOSE THE TRAY
+router.post("/traySummary", async (req, res, next) => {
   try {
-    const {trayId,username}=req.params
-    let data = await Rdl2Controller.traySummery(trayId,username);
-    console.log(data);
+    console.log(req.body);
+    const { trayId, user_name } = req.body;
+    let data = await Rdl2Controller.traySummary(trayId, user_name);
+
     if (data.status === 1) {
       res.status(200).json({
-        data:data.tray,
-        summery:data.summery
+        data: data.tray,
+        summary: data.summary,
       });
-    }
-   else if (data.status === 2) {
+    } else if (data.status === 2) {
       res.status(202).json({
         message: "Sorry you can't access this data",
       });
     } else {
       res.status(202).json({
         message: "Tray not found",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
+//CLOSE SP TRAY AND RP TRAY
+router.post("/closeSpAndRp", async (req, res, next) => {
+  try {
+    let data = await Rdl2Controller.closeSpAndRp(req.body);
+    if (data.status === 1) {
+      res.status(200).json({
+        message: "Successfully sent to warehouse",
+      });
+    } else if (data.status === 5) {
+      res.status(202).json({
+        message: "Failed please tray again",
+      });
+    } else {
+      res.status(202).json({
+        message: "Already closed",
       });
     }
   } catch (error) {

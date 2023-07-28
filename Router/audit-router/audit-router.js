@@ -121,9 +121,11 @@ router.post("/bqcReport/:uic/:trayId", async (req, res, next) => {
 router.post("/traySegrigation", async (req, res, next) => {
   try {
     const { type, stage } = req.body;
+    console.log(req.body);
+    console.log("check");
     let data = await auditController.traySegrigation(req.body);
     if (data.status == 1) {
-      if (stage == "BQC Not Done / Imei not verified") {
+      if (stage == "BQC Not Done / Unverified imei") {
         res.status(200).json({
           message: `BQC was not done for this UIC, leave it in the WHT Tray`,
         });
@@ -200,6 +202,20 @@ router.post("/trayClose/:trayId", async (req, res, next) => {
         message: "Failed tray again.",
       });
     }
+  } catch (error) {
+    next(error);
+  }
+});
+// GET COLOR AND STORAGE AND RAM
+router.post("/getColorStorageRam", async (req, res, next) => {
+  try {
+    
+    let data = await auditController.getAllStorageAndRamAndColor();
+    if (data) {
+      res.status(200).json({
+        data: data
+      });
+    } 
   } catch (error) {
     next(error);
   }

@@ -663,7 +663,7 @@ router.post("/closeBotTray/:location", async (req, res, next) => {
 
 /*--------------------------SUMMERY OF BAG AFTER BOT DONE--------------------------*/
 
-router.post("/summeryBotTrayBag/:bagId", async (req, res, next) => {
+router.post("/summaryBotTrayBag/:bagId", async (req, res, next) => {
   try {
     let data = await warehouseInController.getSummeryBotTray(req.params.bagId);
     if (data) {
@@ -761,6 +761,24 @@ router.post("/whtTray/:location/:type", async (req, res, next) => {
     next(error);
   }
 });
+/*-----------------------GET RPT TRAY BASED ON THE STATUS -----------------------------*/
+router.post("/rptTray", async (req, res, next) => {
+  try {
+    const { location, type, status } = req.body;
+    let data = await warehouseInController.getRptTrayBasedOnStatus(
+      location,
+      type,
+      status
+    );
+    if (data) {
+      res.status(200).json({
+        data: data,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
 
 /*--------------------------IN USE WHT TRAY--------------------------*/
 
@@ -769,6 +787,24 @@ router.post("/wht-tray/:status/:location", async (req, res, next) => {
     let data = await warehouseInController.getInUseWhtTray(
       req.params.status,
       req.params.location
+    );
+    if (data) {
+      res.status(200).json({
+        data: data,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
+/*---------------------------FOR PLANNER -------------------------------*/
+router.post("/plannerPage/:status/:location", async (req, res, next) => {
+  try {
+    const { status, location } = req.params;
+    let data = await warehouseInController.plannerPageDataFetch(
+      status,
+      location
     );
     if (data) {
       res.status(200).json({
@@ -927,6 +963,21 @@ router.post("/wht-return-from-charging/:location", async (req, res, next) => {
     let data = await warehouseInController.returnFromChargingWht(
       req.params.location
     );
+    if (data) {
+      res.status(200).json({
+        data: data,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
+/*----------------------------TRAY RETURN FROM RL-TWO-----------------------------------------*/
+router.post("/rptReturnFromRdlTwo/:location", async (req, res, next) => {
+  try {
+    const { location } = req.params;
+    let data = await warehouseInController.getRpTrayRetunrFromRdlTwo(location);
     if (data) {
       res.status(200).json({
         data: data,
@@ -1164,8 +1215,7 @@ router.post("/recieved-from-bqc", async (req, res, next) => {
       res.status(200).json({
         message: "Successfully Received",
       });
-    }
-   else if (data.status == 3) {
+    } else if (data.status == 3) {
       res.status(202).json({
         message: "Please Enter Valid Count",
       });
@@ -1497,14 +1547,15 @@ router.post("/returnFromMerging/:location", async (req, res, next) => {
 /*--------------------- AFTER MERGE IS DONE CLOSE MMT TRAY--------------------------------*/
 router.post("/mergeDoneMmttrayClose", async (req, res, next) => {
   try {
-    const { toTray, fromTray, type, length, limit, status } = req.body;
+    const { toTray, fromTray, type, length, limit, status,rackId } = req.body;
     let data = await warehouseInController.mergeDoneTrayClose(
       fromTray,
       toTray,
       type,
       length,
       limit,
-      status
+      status,
+      rackId
     );
     if (data.status == 1) {
       res.status(200).json({
@@ -2339,6 +2390,23 @@ router.post("/rdl-fls/closedByWh", async (req, res, next) => {
     next(error);
   }
 });
+/*---------------------------RDL-TWO DONE CLOSE ---------------------------------------------------------*/
+router.post("/rdl-two/closedByWh", async (req, res, next) => {
+  try {
+    let data = await warehouseInController.rdlTwoDoneClose(req.body);
+    if (data) {
+      res.status(200).json({
+        message: "Tray Closed Succcessfully",
+      });
+    } else {
+      res.status(202).json({
+        message: "Failed",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
 /*-------------------------------------------------CTX TRAY -------------------------------------------*/
 router.post("/ctx/transferRequest/approve", async (req, res, next) => {
   try {
@@ -2569,7 +2637,6 @@ router.post("/returnFromWhtToRpSorting/:location", async (req, res, next) => {
     let data = await warehouseInController.getReturnFromSortingWhtToRp(
       req.params.location
     );
-
     if (data) {
       res.status(200).json({
         data: data,

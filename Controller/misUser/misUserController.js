@@ -35,13 +35,12 @@ module.exports = {
       const imeiRegex = /^\d{15}$/; // Regex pattern for 15 digits
       for (let x of ordersData.item) {
         if (x.order_status == "NEW") {
-        
           if (x?.imei.match(/[0-9]/g).join("").length !== 15) {
             // IMEI length is correct
             console.log(x.imei);
             imei.push(x.imei);
             err["imei_number_is_duplicate"] = imei;
-          } 
+          }
           const orderDate = x?.order_date; // Assuming `data` is available
           const parsedDate = new Date(orderDate);
           if (isNaN(parsedDate)) {
@@ -292,10 +291,10 @@ module.exports = {
         sort_id: "Ready to RDL",
         cpc: location,
       });
-      count.rdl_two =await masters.countDocuments({
+      count.rdl_two = await masters.countDocuments({
         cpc: location,
         sort_id: "Ready to RDL-Repair",
-        type_taxanomy:"RPT"
+        type_taxanomy: "RPT",
       });
       count.botToWht = await masters.count({
         type_taxanomy: "BOT",
@@ -2232,6 +2231,7 @@ module.exports = {
   },
   addUicCode: (uicData) => {
     return new Promise(async (resolve, reject) => {
+      // Step 1: Find the highest UIC code in the database collection "delivery."
       let codeHighst = await delivery.aggregate([
         {
           $group: {
@@ -2243,36 +2243,29 @@ module.exports = {
         },
       ]);
 
+      // Step 2: Determine the count part of the new UIC code.
       let count = "";
       if (codeHighst[0].Max == null) {
-        count = "0000001";
+        count = "00001";
       } else {
-        let number = Number(codeHighst[0].Max.slice(-7)).toString();
+        let number = Number(codeHighst[0].Max.slice(-5)).toString();
         let total = (Number(number) + 1).toString();
-        if (total.length == 1) {
-          count = "000000" + total;
-        } else if (total.length == 2) {
-          count = "00000" + total;
-        } else if (total.length == 3) {
-          count = "0000" + total;
-        } else if (total.length == 4) {
-          count = "000" + total;
-        } else if (total.length == 5) {
-          count = "00" + total;
-        } else if (total.length == 6) {
-          count = "0" + total;
-        }
+        count = total.padStart(5, "0");
       }
 
-      var date = new Date();
+      // Step 3: Get today's date and extract the day of the month as "DD".
+      const today = new Date();
+      const dayOfMonth = today.getDate().toString().padStart(2, "0");
+
+      // Step 4: Generate the UIC code.
       let uic_code =
         "9" +
         new Date().getFullYear().toString().slice(-1) +
-        (date.getMonth() + 1).toLocaleString("en-US", {
-          minimumIntegerDigits: 2,
-          useGrouping: false,
-        }) +
+        (today.getMonth() + 1).toString().padStart(2, "0") +
+        dayOfMonth +
         count;
+
+      // Step 5: Update the database with the new UIC code and other data.
       let data = await delivery.findOneAndUpdate(
         { _id: uicData._id },
         {
@@ -2289,7 +2282,6 @@ module.exports = {
           projection: { _id: 0 },
         }
       );
-
       if (data) {
         // let updateElastic = await elasticsearch.uicCodeGen(data);
         resolve(data);
@@ -2664,6 +2656,7 @@ module.exports = {
         let data = await masters.find({
           sort_id: "Sorting Request Sent To Warehouse",
           cpc: location,
+
           type_taxanomy: "BOT",
         });
         if (data) {
@@ -2677,11 +2670,13 @@ module.exports = {
                 {
                   sort_id: "Sorting Request Sent To Warehouse",
                   cpc: location,
+
                   // type_taxanomy: "BOT",
                 },
                 {
                   sort_id: "Assigned to sorting agent",
                   cpc: location,
+
                   // type_taxanomy: "BOT",
                 },
               ],
@@ -3491,6 +3486,28 @@ module.exports = {
             },
           },
         ]);
+      } else if (type == "RDL two done closed by warehouse") {
+        items = await masters.aggregate([
+          {
+            $match: {
+              "track_tray.rdl_two_done_closed_by_agent": { $gte: threeDaysAgo },
+              sort_id: type,
+              cpc: location,
+            },
+          },
+          {
+            $unwind: "$items",
+          },
+          {
+            $project: {
+              items: 1,
+              brand: 1,
+              model: 1,
+              code: 1,
+              "track_tray.rdl_two_done_closed_by_agent": 1,
+            },
+          },
+        ]);
       } else {
         items = await masters.aggregate([
           {
@@ -3936,21 +3953,43 @@ module.exports = {
               },
             }
           );
-          sendtoPickupRequest = await masters.updateOne(
-            { "items.uic": x, type_taxanomy: "WHT" },
-            {
-              $set: {
-                sort_id: "Pickup Request sent to Warehouse",
-                issued_user_name: itemData.user_name,
-                requested_date: Date.now(),
-                actual_items: [],
-                temp_array: [],
-                pickup_type: itemData.value,
-                "items.$.pickup_toTray": itemData.toTray,
-                to_tray_for_pickup: itemData.toTray,
+          if (itemData.value == "RDL two done closed by warehouse") {
+            sendtoPickupRequest = await masters.updateOne(
+              {
+                $or: [{ "items.uic": x, type_taxanomy: "RPT" }],
               },
-            }
-          );
+              {
+                $set: {
+                  sort_id: "Pickup Request sent to Warehouse",
+                  issued_user_name: itemData.user_name,
+                  requested_date: Date.now(),
+                  actual_items: [],
+                  temp_array: [],
+                  pickup_type: itemData.value,
+                  "items.$.pickup_toTray": itemData.toTray,
+                  to_tray_for_pickup: itemData.toTray,
+                },
+              }
+            );
+          } else {
+            sendtoPickupRequest = await masters.updateOne(
+              {
+                $or: [{ "items.uic": x, type_taxanomy: "WHT" }],
+              },
+              {
+                $set: {
+                  sort_id: "Pickup Request sent to Warehouse",
+                  issued_user_name: itemData.user_name,
+                  requested_date: Date.now(),
+                  actual_items: [],
+                  temp_array: [],
+                  pickup_type: itemData.value,
+                  "items.$.pickup_toTray": itemData.toTray,
+                  to_tray_for_pickup: itemData.toTray,
+                },
+              }
+            );
+          }
         }
         let updateDelivery = await delivery.updateOne(
           { "uic_code.code": x },
@@ -3962,6 +4001,7 @@ module.exports = {
           }
         );
       }
+      console.log(sendtoPickupRequest);
       if (sendtoPickupRequest.matchedCount != 0) {
         resolve(sendtoPickupRequest);
       } else {
@@ -4127,7 +4167,12 @@ module.exports = {
                 type_taxanomy: "ST",
                 brand: brand,
                 model: model,
-                $expr: { $ne: [{ $size: "$items" }, { $toInt: "$limit" }] },
+                $expr: {
+                  $and: [
+                    { $ne: [{ $ifNull: ["$items", null] }, null] },
+                    { $ne: [{ $size: "$items" }, { $toInt: "$limit" }] },
+                  ],
+                },
                 tray_grade: getCtxGrade.code,
                 cpc: location,
                 sort_id: "Inuse",
@@ -4135,7 +4180,7 @@ module.exports = {
             ],
           })
           .catch((err) => reject(err));
-
+        console.log(stxTray);
         if (stxTray.length !== 0) {
           for (let x of stxTray) {
             if (parseInt(x.limit) > parseInt(x.items.length)) {
@@ -4223,9 +4268,11 @@ module.exports = {
       }
     });
   },
-  assignForRepairStockCheck: (partId, uic, isCheck, checked) => {
+  assignForRepairStockCheck: (partId, uic, isCheck, checked, selectedQtySp) => {
+    console.log(isCheck);
+    console.log(partId);
     return new Promise(async (resolve, reject) => {
-      let arr = [];
+      let countofStock = selectedQtySp;
       let flag = false;
       for (let x of partId) {
         if (!checked) {
@@ -4233,6 +4280,7 @@ module.exports = {
             .map((item) => {
               let updated;
               if (item?.partId === x?.part_id) {
+                countofStock = countofStock - 1;
                 updated = {
                   ...item,
                   uic: item?.uic.filter((uicData) => uicData !== uic),
@@ -4259,21 +4307,21 @@ module.exports = {
           );
           if (foundPart) {
             isCheck = isCheck.map((item) => {
-              if(Number(item?.balance_stock) > 0){
-                if (item?.partId === x?.part_id) {
+              if (item?.partId === x?.part_id) {
+                if (Number(item?.balance_stock) > 0) {
                   const updatedItem = {
                     ...item,
                     selected_qty: Number(item?.selected_qty) + 1,
                     balance_stock: Number(item?.balance_stock) - 1,
                   };
+                  countofStock = countofStock + 1;
                   updatedItem.uic.push(uic);
                   return updatedItem;
+                } else {
+                  resolve({ status: 0, partid: x?.part_id });
                 }
-                return item;
               }
-              else{
-                resolve({ status: 0, partid: x?.part_id });
-              }
+              return item;
             });
           } else {
             const checkQty = await partAndColor.findOne({
@@ -4286,12 +4334,14 @@ module.exports = {
               if (check < 0) {
                 resolve({ status: 0, partid: x?.part_id });
               } else {
+                countofStock = countofStock + 1;
                 let obj = {
                   uic: [uic],
+                  box_id: checkQty.box_id,
                   partName: x?.part_name,
                   partId: x?.part_id,
                   avl_stock: checkQty?.avl_stock,
-                  selected_qty: "1",
+                  selected_qty: 1,
                   balance_stock: check,
                   status: "Pending",
                 };
@@ -4303,7 +4353,71 @@ module.exports = {
           }
         }
       }
-      resolve({ status: 1, isCheck });
+      resolve({ status: 1, isCheck, countofStock: countofStock });
+    });
+  },
+  plannerPageCharging: (location, type, type1) => {
+    return new Promise(async (resolve, reject) => {
+      const plannerData = await masters.aggregate([
+        {
+          $match: {
+            $or: [
+              {
+                cpc: location,
+                sort_id: type,
+                type_taxanomy: "WHT",
+                prefix: "tray-master",
+              },
+              {
+                cpc: location,
+                prefix: "tray-master",
+                type_taxanomy: "WHT",
+                sort_id: type1,
+              },
+            ],
+          },
+        },
+        {
+          $group: {
+            _id: {
+              brand: "$brand",
+              model: "$model",
+              charging_jack_type: "$items.charging.charging_jack_type",
+            },
+            count: { $sum: 1 },
+          },
+        },
+      ]);
+      console.log(plannerData);
+      resolve(plannerData);
+    });
+  },
+
+  assigneToChargingScreen: (location, brand, model, jack, type, type1) => {
+    console.log(type);
+    return new Promise(async (resolve, reject) => {
+      const data = await masters.find({
+        $or: [
+          {
+            cpc: location,
+            prefix: "tray-master",
+            sort_id: type,
+            type_taxanomy: "WHT",
+            brand: brand,
+            model: model,
+            "items.charging.charging_jack_type": jack,
+          },
+          {
+            cpc: location,
+            prefix: "tray-master",
+            type_taxanomy: "WHT",
+            sort_id: type1,
+            "items.charging.charging_jack_type": jack,
+          },
+        ],
+      });
+
+      resolve(data);
     });
   },
   assignForRepairSortingGetTheRequrements: (
@@ -4311,8 +4425,10 @@ module.exports = {
     uicLength,
     brand,
     model,
-    isCheck
+    isCheck,
+    selectedQtySp
   ) => {
+    console.log(selectedQtySp);
     return new Promise(async (resolve, reject) => {
       const getSortingAgent = await user.find({
         user_type: "Sorting Agent",
@@ -4335,8 +4451,6 @@ module.exports = {
       const rpArr = [];
       if (getRpTray.length !== 0) {
         for (let rpt of getRpTray) {
-          console.log(rpt.limit);
-          console.log(uicLength);
           if (parseInt(rpt.limit) >= uicLength) {
             rpArr.push(rpt);
           }
@@ -4347,6 +4461,7 @@ module.exports = {
         type_taxanomy: "SPT",
         sort_id: "Open",
         cpc: location,
+        limit: { $gte: selectedQtySp.toString() },
       });
       const spArr = [];
       if (getSpTray.length !== 0) {
@@ -4386,6 +4501,7 @@ module.exports = {
               requested_date: Date.now(),
               issued_user_name: sortingUser,
               sort_id: "Assigned to sorting (Wht to rp)",
+              "track_tray.wht_to_rp_assigned_to_sorting": Date.now(),
             },
           }
         );
@@ -4406,6 +4522,7 @@ module.exports = {
               temp_array: selectedUic,
               sp_tray: spTray,
               sort_id: "Assigned to sorting (Wht to rp)",
+              "track_tray.wht_to_rp_assigned_to_sorting": Date.now(),
             },
           }
         );
@@ -4417,12 +4534,39 @@ module.exports = {
                 issued_user_name: spwhuser,
                 requested_date: Date.now(),
                 items: spDetails,
-                sort_id: "Sent to sp warehouse",
+                sort_id: "Assigned to sp warehouse",
                 rp_tray: rpTray,
               },
             }
           );
+
           if (spTrayUpdation) {
+            for (let x of spDetails) {
+              let updateParts = await partAndColor.updateOne(
+                { part_code: x.partId },
+                {
+                  $set: {
+                    avl_stock: x.balance_stock,
+                  },
+                }
+              );
+              if (updateParts.modifiedCount !== 0) {
+                let limit = x.selected_qty;
+                for (let i = 1; i <= limit; i++) {
+                  x.selected_qty = 1;
+                  const spTrayUpdation = await masters.findOneAndUpdate(
+                    { code: spTray },
+                    {
+                      $push: {
+                        actual_items: x,
+                      },
+                    }
+                  );
+                }
+              } else {
+                resolve({ status: 0 });
+              }
+            }
             resolve({ status: 1 });
           } else {
             resolve({ status: 0 });
@@ -4550,14 +4694,24 @@ module.exports = {
       let tray = await masters.find({
         $or: [
           {
-            $expr: { $ne: [{ $size: "$items" }, { $toInt: "$limit" }] },
+            $expr: {
+              $and: [
+                { $ne: [{ $ifNull: ["$items", null] }, null] },
+                { $ne: [{ $size: "$items" }, { $toInt: "$limit" }] },
+              ],
+            },
             cpc: location,
             prefix: "tray-master",
             sort_id: "Open",
             type_taxanomy: "BOT",
           },
           {
-            $expr: { $ne: [{ $size: "$items" }, { $toInt: "$limit" }] },
+            $expr: {
+              $and: [
+                { $ne: [{ $ifNull: ["$items", null] }, null] },
+                { $ne: [{ $size: "$items" }, { $toInt: "$limit" }] },
+              ],
+            },
             cpc: location,
             prefix: "tray-master",
             sort_id: "Wht-utility-work",
