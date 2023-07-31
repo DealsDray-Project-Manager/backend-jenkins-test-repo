@@ -158,7 +158,7 @@ module.exports = {
   partAddIntoBox: (partDetails, spTrayId, boxName, uniqueid,objId) => {
     return new Promise(async (resolve, reject) => {
       const addIntoBot = await box.findOneAndUpdate(
-        { name: boxName },
+        { box_id: boxName },
         {
           $push: {
             sp_items: partDetails,

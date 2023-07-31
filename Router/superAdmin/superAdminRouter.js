@@ -2567,32 +2567,7 @@ router.post("/storage/create", async (req, res, next) => {
     const { type } = req.body;
     const data = await superAdminController.createStorage(req.body);
     if (data.status == 1) {
-      if (type == "storage-list") {
-        fs.readFile(
-          "myjsonfile.json",
-          "utf8",
-          function readFileCallback(err, datafile) {
-            if (err) {
-            } else {
-              obj = JSON.parse(datafile);
-              // let num = parseInt(obj.PARTID.substring(3)) + 1;
-              // let updatedStr =
-              //   obj.PARTID.substring(0, 3) + num.toString().padStart(6, "0");
-              // obj.PARTID = updatedStr;
-              json = JSON.stringify(obj);
-              fs.writeFile(
-                "myjsonfile.json",
-                json,
-                "utf8",
-                function readFileCallback(err, data) {
-                  if (err) {
-                  }
-                }
-              );
-            }
-          }
-        );
-      }
+     
       res.status(200).json({
         message: "Successfully Added",
       });
@@ -3749,6 +3724,23 @@ router.post("/whtTray/recorrect", async (req, res, next) => {
 router.post("/extra/allDeliveryIssue", async (req, res, next) => {
   try {
     let data = await superAdminController.resolveAllDeliveryIssue();
+    if (data.status == true) {
+      res.status(200).json({
+        message: "done",
+      });
+    } else {
+      res.status(202).json({
+        message: "Failed",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+// ORDER DATE ISSUE RESOLVE
+router.post("/extra/orderDateIssue", async (req, res, next) => {
+  try {
+    let data = await superAdminController.resolveOrderDateIssue();
     if (data.status == true) {
       res.status(200).json({
         message: "done",

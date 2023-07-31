@@ -140,6 +140,7 @@ exports = module.exports = () => {
 };
 // BLANCOO AUTOMATION
 async function blancooAutmation(result) {
+  console.log("ss");
   let updatedMuic = [];
   let arrofTray = [];
   for (let x of result) {

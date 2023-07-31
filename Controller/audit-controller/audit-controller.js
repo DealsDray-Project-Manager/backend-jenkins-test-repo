@@ -140,6 +140,7 @@ module.exports = {
               agent_name_bqc: 1,
               bqc_out_date: 1,
               tray_closed_by_bot: 1,
+              imei:1
             }
           );
           if (uicExists) {

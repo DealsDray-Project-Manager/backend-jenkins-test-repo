@@ -146,6 +146,7 @@ module.exports = {
               tray_closed_by_bot: 1,
               rdl_fls_one_report: 1,
               bqc_software_report: 1,
+              imei:1
             }
           );
           if (uicExists) {
