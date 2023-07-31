@@ -1551,6 +1551,7 @@ router.post(
   async (req, res, next) => {
     try {
       const { tray, user_name, sortId } = req.body;
+      console.log(tray);
       let data = await misUserController.assignToAgentRequestToWhRdlFls(
         tray,
         user_name,

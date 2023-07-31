@@ -103,6 +103,7 @@ module.exports = {
             });
             let checkHistoryOfProcurement = await purchaseOrder.findOne({
               spare_part_number: x._id,
+              
             });
             if (checkThePart) {
               let qty = checkThePart.avl_stock - x.count;

@@ -286,6 +286,12 @@ const deliverySchema = mongoose.Schema({
   unverified_imei_status: {
     type: String,
   },
+  rdl_two_user_name:{
+    type:String
+  },
+  issued_to_rdl_two_date:{
+  type:Date
+  },
   rdl_two_closed_date: {
     type: Date,
   },

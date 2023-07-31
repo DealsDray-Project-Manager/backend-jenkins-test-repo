@@ -905,6 +905,7 @@ module.exports = {
           }
         );
         if (data) {
+         
           for (let x of data.items) {
             let updateDelivery = await delivery.findOneAndUpdate(
               { tracking_id: x.awbn_number },
@@ -923,7 +924,7 @@ module.exports = {
             // let updateElastic = await elasticsearch.uicCodeGen(updateDelivery);
           }
           for (let i = 0; i < issueData.try.length; i++) {
-            let assignTray = await masters.updateOne(
+            let assignTray = await masters.findOneAndUpdate(
               { code: issueData.try[i] },
               {
                 $set: {
@@ -932,6 +933,14 @@ module.exports = {
                   status_change_time: Date.now(),
                   assign: "New Assign",
                   "track_tray.bag_tray_issue_to_bot": Date.now(),
+                },
+              }
+            );
+            let updateRack = await trayRack.findOneAndUpdate(
+              { rack_id: assignTray?.rackId },
+              {
+                $push: {
+                  bag_or_tray: assignTray?.code,
                 },
               }
             );
@@ -2779,6 +2788,7 @@ module.exports = {
               actual_items: [],
               issued_user_name: trayData.username,
               temp_array: [],
+              rack_id: null,
               sort_id: "Issued to RDL-two",
               assigned_date: Date.now(),
               "track_tray.issued_to_rdl_two": Date.now(),
@@ -2801,6 +2811,7 @@ module.exports = {
               actual_items: [],
               description: trayData.description,
               temp_array: [],
+              rack_id: null,
               sort_id: "Issued to BQC",
               assigned_date: Date.now(),
               "track_tray.issued_to_bqc_wh": Date.now(),
@@ -2847,6 +2858,7 @@ module.exports = {
               description: trayData.description,
               sort_id: "Issued to Recharging",
               assigned_date: Date.now(),
+              rack_id: null,
               "track_tray.issued_to_recharging": Date.now(),
               temp_array: [],
             },
@@ -2871,6 +2883,7 @@ module.exports = {
                   assign_to_agent_charging: Date.now(),
                   "track_tray.issued_to_recharging": Date.now(),
                   tray_location: "Charging",
+                  rack_id: null,
                   updated_at: Date.now(),
                 },
               },
@@ -2892,9 +2905,11 @@ module.exports = {
               actual_items: [],
               description: trayData.description,
               sort_id: "Issued to RDL-FLS",
+
               requested_date: Date.now(),
               "track_tray.issued_rdl_1_wh": Date.now(),
               assigned_date: Date.now(),
+              rack_id: null,
               temp_array: [],
             },
           }
@@ -2943,6 +2958,7 @@ module.exports = {
               actual_items: [],
               description: trayData.description,
               sort_id: "Issued to RDL-two",
+              rack_id: null,
               requested_date: Date.now(),
               assigned_date: Date.now(),
               "track_tray.issued_to_rdl_two": Date.now(),
@@ -2965,8 +2981,8 @@ module.exports = {
               {
                 $set: {
                   tray_status: "Issued to RDL-two",
-                  rdl_fls_one_user_name: data?.issued_user_name,
-                  rdl_fls_issued_date: Date.now(),
+                  rdl_two_user_name: data?.issued_user_name,
+                  issued_to_rdl_two_date: Date.now(),
                   tray_location: "RDL-2",
                   updated_at: Date.now(),
                 },
@@ -2976,9 +2992,7 @@ module.exports = {
                 projection: { _id: 0 },
               }
             );
-            let updateElasticSearch = await elasticsearch.uicCodeGen(
-              deliveryUpdate
-            );
+
             if (deliveryUpdate) {
               resolve(data);
             } else {
@@ -2995,6 +3009,7 @@ module.exports = {
               description: trayData.description,
               sort_id: "Issued to Charging",
               assigned_date: Date.now(),
+              rack_id: null,
               "track_tray.issued_to_charging": Date.now(),
             },
           }
@@ -3337,15 +3352,15 @@ module.exports = {
           );
         }
         if (data) {
+          let updateRack = await trayRack.findOneAndUpdate(
+            { rack_id: trayData.rackId },
+            {
+              $push: {
+                bag_or_tray: data.code,
+              },
+            }
+          );
           for (let x of data.items) {
-            let updateRack = await trayRack.findOneAndUpdate(
-              { rack_id: trayData.rackId },
-              {
-                $push: {
-                  bag_or_tray: data.code,
-                },
-              }
-            );
             let deliveryUpdate = await delivery.findOneAndUpdate(
               {
                 tracking_id: x.tracking_id,
@@ -3806,8 +3821,17 @@ module.exports = {
             $set: {
               sort_id: trayData.type,
               status_change_time: Date.now(),
+              rack_id: null,
               issued_user_name: trayData.username,
               "track_tray.wh_issue_to_sorting": Date.now(),
+            },
+          }
+        );
+        let updateRack = await trayRack.findOneAndUpdate(
+          { rack_id: data?.rack_id },
+          {
+            $pull: {
+              bag_or_tray: data.code,
             },
           }
         );
@@ -3816,14 +3840,6 @@ module.exports = {
           x.type_taxanomy == "BOT"
         ) {
           for (let x of data.items) {
-            let updateRack = await trayRack.findOneAndUpdate(
-              { rack_id: data?.rack_id },
-              {
-                $pull: {
-                  bag_or_tray: data.code,
-                },
-              }
-            );
             let deliveryUpdate = await delivery.findOneAndUpdate(
               { tracking_id: x.awbn_number },
               {
@@ -4270,6 +4286,7 @@ module.exports = {
           {
             $set: {
               assigned_date: Date.now(),
+              rack_id: null,
               sort_id: "Audit Done Issued to Merging",
               "track_tray.issue_to_merging": Date.now(),
             },
@@ -4284,11 +4301,12 @@ module.exports = {
           }
         );
         if (updaFromTray) {
-          updaToTray = await masters.updateOne(
+          updaToTray = await masters.findOneAndUpdate(
             { code: toTray },
             {
               $set: {
                 assigned_date: Date.now(),
+                rack_id: null,
                 sort_id: "Audit Done Issued to Merging",
                 "track_tray.issue_to_merging": Date.now(),
               },
@@ -4298,7 +4316,7 @@ module.exports = {
             { rack_id: updaToTray?.rack_id },
             {
               $pull: {
-                bag_or_tray: updaToTray.code,
+                bag_or_tray: updaToTray?.code,
               },
             }
           );
@@ -4313,6 +4331,7 @@ module.exports = {
           {
             $set: {
               assigned_date: Date.now(),
+              rack_id: null,
               sort_id: "Ready to BQC Issued to Merging",
               "track_tray.issue_to_merging": Date.now(),
             },
@@ -4323,7 +4342,7 @@ module.exports = {
             { rack_id: updaFromTray?.rack_id },
             {
               $pull: {
-                bag_or_tray: updaFromTray.code,
+                bag_or_tray: updaFromTray?.code,
               },
             }
           );
@@ -4332,6 +4351,7 @@ module.exports = {
             {
               $set: {
                 assigned_date: Date.now(),
+                rack_id: null,
                 sort_id: "Ready to BQC Issued to Merging",
                 "track_tray.issue_to_merging": Date.now(),
               },
@@ -4357,6 +4377,7 @@ module.exports = {
           {
             $set: {
               assigned_date: Date.now(),
+              rack_id: null,
               sort_id: "Ready to Audit Issued to Merging",
               "track_tray.issue_to_merging": Date.now(),
             },
@@ -4376,6 +4397,7 @@ module.exports = {
             {
               $set: {
                 assigned_date: Date.now(),
+                rack_id: null,
                 sort_id: "Ready to Audit Issued to Merging",
                 "track_tray.issue_to_merging": Date.now(),
               },
@@ -4401,6 +4423,7 @@ module.exports = {
           {
             $set: {
               assigned_date: Date.now(),
+              rack_id: null,
               sort_id: "Ready to RDL-Repair Issued to Merging",
               "track_tray.issue_to_merging": Date.now(),
             },
@@ -4420,6 +4443,7 @@ module.exports = {
             {
               $set: {
                 assigned_date: Date.now(),
+                rack_id: null,
                 sort_id: "Ready to RDL-Repair Issued to Merging",
                 "track_tray.issue_to_merging": Date.now(),
               },
@@ -4442,6 +4466,7 @@ module.exports = {
           {
             $set: {
               assigned_date: Date.now(),
+              rack_id: null,
               sort_id: "Issued to Sorting for Ctx to Stx",
               "track_tray.ctx_issued_sorting": Date.now(),
             },
@@ -4461,6 +4486,7 @@ module.exports = {
             {
               $set: {
                 assigned_date: Date.now(),
+                rack_id: null,
                 sort_id: "Issued to Sorting for Ctx to Stx",
                 "track_tray.ctx_issued_sorting": Date.now(),
               },
@@ -4483,6 +4509,7 @@ module.exports = {
           {
             $set: {
               assigned_date: Date.now(),
+              rack_id: null,
               sort_id: "Issued to Merging",
               "track_tray.issue_to_merging": Date.now(),
             },
@@ -4502,6 +4529,7 @@ module.exports = {
             {
               $set: {
                 assigned_date: Date.now(),
+                rack_id: null,
                 sort_id: "Issued to Merging",
                 "track_tray.issue_to_merging": Date.now(),
               },
@@ -4520,13 +4548,15 @@ module.exports = {
         }
       }
       if (updaToTray) {
-        const joinedArray = updaToTray.items.concat(updaFromTray.items);
+        console.log(updaToTray?.items);
+        console.log(updaFromTray?.items);
+        const joinedArray = updaToTray?.items?.concat(updaFromTray?.items);
         for (let x of joinedArray) {
           let deliveryUpdate = await delivery.findOneAndUpdate(
             { tracking_id: x.tracking_id },
             {
               $set: {
-                tray_status: "Send to Merging",
+                tray_status: "Issued to merging",
                 tray_location: "Sorting Agent",
                 updated_at: Date.now(),
               },
@@ -4899,15 +4929,15 @@ module.exports = {
         }
       }
       if (data) {
+        let updateRack = await trayRack.findOneAndUpdate(
+          { rack_id: rackId },
+          {
+            $push: {
+              bag_or_tray: data.code,
+            },
+          }
+        );
         for (let x of data.items) {
-          let updateRack = await trayRack.findOneAndUpdate(
-            { rack_id: rackId },
-            {
-              $push: {
-                bag_or_tray: data.code,
-              },
-            }
-          );
           let update = await delivery.findOneAndUpdate(
             {
               $or: [
@@ -4935,7 +4965,6 @@ module.exports = {
             { code: fromTray },
             {
               $set: {
-                rack_id: rackId,
                 sort_id: "Open",
                 actual_items: [],
                 temp_array: [],
@@ -4951,7 +4980,7 @@ module.exports = {
             { rack_id: rackId },
             {
               $push: {
-                bag_or_tray: data.code,
+                bag_or_tray: updateFromTray.code,
               },
             }
           );
@@ -5133,11 +5162,20 @@ module.exports = {
             $set: {
               sort_id: "Issued to Audit",
               assigned_date: Date.now(),
+              rack_id: null,
               description: trayData.description,
               issued_user_name: trayData.username,
               "track_tray.issue_to_audit_wh": Date.now(),
               actual_items: [],
               temp_array: [],
+            },
+          }
+        );
+        let updateRack = await trayRack.findOneAndUpdate(
+          { rack_id: issue?.rack_id },
+          {
+            $pull: {
+              bag_or_tray: issue?.code,
             },
           }
         );
@@ -6506,13 +6544,14 @@ module.exports = {
                 sort_id: trayData.sortId,
                 recommend_location: null,
                 actual_items: [],
+                rack_id: null,
                 "track_tray.ctx_transfer_to_sales": Date.now(),
                 temp_array: [],
               },
             }
           );
           let updateRack = await trayRack.findOneAndUpdate(
-            { rack_id: data.rackId },
+            { rack_id: data.rack_id },
             {
               $pull: {
                 bag_or_tray: data.code,
@@ -6529,13 +6568,14 @@ module.exports = {
                 sort_id: trayData.sortId,
                 recommend_location: null,
                 actual_items: [],
+                rack_id: null,
                 "track_tray.ctx_transfer_to_processing": Date.now(),
                 temp_array: [],
               },
             }
           );
           let updateRack = await trayRack.findOneAndUpdate(
-            { rack_id: data.rackId },
+            { rack_id: data.rack_id },
             {
               $pull: {
                 bag_or_tray: data.code,
@@ -7005,6 +7045,7 @@ module.exports = {
             $set: {
               sort_id: "Issued to sorting (Wht to rp)",
               assigned_date: Date.now(),
+              rack_id: null,
               "track_tray.wht_to_rp_sorting_issued": Date.now(),
               "track_tray.wht_to_rp_issued_to_sorting": Date.now(),
               actual_items: [],
@@ -7012,6 +7053,14 @@ module.exports = {
           }
         );
         if (rptTrayUpdate) {
+          let updateRack = await trayRack.findOneAndUpdate(
+            { rack_id: rptTrayUpdate.rack_id },
+            {
+              $pull: {
+                bag_or_tray: rptTrayUpdate.code,
+              },
+            }
+          );
           for (let x of rptTrayUpdate?.items) {
             const updateDelivery = await delivery.findOneAndUpdate(
               { "uic_code.code": x.uic },

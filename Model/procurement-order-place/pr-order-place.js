@@ -10,7 +10,7 @@ const prOrderPlacedSchema = mongoose.Schema({
   vendor_id: {
     type: String,
   },
-  quanitity: {
+  quantity: {
     type: String,
   },
   total_price: {

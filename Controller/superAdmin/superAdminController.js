@@ -29,8 +29,8 @@ const {
 const moment = require("moment");
 const elasticsearch = require("../../Elastic-search/elastic");
 
-const IISDOMAIN = "https://prexo-v8-4-dev-api.dealsdray.com/user/profile/";
-const IISDOMAINPRDT = "https://prexo-v8-4-dev-api.dealsdray.com/product/image/";
+const IISDOMAIN = "https://prexo-v8-4-adminapi.dealsdray.com/user/profile/";
+const IISDOMAINPRDT = "https://prexo-v8-4-adminapi.dealsdray.com/product/image/";
 
 /************************************************************************************************** */
 
@@ -1866,6 +1866,7 @@ module.exports = {
           charging_done_date: 1,
           bot_report: 1,
           charging_done_date: 1,
+          imei: 1,
         }
       );
       if (uicExists) {
@@ -2792,21 +2793,26 @@ module.exports = {
 
   editPayment: (paymentsData) => {
     return new Promise(async (resolve, reject) => {
-      const updatepayment = await payment.findOneAndUpdate(
-        {
-          _id: paymentsData._id,
-        },
-        {
-          $set: {
-            name: paymentsData.name,
-            description: paymentsData.description,
-          },
-        }
-      );
-      if (updatepayment) {
-        resolve({ status: 1 });
+      let checkDup = await payment.findOne({ name: paymentsData.name });
+      if (checkDup) {
+        resolve({ status: 2 });
       } else {
-        resolve({ status: 0 });
+        const updatepayment = await payment.findOneAndUpdate(
+          {
+            _id: paymentsData._id,
+          },
+          {
+            $set: {
+              name: paymentsData.name,
+              description: paymentsData.description,
+            },
+          }
+        );
+        if (updatepayment) {
+          resolve({ status: 1 });
+        } else {
+          resolve({ status: 0 });
+        }
       }
     });
   },
@@ -2889,7 +2895,6 @@ module.exports = {
   },
 
   editWarranty: (warrantyData) => {
-    console.log(warrantyData);
     return new Promise(async (resolve, reject) => {
       const updatewarranty = await warranty.findOneAndUpdate(
         {
@@ -3006,12 +3011,10 @@ module.exports = {
       }
     });
   },
-
   createStorage: (dataOfStorage) => {
     return new Promise(async (resolve, reject) => {
       let checkDup = await storagemodel.findOne({
         name: dataOfStorage.name,
-        type: "storage-list",
       });
       if (checkDup) {
         resolve({ status: 2 });
@@ -3044,12 +3047,19 @@ module.exports = {
   },
   editStorage: (dataOfStorage) => {
     return new Promise(async (resolve, reject) => {
-      let updateData = await storagemodel.updateOne({
-        $set: {
-          name: dataOfStorage.name,
-          description: dataOfStorage.description,
+      console.log(dataOfStorage);
+      let updateData = await storagemodel.updateOne(
+        {
+          _id: dataOfStorage._id,
         },
-      });
+        {
+          $set: {
+            name: dataOfStorage.name,
+            description: dataOfStorage.description,
+          },
+        }
+      );
+      console.log(updateData);
       if (updateData) {
         resolve({ status: 1 });
       } else {
@@ -3113,12 +3123,17 @@ module.exports = {
   },
   editRam: (dataOfRam) => {
     return new Promise(async (resolve, reject) => {
-      let updateData = await rammodel.updateOne({
-        $set: {
-          name: dataOfRam.name,
-          description: dataOfRam.description,
+      let updateData = await rammodel.updateOne(
+        {
+          _id: dataOfRam._id,
         },
-      });
+        {
+          $set: {
+            name: dataOfRam.name,
+            description: dataOfRam.description,
+          },
+        }
+      );
       if (updateData) {
         resolve({ status: 1 });
       } else {
@@ -3960,22 +3975,29 @@ module.exports = {
       let findAllUsers = await user.find();
       let updateUserWh;
       for (let x of findAllUsers) {
-        let findWarehouse = await infra.findOne({
-          type_taxanomy: "Warehouse",
-          parent_id: x.cpc,
-        });
-        if (findWarehouse) {
-          updateUserWh = await user.findOneAndUpdate(
-            {
-              user_name: x.user_name,
-            },
-            {
-              $set: {
-                warehouse: findWarehouse.code,
-              },
-            }
-          );
+        if(x.cpc !== "DDPXGGN001"){
+
+          let findLocation=await infra.findOne({code:x.cpc,type_taxanomy:"CPC"})
+         
+          let  findWarehouse = await infra.findOne({
+              type_taxanomy: "Warehouse",
+              parent_id: x.cpc,
+              warehouse_type:findLocation.location_type
+            });
+            if (findWarehouse) {
+              updateUserWh = await user.findOneAndUpdate(
+                {
+                  user_name: x.user_name,
+                },
+                {
+                  $set: {
+                    warehouse: findWarehouse.code,
+                  },
+                }
+              );
+          }
         }
+        
       }
       // let updateProcessing = await user.updateMany(
       //   { cpc: "Gurgaon_122016" },
@@ -4938,23 +4960,7 @@ module.exports = {
         console.log(i);
         i++;
       }
-      //2023-12-05T18:30:00.000+00:00
-      //2023-11-05T18:30:00.000+00:00
-      //2023-12-04T18:30:00.000+00:00
-      //2023-10-05T18:30:00.000+00:00
-      //2023-10-06T18:30:00.000+00:00
-      //2023-09-06T18:30:00.000+00:00
-      //2023-11-04T18:30:00.000+00:00
-      //2023-10-04T18:30:00.000+00:00
-      //2023-09-05T18:30:00.000+00:00
-      //2023-08-06T18:30:00.000+00:00
-      //2023-08-05T18:30:00.000+00:00
 
-      // let updateOrders=await orders.updateMany({order_date:new Date("2023-08-05T18:30:00.000+00:00")},{
-      //   $set:{
-      //     order_date:new Date("2023-05-08T18:30:00.000+00:00")
-      //   }
-      // })
       // let arr=[]
       // for (let x of arr) {
       //   let updatjackMuic = await products.findOneAndUpdate(
@@ -5004,9 +5010,25 @@ module.exports = {
       resolve({ status: true });
     });
   },
+  resolveOrderDateIssue: () => {
+    return new Promise(async (resolve, reject) => {
+      let arr = [];
+      for (let x of arr) {
+        let orderDate = await orders.updateOne(
+          { order_id: x.order_id },
+          {
+            $set: {
+              order_date: new Date(x.order_date),
+            },
+          }
+        );
+      }
+      resolve({ status: true });
+    });
+  },
   addCategoryExtra: () => {
     return new Promise(async (resolve, reject) => {
-      let arr =[]
+      let arr = [];
       let str = "SPC000000";
       let str2 = "BOX000000";
       for (let x of arr) {
@@ -5028,11 +5050,10 @@ module.exports = {
             display: str2,
             created_at: Date.now(),
           });
-          x.box_id=createBox.box_id
-        }
-        else{
-          if(checkBoxId){
-            x.box_id=checkBoxId.box_id
+          x.box_id = createBox.box_id;
+        } else {
+          if (checkBoxId) {
+            x.box_id = checkBoxId.box_id;
           }
         }
         let findCategory = await spareCategories.findOne({
@@ -5067,6 +5088,19 @@ module.exports = {
             },
           }
         );
+        if (x.box_id == "BOX-99") {
+          let updateSp = await partAndColor.findOneAndUpdate(
+            {
+              part_code: x.part_code,
+              type: "part-list",
+            },
+            {
+              $set: {
+                box_id: "SPN000015",
+              },
+            }
+          );
+        }
       }
       resolve({ status: true });
     });
@@ -5074,7 +5108,7 @@ module.exports = {
   /* ------------------------------OLD SPN MANGE-----------------------------*/
   manageOldSpnData: () => {
     return new Promise(async (resolve, reject) => {
-      let arr = []
+      let arr = [];
       for (let x of arr) {
         const spnArray = x.spn.split(",");
 
