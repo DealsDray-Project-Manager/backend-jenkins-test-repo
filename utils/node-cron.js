@@ -140,13 +140,12 @@ exports = module.exports = () => {
 };
 // BLANCOO AUTOMATION
 async function blancooAutmation(result) {
-  console.log("ss");
   let updatedMuic = [];
   let arrofTray = [];
   for (let x of result) {
     x["imei_verification_status_from_prexo"] = "Unverified";
     let imeiCheck = await delivery.findOne({ "uic_code.code": x.uic });
-    if (imeiCheck?.imei !== undefined) {
+    if (imeiCheck?.imei !== undefined && imeiCheck?.bqc_report?.blancoo_qc_status == "BQC Finished" ) {
       if (
         imeiCheck?.imei?.match(/[0-9]/g)?.join("") == x.mobile_imei ||
         imeiCheck?.imei?.match(/[0-9]/g)?.join("") == x.mobile_imei2 ||

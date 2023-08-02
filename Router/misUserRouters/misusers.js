@@ -828,7 +828,7 @@ router.post("/check-all-wht-inuse-for-sorting", async (req, res, next) => {
         message: "Ready For Sorting",
       });
     } else if (data.length !== 0) {
-      console.log(data);
+     
 
       let arr = data.toString();
       res.status(202).json({
@@ -1172,8 +1172,6 @@ router.post("/pickup/items/:type/:location", async (req, res, next) => {
   try {
     let { type, page, location } = req.params;
     const data = await misUserController.pickupPageItemView(type, location);
-
-    console.log(data.items.length);
     if (data.items.length !== 0) {
       res.status(200).json({
         data: data.items,
@@ -1193,7 +1191,6 @@ router.post("/pickup/items/:type/:location", async (req, res, next) => {
 // GET DATA BASED ON THE FROM DATE AND TO DATE
 router.post("/pickup/dateFilter", async (req, res, next) => {
   try {
-    console.log(req.body);
     let { type, location, selectedStatus } = req.body;
     const data = await misUserController.pickUpDateWiseFilter(
       type,
@@ -1551,7 +1548,6 @@ router.post(
   async (req, res, next) => {
     try {
       const { tray, user_name, sortId } = req.body;
-      console.log(tray);
       let data = await misUserController.assignToAgentRequestToWhRdlFls(
         tray,
         user_name,
@@ -1741,7 +1737,6 @@ router.post("/assignForRepiar/stockCheck", async (req, res, next) => {
       checked,
       selectedQtySp
     );
-    console.log(data.countofStock);
     if (data.status == 1) {
       res.status(200).json({
         data: data.isCheck,
@@ -1754,6 +1749,11 @@ router.post("/assignForRepiar/stockCheck", async (req, res, next) => {
     } else if (data.status == 5) {
       res.status(202).json({
         message: "Part is not active state or not exists",
+      });
+    }
+    else if (data.status == 6) {
+      res.status(202).json({
+        message: "Part is not connected to box",
       });
     }
   } catch (error) {
@@ -1784,7 +1784,6 @@ router.post("/plannerPage/charging", async (req, res, next) => {
 router.post("/assignToChargingScreen", async (req, res, next) => {
   try {
     const { type, type1, location, brand, model, jack } = req.body;
-    console.log(req.body);
     let data = await misUserController.assigneToChargingScreen(
       location,
       brand,
@@ -1830,7 +1829,6 @@ router.post("/assignForRepiar/getTheRequrements", async (req, res, next) => {
 // WHT TO RP SORTING ASSIGN
 router.post("/whtToRpSorting/assign", async (req, res, next) => {
   try {
-    console.log(req.body);
     const { spDetails, spTray, rpTray, spwhuser, sortingUser, selectedUic } =
       req.body;
     let data = await misUserController.whtToRpSortingAssign(

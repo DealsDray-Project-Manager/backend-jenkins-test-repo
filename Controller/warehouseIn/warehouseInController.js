@@ -4548,8 +4548,6 @@ module.exports = {
         }
       }
       if (updaToTray) {
-        console.log(updaToTray?.items);
-        console.log(updaFromTray?.items);
         const joinedArray = updaToTray?.items?.concat(updaFromTray?.items);
         for (let x of joinedArray) {
           let deliveryUpdate = await delivery.findOneAndUpdate(
@@ -6989,12 +6987,12 @@ module.exports = {
       }
     });
   },
-  billedBinReport: (location) => {
+  billedBinReport: () => {
+   
     return new Promise(async (resolve, reject) => {
       let getData = await delivery.aggregate([
         {
           $match: {
-            partner_shop: location,
             item_moved_to_billed_bin: "Yes",
           },
         },
@@ -7019,7 +7017,7 @@ module.exports = {
         sort_id: "Assigned to sorting (Wht to rp)",
       });
       resolve(getTray);
-      console.log(getTray);
+     
     });
   },
   whtToRpWhtTrayScan: (location, whtTray) => {
@@ -7047,7 +7045,6 @@ module.exports = {
               assigned_date: Date.now(),
               rack_id: null,
               "track_tray.wht_to_rp_sorting_issued": Date.now(),
-              "track_tray.wht_to_rp_issued_to_sorting": Date.now(),
               actual_items: [],
             },
           }
@@ -7111,6 +7108,7 @@ module.exports = {
           {
             $set: {
               sort_id: "Received from sorting (Wht to rp)",
+              "track_tray.wht_to_rp_sorting_done_recived_wh":Date.now()
             },
           }
         );

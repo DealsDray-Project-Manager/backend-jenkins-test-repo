@@ -1583,7 +1583,6 @@ router.post("/categoryCheck", async (req, res, next) => {
 // GET ALL THE SP CATEGORIES
 router.post("/spcategories/view", async (req, res, next) => {
   try {
-    console.log("working");
     const spcategoriesData = await superAdminController.getAllSPCategories();
     if (spcategoriesData) {
       res.status(200).json({
@@ -2046,7 +2045,6 @@ router.get("/geteditTrayRacks/:code", async (req, res) => {
 // GET ALL THE boxes
 router.post("/boxes/view", async (req, res, next) => {
   try {
-    console.log("working");
     const boxesData = await superAdminController.getAllBoxes();
     if (boxesData) {
       res.status(200).json({
@@ -2234,7 +2232,6 @@ router.get("/geteditBoxes/:code", async (req, res) => {
 // GET ALL THE boxes
 router.post("/payments/view", async (req, res, next) => {
   try {
-    console.log("working");
     const warrantyData = await superAdminController.getAllWarranty();
     if (warrantyData) {
       res.status(200).json({
@@ -2354,7 +2351,6 @@ router.post("/payments/one/:id", async (req, res, next) => {
 // GET ALL THE Warranties
 router.post("/warranty/view/", async (req, res, next) => {
   try {
-    console.log("working");
     const warrantyData = await superAdminController.getAllWarranty();
     if (warrantyData) {
       res.status(200).json({
@@ -2567,7 +2563,6 @@ router.post("/storage/create", async (req, res, next) => {
     const { type } = req.body;
     const data = await superAdminController.createStorage(req.body);
     if (data.status == 1) {
-     
       res.status(200).json({
         message: "Successfully Added",
       });
@@ -2988,7 +2983,7 @@ router.post("/partlist/manageStock/bulkValidation", async (req, res, next) => {
     const data = await superAdminController.partListManageBulkValidation(
       req.body
     );
-    console.log(data);
+
     if (data.status == true) {
       res.status(200).json({
         message: "Successfully Validated",

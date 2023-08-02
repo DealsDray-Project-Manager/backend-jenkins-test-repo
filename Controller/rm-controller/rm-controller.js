@@ -47,7 +47,6 @@ module.exports = {
     });
   },
   getSpTrayForPartissue: (username) => {
-    console.log(username);
     return new Promise(async (resolve, reject) => {
       const getTray = await masters.find({
         prefix: "tray-master",
@@ -64,6 +63,17 @@ module.exports = {
       if (getTheTray) {
         if (getTheTray.sort_id == "Assigned to sp warehouse") {
           if (getTheTray.issued_user_name == userName) {
+            for (let x of getTheTray?.items) {
+                let checkBoxId = await partAndColor.findOne({
+                  part_code: x?.partId,
+                });
+                if (checkBoxId) {
+                  x["avl_qty_box"] = checkBoxId?.avl_stock;
+                } else {
+                  x["avl_qty_box"] = "";
+                }
+              
+            }
             resolve({ status: 2, tray: getTheTray });
           } else {
             resolve({ status: 2 });
@@ -78,7 +88,7 @@ module.exports = {
       }
     });
   },
-  spTrayAddParts: (partId, trayId) => {
+  spTrayAddParts: (partId, trayId, boxId) => {
     return new Promise(async (resolve, reject) => {
       const updatePart = await masters.findOneAndUpdate(
         { code: trayId, "items.partId": partId },
@@ -155,7 +165,7 @@ module.exports = {
       resolve(data);
     });
   },
-  partAddIntoBox: (partDetails, spTrayId, boxName, uniqueid,objId) => {
+  partAddIntoBox: (partDetails, spTrayId, boxName, uniqueid, objId) => {
     return new Promise(async (resolve, reject) => {
       const addIntoBot = await box.findOneAndUpdate(
         { box_id: boxName },
@@ -171,7 +181,7 @@ module.exports = {
           {
             $pull: {
               temp_array: {
-                unique_id_gen:uniqueid
+                unique_id_gen: uniqueid,
               },
             },
           },
@@ -179,12 +189,12 @@ module.exports = {
             returnOriginal: false,
           }
         );
-        if(objId == "Not used" || objId == "Not required"){
+        if (objId == "Not used" || objId == "Not required") {
           const updateStock = await partAndColor.findOneAndUpdate(
             { part_code: partDetails },
             {
               $inc: {
-                avl_stock: 1
+                avl_stock: 1,
               },
             }
           );

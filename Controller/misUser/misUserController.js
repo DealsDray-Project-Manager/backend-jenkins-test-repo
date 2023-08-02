@@ -37,7 +37,6 @@ module.exports = {
         if (x.order_status == "NEW") {
           if (x?.imei.match(/[0-9]/g).join("").length !== 15) {
             // IMEI length is correct
-            console.log(x.imei);
             imei.push(x.imei);
             err["imei_number_is_duplicate"] = imei;
           }
@@ -4001,7 +4000,7 @@ module.exports = {
           }
         );
       }
-      console.log(sendtoPickupRequest);
+     
       if (sendtoPickupRequest.matchedCount != 0) {
         resolve(sendtoPickupRequest);
       } else {
@@ -4102,7 +4101,7 @@ module.exports = {
         },
       ]);
       if (data) {
-        console.log(data);
+       
         resolve(data);
       }
     });
@@ -4180,7 +4179,7 @@ module.exports = {
             ],
           })
           .catch((err) => reject(err));
-        console.log(stxTray);
+        
         if (stxTray.length !== 0) {
           for (let x of stxTray) {
             if (parseInt(x.limit) > parseInt(x.items.length)) {
@@ -4229,6 +4228,7 @@ module.exports = {
           },
         },
       ]);
+    
       resolve(findItem);
     });
   },
@@ -4261,7 +4261,17 @@ module.exports = {
         },
       ]);
       if (findItem) {
-        console.log(findItem[0]);
+        for(let x of findItem){
+          for(let y of x?.items?.rdl_fls_report?.partRequired){
+            const checkPart=await partAndColor.findOne({part_code:y?.part_id})
+            if(checkPart){
+              y["avl_qty"]=checkPart?.avl_stock
+            }
+            else{
+              y["avl_qty"]=0
+            }
+          }
+        }
         resolve({ findItem: findItem, status: 1 });
       } else {
         resolve({ status: 2 });
@@ -4269,8 +4279,6 @@ module.exports = {
     });
   },
   assignForRepairStockCheck: (partId, uic, isCheck, checked, selectedQtySp) => {
-    console.log(isCheck);
-    console.log(partId);
     return new Promise(async (resolve, reject) => {
       let countofStock = selectedQtySp;
       let flag = false;
@@ -4330,22 +4338,27 @@ module.exports = {
               status: "Active",
             });
             if (checkQty) {
-              let check = checkQty?.avl_stock - Math.abs(1);
-              if (check < 0) {
-                resolve({ status: 0, partid: x?.part_id });
-              } else {
-                countofStock = countofStock + 1;
-                let obj = {
-                  uic: [uic],
-                  box_id: checkQty.box_id,
-                  partName: x?.part_name,
-                  partId: x?.part_id,
-                  avl_stock: checkQty?.avl_stock,
-                  selected_qty: 1,
-                  balance_stock: check,
-                  status: "Pending",
-                };
-                isCheck.push(obj);
+              if(checkQty?.box_id !== undefined){
+                let check = checkQty?.avl_stock - Math.abs(1);
+                if (check < 0) {
+                  resolve({ status: 0, partid: x?.part_id });
+                } else {
+                  countofStock = countofStock + 1;
+                  let obj = {
+                    uic: [uic],
+                    box_id: checkQty.box_id,
+                    partName: x?.part_name,
+                    partId: x?.part_id,
+                    avl_stock: checkQty?.avl_stock,
+                    selected_qty: 1,
+                    balance_stock: check,
+                    status: "Pending",
+                  };
+                  isCheck.push(obj);
+                }
+              }
+              else{
+                resolve({ status: 6 });
               }
             } else {
               resolve({ status: 5 });
@@ -4388,13 +4401,13 @@ module.exports = {
           },
         },
       ]);
-      console.log(plannerData);
+     
       resolve(plannerData);
     });
   },
 
   assigneToChargingScreen: (location, brand, model, jack, type, type1) => {
-    console.log(type);
+  
     return new Promise(async (resolve, reject) => {
       const data = await masters.find({
         $or: [
@@ -4428,7 +4441,7 @@ module.exports = {
     isCheck,
     selectedQtySp
   ) => {
-    console.log(selectedQtySp);
+   
     return new Promise(async (resolve, reject) => {
       const getSortingAgent = await user.find({
         user_type: "Sorting Agent",

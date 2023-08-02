@@ -37,7 +37,6 @@ router.post("/assigned-tray/:userName", async (req, res, next) => {
 // RECEIVE SP TRAY
 router.post("/recieved-sp-tray", async (req, res, next) => {
   try {
-    console.log(req.body);
     let data = await Rdl2Controller.receiveSpTray(req.body);
     if (data.status == 1) {
       res.status(200).json({
@@ -105,7 +104,6 @@ router.post("/uicScan/:uic/:trayId", async (req, res, next) => {
 // REPAIR DONE ACTION PAGE
 router.post("/repairDone/action", async (req, res, next) => {
   try {
-    console.log(req.body);
     let data = await Rdl2Controller.repairDoneAction(req.body);
     if (data.status === 1) {
       res.status(200).json({
@@ -128,7 +126,6 @@ router.post("/repairDone/action", async (req, res, next) => {
 // REPAIR DONE CLOSE THE TRAY
 router.post("/traySummary", async (req, res, next) => {
   try {
-    console.log(req.body);
     const { trayId, user_name } = req.body;
     let data = await Rdl2Controller.traySummary(trayId, user_name);
 

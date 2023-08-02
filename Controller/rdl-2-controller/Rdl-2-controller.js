@@ -70,7 +70,7 @@ module.exports = {
         for (const item of tray.items) {
           selectedQtySum += parseInt(item.selected_qty);
         }
-        console.log(selectedQtySum);
+       
         if (selectedQtySum == trayData.counts) {
           let data = await masters.findOneAndUpdate(
             { code: trayData.trayId },
@@ -183,7 +183,7 @@ module.exports = {
       }
 
       for (let x of trayItemData.rdl_repair_report.rdl_two_part_status) {
-        console.log(x);
+      
         if (
           x.rdl_two_status !== "Used" 
         ) {

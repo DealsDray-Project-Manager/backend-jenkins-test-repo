@@ -352,7 +352,6 @@ router.post(
   "/sorting/wht-to-rp/assignedTray/:username/:trayType",
   async (req, res, next) => {
     try {
-      console.log(req.params);
       const { username, trayType } = req.params;
       let data = await sortingAgentController.sortingGetAssignedTrayForWhtToRp(
         username,
@@ -381,7 +380,7 @@ router.post("/sorting/wht-to-rp/:trayId/:username", async (req, res, next) => {
     if (data.status == 1) {
       res.status(200).json({
         data: data.tray,
-        rpTray:data.rpTray
+        rpTray: data.rpTray,
       });
     } else if (data.status == 2) {
       res.status(202).json({
@@ -397,7 +396,7 @@ router.post("/sorting/wht-to-rp/:trayId/:username", async (req, res, next) => {
   }
 });
 
-// UIC SCAN FOR WHT TO RP 
+// UIC SCAN FOR WHT TO RP
 router.post("/whtToRp/itemTransferUicScan", async (req, res, next) => {
   try {
     let data = await sortingAgentController.whtToRpItemScan(req.body);
@@ -453,7 +452,9 @@ router.post("/whtToRp/itemTransfer", async (req, res, next) => {
 // WHT TO RP SORTING DONE CLOSE THE TRAY
 router.post("/whtToRp/closeTray", async (req, res, next) => {
   try {
-    let data = await sortingAgentController.whtToTRpSortingDoneCloseTray(req.body);
+    let data = await sortingAgentController.whtToTRpSortingDoneCloseTray(
+      req.body
+    );
 
     if (data.status === 1) {
       res.status(200).json({
