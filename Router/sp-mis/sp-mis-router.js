@@ -48,7 +48,6 @@ router.post("/procurment/creation", async (req, res, next) => {
 // CREATE PROCUREMENT REQUEST
 router.post("/procurment/request", async (req, res, next) => {
   try {
-    console.log(req.body);
     const { spList, brand, model } = req.body;
     let data = await SpMisController.ProcurementRequestCreation(
       spList,

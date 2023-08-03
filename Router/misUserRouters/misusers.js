@@ -828,8 +828,6 @@ router.post("/check-all-wht-inuse-for-sorting", async (req, res, next) => {
         message: "Ready For Sorting",
       });
     } else if (data.length !== 0) {
-     
-
       let arr = data.toString();
       res.status(202).json({
         message: `${arr} - This Tray's Are Already In Sorting`,
@@ -1587,7 +1585,6 @@ router.post(
   }
 );
 
-
 router.post("/RDLoneDoneTray/:location", async (req, res, next) => {
   try {
     const { location } = req.params;
@@ -1750,8 +1747,7 @@ router.post("/assignForRepiar/stockCheck", async (req, res, next) => {
       res.status(202).json({
         message: "Part is not active state or not exists",
       });
-    }
-    else if (data.status == 6) {
+    } else if (data.status == 6) {
       res.status(202).json({
         message: "Part is not connected to box",
       });
@@ -1852,5 +1848,115 @@ router.post("/whtToRpSorting/assign", async (req, res, next) => {
     next(error);
   }
 });
-
+/*------------------------------------STX UTILITY----------------------------------------------*/
+//IMPORT XLSX
+router.post("/stxUtilityImportXlsx", async (req, res, next) => {
+  try {
+    let data = await misUserController.stxUtilityImportXlsx();
+    if (data.status == 1) {
+      res.status(200).json({
+        message: "Successfully added",
+        data:data.data
+      });
+    } else {
+      res.status(202).json({
+        message: "Failed please try again",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+// SEARCH UIC
+router.post("/stxUtilityScanUic/:uic", async (req, res, next) => {
+  try {
+    // PARAMS
+    const { uic } = req.params;
+    // FUNCTION FROM CONTROLLER
+    let data = await misUserController.stxUtilityScanUic(uic);
+    if (data.status == 1) {
+      res.status(200).json({
+        data: data.uicData,
+      });
+    } else if (data.status == 2) {
+      res.status(202).json({
+        message: `Already added to ${data.trayId}`,
+      });
+    } else {
+      res.status(202).json({
+        message: "Invalid UIC please check",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+// GET STX TRAY
+router.post("/stxUtilityGetStx", async (req, res, next) => {
+  try {
+    // PARAMS
+    const { uic, location, grade } = req.body;
+    // FUNCTION FROM CONTROLLER
+    let data = await misUserController.stxUtilityGetStx(uic, location, grade);
+    if (data.status == 2) {
+      res.status(200).json({
+        data: data.trayData,
+        muiDetails: data.muiDetails,
+      });
+    } else if (data.status == 1) {
+      res.status(202).json({
+        message: "Product not exists",
+      });
+    } else {
+      res.status(202).json({
+        message: "Item not delivered",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+// ADD TO STX
+router.post("/stxUtilityAddToStx", async (req, res, next) => {
+  try {
+    // PARAMS
+    const { uic, stXTrayId, ctxTrayId, brand, model, muic } = req.body;
+    // FUNCTION FROM CONTROLLER
+    let data = await misUserController.stxUtilityAddItems(
+      uic,
+      stXTrayId,
+      ctxTrayId,
+      brand,
+      model,
+      muic
+    );
+    if (data.status == 1) {
+      res.status(200).json({
+        message: "Successfully Added",
+      });
+    } else {
+      res.status(202).json({
+        message: "Failed please try again",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+// GET STX UTILITY IN-PROGRESS TRAY
+router.post("/getStxUtilityInProgress/:location", async (req, res, next) => {
+  try {
+    // PARAMS
+    const { location } = req.params;
+    // FUNCTION FROM CONTROLLER
+    let data = await misUserController.stxUtilityTrayInproGress(location);
+    if (data) {
+      res.status(200).json({
+        data: data,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
 module.exports = router;

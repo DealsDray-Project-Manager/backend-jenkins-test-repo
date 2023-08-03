@@ -71,7 +71,7 @@ const ordersSchema = mongoose.Schema({
   gc_redeem_time: {
     type: Date,
   },
-  gc_amount_refund_time: {
+  gc_refund_time: {
     type: Date,
   },
   diagnstic_status: {

@@ -3766,6 +3766,7 @@ router.post("/extra/addCategory", async (req, res, next) => {
     next(error);
   }
 });
+
 // MANAGE OLD SPN0000 PARTID  V8.4
 router.post("/extra/manageOldSpn", async (req, res, next) => {
   try {
