@@ -121,8 +121,6 @@ router.post("/bqcReport/:uic/:trayId", async (req, res, next) => {
 router.post("/traySegrigation", async (req, res, next) => {
   try {
     const { type, stage } = req.body;
-    console.log(req.body);
-    console.log("check");
     let data = await auditController.traySegrigation(req.body);
     if (data.status == 1) {
       if (stage == "BQC Not Done / Unverified imei") {

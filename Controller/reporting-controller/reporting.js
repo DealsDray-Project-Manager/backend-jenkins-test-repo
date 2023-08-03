@@ -1300,8 +1300,7 @@ module.exports = {
       const findUnverifiedImei = await delivery
         .find({
           partner_shop: location,
-          unverified_imei_status:
-            "Unverified",
+          unverified_imei_status: "Unverified",
         })
         .skip(skip)
         .limit(limit);
@@ -1321,63 +1320,62 @@ module.exports = {
     type
   ) => {
     return new Promise(async (resolve, reject) => {
-        const fromDateTimestamp = Date.parse(fromDate);
-        const toDateTimestamp = Date.parse(toDate);
-        let allOrdersReport = await orders.aggregate([
-          {
-            $match: {
-              order_status: "NEW",
-              partner_shop: location,
-              order_date: {
-                $gte: new Date(fromDateTimestamp),
-                $lte: new Date(toDateTimestamp),
-              },
+      const fromDateTimestamp = Date.parse(fromDate);
+      const toDateTimestamp = Date.parse(toDate);
+      let allOrdersReport = await orders.aggregate([
+        {
+          $match: {
+            order_status: "NEW",
+            partner_shop: location,
+            order_date: {
+              $gte: new Date(fromDateTimestamp),
+              $lte: new Date(toDateTimestamp),
             },
           },
-          {
-            $lookup: {
-              from: "products",
-              localField: `item_id`,
-              foreignField: "vendor_sku_id",
-              as: "products",
-            },
+        },
+        {
+          $lookup: {
+            from: "products",
+            localField: `item_id`,
+            foreignField: "vendor_sku_id",
+            as: "products",
           },
-          {
-            $facet: {
-              results: [{ $skip: skip }, { $limit: limit }],
-              count: [{ $count: "count" }],
-            },
+        },
+        {
+          $facet: {
+            results: [{ $skip: skip }, { $limit: limit }],
+            count: [{ $count: "count" }],
           },
-        ]);
+        },
+      ]);
 
-        let forXlsxDownload = await orders.aggregate([
-          {
-            $match: {
-              partner_shop: location,
-              order_status: "NEW",
-              order_date: {
-                $gte: new Date(fromDateTimestamp),
-                $lte: new Date(toDateTimestamp),
-              },
+      let forXlsxDownload = await orders.aggregate([
+        {
+          $match: {
+            partner_shop: location,
+            order_status: "NEW",
+            order_date: {
+              $gte: new Date(fromDateTimestamp),
+              $lte: new Date(toDateTimestamp),
             },
           },
-          {
-            $lookup: {
-              from: "products",
-              localField: `item_id`,
-              foreignField: "vendor_sku_id",
-              as: "products",
-            },
+        },
+        {
+          $lookup: {
+            from: "products",
+            localField: `item_id`,
+            foreignField: "vendor_sku_id",
+            as: "products",
           },
-        ])
-        resolve({
-          getCount: allOrdersReport[0]?.count[0]?.count,
-          allOrdersReport: allOrdersReport[0]?.results,
-          forXlsxDownload: forXlsxDownload
-        });
+        },
+      ]);
+      resolve({
+        getCount: allOrdersReport[0]?.count[0]?.count,
+        allOrdersReport: allOrdersReport[0]?.results,
+        forXlsxDownload: forXlsxDownload,
+      });
     });
   },
-
 
   monthWiseReportItemFilter: (
     location,
@@ -1490,14 +1488,14 @@ module.exports = {
     return new Promise(async (resolve, reject) => {
       let monthWiseReport, getCount, forXlsxDownload;
       if (type == "Order Date") {
-        const fromDateTimestamp = Date.parse(fromDate); 
-        const toDateTimestamp =  Date.parse(toDate);
+        const fromDateTimestamp = Date.parse(fromDate);
+        const toDateTimestamp = Date.parse(toDate);
         let monthWiseReport = await orders.aggregate([
           {
             $match: {
               delivery_status: "Delivered",
               partner_shop: location,
-              imei_verification_status:"Unverified",
+              imei_verification_status: "Unverified",
               order_date: {
                 $gte: new Date(fromDateTimestamp),
                 $lte: new Date(toDateTimestamp),
@@ -1525,7 +1523,7 @@ module.exports = {
             $match: {
               partner_shop: location,
               delivery_status: "Delivered",
-              imei_verification_status:"Unverified",
+              imei_verification_status: "Unverified",
               order_date: {
                 $gte: new Date(fromDateTimestamp),
                 $lte: new Date(toDateTimestamp),
@@ -1544,12 +1542,10 @@ module.exports = {
         let arrLimit = [];
         for (let x of monthWiseReport?.[0].results) {
           arrLimit.push(...x.delivery);
-       
         }
         let arrWithoutLimit = [];
         for (let y of forXlsxDownload) {
           arrWithoutLimit.push(...y.delivery);
-          
         }
         resolve({
           getCount: arrWithoutLimit.length,

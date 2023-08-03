@@ -25,7 +25,6 @@ router.post("/spTray/:user_name", async (req, res, next) => {
     const { user_name } = req.params;
     let data = await rmuserController.getSpTrayForPartissue(user_name);
     if (data) {
-      console.log(data);
       res.status(200).json({
         data: data,
       });
@@ -37,7 +36,6 @@ router.post("/spTray/:user_name", async (req, res, next) => {
 // PARTS ISSUE PAGE
 router.post("/spTrayPartIssue", async (req, res, next) => {
   try {
-    console.log(req.body);
     const { trayId, username, status } = req.body;
     let data = await rmuserController.spTrayPartIssuePage(
       trayId,
@@ -63,10 +61,10 @@ router.post("/spTrayPartIssue", async (req, res, next) => {
   }
 });
 // ADD THE PARTS
-router.post("/spTray/addParts/:partId/:trayId", async (req, res, next) => {
+router.post("/spTray/addParts/:partId/:trayId/:boxId", async (req, res, next) => {
   try {
-    const { partId, trayId } = req.params;
-    let data = await rmuserController.spTrayAddParts(partId, trayId);
+    const { partId, trayId ,boxId} = req.params;
+    let data = await rmuserController.spTrayAddParts(partId, trayId,boxId);
     if (data.status == 1) {
       res.status(200).json({
         message: "Successfully added",
@@ -83,10 +81,9 @@ router.post("/spTray/addParts/:partId/:trayId", async (req, res, next) => {
 // CLOSE THE SP TRAY
 router.post("/spTrayClose", async (req, res, next) => {
   try {
-    console.log(req.body);
     const { trayId, rackId } = req.body;
     let data = await rmuserController.spTrayClose(trayId, rackId);
-    console.log(data);
+
     if (data.status == 1) {
       res.status(200).json({
         message: "Successfully Closed & Ready to RDL-Repair",
@@ -106,7 +103,6 @@ router.post("/spTray/readyToRdlRepair/:user_name", async (req, res, next) => {
     const { user_name } = req.params;
     let data = await rmuserController.getSpTrayForRdlRepair(user_name);
     if (data) {
-      console.log(data);
       res.status(200).json({
         data: data,
       });
@@ -132,8 +128,7 @@ router.post("/spTrayReturnFromRdlTwo/:location", async (req, res, next) => {
 /*------------------------------------------------------SP TRAY ---------------------------------------------*/
 router.post("/addIntoBox", async (req, res, next) => {
   try {
-    console.log(req.body);
-    const { partDetails, spTrayId, boxName,uniqueid,objId } = req.body;
+    const { partDetails, spTrayId, boxName, uniqueid, objId } = req.body;
     let data = await rmuserController.partAddIntoBox(
       partDetails,
       spTrayId,
@@ -176,7 +171,7 @@ router.post("/rdlTwoDoneCloseSP", async (req, res, next) => {
 // GET ALL THE boxes
 router.post("/boxesView/:partId", async (req, res, next) => {
   try {
-    const {partId}=req.params
+    const { partId } = req.params;
     const boxesData = await rmuserController.getBoxData(partId);
     if (boxesData.status == 1) {
       res.status(200).json({

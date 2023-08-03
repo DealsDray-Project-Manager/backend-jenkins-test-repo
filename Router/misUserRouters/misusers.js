@@ -828,8 +828,6 @@ router.post("/check-all-wht-inuse-for-sorting", async (req, res, next) => {
         message: "Ready For Sorting",
       });
     } else if (data.length !== 0) {
-      console.log(data);
-
       let arr = data.toString();
       res.status(202).json({
         message: `${arr} - This Tray's Are Already In Sorting`,
@@ -1172,8 +1170,6 @@ router.post("/pickup/items/:type/:location", async (req, res, next) => {
   try {
     let { type, page, location } = req.params;
     const data = await misUserController.pickupPageItemView(type, location);
-
-    console.log(data.items.length);
     if (data.items.length !== 0) {
       res.status(200).json({
         data: data.items,
@@ -1193,7 +1189,6 @@ router.post("/pickup/items/:type/:location", async (req, res, next) => {
 // GET DATA BASED ON THE FROM DATE AND TO DATE
 router.post("/pickup/dateFilter", async (req, res, next) => {
   try {
-    console.log(req.body);
     let { type, location, selectedStatus } = req.body;
     const data = await misUserController.pickUpDateWiseFilter(
       type,
@@ -1551,7 +1546,6 @@ router.post(
   async (req, res, next) => {
     try {
       const { tray, user_name, sortId } = req.body;
-      console.log(tray);
       let data = await misUserController.assignToAgentRequestToWhRdlFls(
         tray,
         user_name,
@@ -1590,7 +1584,6 @@ router.post(
     }
   }
 );
-
 
 router.post("/RDLoneDoneTray/:location", async (req, res, next) => {
   try {
@@ -1741,7 +1734,6 @@ router.post("/assignForRepiar/stockCheck", async (req, res, next) => {
       checked,
       selectedQtySp
     );
-    console.log(data.countofStock);
     if (data.status == 1) {
       res.status(200).json({
         data: data.isCheck,
@@ -1754,6 +1746,10 @@ router.post("/assignForRepiar/stockCheck", async (req, res, next) => {
     } else if (data.status == 5) {
       res.status(202).json({
         message: "Part is not active state or not exists",
+      });
+    } else if (data.status == 6) {
+      res.status(202).json({
+        message: "Part is not connected to box",
       });
     }
   } catch (error) {
@@ -1784,7 +1780,6 @@ router.post("/plannerPage/charging", async (req, res, next) => {
 router.post("/assignToChargingScreen", async (req, res, next) => {
   try {
     const { type, type1, location, brand, model, jack } = req.body;
-    console.log(req.body);
     let data = await misUserController.assigneToChargingScreen(
       location,
       brand,
@@ -1830,7 +1825,6 @@ router.post("/assignForRepiar/getTheRequrements", async (req, res, next) => {
 // WHT TO RP SORTING ASSIGN
 router.post("/whtToRpSorting/assign", async (req, res, next) => {
   try {
-    console.log(req.body);
     const { spDetails, spTray, rpTray, spwhuser, sortingUser, selectedUic } =
       req.body;
     let data = await misUserController.whtToRpSortingAssign(
@@ -1854,5 +1848,115 @@ router.post("/whtToRpSorting/assign", async (req, res, next) => {
     next(error);
   }
 });
-
+/*------------------------------------STX UTILITY----------------------------------------------*/
+//IMPORT XLSX
+router.post("/stxUtilityImportXlsx", async (req, res, next) => {
+  try {
+    let data = await misUserController.stxUtilityImportXlsx();
+    if (data.status == 1) {
+      res.status(200).json({
+        message: "Successfully added",
+        data:data.data
+      });
+    } else {
+      res.status(202).json({
+        message: "Failed please try again",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+// SEARCH UIC
+router.post("/stxUtilityScanUic/:uic", async (req, res, next) => {
+  try {
+    // PARAMS
+    const { uic } = req.params;
+    // FUNCTION FROM CONTROLLER
+    let data = await misUserController.stxUtilityScanUic(uic);
+    if (data.status == 1) {
+      res.status(200).json({
+        data: data.uicData,
+      });
+    } else if (data.status == 2) {
+      res.status(202).json({
+        message: `Already added to ${data.trayId}`,
+      });
+    } else {
+      res.status(202).json({
+        message: "Invalid UIC please check",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+// GET STX TRAY
+router.post("/stxUtilityGetStx", async (req, res, next) => {
+  try {
+    // PARAMS
+    const { uic, location, grade } = req.body;
+    // FUNCTION FROM CONTROLLER
+    let data = await misUserController.stxUtilityGetStx(uic, location, grade);
+    if (data.status == 2) {
+      res.status(200).json({
+        data: data.trayData,
+        muiDetails: data.muiDetails,
+      });
+    } else if (data.status == 1) {
+      res.status(202).json({
+        message: "Product not exists",
+      });
+    } else {
+      res.status(202).json({
+        message: "Item not delivered",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+// ADD TO STX
+router.post("/stxUtilityAddToStx", async (req, res, next) => {
+  try {
+    // PARAMS
+    const { uic, stXTrayId, ctxTrayId, brand, model, muic } = req.body;
+    // FUNCTION FROM CONTROLLER
+    let data = await misUserController.stxUtilityAddItems(
+      uic,
+      stXTrayId,
+      ctxTrayId,
+      brand,
+      model,
+      muic
+    );
+    if (data.status == 1) {
+      res.status(200).json({
+        message: "Successfully Added",
+      });
+    } else {
+      res.status(202).json({
+        message: "Failed please try again",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+// GET STX UTILITY IN-PROGRESS TRAY
+router.post("/getStxUtilityInProgress/:location", async (req, res, next) => {
+  try {
+    // PARAMS
+    const { location } = req.params;
+    // FUNCTION FROM CONTROLLER
+    let data = await misUserController.stxUtilityTrayInproGress(location);
+    if (data) {
+      res.status(200).json({
+        data: data,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
 module.exports = router;

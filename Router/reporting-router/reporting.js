@@ -164,7 +164,6 @@ router.post("/delivered/item/filter", async (req, res, next) => {
 // filter for all orders report
 router.post("/orderDateReport/item/filter", async (req, res, next) => {
   try {
-    console.log(req.body);
     let { location, fromDate, toDate, page, size, type } = req.body;
     page++;
     const limit = parseInt(size);
@@ -177,7 +176,6 @@ router.post("/orderDateReport/item/filter", async (req, res, next) => {
       skip,
       type
     );
-    console.log(filterData.forXlsxDownload.length);
     if (filterData.allOrdersReport.length !== 0) {
       res.status(200).json({
         data: filterData.allOrdersReport,
@@ -231,7 +229,6 @@ router.post("/monthWiseReport/item/filter", async (req, res, next) => {
 // FILTER FOR UNVERIFIED IMEI
 router.post("/unverifiedImei/item/filter", async (req, res, next) => {
   try {
-    console.log(req.body);
     let { location, fromDate, toDate, page, size, type } = req.body;
     page++;
     const limit = parseInt(size);

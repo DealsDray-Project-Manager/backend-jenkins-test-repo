@@ -25,7 +25,6 @@ router.post("/procurment/view/:status", async (req, res, next) => {
   try {
     const {status}=req.params
     let data = await purchaseController.procurementRequestView(status);
-    console.log(data);
     if (data) {
       res.status(200).json({
         data: data,
@@ -48,7 +47,6 @@ router.post("/placeOrderScreen/:spnNumber/:muic", async (req, res, next) => {
       spnNumber,
       muic
     );
-    console.log(data);
     if (data.status == 1) {
       res.status(200).json({
         data: data.pageData,

@@ -29,8 +29,8 @@ const {
 const moment = require("moment");
 const elasticsearch = require("../../Elastic-search/elastic");
 
-const IISDOMAIN = "https://prexo-v8-4-adminapi.dealsdray.com/user/profile/";
-const IISDOMAINPRDT = "https://prexo-v8-4-adminapi.dealsdray.com/product/image/";
+const IISDOMAIN = "https://prexo-v8-4-uat-api.dealsdray.com/user/profile/";
+const IISDOMAINPRDT = "https://prexo-v8-4-uat-api.dealsdray.com/product/image/";
 
 /************************************************************************************************** */
 
@@ -790,7 +790,6 @@ module.exports = {
   /*--------------------------------EDIT PRODUCT-----------------------------------*/
 
   editproduct: (productData) => {
-    console.log(productData.jack_type);
     return new Promise(async (resolve, reject) => {
       let data = await products.updateOne(
         { _id: productData._id },
@@ -804,7 +803,7 @@ module.exports = {
           },
         }
       );
-      console.log(data);
+
       if (data.modifiedCount != 0) {
         resolve(data);
       } else {
@@ -2492,7 +2491,6 @@ module.exports = {
   },
 
   deleteSPcategory: (spcategory_id) => {
-    console.log(spcategory_id);
     return new Promise(async (resolve, reject) => {
       let data = await spareCategories.deleteOne({
         spcategory_id: spcategory_id,
@@ -2505,7 +2503,6 @@ module.exports = {
     });
   },
   geteditSPcategory: (spcategory_id) => {
-    console.log(spcategory_id);
     return new Promise(async (resolve, reject) => {
       let data = await spareCategories.findOne({
         spcategory_id: spcategory_id,
@@ -2578,7 +2575,6 @@ module.exports = {
   },
 
   deleteTrayRacks: (rack_id) => {
-    console.log(rack_id);
     return new Promise(async (resolve, reject) => {
       let data = await trayRack.deleteOne({ rack_id: rack_id });
       if (data) {
@@ -2589,7 +2585,6 @@ module.exports = {
     });
   },
   geteditTrayRacks: (rack_id) => {
-    console.log(rack_id);
     return new Promise(async (resolve, reject) => {
       let data = await trayRack.findOne({ rack_id: rack_id });
       if (data) {
@@ -2661,7 +2656,7 @@ module.exports = {
   getOneTrayRack: (rack_id) => {
     return new Promise(async (resolve, reject) => {
       const getOneTrayRack = await trayRack.findOne({ rack_id: rack_id });
-      console.log(getOneTrayRack);
+
       if (getOneTrayRack) {
         resolve({ status: 1, data: getOneTrayRack });
       } else {
@@ -2680,7 +2675,6 @@ module.exports = {
   },
 
   deleteBoxes: (box_id) => {
-    console.log(box_id);
     return new Promise(async (resolve, reject) => {
       let data = await box.deleteOne({ box_id: box_id });
       if (data) {
@@ -2691,7 +2685,6 @@ module.exports = {
     });
   },
   geteditBoxes: (box_id) => {
-    console.log(box_id);
     return new Promise(async (resolve, reject) => {
       let data = await box.findOne({ box_id: box_id });
       if (data) {
@@ -2818,7 +2811,6 @@ module.exports = {
   },
 
   geteditPayment: (name) => {
-    console.log(name);
     return new Promise(async (resolve, reject) => {
       let data = await payment.findOne({ name: name });
       if (data) {
@@ -2830,7 +2822,6 @@ module.exports = {
   },
 
   deletePayment: (name) => {
-    console.log(name);
     return new Promise(async (resolve, reject) => {
       let data = await payment.deleteOne({ _id: name });
       if (data) {
@@ -2916,7 +2907,6 @@ module.exports = {
   },
 
   geteditWarranty: (name) => {
-    console.log(name);
     return new Promise(async (resolve, reject) => {
       let data = await warranty.findOne({ name: name });
       if (data) {
@@ -2928,7 +2918,6 @@ module.exports = {
   },
 
   deleteWarranty: (name) => {
-    console.log(name);
     return new Promise(async (resolve, reject) => {
       let data = await warranty.deleteOne({ _id: name });
       if (data) {
@@ -3047,7 +3036,6 @@ module.exports = {
   },
   editStorage: (dataOfStorage) => {
     return new Promise(async (resolve, reject) => {
-      console.log(dataOfStorage);
       let updateData = await storagemodel.updateOne(
         {
           _id: dataOfStorage._id,
@@ -3059,7 +3047,7 @@ module.exports = {
           },
         }
       );
-      console.log(updateData);
+
       if (updateData) {
         resolve({ status: 1 });
       } else {
@@ -3975,29 +3963,30 @@ module.exports = {
       let findAllUsers = await user.find();
       let updateUserWh;
       for (let x of findAllUsers) {
-        if(x.cpc !== "DDPXGGN001"){
+        if (x.cpc !== "DDPXGGN001") {
+          let findLocation = await infra.findOne({
+            code: x.cpc,
+            type_taxanomy: "CPC",
+          });
 
-          let findLocation=await infra.findOne({code:x.cpc,type_taxanomy:"CPC"})
-         
-          let  findWarehouse = await infra.findOne({
-              type_taxanomy: "Warehouse",
-              parent_id: x.cpc,
-              warehouse_type:findLocation.location_type
-            });
-            if (findWarehouse) {
-              updateUserWh = await user.findOneAndUpdate(
-                {
-                  user_name: x.user_name,
+          let findWarehouse = await infra.findOne({
+            type_taxanomy: "Warehouse",
+            parent_id: x.cpc,
+            warehouse_type: findLocation.location_type,
+          });
+          if (findWarehouse) {
+            updateUserWh = await user.findOneAndUpdate(
+              {
+                user_name: x.user_name,
+              },
+              {
+                $set: {
+                  warehouse: findWarehouse.code,
                 },
-                {
-                  $set: {
-                    warehouse: findWarehouse.code,
-                  },
-                }
-              );
+              }
+            );
           }
         }
-        
       }
       // let updateProcessing = await user.updateMany(
       //   { cpc: "Gurgaon_122016" },
@@ -4575,7 +4564,6 @@ module.exports = {
               } else {
                 obj.part_id = "SPN000000";
               }
-              console.log(obj);
               arr.push(obj);
             }
             if (
@@ -4702,7 +4690,6 @@ module.exports = {
           }
         }
       }
-      console.log(arr.length);
       resolve(arr);
     });
   },
@@ -4903,7 +4890,9 @@ module.exports = {
       let i = 0;
       for (let x of findDelivery) {
         // check imei verified or not
-        if (x.bqc_software_report != undefined) {
+        if (
+          x.bqc_software_report != undefined 
+        ) {
           let status = "Unverified";
           if (
             x.imei?.match(/[0-9]/g)?.join("") ==
@@ -4935,29 +4924,29 @@ module.exports = {
           );
         }
 
-        if (x.partner_shop == "Sales_Gurgaon_122016") {
-          let updateDeliveryTwo = await delivery.findOneAndUpdate(
-            { "uic_code.code": x.uic_code?.code },
-            {
-              $set: {
-                partner_shop: "Gurgaon_122016",
-              },
-            }
-          );
-        } else if (
-          x.partner_shop == "Gurgaon_122016" ||
-          x.partner_shop == "Sales_Gurgaon_122016"
-        ) {
-          let updateOrder = await orders.findOneAndUpdate(
-            { order_id: x.order_id },
-            {
-              $set: {
-                partner_shop: "Gurgaon_122016",
-              },
-            }
-          );
-        }
-        console.log(i);
+        // if (x.partner_shop == "Sales_Gurgaon_122016") {
+        //   let updateDeliveryTwo = await delivery.findOneAndUpdate(
+        //     { "uic_code.code": x.uic_code?.code },
+        //     {
+        //       $set: {
+        //         partner_shop: "Gurgaon_122016",
+        //       },
+        //     }
+        //   );
+        // } else if (
+        //   x.partner_shop == "Gurgaon_122016" ||
+        //   x.partner_shop == "Sales_Gurgaon_122016"
+        // ) {
+        //   let updateOrder = await orders.findOneAndUpdate(
+        //     { order_id: x.order_id },
+        //     {
+        //       $set: {
+        //         partner_shop: "Gurgaon_122016",
+        //       },
+        //     }
+        //   );
+        // }
+        // console.log(i);
         i++;
       }
 
@@ -5028,34 +5017,407 @@ module.exports = {
   },
   addCategoryExtra: () => {
     return new Promise(async (resolve, reject) => {
-      let arr = [];
-      let str = "SPC000000";
+      let arr = [
+        {
+          part_code: "SPN001741",
+          Category: "BACK CAMERA",
+          "Technical QC": "Y",
+          sp_category: "BACK CAMERA",
+        },
+        {
+          part_code: "SPN001726",
+          Category: "BACK CAMERA",
+          "Technical QC": "Y",
+          sp_category: "BACK CAMERA",
+        },
+        {
+          part_code: "SPN001721",
+          Category: "BACK CAMERA",
+          "Technical QC": "Y",
+          sp_category: "BACK CAMERA",
+        },
+        {
+          part_code: "SPN001738",
+          Category: "BACK CAMERA",
+          "Technical QC": "Y",
+          sp_category: "BACK CAMERA",
+        },
+        {
+          part_code: "SPN001764",
+          Category: "BACK CAMERA",
+          "Technical QC": "Y",
+          sp_category: "BACK CAMERA",
+        },
+        {
+          part_code: "SPN001757",
+          Category: "BACK PANEL",
+          "Technical QC": "Y",
+          sp_category: "BACK PANEL",
+        },
+        {
+          part_code: "SPN001756",
+          Category: "BACK PANEL",
+          "Technical QC": "Y",
+          sp_category: "BACK PANEL",
+        },
+        {
+          part_code: "SPN001725",
+          Category: "BACK PANEL",
+          "Technical QC": "Y",
+          sp_category: "BACK PANEL",
+        },
+        {
+          part_code: "SPN001724",
+          Category: "BACK PANEL",
+          "Technical QC": "Y",
+          sp_category: "BACK PANEL",
+        },
+        {
+          part_code: "SPN001766",
+          Category: "BACK PANEL",
+          "Technical QC": "Y",
+          sp_category: "BACK PANEL",
+        },
+        {
+          part_code: "SPN001743",
+          Category: "BATTERY",
+          "Technical QC": "Y",
+          sp_category: "BATTERY",
+        },
+        {
+          part_code: "SPN001742",
+          Category: "CAMERA GLASS",
+          "Technical QC": "Y",
+          sp_category: "CAMERA GLASS",
+        },
+        {
+          part_code: "SPN001762",
+          Category: "CAMERA GLASS",
+          "Technical QC": "Y",
+          sp_category: "CAMERA GLASS",
+        },
+        {
+          part_code: "SPN001717",
+          Category: "CAMERA GLASS",
+          "Technical QC": "Y",
+          sp_category: "CAMERA GLASS",
+        },
+        {
+          part_code: "SPN001755",
+          Category: "CHARGING PCB",
+          "Technical QC": "Y",
+          sp_category: "CHARGING PCB",
+        },
+        {
+          part_code: "SPN001735",
+          Category: "CHARGING PCB",
+          "Technical QC": "Y",
+          sp_category: "CHARGING PCB",
+        },
+        {
+          part_code: "SPN001710",
+          Category: "CHROME WITH BUTTONS",
+          "Technical QC": "Y",
+          sp_category: "CHROME WITH BUTTONS",
+        },
+        {
+          part_code: "SPN001720",
+          Category: "CHROME WITH BUTTONS",
+          "Technical QC": "Y",
+          sp_category: "CHROME WITH BUTTONS",
+        },
+        {
+          part_code: "SPN001722",
+          Category: "CHROME WITH BUTTONS",
+          "Technical QC": "Y",
+          sp_category: "CHROME WITH BUTTONS",
+        },
+        {
+          part_code: "SPN001759",
+          Category: "DISPLAY FLEX",
+          "Technical QC": "Y",
+          sp_category: "DISPLAY FLEX",
+        },
+        {
+          part_code: "SPN001744",
+          Category: "DISPLAY REFLECTOR",
+          "Technical QC": "Y",
+          sp_category: "DISPLAY REFLECTOR",
+        },
+        {
+          part_code: "SPN001747",
+          Category: "FINGERPRINT SIDE",
+          "Technical QC": "Y",
+          sp_category: "FINGERPRINT SIDE",
+        },
+        {
+          part_code: "SPN001746",
+          Category: "FINGERPRINT SIDE",
+          "Technical QC": "Y",
+          sp_category: "FINGERPRINT SIDE",
+        },
+        {
+          part_code: "SPN001745",
+          Category: "FINGERPRINT SIDE",
+          "Technical QC": "Y",
+          sp_category: "FINGERPRINT SIDE",
+        },
+        {
+          part_code: "SPN001733",
+          Category: "FRONT CAMERA",
+          "Technical QC": "Y",
+          sp_category: "FRONT CAMERA",
+        },
+        {
+          part_code: "SPN001765",
+          Category: "FRONT CAMERA",
+          "Technical QC": "Y",
+          sp_category: "FRONT CAMERA",
+        },
+        {
+          part_code: "SPN001739",
+          Category: "LCD FRAME",
+          "Technical QC": "Y",
+          sp_category: "LCD FRAME",
+        },
+        {
+          part_code: "SPN001740",
+          Category: "LCD FRAME",
+          "Technical QC": "Y",
+          sp_category: "LCD FRAME",
+        },
+        {
+          part_code: "SPN001761",
+          Category: "MAIN FLEX CONNECTOR",
+          "Technical QC": "Y",
+          sp_category: "MAIN FLEX CONNECTOR",
+        },
+        {
+          part_code: "SPN001727",
+          Category: "MICROPHONE (MIC)",
+          "Technical QC": "Y",
+          sp_category: "MICROPHONE (MIC)",
+        },
+        {
+          part_code: "SPN001760",
+          Category: "MICROPHONE (MIC)",
+          "Technical QC": "Y",
+          sp_category: "MICROPHONE (MIC)",
+        },
+        {
+          part_code: "SPN001730",
+          Category: "MICROPHONE (MIC)",
+          "Technical QC": "Y",
+          sp_category: "MICROPHONE (MIC)",
+        },
+        {
+          part_code: "SPN001763",
+          Category: "POLORIZER FILM",
+          "Technical QC": "Y",
+          sp_category: "POLORIZER FILM",
+        },
+        {
+          part_code: "SPN001734",
+          Category: "POWER BUTTON",
+          "Technical QC": "Y",
+          sp_category: "POWER BUTTON",
+        },
+        {
+          part_code: "SPN001737",
+          Category: "POWER BUTTON",
+          "Technical QC": "Y",
+          sp_category: "POWER BUTTON",
+        },
+        {
+          part_code: "SPN001706",
+          Category: "POWER BUTTON",
+          "Technical QC": "Y",
+          sp_category: "POWER BUTTON",
+        },
+        {
+          part_code: "SPN001709",
+          Category: "POWER BUTTON",
+          "Technical QC": "Y",
+          sp_category: "POWER BUTTON",
+        },
+        {
+          part_code: "SPN001718",
+          Category: "POWER BUTTON",
+          "Technical QC": "Y",
+          sp_category: "POWER BUTTON",
+        },
+        {
+          part_code: "SPN001751",
+          Category: "RECEIVER NET",
+          "Technical QC": "Y",
+          sp_category: "RECEIVER NET",
+        },
+        {
+          part_code: "SPN001736",
+          Category: "RINGER",
+          "Technical QC": "Y",
+          sp_category: "RINGER",
+        },
+        {
+          part_code: "SPN001729",
+          Category: "RINGER",
+          "Technical QC": "Y",
+          sp_category: "RINGER",
+        },
+        {
+          part_code: "SPN001750",
+          Category: "SIM TRAY",
+          "Technical QC": "Y",
+          sp_category: "SIM TRAY",
+        },
+        {
+          part_code: "SPN001715",
+          Category: "SIM TRAY",
+          "Technical QC": "Y",
+          sp_category: "SIM TRAY",
+        },
+        {
+          part_code: "SPN001749",
+          Category: "SIM TRAY",
+          "Technical QC": "Y",
+          sp_category: "SIM TRAY",
+        },
+        {
+          part_code: "SPN001708",
+          Category: "SIM TRAY",
+          "Technical QC": "Y",
+          sp_category: "SIM TRAY",
+        },
+        {
+          part_code: "SPN001748",
+          Category: "SIM TRAY",
+          "Technical QC": "Y",
+          sp_category: "SIM TRAY",
+        },
+        {
+          part_code: "SPN001758",
+          Category: "TOUCH GLASS",
+          "Technical QC": "Y",
+          sp_category: "TOUCH GLASS",
+        },
+        {
+          part_code: "SPN001714",
+          Category: "TOUCH GLASS",
+          "Technical QC": "Y",
+          sp_category: "TOUCH GLASS",
+        },
+        {
+          part_code: "SPN001716",
+          Category: "TOUCH GLASS",
+          "Technical QC": "Y",
+          sp_category: "TOUCH GLASS",
+        },
+        {
+          part_code: "SPN001723",
+          Category: "TOUCH GLASS",
+          "Technical QC": "Y",
+          sp_category: "TOUCH GLASS",
+        },
+        {
+          part_code: "SPN001705",
+          Category: "VIBRATOR",
+          "Technical QC": "Y",
+          sp_category: "VIBRATOR",
+        },
+        {
+          part_code: "SPN001728",
+          Category: "VIBRATOR",
+          "Technical QC": "Y",
+          sp_category: "VIBRATOR",
+        },
+        {
+          part_code: "SPN001713",
+          Category: "VOLUME BUTTON",
+          "Technical QC": "Y",
+          sp_category: "VOLUME BUTTON",
+        },
+        {
+          part_code: "SPN001754",
+          Category: "VOLUME BUTTON",
+          "Technical QC": "Y",
+          sp_category: "VOLUME BUTTON",
+        },
+        {
+          part_code: "SPN001719",
+          Category: "VOLUME BUTTON",
+          "Technical QC": "Y",
+          sp_category: "VOLUME BUTTON",
+        },
+        {
+          part_code: "SPN001707",
+          Category: "VOLUME BUTTON",
+          "Technical QC": "Y",
+          sp_category: "VOLUME BUTTON",
+        },
+        {
+          part_code: "SPN001753",
+          Category: "VOLUME BUTTON",
+          "Technical QC": "Y",
+          sp_category: "VOLUME BUTTON",
+        },
+        {
+          part_code: "SPN001732",
+          Category: "VOLUME BUTTON",
+          "Technical QC": "Y",
+          sp_category: "VOLUME BUTTON",
+        },
+        {
+          part_code: "SPN001711",
+          Category: "VOLUME BUTTON",
+          "Technical QC": "Y",
+          sp_category: "VOLUME BUTTON",
+        },
+        {
+          part_code: "SPN001712",
+          Category: "VOLUME BUTTON",
+          "Technical QC": "Y",
+          sp_category: "VOLUME BUTTON",
+        },
+        {
+          part_code: "SPN001752",
+          Category: "VOLUME BUTTON",
+          "Technical QC": "Y",
+          sp_category: "VOLUME BUTTON",
+        },
+        {
+          part_code: "SPN001731",
+          Category: "VOLUME BUTTON",
+          "Technical QC": "Y",
+          sp_category: "VOLUME BUTTON",
+        },
+      ];
+      let str = "SPC000058";
       let str2 = "BOX000000";
       for (let x of arr) {
-        let checkBoxId = await box.findOne({ name: x.box_id });
-        if (
-          checkBoxId == null &&
-          x.box_id !== undefined &&
-          x.box_id !== "" &&
-          x.box_id !== "BOX-99"
-        ) {
-          let num1 = parseInt(str2.substring(3)) + 1;
-          let updatedStr2 =
-            str2.substring(0, 3) + num1.toString().padStart(6, "0");
-          str2 = updatedStr2;
-          let createBox = await box.create({
-            box_id: str2,
-            name: x.box_id,
-            description: x.box_id,
-            display: str2,
-            created_at: Date.now(),
-          });
-          x.box_id = createBox.box_id;
-        } else {
-          if (checkBoxId) {
-            x.box_id = checkBoxId.box_id;
-          }
-        }
+        // let checkBoxId = await box.findOne({ name: x.box_id });
+        // if (
+        //   checkBoxId == null &&
+        //   x.box_id !== undefined &&
+        //   x.box_id !== "" &&
+        //   x.box_id !== "BOX-99"
+        // ) {
+        //   let num1 = parseInt(str2.substring(3)) + 1;
+        //   let updatedStr2 =
+        //     str2.substring(0, 3) + num1.toString().padStart(6, "0");
+        //   str2 = updatedStr2;
+        //   let createBox = await box.create({
+        //     box_id: str2,
+        //     name: x.box_id,
+        //     description: x.box_id,
+        //     display: str2,
+        //     created_at: Date.now(),
+        //   });
+        //   x.box_id = createBox.box_id;
+        // } else {
+        //   if (checkBoxId) {
+        //     x.box_id = checkBoxId.box_id;
+        //   }
+        // }
         let findCategory = await spareCategories.findOne({
           category_name: x.sp_category,
         });
@@ -5084,23 +5446,23 @@ module.exports = {
           {
             $set: {
               sp_category: x.sp_category,
-              box_id: x.box_id,
+              // box_id: x.box_id,
             },
           }
         );
-        if (x.box_id == "BOX-99") {
-          let updateSp = await partAndColor.findOneAndUpdate(
-            {
-              part_code: x.part_code,
-              type: "part-list",
-            },
-            {
-              $set: {
-                box_id: "SPN000015",
-              },
-            }
-          );
-        }
+        // if (x.box_id == "BOX-99") {
+        //   let updateSp = await partAndColor.findOneAndUpdate(
+        //     {
+        //       part_code: x.part_code,
+        //       type: "part-list",
+        //     },
+        //     {
+        //       $set: {
+        //         box_id: "SPN000015",
+        //       },
+        //     }
+        //   );
+        // }
       }
       resolve({ status: true });
     });

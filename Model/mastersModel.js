@@ -158,10 +158,9 @@ const mastersSchema = mongoose.Schema({
     ctx_issued_sorting: Date,
     ctx_sorting_done: Date,
     wht_to_rp_sorting_issued: Date,
-    issued_to_rdl_two: Date,
     wht_to_rp_assigned_to_sorting:Date,
-    wht_to_rp_issued_to_sorting:Date,
     wht_to_rp_sorting_done_sorting:Date,
+    issued_to_rdl_two: Date,
     rdl_two_done_closed_by_agent:Date
   },
   rack_id: {

@@ -15,6 +15,7 @@ const {
   partAndColor,
 } = require("../../Model/Part-list-and-color/part-list-and-color");
 const elasticsearch = require("../../Elastic-search/elastic");
+const { stxUtility } = require("../../Model/Stx-utility/stx-utility");
 /******************************************************************* */
 
 module.exports = {
@@ -37,7 +38,6 @@ module.exports = {
         if (x.order_status == "NEW") {
           if (x?.imei.match(/[0-9]/g).join("").length !== 15) {
             // IMEI length is correct
-            console.log(x.imei);
             imei.push(x.imei);
             err["imei_number_is_duplicate"] = imei;
           }
@@ -4001,7 +4001,7 @@ module.exports = {
           }
         );
       }
-      console.log(sendtoPickupRequest);
+
       if (sendtoPickupRequest.matchedCount != 0) {
         resolve(sendtoPickupRequest);
       } else {
@@ -4102,7 +4102,6 @@ module.exports = {
         },
       ]);
       if (data) {
-        console.log(data);
         resolve(data);
       }
     });
@@ -4180,7 +4179,7 @@ module.exports = {
             ],
           })
           .catch((err) => reject(err));
-        console.log(stxTray);
+
         if (stxTray.length !== 0) {
           for (let x of stxTray) {
             if (parseInt(x.limit) > parseInt(x.items.length)) {
@@ -4229,6 +4228,7 @@ module.exports = {
           },
         },
       ]);
+
       resolve(findItem);
     });
   },
@@ -4261,7 +4261,18 @@ module.exports = {
         },
       ]);
       if (findItem) {
-        console.log(findItem[0]);
+        for (let x of findItem) {
+          for (let y of x?.items?.rdl_fls_report?.partRequired) {
+            const checkPart = await partAndColor.findOne({
+              part_code: y?.part_id,
+            });
+            if (checkPart) {
+              y["avl_qty"] = checkPart?.avl_stock;
+            } else {
+              y["avl_qty"] = 0;
+            }
+          }
+        }
         resolve({ findItem: findItem, status: 1 });
       } else {
         resolve({ status: 2 });
@@ -4269,8 +4280,6 @@ module.exports = {
     });
   },
   assignForRepairStockCheck: (partId, uic, isCheck, checked, selectedQtySp) => {
-    console.log(isCheck);
-    console.log(partId);
     return new Promise(async (resolve, reject) => {
       let countofStock = selectedQtySp;
       let flag = false;
@@ -4330,22 +4339,26 @@ module.exports = {
               status: "Active",
             });
             if (checkQty) {
-              let check = checkQty?.avl_stock - Math.abs(1);
-              if (check < 0) {
-                resolve({ status: 0, partid: x?.part_id });
+              if (checkQty?.box_id !== undefined) {
+                let check = checkQty?.avl_stock - Math.abs(1);
+                if (check < 0) {
+                  resolve({ status: 0, partid: x?.part_id });
+                } else {
+                  countofStock = countofStock + 1;
+                  let obj = {
+                    uic: [uic],
+                    box_id: checkQty.box_id,
+                    partName: x?.part_name,
+                    partId: x?.part_id,
+                    avl_stock: checkQty?.avl_stock,
+                    selected_qty: 1,
+                    balance_stock: check,
+                    status: "Pending",
+                  };
+                  isCheck.push(obj);
+                }
               } else {
-                countofStock = countofStock + 1;
-                let obj = {
-                  uic: [uic],
-                  box_id: checkQty.box_id,
-                  partName: x?.part_name,
-                  partId: x?.part_id,
-                  avl_stock: checkQty?.avl_stock,
-                  selected_qty: 1,
-                  balance_stock: check,
-                  status: "Pending",
-                };
-                isCheck.push(obj);
+                resolve({ status: 6 });
               }
             } else {
               resolve({ status: 5 });
@@ -4388,13 +4401,12 @@ module.exports = {
           },
         },
       ]);
-      console.log(plannerData);
+
       resolve(plannerData);
     });
   },
 
   assigneToChargingScreen: (location, brand, model, jack, type, type1) => {
-    console.log(type);
     return new Promise(async (resolve, reject) => {
       const data = await masters.find({
         $or: [
@@ -4428,7 +4440,6 @@ module.exports = {
     isCheck,
     selectedQtySp
   ) => {
-    console.log(selectedQtySp);
     return new Promise(async (resolve, reject) => {
       const getSortingAgent = await user.find({
         user_type: "Sorting Agent",
@@ -5066,6 +5077,3583 @@ module.exports = {
         let dataImportDelivery = await tempDelivery.create(objDelivery);
       }
       resolve({ status: 1 });
+    });
+  },
+  /*--------------------------------------------STX UTILITY ---------------------------------------*/
+  stxUtilityImportXlsx: () => {
+    return new Promise(async (resolve, reject) => {
+      let arr = [
+        {
+         "uic": 92110008462,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTT4601",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92110006225,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTT4601",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92110007981,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTT4601",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92110009805,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTT4601",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100004320,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTT4601",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92110006270,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTT4601",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92110006258,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTT4601",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92110008327,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTT4601",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92110009875,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTT4601",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92110009912,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTT4601",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92110008859,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTT4601",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92110009820,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTT4601",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92110009885,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTT4601",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92110008468,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTT4601",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92110008795,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTT4601",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92110008609,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTT4601",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92110006120,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTT4601",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92110006313,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTT4601",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92110007965,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTT4601",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92110008803,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTT4601",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92110008209,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTT4601",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92110009796,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTT4601",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100004323,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTT4601",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100004298,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTT4601",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100004378,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTT4601",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92110008501,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTT4601",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92110009093,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTT4601",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100004268,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTT4601",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92110009028,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTT4601",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92110008046,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTT4601",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92110008809,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTT4601",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92060010961,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTC3013",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92060010703,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTC3013",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92110005455,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTC3013",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100004443,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTC3013",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92060010648,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTC3013",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92110010130,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTC3013",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100004856,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTC3013",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92060010610,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTC3013",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92110005537,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTC3013",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92060010597,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTC3013",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92060010630,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTC3013",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92060010746,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTC3013",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92110009711,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTC3013",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92060010933,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTC3013",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92060010579,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTC3013",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100004674,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTC3013",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92110010022,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTC3013",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92060011021,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTC3013",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100000643,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTC3013",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 928050007459,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTC3013",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92110005411,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTC3013",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92060010929,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTC3013",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92110008983,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTC3013",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 928050007106,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTC3013",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92080012340,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTC3013",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92070011785,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTC3013",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92090000085,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTC3013",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92060010927,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTC3013",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100000390,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTC3013",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92120010154,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTC3013",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92120010153,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTC3013",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92110005481,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTC3013",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100004743,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTC3013",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100004891,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTC3013",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100004429,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTC3013",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92110005428,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTC3013",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92060010975,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTC3013",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92060011010,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTC3013",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100004756,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTC3013",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92110010053,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTC3013",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 928050005563,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTC3013",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 928050007595,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTC3013",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92060010624,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTC3013",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92060010222,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTC3014",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92060010520,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTC3014",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92060010311,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTC3014",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92060010294,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTC3014",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92060010434,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTC3014",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92060010660,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTC3014",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92060010570,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTC3014",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92060010645,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTC3014",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92050004727,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTC3014",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92050003806,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTC3014",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92060010488,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTC3014",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92060010229,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTC3014",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92060010444,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTC3014",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92060010583,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTC3014",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92050004649,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTC3014",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92060010512,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTC3014",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92060010526,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTC3014",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92060010031,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTC3014",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92060010232,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTC3014",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92060010345,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTC3014",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92060010421,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTC3014",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92060010398,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTC3014",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92060010263,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTC3014",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92060010400,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTC3014",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92060010684,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTC3014",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92060010586,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTC3014",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92060010418,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTC3014",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92060010474,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTC3014",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92060010403,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTC3014",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92060010516,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTC3014",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92060010450,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTC3014",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92060010533,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTC3014",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92060010399,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTC3014",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92060010544,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTC3014",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92060010277,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTC3014",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92060010658,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTC3014",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92060010615,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTC3014",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92060010094,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTC3014",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92050003783,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTC3014",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92050008698,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTC3014",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100002820,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTT4548",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100001473,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTT4548",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100002569,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTT4548",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100005219,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTT4548",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100002432,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTT4548",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92110005968,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTT4548",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92110005695,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTT4548",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100005000,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTT4548",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100005155,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTT4548",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100001823,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTT4548",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100005332,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTT4548",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100001481,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTT4548",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100001409,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTT4548",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100002798,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTT4548",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100005244,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTT4548",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92110006014,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTT4548",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92110005839,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTT4548",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100005290,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTT4548",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92110006037,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTT4548",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100001494,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTT4548",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100002136,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTT4548",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92110006069,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTT4548",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100001927,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTT4548",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100002694,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTT4548",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100001391,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTT4548",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100001183,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTT4534",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100003026,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTT4534",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92110007935,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTT4534",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92110007018,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTT4534",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92110007287,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTT4534",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100001890,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTT4534",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100003372,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTT4534",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100001437,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTT4534",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100002083,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTT4534",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100002130,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTT4534",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92110008134,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTT4534",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92110006621,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTT4534",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100003124,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTT4534",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92090000101,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTT4534",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92090000179,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTT4534",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100003131,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTT4534",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100003035,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTT4534",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92110008068,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTT4534",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100001562,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTT4591",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92110009157,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTT4591",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92110007617,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTT4591",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92110007755,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTT4591",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100003384,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTT4591",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92110007769,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTT4591",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92110009215,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTT4591",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92110007808,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTT4591",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92110007773,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTT4591",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100001363,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTT4591",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100001022,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTT4591",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100003568,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTT4591",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92110009448,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTT4591",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100002261,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTT4591",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100001539,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTT4591",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92110008763,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTT4591",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92110007750,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTT4591",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92110009545,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTT4591",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100003371,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTT4591",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100003180,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTT4591",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92110009398,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTT4591",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92110008743,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTT4591",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100001031,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTT4591",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92110009230,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTT4591",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92110007650,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTT4591",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100000659,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTT4591",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100000938,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTT4591",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92110008776,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTT4591",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100000997,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTT4591",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92110007658,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTT4591",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100000686,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTT4591",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100001861,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTT4591",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92110009233,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTT4591",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100001006,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTT4591",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100000709,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTT4591",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100000942,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTT4591",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92110009393,
+         "model_name": "Xiaomi redmi note 5 pro",
+         "grade": "C",
+         "ctx_tray_id": "CTT4591",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 928050005786,
+         "model_name": "Xiaomi redmi note 4",
+         "grade": "C",
+         "ctx_tray_id": "CTT4589",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 928050006013,
+         "model_name": "Xiaomi redmi note 4",
+         "grade": "C",
+         "ctx_tray_id": "CTT4589",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100000868,
+         "model_name": "Xiaomi redmi note 4",
+         "grade": "C",
+         "ctx_tray_id": "CTT4589",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92110006788,
+         "model_name": "Xiaomi redmi note 4",
+         "grade": "C",
+         "ctx_tray_id": "CTT4589",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100003957,
+         "model_name": "Xiaomi redmi note 5   ",
+         "grade": "C",
+         "ctx_tray_id": "STC4055",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92110009660,
+         "model_name": "Xiaomi redmi note 5   ",
+         "grade": "C",
+         "ctx_tray_id": "STC4055",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92110006580,
+         "model_name": "Xiaomi redmi note 5   ",
+         "grade": "C",
+         "ctx_tray_id": "STC4055",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100001616,
+         "model_name": "Xiaomi redmi note 5   ",
+         "grade": "C",
+         "ctx_tray_id": "STC4055",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92110005632,
+         "model_name": "Xiaomi redmi note 5   ",
+         "grade": "C",
+         "ctx_tray_id": "STC4055",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92110006093,
+         "model_name": "Xiaomi redmi note 5   ",
+         "grade": "C",
+         "ctx_tray_id": "STC4055",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92110005617,
+         "model_name": "Xiaomi redmi note 5   ",
+         "grade": "C",
+         "ctx_tray_id": "STC4055",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100003577,
+         "model_name": "Xiaomi redmi note 5   ",
+         "grade": "C",
+         "ctx_tray_id": "STC4055",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92110010034,
+         "model_name": "Xiaomi redmi note 5   ",
+         "grade": "C",
+         "ctx_tray_id": "STC4055",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92080013130,
+         "model_name": "Xiaomi redmi note 5   ",
+         "grade": "C",
+         "ctx_tray_id": "STC4055",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 928050009003,
+         "model_name": "Xiaomi redmi note 5   ",
+         "grade": "C",
+         "ctx_tray_id": "STC4055",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92110006679,
+         "model_name": "Xiaomi redmi note 5   ",
+         "grade": "C",
+         "ctx_tray_id": "STC4055",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100004222,
+         "model_name": "Xiaomi redmi note 5   ",
+         "grade": "C",
+         "ctx_tray_id": "STC4055",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 869781035928543,
+         "model_name": "Xiaomi redmi note 5   ",
+         "grade": "C",
+         "ctx_tray_id": "STC4055",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92080013102,
+         "model_name": "Xiaomi redmi note 5   ",
+         "grade": "C",
+         "ctx_tray_id": "STC4055",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92110006891,
+         "model_name": "Xiaomi redmi note 5   ",
+         "grade": "C",
+         "ctx_tray_id": "STC4055",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 861171035038857,
+         "model_name": "OPPO F1s",
+         "grade": "C",
+         "ctx_tray_id": "STC4042",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 863795031348817,
+         "model_name": "OPPO F1s",
+         "grade": "C",
+         "ctx_tray_id": "STC4042",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": "0E1JMU_F",
+         "model_name": "OPPO F1s",
+         "grade": "C",
+         "ctx_tray_id": "STC4042",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 864725035423992,
+         "model_name": "OPPO F1s",
+         "grade": "C",
+         "ctx_tray_id": "STC4042",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": "0EFC5E_C",
+         "model_name": "OPPO F1s",
+         "grade": "C",
+         "ctx_tray_id": "STC4042",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 863084032729238,
+         "model_name": "OPPO F1s",
+         "grade": "C",
+         "ctx_tray_id": "STC4042",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 863795031471395,
+         "model_name": "OPPO F1s",
+         "grade": "C",
+         "ctx_tray_id": "STC4042",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 864725030049636,
+         "model_name": "OPPO F1s",
+         "grade": "C",
+         "ctx_tray_id": "STC4042",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": "0DVLOP_J",
+         "model_name": "OPPO F1s",
+         "grade": "C",
+         "ctx_tray_id": "STC4042",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 863084037693298,
+         "model_name": "OPPO F1s",
+         "grade": "C",
+         "ctx_tray_id": "STC4042",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 863795031481931,
+         "model_name": "OPPO F1s",
+         "grade": "C",
+         "ctx_tray_id": "STC4042",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 863795033810376,
+         "model_name": "OPPO F1s",
+         "grade": "C",
+         "ctx_tray_id": "STC4042",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 861171036704135,
+         "model_name": "OPPO F1s",
+         "grade": "C",
+         "ctx_tray_id": "STC4042",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 864725030875113,
+         "model_name": "OPPO F1s",
+         "grade": "C",
+         "ctx_tray_id": "STC4042",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92080013283,
+         "model_name": "OPPO A3S",
+         "grade": "C",
+         "ctx_tray_id": "CTC3021",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92050008797,
+         "model_name": "OPPO A3S",
+         "grade": "C",
+         "ctx_tray_id": "CTC3021",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92080012888,
+         "model_name": "OPPO A3S",
+         "grade": "C",
+         "ctx_tray_id": "CTC3021",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92090000001,
+         "model_name": "OPPO A3S",
+         "grade": "C",
+         "ctx_tray_id": "CTC3021",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92080012824,
+         "model_name": "OPPO A3S",
+         "grade": "C",
+         "ctx_tray_id": "CTC3021",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92080012554,
+         "model_name": "OPPO A3S",
+         "grade": "C",
+         "ctx_tray_id": "CTC3021",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92080012823,
+         "model_name": "OPPO A3S",
+         "grade": "C",
+         "ctx_tray_id": "CTC3021",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92080012536,
+         "model_name": "OPPO A3S",
+         "grade": "C",
+         "ctx_tray_id": "CTC3021",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92070011827,
+         "model_name": "OPPO A3S",
+         "grade": "C",
+         "ctx_tray_id": "CTC3021",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92080012563,
+         "model_name": "OPPO A3S",
+         "grade": "C",
+         "ctx_tray_id": "CTC3021",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92080012562,
+         "model_name": "OPPO A3S",
+         "grade": "C",
+         "ctx_tray_id": "CTC3021",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92080012885,
+         "model_name": "OPPO A3S",
+         "grade": "C",
+         "ctx_tray_id": "CTC3021",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92080012676,
+         "model_name": "OPPO A3S",
+         "grade": "C",
+         "ctx_tray_id": "CTC3021",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92080012921,
+         "model_name": "OPPO A3S",
+         "grade": "C",
+         "ctx_tray_id": "CTC3021",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92080012893,
+         "model_name": "OPPO A3S",
+         "grade": "C",
+         "ctx_tray_id": "CTC3021",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92080012384,
+         "model_name": "OPPO A3S",
+         "grade": "C",
+         "ctx_tray_id": "CTC3021",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92080012737,
+         "model_name": "OPPO A3S",
+         "grade": "C",
+         "ctx_tray_id": "CTC3021",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92050004736,
+         "model_name": "OPPO A3S",
+         "grade": "C",
+         "ctx_tray_id": "CTC3021",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92080012698,
+         "model_name": "OPPO A3S",
+         "grade": "C",
+         "ctx_tray_id": "CTC3021",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92080012420,
+         "model_name": "OPPO A3S",
+         "grade": "C",
+         "ctx_tray_id": "CTC3021",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92080013197,
+         "model_name": "OPPO A3S",
+         "grade": "C",
+         "ctx_tray_id": "CTC3021",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92080013405,
+         "model_name": "OPPO A3S",
+         "grade": "C",
+         "ctx_tray_id": "CTC3021",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100003829,
+         "model_name": "Xiaomi redmi note 5 ",
+         "grade": "C",
+         "ctx_tray_id": "CTT4607",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92110007932,
+         "model_name": "Xiaomi redmi note 5 ",
+         "grade": "C",
+         "ctx_tray_id": "CTT4607",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100003135,
+         "model_name": "Xiaomi redmi note 5 ",
+         "grade": "C",
+         "ctx_tray_id": "CTT4607",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100005130,
+         "model_name": "Xiaomi redmi note 5 ",
+         "grade": "C",
+         "ctx_tray_id": "CTT4607",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92110005709,
+         "model_name": "Xiaomi redmi note 5 ",
+         "grade": "C",
+         "ctx_tray_id": "CTT4607",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100000395,
+         "model_name": "Xiaomi redmi note 5 ",
+         "grade": "C",
+         "ctx_tray_id": "CTT4607",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100003310,
+         "model_name": "Xiaomi redmi note 5 ",
+         "grade": "C",
+         "ctx_tray_id": "CTT4607",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100000613,
+         "model_name": "Xiaomi redmi note 5 ",
+         "grade": "C",
+         "ctx_tray_id": "CTT4607",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100000565,
+         "model_name": "Xiaomi redmi note 5 ",
+         "grade": "C",
+         "ctx_tray_id": "CTT4607",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100004120,
+         "model_name": "Xiaomi redmi note 5 ",
+         "grade": "C",
+         "ctx_tray_id": "CTT4607",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92110009485,
+         "model_name": "Xiaomi redmi note 5 ",
+         "grade": "C",
+         "ctx_tray_id": "CTT4607",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92110005668,
+         "model_name": "Xiaomi redmi note 5 ",
+         "grade": "C",
+         "ctx_tray_id": "CTT4607",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100003072,
+         "model_name": "Xiaomi redmi note 5 ",
+         "grade": "C",
+         "ctx_tray_id": "CTT4607",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92110007672,
+         "model_name": "Xiaomi redmi note 5 ",
+         "grade": "C",
+         "ctx_tray_id": "CTT4607",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92080012877,
+         "model_name": "Xiaomi redmi note 5 ",
+         "grade": "C",
+         "ctx_tray_id": "CTT4607",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100001571,
+         "model_name": "Xiaomi redmi note 5 ",
+         "grade": "C",
+         "ctx_tray_id": "CTT4607",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100003348,
+         "model_name": "Xiaomi redmi note 5 ",
+         "grade": "C",
+         "ctx_tray_id": "CTT4607",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92110007482,
+         "model_name": "Xiaomi redmi note 5 ",
+         "grade": "C",
+         "ctx_tray_id": "CTT4607",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100001349,
+         "model_name": "Xiaomi redmi note 5 ",
+         "grade": "C",
+         "ctx_tray_id": "CTT4607",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100003097,
+         "model_name": "Xiaomi redmi note 5 ",
+         "grade": "C",
+         "ctx_tray_id": "CTT4607",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92110007733,
+         "model_name": "Xiaomi redmi note 5 ",
+         "grade": "C",
+         "ctx_tray_id": "CTT4607",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92110006282,
+         "model_name": "Xiaomi redmi note 5 ",
+         "grade": "C",
+         "ctx_tray_id": "CTT4607",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92110006759,
+         "model_name": "Xiaomi redmi note 5 ",
+         "grade": "C",
+         "ctx_tray_id": "CTT4607",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100002572,
+         "model_name": "Xiaomi redmi note 5 ",
+         "grade": "C",
+         "ctx_tray_id": "CTT4607",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100003962,
+         "model_name": "Xiaomi redmi note 5 ",
+         "grade": "C",
+         "ctx_tray_id": "CTT4607",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100004028,
+         "model_name": "Xiaomi redmi note 5 ",
+         "grade": "C",
+         "ctx_tray_id": "CTT4607",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100004299,
+         "model_name": "Xiaomi redmi note 5 ",
+         "grade": "C",
+         "ctx_tray_id": "CTT4607",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92110009968,
+         "model_name": "Xiaomi redmi note 5 ",
+         "grade": "C",
+         "ctx_tray_id": "CTT4607",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92110007097,
+         "model_name": "Xiaomi redmi note 5 ",
+         "grade": "C",
+         "ctx_tray_id": "CTT4607",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100002528,
+         "model_name": "Xiaomi redmi note 5 ",
+         "grade": "C",
+         "ctx_tray_id": "CTT4607",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92110009624,
+         "model_name": "Xiaomi redmi note 5 ",
+         "grade": "C",
+         "ctx_tray_id": "CTT4607",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100001041,
+         "model_name": "Xiaomi redmi note 5 ",
+         "grade": "C",
+         "ctx_tray_id": "CTT4607",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 928050003309,
+         "model_name": "Xiaomi redmi note 3",
+         "grade": "C",
+         "ctx_tray_id": "CTC3024",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92060010590,
+         "model_name": "Xiaomi redmi note 3",
+         "grade": "C",
+         "ctx_tray_id": "CTC3024",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 862188039597083,
+         "model_name": "Xiaomi redmi note 3",
+         "grade": "C",
+         "ctx_tray_id": "CTC3024",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 861375036831448,
+         "model_name": "Xiaomi redmi note 3",
+         "grade": "C",
+         "ctx_tray_id": "CTC3024",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 928050005303,
+         "model_name": "Xiaomi redmi note 3",
+         "grade": "C",
+         "ctx_tray_id": "CTC3024",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 928050006569,
+         "model_name": "Xiaomi redmi note 3",
+         "grade": "C",
+         "ctx_tray_id": "CTC3024",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92060010937,
+         "model_name": "Xiaomi redmi note 3",
+         "grade": "C",
+         "ctx_tray_id": "CTC3024",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 928050009457,
+         "model_name": "Xiaomi redmi note 3",
+         "grade": "C",
+         "ctx_tray_id": "CTC3024",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92060010932,
+         "model_name": "Xiaomi redmi note 3",
+         "grade": "C",
+         "ctx_tray_id": "CTC3024",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92070012286,
+         "model_name": "Xiaomi redmi note 3",
+         "grade": "C",
+         "ctx_tray_id": "CTC3024",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 862188038102372,
+         "model_name": "Xiaomi redmi note 3",
+         "grade": "C",
+         "ctx_tray_id": "CTC3024",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 928050005816,
+         "model_name": "Xiaomi redmi note 3",
+         "grade": "C",
+         "ctx_tray_id": "CTC3024",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92090000247,
+         "model_name": "Xiaomi redmi note 3",
+         "grade": "C",
+         "ctx_tray_id": "CTC3024",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92110005715,
+         "model_name": "Xiaomi redmi note 3",
+         "grade": "C",
+         "ctx_tray_id": "CTC3024",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92050008817,
+         "model_name": "Xiaomi redmi note 3",
+         "grade": "C",
+         "ctx_tray_id": "CTC3024",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92060010669,
+         "model_name": "Xiaomi redmi note 3",
+         "grade": "C",
+         "ctx_tray_id": "CTC3024",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92050003657,
+         "model_name": "Xiaomi redmi note 3",
+         "grade": "C",
+         "ctx_tray_id": "CTC3024",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92060010409,
+         "model_name": "Xiaomi redmi note 3",
+         "grade": "C",
+         "ctx_tray_id": "CTC3024",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92060010484,
+         "model_name": "Xiaomi redmi note 3",
+         "grade": "C",
+         "ctx_tray_id": "CTC3024",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92050008855,
+         "model_name": "Xiaomi redmi note 3",
+         "grade": "C",
+         "ctx_tray_id": "CTC3024",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100003881,
+         "model_name": "Xiaomi redmi note 3",
+         "grade": "C",
+         "ctx_tray_id": "CTC3024",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 869589025538705,
+         "model_name": "Xiaomi redmi note 3",
+         "grade": "C",
+         "ctx_tray_id": "CTC3024",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 861375039307149,
+         "model_name": "Xiaomi redmi note 3",
+         "grade": "C",
+         "ctx_tray_id": "CTC3024",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 863217033171139,
+         "model_name": "Xiaomi redmi note 3",
+         "grade": "C",
+         "ctx_tray_id": "CTC3024",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92080012718,
+         "model_name": "Xiaomi redmi note 3",
+         "grade": "C",
+         "ctx_tray_id": "CTC3024",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100004732,
+         "model_name": "Xiaomi redmi note 3",
+         "grade": "C",
+         "ctx_tray_id": "CTC3024",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 928050004041,
+         "model_name": "Xiaomi redmi note 3",
+         "grade": "C",
+         "ctx_tray_id": "CTC3024",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 863217036991863,
+         "model_name": "Xiaomi redmi note 3",
+         "grade": "C",
+         "ctx_tray_id": "CTC3024",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92060010249,
+         "model_name": "Xiaomi redmi note 3",
+         "grade": "C",
+         "ctx_tray_id": "CTC3024",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92060010479,
+         "model_name": "Xiaomi redmi note 3",
+         "grade": "C",
+         "ctx_tray_id": "CTC3024",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92080012374,
+         "model_name": "Xiaomi redmi note 3",
+         "grade": "C",
+         "ctx_tray_id": "CTC3024",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92110007137,
+         "model_name": "Xiaomi redmi note 3",
+         "grade": "C",
+         "ctx_tray_id": "CTC3024",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92110007281,
+         "model_name": "Xiaomi redmi 9A",
+         "grade": "C",
+         "ctx_tray_id": "STC4064",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92110008181,
+         "model_name": "Xiaomi redmi 9A",
+         "grade": "C",
+         "ctx_tray_id": "STC4064",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100003322,
+         "model_name": "Xiaomi redmi 9A",
+         "grade": "C",
+         "ctx_tray_id": "STC4064",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92110009686,
+         "model_name": "Xiaomi redmi 9A",
+         "grade": "C",
+         "ctx_tray_id": "STC4064",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100002348,
+         "model_name": "Xiaomi redmi 9A",
+         "grade": "C",
+         "ctx_tray_id": "STC4064",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92110006110,
+         "model_name": "Xiaomi redmi 9A",
+         "grade": "C",
+         "ctx_tray_id": "STC4064",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92110007158,
+         "model_name": "Xiaomi redmi 9A",
+         "grade": "C",
+         "ctx_tray_id": "STC4064",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92110008010,
+         "model_name": "Xiaomi redmi 9A",
+         "grade": "C",
+         "ctx_tray_id": "STC4064",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100002270,
+         "model_name": "Xiaomi redmi 9A",
+         "grade": "C",
+         "ctx_tray_id": "STC4064",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92110007230,
+         "model_name": "Xiaomi redmi 9A",
+         "grade": "C",
+         "ctx_tray_id": "STC4064",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100001160,
+         "model_name": "Xiaomi redmi 9A",
+         "grade": "C",
+         "ctx_tray_id": "STC4064",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100001519,
+         "model_name": "Xiaomi redmi 9A",
+         "grade": "C",
+         "ctx_tray_id": "STC4064",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100003642,
+         "model_name": "Xiaomi redmi 9A",
+         "grade": "C",
+         "ctx_tray_id": "STC4064",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100003258,
+         "model_name": "Xiaomi redmi 9A",
+         "grade": "C",
+         "ctx_tray_id": "STC4064",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100005265,
+         "model_name": "Xiaomi redmi 9A",
+         "grade": "C",
+         "ctx_tray_id": "STC4064",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100005239,
+         "model_name": "Xiaomi redmi 9A",
+         "grade": "C",
+         "ctx_tray_id": "STC4064",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92110009325,
+         "model_name": "Xiaomi redmi 9A",
+         "grade": "C",
+         "ctx_tray_id": "STC4064",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100002869,
+         "model_name": "Xiaomi redmi 9A",
+         "grade": "C",
+         "ctx_tray_id": "STC4064",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100000381,
+         "model_name": "Xiaomi redmi 9A",
+         "grade": "C",
+         "ctx_tray_id": "STC4064",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100001452,
+         "model_name": "Xiaomi redmi 9A",
+         "grade": "C",
+         "ctx_tray_id": "STC4064",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100003077,
+         "model_name": "Xiaomi redmi 9A",
+         "grade": "C",
+         "ctx_tray_id": "STC4064",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100002987,
+         "model_name": "Xiaomi redmi 9A",
+         "grade": "C",
+         "ctx_tray_id": "STC4064",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92110009269,
+         "model_name": "Xiaomi redmi 9A",
+         "grade": "C",
+         "ctx_tray_id": "STC4064",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100000991,
+         "model_name": "Xiaomi redmi 9A",
+         "grade": "C",
+         "ctx_tray_id": "STC4064",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100003811,
+         "model_name": "Xiaomi redmi 9A",
+         "grade": "C",
+         "ctx_tray_id": "STC4064",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100001549,
+         "model_name": "Xiaomi redmi 9A",
+         "grade": "C",
+         "ctx_tray_id": "STC4064",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 928070011859,
+         "model_name": "Xiaomi redmi 9A",
+         "grade": "C",
+         "ctx_tray_id": "STC4064",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100000784,
+         "model_name": "Xiaomi redmi note 4",
+         "grade": "C",
+         "ctx_tray_id": "CTT4532",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100001068,
+         "model_name": "Xiaomi redmi note 4",
+         "grade": "C",
+         "ctx_tray_id": "CTT4532",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100002743,
+         "model_name": "Xiaomi redmi note 4",
+         "grade": "C",
+         "ctx_tray_id": "CTT4532",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100004133,
+         "model_name": "Xiaomi redmi note 4",
+         "grade": "C",
+         "ctx_tray_id": "CTT4532",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100001620,
+         "model_name": "Xiaomi redmi note 4",
+         "grade": "C",
+         "ctx_tray_id": "CTT4532",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100001319,
+         "model_name": "Xiaomi redmi note 4",
+         "grade": "C",
+         "ctx_tray_id": "CTT4532",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100003569,
+         "model_name": "Xiaomi redmi note 4",
+         "grade": "C",
+         "ctx_tray_id": "CTT4532",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100000480,
+         "model_name": "Xiaomi redmi note 4",
+         "grade": "C",
+         "ctx_tray_id": "CTT4532",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92110009961,
+         "model_name": "Xiaomi redmi note 4",
+         "grade": "C",
+         "ctx_tray_id": "CTT4532",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100001636,
+         "model_name": "Xiaomi redmi note 4",
+         "grade": "C",
+         "ctx_tray_id": "CTT4532",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100002371,
+         "model_name": "Xiaomi redmi note 4",
+         "grade": "C",
+         "ctx_tray_id": "CTT4532",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100001194,
+         "model_name": "Xiaomi redmi note 4",
+         "grade": "C",
+         "ctx_tray_id": "CTT4532",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92110005901,
+         "model_name": "Xiaomi redmi note 4",
+         "grade": "C",
+         "ctx_tray_id": "CTT4532",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100001182,
+         "model_name": "Xiaomi redmi note 4",
+         "grade": "C",
+         "ctx_tray_id": "CTT4532",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100002152,
+         "model_name": "Xiaomi redmi note 4",
+         "grade": "C",
+         "ctx_tray_id": "CTT4532",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92110005952,
+         "model_name": "Xiaomi redmi note 4",
+         "grade": "C",
+         "ctx_tray_id": "CTT4532",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100003742,
+         "model_name": "Xiaomi redmi note 4",
+         "grade": "C",
+         "ctx_tray_id": "CTT4532",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100002284,
+         "model_name": "Xiaomi redmi note 4",
+         "grade": "C",
+         "ctx_tray_id": "CTT4532",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100001507,
+         "model_name": "Xiaomi redmi note 4",
+         "grade": "C",
+         "ctx_tray_id": "CTT4532",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100002135,
+         "model_name": "Xiaomi redmi note 4",
+         "grade": "C",
+         "ctx_tray_id": "CTT4532",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100001204,
+         "model_name": "Xiaomi redmi note 4",
+         "grade": "C",
+         "ctx_tray_id": "CTT4532",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100003916,
+         "model_name": "Xiaomi redmi note 4",
+         "grade": "upgrade",
+         "ctx_tray_id": "CTT4532",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 928050003913,
+         "model_name": "Xiaomi redmi 9a",
+         "grade": "C",
+         "ctx_tray_id": "STC4072",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92110007288,
+         "model_name": "Xiaomi redmi 9a",
+         "grade": "C",
+         "ctx_tray_id": "STC4072",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92110009886,
+         "model_name": "Xiaomi redmi 9a",
+         "grade": "C",
+         "ctx_tray_id": "STC4072",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 928050008421,
+         "model_name": "Xiaomi redmi 9a",
+         "grade": "C",
+         "ctx_tray_id": "STC4072",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92110006083,
+         "model_name": "Xiaomi redmi 9a",
+         "grade": "C",
+         "ctx_tray_id": "STC4072",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 928050005887,
+         "model_name": "Xiaomi redmi 9a",
+         "grade": "C",
+         "ctx_tray_id": "STC4072",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92110009023,
+         "model_name": "Xiaomi redmi 9a",
+         "grade": "C",
+         "ctx_tray_id": "STC4072",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100004765,
+         "model_name": "Xiaomi redmi 9a",
+         "grade": "C",
+         "ctx_tray_id": "STC4072",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 928030001363,
+         "model_name": "Xiaomi redmi 9a",
+         "grade": "C",
+         "ctx_tray_id": "STC4072",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 928050005189,
+         "model_name": "Xiaomi redmi 9a",
+         "grade": "C",
+         "ctx_tray_id": "STC4072",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 928030000677,
+         "model_name": "Xiaomi redmi 9a",
+         "grade": "C",
+         "ctx_tray_id": "STC4072",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 928050008545,
+         "model_name": "Xiaomi redmi 9a",
+         "grade": "C",
+         "ctx_tray_id": "STC4072",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 928050002925,
+         "model_name": "Xiaomi redmi 9a",
+         "grade": "C",
+         "ctx_tray_id": "STC4072",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 928030001159,
+         "model_name": "Xiaomi redmi 9a",
+         "grade": "C",
+         "ctx_tray_id": "STC4072",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100005010,
+         "model_name": "Xiaomi redmi 9a",
+         "grade": "C",
+         "ctx_tray_id": "STC4072",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 928050008417,
+         "model_name": "Xiaomi redmi 9a",
+         "grade": "C",
+         "ctx_tray_id": "STC4072",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 928050003990,
+         "model_name": "Xiaomi redmi 9a",
+         "grade": "C",
+         "ctx_tray_id": "STC4072",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 928050005971,
+         "model_name": "Xiaomi redmi 9a",
+         "grade": "C",
+         "ctx_tray_id": "STC4072",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 928050006925,
+         "model_name": "Xiaomi redmi 9a",
+         "grade": "C",
+         "ctx_tray_id": "STC4072",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 928050008550,
+         "model_name": "Xiaomi redmi 9a",
+         "grade": "C",
+         "ctx_tray_id": "STC4072",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 928030000481,
+         "model_name": "Xiaomi redmi 9a",
+         "grade": "C",
+         "ctx_tray_id": "STC4072",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 928030000586,
+         "model_name": "Xiaomi redmi 9a",
+         "grade": "C",
+         "ctx_tray_id": "STC4072",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100004430,
+         "model_name": "Xiaomi redmi 9a",
+         "grade": "C",
+         "ctx_tray_id": "STC4072",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 928050003150,
+         "model_name": "Xiaomi redmi 9a",
+         "grade": "C",
+         "ctx_tray_id": "STC4072",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 928050005470,
+         "model_name": "Xiaomi redmi 9a",
+         "grade": "C",
+         "ctx_tray_id": "STC4072",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 928030000782,
+         "model_name": "Xiaomi redmi 9a",
+         "grade": "C",
+         "ctx_tray_id": "STC4072",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 928050005578,
+         "model_name": "Xiaomi redmi 9a",
+         "grade": "C",
+         "ctx_tray_id": "STC4072",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100004289,
+         "model_name": "Xiaomi redmi 9a",
+         "grade": "C",
+         "ctx_tray_id": "STC4072",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 928050007814,
+         "model_name": "Xiaomi redmi 9a",
+         "grade": "C",
+         "ctx_tray_id": "STC4072",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 928050009162,
+         "model_name": "Xiaomi redmi 9a",
+         "grade": "C",
+         "ctx_tray_id": "STC4072",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 928050003401,
+         "model_name": "Xiaomi redmi 9a",
+         "grade": "C",
+         "ctx_tray_id": "STC4072",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92110007959,
+         "model_name": "Xiaomi redmi 9a",
+         "grade": "C",
+         "ctx_tray_id": "STC4072",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92110009831,
+         "model_name": "Xiaomi redmi 6",
+         "grade": "C",
+         "ctx_tray_id": "STC4014",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92110006627,
+         "model_name": "Xiaomi redmi 6",
+         "grade": "C",
+         "ctx_tray_id": "STC4014",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92110007007,
+         "model_name": "Xiaomi redmi 6",
+         "grade": "C",
+         "ctx_tray_id": "STC4014",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92110009873,
+         "model_name": "Xiaomi redmi 6",
+         "grade": "C",
+         "ctx_tray_id": "STC4014",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 928050002947,
+         "model_name": "Xiaomi redmi 6",
+         "grade": "C",
+         "ctx_tray_id": "STC4014",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": "0FEJ0B_N",
+         "model_name": "Xiaomi redmi 6",
+         "grade": "C",
+         "ctx_tray_id": "STC4014",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100001219,
+         "model_name": "Xiaomi redmi 6",
+         "grade": "C",
+         "ctx_tray_id": "STC4014",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100005279,
+         "model_name": "Xiaomi redmi 6",
+         "grade": "C",
+         "ctx_tray_id": "STC4014",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 928050004043,
+         "model_name": "Xiaomi redmi 6",
+         "grade": "C",
+         "ctx_tray_id": "STC4014",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100000957,
+         "model_name": "Xiaomi redmi 6",
+         "grade": "C",
+         "ctx_tray_id": "STC4014",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100001066,
+         "model_name": "Xiaomi redmi 6",
+         "grade": "C",
+         "ctx_tray_id": "STC4014",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 928050007844,
+         "model_name": "Xiaomi redmi 6",
+         "grade": "C",
+         "ctx_tray_id": "STC4014",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100002889,
+         "model_name": "Xiaomi redmi 6",
+         "grade": "C",
+         "ctx_tray_id": "STC4014",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": "0DT67T_Q",
+         "model_name": "Xiaomi redmi 6",
+         "grade": "C",
+         "ctx_tray_id": "STC4014",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100005185,
+         "model_name": "Xiaomi redmi 6",
+         "grade": "C",
+         "ctx_tray_id": "STC4014",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92110009431,
+         "model_name": "Xiaomi redmi 6",
+         "grade": "C",
+         "ctx_tray_id": "STC4014",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100003393,
+         "model_name": "Xiaomi redmi 6",
+         "grade": "C",
+         "ctx_tray_id": "STC4014",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": "0E2GPB_D",
+         "model_name": "Xiaomi redmi 6",
+         "grade": "C",
+         "ctx_tray_id": "STC4014",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92110006477,
+         "model_name": "Xiaomi redmi 6",
+         "grade": "C",
+         "ctx_tray_id": "STC4014",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92110006728,
+         "model_name": "Xiaomi redmi 6",
+         "grade": "C",
+         "ctx_tray_id": "STC4014",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92110007441,
+         "model_name": "Xiaomi redmi 6",
+         "grade": "C",
+         "ctx_tray_id": "STC4014",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 928050004270,
+         "model_name": "Xiaomi redmi 6",
+         "grade": "C",
+         "ctx_tray_id": "STC4014",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 928050006465,
+         "model_name": "Xiaomi redmi 6",
+         "grade": "C",
+         "ctx_tray_id": "STC4014",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 928050004001,
+         "model_name": "Xiaomi redmi 6",
+         "grade": "C",
+         "ctx_tray_id": "STC4014",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100001003,
+         "model_name": "Xiaomi redmi 8a",
+         "grade": "C",
+         "ctx_tray_id": "CTT4565",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100001306,
+         "model_name": "Xiaomi redmi 8a",
+         "grade": "C",
+         "ctx_tray_id": "CTT4565",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100000588,
+         "model_name": "Xiaomi redmi 8a",
+         "grade": "C",
+         "ctx_tray_id": "CTT4565",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100001588,
+         "model_name": "Xiaomi redmi 8a",
+         "grade": "C",
+         "ctx_tray_id": "CTT4565",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92110008017,
+         "model_name": "Xiaomi redmi 8a",
+         "grade": "C",
+         "ctx_tray_id": "CTT4565",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100002094,
+         "model_name": "Xiaomi redmi 8a",
+         "grade": "C",
+         "ctx_tray_id": "CTT4565",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100000746,
+         "model_name": "Xiaomi redmi 8a",
+         "grade": "C",
+         "ctx_tray_id": "CTT4565",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100000605,
+         "model_name": "Xiaomi redmi 8a",
+         "grade": "C",
+         "ctx_tray_id": "CTT4565",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100002030,
+         "model_name": "Xiaomi redmi 8a",
+         "grade": "C",
+         "ctx_tray_id": "CTT4565",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100000626,
+         "model_name": "Xiaomi redmi 8a",
+         "grade": "C",
+         "ctx_tray_id": "CTT4565",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100001720,
+         "model_name": "Xiaomi redmi 8a",
+         "grade": "C",
+         "ctx_tray_id": "CTT4565",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100002503,
+         "model_name": "Xiaomi redmi 8a",
+         "grade": "C",
+         "ctx_tray_id": "CTT4565",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100001054,
+         "model_name": "Xiaomi redmi 8a",
+         "grade": "C",
+         "ctx_tray_id": "CTT4565",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100002267,
+         "model_name": "Xiaomi redmi 8a",
+         "grade": "C",
+         "ctx_tray_id": "CTT4565",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92110006422,
+         "model_name": "Xiaomi redmi 8a",
+         "grade": "C",
+         "ctx_tray_id": "CTT4565",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100002610,
+         "model_name": "Xiaomi redmi 8a",
+         "grade": "C",
+         "ctx_tray_id": "CTT4565",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100001719,
+         "model_name": "Xiaomi redmi 8a",
+         "grade": "C",
+         "ctx_tray_id": "CTT4565",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100002682,
+         "model_name": "Xiaomi redmi 8a",
+         "grade": "C",
+         "ctx_tray_id": "CTT4565",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92110006622,
+         "model_name": "POCO M2",
+         "grade": "C",
+         "ctx_tray_id": "CTT4555",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100004863,
+         "model_name": "POCO M2",
+         "grade": "C",
+         "ctx_tray_id": "CTT4555",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92110008261,
+         "model_name": "POCO M2",
+         "grade": "C",
+         "ctx_tray_id": "CTT4555",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100004326,
+         "model_name": "POCO M2",
+         "grade": "C",
+         "ctx_tray_id": "CTT4555",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100004223,
+         "model_name": "POCO M2",
+         "grade": "C",
+         "ctx_tray_id": "CTT4555",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100004906,
+         "model_name": "POCO M2",
+         "grade": "C",
+         "ctx_tray_id": "CTT4555",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92110007567,
+         "model_name": "POCO M2",
+         "grade": "C",
+         "ctx_tray_id": "CTT4555",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100004904,
+         "model_name": "POCO M2",
+         "grade": "C",
+         "ctx_tray_id": "CTT4555",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92110005818,
+         "model_name": "Samsung galaxy m31",
+         "grade": "C",
+         "ctx_tray_id": "CTC3042",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100004008,
+         "model_name": "Samsung galaxy m31",
+         "grade": "C",
+         "ctx_tray_id": "CTC3042",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92110006613,
+         "model_name": "Samsung galaxy m31",
+         "grade": "C",
+         "ctx_tray_id": "CTC3042",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100001190,
+         "model_name": "Samsung galaxy m31",
+         "grade": "C",
+         "ctx_tray_id": "CTC3042",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92110005527,
+         "model_name": "Samsung galaxy m31",
+         "grade": "C",
+         "ctx_tray_id": "CTC3042",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92110008003,
+         "model_name": "Samsung galaxy m31",
+         "grade": "C",
+         "ctx_tray_id": "CTC3042",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100000434,
+         "model_name": "Samsung galaxy m31",
+         "grade": "C",
+         "ctx_tray_id": "CTC3042",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100000815,
+         "model_name": "Samsung galaxy m31",
+         "grade": "C",
+         "ctx_tray_id": "CTC3042",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100003676,
+         "model_name": "Samsung galaxy m31",
+         "grade": "C",
+         "ctx_tray_id": "CTC3042",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100002622,
+         "model_name": "Xiaomi redmi 5",
+         "grade": "C",
+         "ctx_tray_id": "CTC3049",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100002721,
+         "model_name": "Xiaomi redmi 5",
+         "grade": "C",
+         "ctx_tray_id": "CTC3049",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92110005798,
+         "model_name": "Xiaomi redmi 5",
+         "grade": "C",
+         "ctx_tray_id": "CTC3049",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100002287,
+         "model_name": "Xiaomi redmi 5",
+         "grade": "C",
+         "ctx_tray_id": "CTC3049",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92110008761,
+         "model_name": "Xiaomi redmi 5",
+         "grade": "C",
+         "ctx_tray_id": "CTC3049",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100002542,
+         "model_name": "Xiaomi redmi 5",
+         "grade": "C",
+         "ctx_tray_id": "CTC3049",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92110005723,
+         "model_name": "Xiaomi redmi 5",
+         "grade": "C",
+         "ctx_tray_id": "CTC3049",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100001892,
+         "model_name": "Xiaomi redmi 6",
+         "grade": "C",
+         "ctx_tray_id": "CTT4598",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 928050004172,
+         "model_name": "Xiaomi redmi 6",
+         "grade": "C",
+         "ctx_tray_id": "CTT4598",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 928050004230,
+         "model_name": "Xiaomi redmi 6",
+         "grade": "C",
+         "ctx_tray_id": "CTT4598",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100001463,
+         "model_name": "Xiaomi redmi 6",
+         "grade": "C",
+         "ctx_tray_id": "CTT4598",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92110009678,
+         "model_name": "Xiaomi redmi 6",
+         "grade": "C",
+         "ctx_tray_id": "CTT4598",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92110007652,
+         "model_name": "Xiaomi redmi 6",
+         "grade": "C",
+         "ctx_tray_id": "CTT4598",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100002689,
+         "model_name": "Xiaomi redmi 6",
+         "grade": "C",
+         "ctx_tray_id": "CTT4598",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92110007886,
+         "model_name": "Xiaomi redmi 6",
+         "grade": "C",
+         "ctx_tray_id": "CTT4598",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100001232,
+         "model_name": "Xiaomi redmi 6",
+         "grade": "C",
+         "ctx_tray_id": "CTT4598",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92110007426,
+         "model_name": "Xiaomi redmi 6",
+         "grade": "C",
+         "ctx_tray_id": "CTT4598",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92110007415,
+         "model_name": "Xiaomi redmi 6",
+         "grade": "C",
+         "ctx_tray_id": "CTT4598",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100000765,
+         "model_name": "Xiaomi redmi 6",
+         "grade": "C",
+         "ctx_tray_id": "CTT4598",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92110007027,
+         "model_name": "Xiaomi redmi 6",
+         "grade": "C",
+         "ctx_tray_id": "CTT4598",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92110005434,
+         "model_name": "Xiaomi redmi 6",
+         "grade": "C",
+         "ctx_tray_id": "CTT4598",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100001313,
+         "model_name": "Xiaomi redmi 6",
+         "grade": "C",
+         "ctx_tray_id": "CTT4598",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100001641,
+         "model_name": "Xiaomi redmi 6",
+         "grade": "C",
+         "ctx_tray_id": "CTT4598",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100002311,
+         "model_name": "Xiaomi redmi 6",
+         "grade": "C",
+         "ctx_tray_id": "CTT4598",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92110006263,
+         "model_name": "Xiaomi redmi 6",
+         "grade": "C",
+         "ctx_tray_id": "CTT4598",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100001424,
+         "model_name": "Xiaomi redmi 6",
+         "grade": "C",
+         "ctx_tray_id": "CTT4598",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100001779,
+         "model_name": "Xiaomi redmi 6",
+         "grade": "C",
+         "ctx_tray_id": "CTT4598",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100005381,
+         "model_name": "Xiaomi redmi 6",
+         "grade": "C",
+         "ctx_tray_id": "CTT4598",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100002636,
+         "model_name": "Xiaomi redmi 6",
+         "grade": "C",
+         "ctx_tray_id": "CTT4598",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92100004657,
+         "model_name": "Xiaomi redmi 6",
+         "grade": "C",
+         "ctx_tray_id": "CTT4598",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92110007885,
+         "model_name": "Xiaomi redmi 6",
+         "grade": "C",
+         "ctx_tray_id": "CTT4598",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92110005978,
+         "model_name": "Xiaomi redmi 6",
+         "grade": "C",
+         "ctx_tray_id": "CTT4598",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 928050007527,
+         "model_name": "Xiaomi redmi 6",
+         "grade": "C",
+         "ctx_tray_id": "CTT4598",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 928050007660,
+         "model_name": "Xiaomi redmi 6",
+         "grade": "C",
+         "ctx_tray_id": "CTT4598",
+         "date": "07\/24\/2023"
+        },
+        {
+         "uic": 92110008056,
+         "model_name": "Xiaomi redmi 6",
+         "grade": "C",
+         "ctx_tray_id": "CTT4598",
+         "date": "07\/24\/2023"
+        }
+       ]
+       let arr1=[]
+      for (let x of arr) {
+        let checkPresentIntray = await delivery.findOne({
+          "uic_code.code": x.uic?.toString(),
+        });
+      
+        if (checkPresentIntray == null) {
+          arr1.push(x.uic)
+        } 
+      }
+      resolve({ status: 1,data:arr1 });
+    });
+  },
+  //SEARCH UIC FROM STX UTILITY COLLECTION
+  stxUtilityScanUic: (uic) => {
+    // PROMISE FOR GET DATA
+    return new Promise(async (resolve, reject) => {
+      // FETCH DATA / CHECK UIC VALID OR NOT
+      const fetchData = await stxUtility.find({ uic: uic });
+      // CHECK UIC AVAILABLE OR NOT
+      if (fetchData.length !== 0) {
+        // CHECK ALREADY ADDED INTO TRAY
+        const checkIntrayOrnot = await masters.findOne({ "items.uic": uic });
+        if (checkIntrayOrnot) {
+          resolve({ status: 2, trayId: checkIntrayOrnot.code });
+        }
+
+        // RESOLVE WITH STATUS 1
+        resolve({ status: 1, uicData: fetchData });
+      } else {
+        // UIC NOT FOUND SO STATUS 0
+        resolve({ status: 0 });
+      }
+    });
+  },
+  // STX UTILITY GET MATCH BRAND AND MODEL
+  stxUtilityGetStx: (uic, location, grade) => {
+    // PROMISE
+    return new Promise(async (resolve, reject) => {
+      // CHECK UIC BRAND AND MODEL AND AVAILABILITY OF UIC
+      const checkUic = await delivery.findOne({ "uic_code.code": uic });
+      // IF UIC EXISTS IN MAIN DELIVERY
+      if (checkUic) {
+        // FIND BRAND AND MODEL USING ITEM ID FROM UIC
+        const brandAndModel = await products.findOne({
+          vendor_sku_id: checkUic?.item_id,
+        });
+        // CHECK PRODUCT MASTER
+        if (brandAndModel) {
+          let obj = {
+            brand: brandAndModel.brand_name,
+            model: brandAndModel.model_name,
+            muic: brandAndModel.muic,
+          };
+          const findStxTray = await masters.find({
+            $or: [
+              {
+                sort_id: "Open",
+                type_taxanomy: "ST",
+                cpc: location,
+                tray_grade: grade,
+                brand: brandAndModel.brand_name,
+                model: brandAndModel.model_name,
+              },
+              {
+                sort_id: "STX-Utility In-progress",
+                type_taxanomy: "ST",
+                cpc: location,
+                tray_grade: grade,
+                brand: brandAndModel.brand_name,
+                model: brandAndModel.model_name,
+              },
+            ],
+          });
+          let spArr = [];
+          // SP TRAY
+          if (findStxTray.length !== 0) {
+            for (let spt of findStxTray) {
+              // CHECK TRAY IS FULL OR NOT
+              if (parseInt(spt.limit) > parseInt(spt.items.length + 1)) {
+                spArr.push(spt);
+              }
+            }
+          }
+          resolve({ status: 2, trayData: spArr, muiDetails: obj });
+        } else {
+          resolve({ status: 1 });
+        }
+      } else {
+        //UIC NOT EXISTS IN OUR MAIN DELIVERY COLLECTION
+        resolve({ status: 0 });
+      }
+    });
+  },
+  // UNIT ADD TO STX
+  stxUtilityAddItems: (uic, stXTrayId, ctxTrayId, brand, model, muic) => {
+    return new Promise(async (resolve, reject) => {
+      const getDelivery = await delivery.findOneAndUpdate(
+        { "uic_code.code": uic },
+        {
+          $set: {
+            stx_tray_id: stXTrayId,
+            ctx_tray_id: ctxTrayId,
+            updated_at: Date.now(),
+          },
+        }
+      );
+      let obj = {
+        tracking_id: getDelivery?.tracking_id,
+        bot_agent: getDelivery?.agent_name,
+        tray_id: getDelivery?.tray_id,
+        uic: uic,
+        imei: getDelivery?.imei,
+        muic: muic,
+        brand_name: brand,
+        model_name: model,
+        order_id: getDelivery?.order_id,
+        charging: getDelivery?.charging,
+        bqc_report: getDelivery?.bqc_report,
+      };
+      let updateStx = await masters.findOneAndUpdate(
+        { code: stXTrayId },
+        {
+          $set: {
+            sort_id: "STX-Utility In-progress",
+          },
+          $push: {
+            items: obj,
+          },
+        }
+      );
+      if (updateStx) {
+        resolve({ status: 1 });
+      } else {
+        resolve({ status: 0 });
+      }
+    });
+  },
+  // GET TRAY IN STX-UTILITY IN-PROGRESS
+  stxUtilityTrayInproGress: (location) => {
+    return new Promise(async (resolve, reject) => {
+      const getTray = await masters.find({
+        type_taxanomy: "ST",
+        cpc: location,
+        sort_id: "STX-Utility In-progress",
+      });
+      resolve(getTray);
     });
   },
 };

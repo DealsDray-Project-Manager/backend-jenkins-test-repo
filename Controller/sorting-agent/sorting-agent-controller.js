@@ -956,7 +956,7 @@ module.exports = {
     });
   },
   sortingGetAssignedTrayForWhtToRp: (user_name, trayType) => {
-    console.log(user_name);
+   
     return new Promise(async (resolve, reject) => {
       let data = await masters.find({
         issued_user_name: user_name,
@@ -1109,7 +1109,7 @@ module.exports = {
     });
   },
   whtToTRpSortingDoneCloseTray: (trayDetails) => {
-    console.log(trayDetails);
+   
     return new Promise(async (resolve, reject) => {
       let data;
       let rpTray;
@@ -1137,6 +1137,7 @@ module.exports = {
             $set: {
               sort_id: "Sorting done (Wht to rp)",
               temp_array: [],
+              "track_tray.wht_to_rp_sorting_done_sorting":Date.now(),
               closed_date_agent: Date.now(),
             },
           }
@@ -1147,6 +1148,7 @@ module.exports = {
             $set: {
               sort_id: "Sorting done (Wht to rp)",
               temp_array: [],
+              "track_tray.wht_to_rp_sorting_done_sorting":Date.now(),
               actual_items: [],
               closed_date_agent: Date.now(),
             },
@@ -1159,6 +1161,7 @@ module.exports = {
             $set: {
               sort_id: "Sorting done (Wht to rp)",
               temp_array: [],
+              "track_tray.wht_to_rp_sorting_done_sorting":Date.now(),
               actual_items: [],
               closed_date_agent: Date.now(),
             },

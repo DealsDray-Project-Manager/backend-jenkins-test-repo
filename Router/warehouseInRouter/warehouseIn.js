@@ -1547,7 +1547,7 @@ router.post("/returnFromMerging/:location", async (req, res, next) => {
 /*--------------------- AFTER MERGE IS DONE CLOSE MMT TRAY--------------------------------*/
 router.post("/mergeDoneMmttrayClose", async (req, res, next) => {
   try {
-    const { toTray, fromTray, type, length, limit, status,rackId } = req.body;
+    const { toTray, fromTray, type, length, limit, status, rackId } = req.body;
     let data = await warehouseInController.mergeDoneTrayClose(
       fromTray,
       toTray,
@@ -2560,10 +2560,9 @@ router.post("/movedToBilledBin", async (req, res, next) => {
 });
 /*-----------------------------------------BILLED BIN REPORT-------------------------------*/
 
-router.post("/billedBin/report/:location", async (req, res, next) => {
+router.post("/billedBinReport", async (req, res, next) => {
   try {
-    const { location } = req.params;
-    const data = await warehouseInController.billedBinReport(location);
+    const data = await warehouseInController.billedBinReport();
     if (data) {
       res.status(200).json({
         data: data,
@@ -2581,7 +2580,6 @@ router.post("/whtToRp/requests/:location", async (req, res, next) => {
   try {
     const { location } = req.params;
     const data = await warehouseInController.whtToRpRequests(location);
-    console.log(data);
     if (data) {
       res.status(200).json({
         data: data,
@@ -2600,7 +2598,7 @@ router.post("/whtToRp/whtTray", async (req, res, next) => {
       location,
       whtTray
     );
-    console.log(data);
+
     if (data) {
       res.status(200).json({
         data: data,
