@@ -5978,7 +5978,9 @@ module.exports = {
               },
             }
           );
-        } else {
+        }
+       
+         else {
           status = "Ready to RDL";
           data = await masters.findOneAndUpdate(
             { code: trayData.trayId },
