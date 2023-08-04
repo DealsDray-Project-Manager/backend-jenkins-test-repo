@@ -5978,7 +5978,26 @@ module.exports = {
               },
             }
           );
-        } else {
+        }
+        else if(trayData.stage == "RDL two done closed by warehouse"){
+          status = "RDL two done closed by warehouse";
+          data = await masters.findOneAndUpdate(
+            { code: trayData.trayId },
+            {
+              $set: {
+                rack_id: trayData.rackId,
+                sort_id: "RDL two done closed by warehouse",
+                closed_time_wharehouse: Date.now(),
+                issued_user_name: null,
+                actual_items: [],
+                temp_array: [],
+                pickup_type: null,
+                to_tray_for_pickup: null,
+              },
+            }
+          );
+        }
+         else {
           status = "Ready to RDL";
           data = await masters.findOneAndUpdate(
             { code: trayData.trayId },
