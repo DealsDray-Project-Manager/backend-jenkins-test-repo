@@ -6,12 +6,12 @@ const {
 const { purchaseOrder } = require("../../Model/Purchase-order/purchase-order");
 
 module.exports = {
-  dashboardData: (location,username) => {
+  dashboardData: (location, username) => {
     return new Promise(async (resolve, reject) => {
       let count = {
-        precourmentCount:0
+        precourmentCount: 0,
       };
-      count.precourmentCount =await masters.aggregate([
+      count.precourmentCount = await masters.aggregate([
         {
           $match: {
             "items.rdl_fls_report.selected_status": "Repair Required",
@@ -38,7 +38,7 @@ module.exports = {
           },
         },
       ]);
-      count.precourmentCount=count.precourmentCount.length
+      count.precourmentCount = count.precourmentCount.length;
       if (count) {
         resolve(count);
       }
@@ -103,7 +103,6 @@ module.exports = {
             });
             let checkHistoryOfProcurement = await purchaseOrder.findOne({
               spare_part_number: x._id,
-              
             });
             if (checkThePart) {
               let qty = checkThePart.avl_stock - x.count;
@@ -156,78 +155,46 @@ module.exports = {
         const prefix = "P";
         const randomDigits = Math.floor(Math.random() * 90000) + 10000; // Generates a random 5-digit number
         const timestamp = Date.now().toString().slice(-5); // Uses the last 5 digits of the current timestamp
-
         return prefix + timestamp + randomDigits;
       }
       for (let x of spData) {
-        const uniqueID = generateUniqueID();
-        let obj = {
-          request_id: uniqueID,
-          request_date: new Date(Date.now()),
-        };
-        let checkSpExists = await purchaseOrder.findOne({
-          spare_part_number: x.part_id,
-          muic: x.muic,
-        });
-        if (checkSpExists) {
-          updateData = await purchaseOrder.findOneAndUpdate(
-            { spare_part_number: x.part_id },
-            {
-              $inc: {
-                requred_qty: parseInt(x.required_qty),
-              },
-              $push: {
-                request_id: uniqueID.toString(),
-              },
-              $set: {
-                updated_at: Date.now(),
-              },
-            },
-            
-          );
-          //   if (updateData) {
-          //     let updateMaster = await masters.findOneAndUpdate(
-          //       {
-          //         model: model,
-          //         brand: brand,
-          //         "items.rdl_fls_report.partRequired": {
-          //           $elemMatch: { part_id: x.part_id },
-          //         },
-          //       },
-          //       {
-          //         $set: {
-          //           "items.$.procurement_status": "Created",
-          //         },
-          //       }
-          //     );
-          //     console.log(updateMaster.code);
-          //   }
-        } else {
-          updateData = await purchaseOrder.create({
+        if(Number(x.required_qty) > 0){
+          const uniqueID = generateUniqueID();
+          let obj = {
+            request_id: uniqueID,
+            request_date: new Date(Date.now()),
+          };
+          let checkSpExists = await purchaseOrder.findOne({
             spare_part_number: x.part_id,
             muic: x.muic,
-            request_id: [uniqueID],
-            request_date: Date.now(),
-            spare_part_name: x.part_name,
-            requred_qty: x.required_qty,
           });
-          //   if (updateData) {
-          //     let updateMaster = await masters.updateMany(
-          //       {
-          //         model: model,
-          //         brand: brand,
-          //         "items.rdl_fls_report.partRequired": {
-          //           $elemMatch: { part_id: x.part_id },
-          //         },
-          //       },
-          //       {
-          //         $set: {
-          //           "items.$.procurement_status": "Created",
-          //         },
-          //       }
-          //     );
-          //     console.log(updateMaster);
-          //   }
+          if (checkSpExists) {
+            updateData = await purchaseOrder.findOneAndUpdate(
+              { spare_part_number: x.part_id },
+              {
+                $inc: {
+                  requred_qty: parseInt(x.required_qty),
+                },
+                $push: {
+                  request_id: uniqueID.toString(),
+                },
+                $set: {
+                  updated_at: Date.now(),
+                },
+              }
+            );
+          
+          } else {
+            updateData = await purchaseOrder.create({
+              spare_part_number: x.part_id,
+              muic: x.muic,
+              request_id: [uniqueID],
+              request_date: Date.now(),
+              spare_part_name: x.part_name,
+              requred_qty: x.required_qty,
+            });
+           
+          }
         }
       }
       if (updateData) {
@@ -237,5 +204,4 @@ module.exports = {
       }
     });
   },
- 
 };

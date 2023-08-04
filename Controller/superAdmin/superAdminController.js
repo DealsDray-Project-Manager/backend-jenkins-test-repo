@@ -29,8 +29,8 @@ const {
 const moment = require("moment");
 const elasticsearch = require("../../Elastic-search/elastic");
 
-const IISDOMAIN = "https://prexo-v8-4-uat-api.dealsdray.com/user/profile/";
-const IISDOMAINPRDT = "https://prexo-v8-4-uat-api.dealsdray.com/product/image/";
+const IISDOMAIN = "https://prexo-v8-4-adminapi.dealsdray.com/user/profile/";
+const IISDOMAINPRDT = "https://prexo-v8-4-adminapi.dealsdray.com/product/image/";
 
 /************************************************************************************************** */
 
@@ -122,10 +122,12 @@ module.exports = {
       count.bag = await masters.count({ prefix: "bag-master" });
       count.partList = await partAndColor.count({ type: "part-list" });
       count.colorList = await partAndColor.count({ type: "color-list" });
-      count.storageList = await storagemodel.count({ type: "storage-list" });
-      count.warrantyList = await warranty.count({ type: "warranty-list" });
-      count.paymentList = await payment.count({ type: "payment-list" });
-      count.ramList = await rammodel.count({ type: "ram-list" });
+      count.storageList = await storagemodel.count({});
+      count.warrantyList = await warranty.count({ });
+      count.paymentList = await payment.count({ });
+      count.ramList = await rammodel.count({ });
+      count.boxList = await box.count({  });
+      count.trayRacks = await trayRack.count({  });
       count.readyForTransferSales = await masters.count({
         prefix: "tray-master",
         sort_id: "Audit Done Closed By Warehouse",
