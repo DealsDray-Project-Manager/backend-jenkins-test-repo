@@ -6,6 +6,7 @@ const router = express.Router();
 // user controller
 const warehouseInController = require("../../Controller/warehouseIn/warehouseInController");
 const { masters } = require("../../Model/mastersModel");
+const elasticsearch = require("../../Elastic-search/elastic");
 /*******************************************************************************************************************/
 /**************************************************Dashboard**************************************************************************/
 router.post("/dashboard/:location", async (req, res, next) => {
@@ -2660,6 +2661,87 @@ router.post("/recieved-from-sortingWhtToRp", async (req, res, next) => {
     } else {
       res.status(202).json({
         message: "Failed",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+/*---------------------------------------UPGRADE UNITS REPORT ----------------------------------------------------*/
+router.post("/upgradeUnits/:location/:page/:size", async (req, res, next) => {
+  try {
+    let { location, page, size } = req.params;
+    page++;
+    const limit = parseInt(size);
+    const skip = (page - 1) * size;
+    let data = await warehouseInController.getUpgradeUnistData(
+      location,
+      limit,
+      skip
+    );
+    if (data) {
+      res.status(200).json({
+        data: data.upgaradeReport,
+        count: data.count,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+// DATE RANGE FILTER
+router.post("/upgardeUnitsFilter/item/filter", async (req, res, next) => {
+  try {
+    let { location, fromDate, toDate, page, size, type } = req.body;
+    page++;
+    const limit = parseInt(size);
+    const skip = (page - 1) * size;
+    const filterData = await warehouseInController.upgardeUnitsFilter(
+      location,
+      fromDate,
+      toDate,
+      limit,
+      skip,
+      type
+    );
+    if (filterData.monthWiseReport.length !== 0) {
+      res.status(200).json({
+        data: filterData.monthWiseReport,
+        count: filterData.getCount,
+      });
+    } else {
+      res.status(202).json({
+        data: filterData.monthWiseReport,
+
+        count: filterData.getCount,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+// UNIVERSAL SEARCH
+router.post("/search/upgradeReport", async (req, res, next) => {
+  try {
+    let { searchData, location, rowsPerPage, page } = req.body;
+    page++;
+    const limit = parseInt(rowsPerPage);
+    const skip = (page - 1) * rowsPerPage;
+    let data = await elasticsearch.searchForUpgradeUnits(
+      searchData,
+      limit,
+      skip,
+      location
+    );
+    if (data.searchResult.length !== 0) {
+      res.status(200).json({
+        data: data.searchResult,
+        count: data.count,
+      });
+    } else {
+      res.status(202).json({
+        data: data.searchResult,
+        count: data.count,
       });
     }
   } catch (error) {

@@ -6,12 +6,11 @@ const {
 const { purchaseOrder } = require("../../Model/Purchase-order/purchase-order");
 
 module.exports = {
-  dashboardData: (location,username) => {
+  dashboardData: (location, username) => {
     return new Promise(async (resolve, reject) => {
-      let count = {
-        precourmentCount:0
-      };
-      count.precourmentCount =await masters.aggregate([
+     
+      // Step 1: Create the pipeline for aggregation
+      const pipeline = [
         {
           $match: {
             "items.rdl_fls_report.selected_status": "Repair Required",
@@ -30,18 +29,77 @@ module.exports = {
         {
           $group: {
             _id: {
-              model: "$items.model_name",
               brand: "$items.brand_name",
+              model: "$items.model_name",
               muic: "$items.muic",
+              part_id: "$items.rdl_fls_report.partRequired.part_id",
             },
             count: { $sum: 1 },
           },
         },
-      ]);
-      count.precourmentCount=count.precourmentCount.length
-      if (count) {
-        resolve(count);
-      }
+        {
+          $group: {
+            _id: {
+              brand: "$_id.brand",
+              model: "$_id.model",
+              muic: "$_id.muic",
+            },
+            parts: {
+              $push: {
+                part_id: "$_id.part_id",
+                count: "$count",
+              },
+            },
+          },
+        },
+      ];
+
+      // Step 2: Execute the aggregation pipeline
+      const findItem = await masters
+        .aggregate(pipeline)
+        .allowDiskUse(true)
+        .exec();
+
+      // Step 3: Extract all part codes
+      const partCodes = findItem.flatMap((x) =>
+        x.parts.map((part) => part.part_id[0])
+      );
+
+      // Step 4: Fetch all partAndColor data in bulk
+      const partAndColorData = await partAndColor.find({
+        part_code: { $in: partCodes },
+      });
+
+      // Step 5: Calculate the required_qty and filter out the unnecessary data
+      const resolvedArr = findItem.reduce((result, x) => {
+        let required_qty = 0;
+        x.parts.forEach((y) => {
+          const checkThePart = partAndColorData.find(
+            (part) => part.part_code === y.part_id[0]
+          );
+          if (checkThePart) {
+            let qty = checkThePart.avl_stock - y.count;
+            if (qty < 0) {
+              let required = Math.abs(qty);
+              required_qty += required;
+            }
+          } else {
+            required_qty += y.count;
+          }
+        });
+
+        if (required_qty !== 0) {
+          x["required_qty"] = required_qty;
+          result.push(x);
+        }
+
+        return result;
+      }, []);
+
+      // Step 6: Calculate the count and resolve the final result
+      const count = { precourmentCount: resolvedArr.length };
+      console.log(count);
+      resolve(count );
     });
   },
   procureMentCreation: (location, brand, model) => {
@@ -103,7 +161,6 @@ module.exports = {
             });
             let checkHistoryOfProcurement = await purchaseOrder.findOne({
               spare_part_number: x._id,
-              
             });
             if (checkThePart) {
               let qty = checkThePart.avl_stock - x.count;
@@ -156,78 +213,44 @@ module.exports = {
         const prefix = "P";
         const randomDigits = Math.floor(Math.random() * 90000) + 10000; // Generates a random 5-digit number
         const timestamp = Date.now().toString().slice(-5); // Uses the last 5 digits of the current timestamp
-
         return prefix + timestamp + randomDigits;
       }
       for (let x of spData) {
-        const uniqueID = generateUniqueID();
-        let obj = {
-          request_id: uniqueID,
-          request_date: new Date(Date.now()),
-        };
-        let checkSpExists = await purchaseOrder.findOne({
-          spare_part_number: x.part_id,
-          muic: x.muic,
-        });
-        if (checkSpExists) {
-          updateData = await purchaseOrder.findOneAndUpdate(
-            { spare_part_number: x.part_id },
-            {
-              $inc: {
-                requred_qty: parseInt(x.required_qty),
-              },
-              $push: {
-                request_id: uniqueID.toString(),
-              },
-              $set: {
-                updated_at: Date.now(),
-              },
-            },
-            
-          );
-          //   if (updateData) {
-          //     let updateMaster = await masters.findOneAndUpdate(
-          //       {
-          //         model: model,
-          //         brand: brand,
-          //         "items.rdl_fls_report.partRequired": {
-          //           $elemMatch: { part_id: x.part_id },
-          //         },
-          //       },
-          //       {
-          //         $set: {
-          //           "items.$.procurement_status": "Created",
-          //         },
-          //       }
-          //     );
-          //     console.log(updateMaster.code);
-          //   }
-        } else {
-          updateData = await purchaseOrder.create({
+        if (Number(x.required_qty) > 0) {
+          const uniqueID = generateUniqueID();
+          let obj = {
+            request_id: uniqueID,
+            request_date: new Date(Date.now()),
+          };
+          let checkSpExists = await purchaseOrder.findOne({
             spare_part_number: x.part_id,
             muic: x.muic,
-            request_id: [uniqueID],
-            request_date: Date.now(),
-            spare_part_name: x.part_name,
-            requred_qty: x.required_qty,
           });
-          //   if (updateData) {
-          //     let updateMaster = await masters.updateMany(
-          //       {
-          //         model: model,
-          //         brand: brand,
-          //         "items.rdl_fls_report.partRequired": {
-          //           $elemMatch: { part_id: x.part_id },
-          //         },
-          //       },
-          //       {
-          //         $set: {
-          //           "items.$.procurement_status": "Created",
-          //         },
-          //       }
-          //     );
-          //     console.log(updateMaster);
-          //   }
+          if (checkSpExists) {
+            updateData = await purchaseOrder.findOneAndUpdate(
+              { spare_part_number: x.part_id },
+              {
+                $inc: {
+                  requred_qty: parseInt(x.required_qty),
+                },
+                $push: {
+                  request_id: uniqueID.toString(),
+                },
+                $set: {
+                  updated_at: Date.now(),
+                },
+              }
+            );
+          } else {
+            updateData = await purchaseOrder.create({
+              spare_part_number: x.part_id,
+              muic: x.muic,
+              request_id: [uniqueID],
+              request_date: Date.now(),
+              spare_part_name: x.part_name,
+              requred_qty: x.required_qty,
+            });
+          }
         }
       }
       if (updateData) {
@@ -237,5 +260,4 @@ module.exports = {
       }
     });
   },
- 
 };

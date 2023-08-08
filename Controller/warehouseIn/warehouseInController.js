@@ -905,7 +905,6 @@ module.exports = {
           }
         );
         if (data) {
-         
           for (let x of data.items) {
             let updateDelivery = await delivery.findOneAndUpdate(
               { tracking_id: x.awbn_number },
@@ -5978,9 +5977,24 @@ module.exports = {
               },
             }
           );
-        }
-       
-         else {
+        } else if (trayData.stage == "RDL two done closed by warehouse") {
+          status = "RDL two done closed by warehouse";
+          data = await masters.findOneAndUpdate(
+            { code: trayData.trayId },
+            {
+              $set: {
+                rack_id: trayData.rackId,
+                sort_id: "RDL two done closed by warehouse",
+                closed_time_wharehouse: Date.now(),
+                issued_user_name: null,
+                actual_items: [],
+                temp_array: [],
+                pickup_type: null,
+                to_tray_for_pickup: null,
+              },
+            }
+          );
+        } else {
           status = "Ready to RDL";
           data = await masters.findOneAndUpdate(
             { code: trayData.trayId },
@@ -6990,7 +7004,6 @@ module.exports = {
     });
   },
   billedBinReport: () => {
-   
     return new Promise(async (resolve, reject) => {
       let getData = await delivery.aggregate([
         {
@@ -7019,7 +7032,6 @@ module.exports = {
         sort_id: "Assigned to sorting (Wht to rp)",
       });
       resolve(getTray);
-     
     });
   },
   whtToRpWhtTrayScan: (location, whtTray) => {
@@ -7110,7 +7122,7 @@ module.exports = {
           {
             $set: {
               sort_id: "Received from sorting (Wht to rp)",
-              "track_tray.wht_to_rp_sorting_done_recived_wh":Date.now()
+              "track_tray.wht_to_rp_sorting_done_recived_wh": Date.now(),
             },
           }
         );
@@ -7139,6 +7151,48 @@ module.exports = {
       } else {
         resolve({ status: 3 });
       }
+    });
+  },
+  getUpgradeUnistData: (location, limit, skip) => {
+    return new Promise(async (resolve, reject) => {
+      const findUpgardeUnits = await delivery
+        .find({
+          partner_shop: location,
+          "audit_report.stage": "Upgrade",
+        })
+        .skip(skip)
+        .limit(limit);
+      const count = await delivery.count({
+        partner_shop: location,
+        "audit_report.stage": "Upgrade",
+      });
+      resolve({ upgaradeReport: findUpgardeUnits, count: count });
+    });
+  },
+  upgardeUnitsFilter: (location, fromDate, toDate, limit, skip, type) => {
+    return new Promise(async (resolve, reject) => {
+      let monthWiseReport, getCount;
+      
+        const fromDateISO = new Date(fromDate).toISOString();
+        const toDateISO = new Date(toDate).toISOString();
+        monthWiseReport = await delivery
+          .find({
+            partner_shop: location,
+            "audit_report.stage": "Upgrade",
+            audit_done_date: { $gte: fromDateISO, $lte: toDateISO },
+          })
+          .limit(limit)
+          .skip(skip);
+        getCount = await delivery.count({
+          partner_shop: location,
+          "audit_report.stage": "Upgrade",
+          audit_done_date: { $gte: fromDateISO, $lte: toDateISO },
+        });
+      
+      resolve({
+        monthWiseReport: monthWiseReport,
+        getCount: getCount,
+      });
     });
   },
 };

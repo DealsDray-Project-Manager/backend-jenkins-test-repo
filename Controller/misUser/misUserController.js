@@ -2859,6 +2859,7 @@ module.exports = {
     grade
   ) => {
     return new Promise(async (resolve, reject) => {
+      console.log(grade);
       let arr = [];
       let whtTray;
       if (type == "WHT") {
@@ -4232,6 +4233,85 @@ module.exports = {
       resolve(findItem);
     });
   },
+  procurmentRepairScreen: (location) => {
+    return new Promise(async (resolve, reject) => {
+      const findItem = await masters.aggregate([
+        {
+          $match: {
+            "items.rdl_fls_report.selected_status": "Repair Required",
+            cpc: location,
+            sort_id: "Ready to RDL-Repair",
+          },
+        },
+        {
+          $unwind: "$items",
+        },
+        {
+          $match: {
+            "items.rdl_fls_report.selected_status": "Repair Required",
+          },
+        },
+        {
+          $group: {
+            _id: {
+              brand: "$items.brand_name",
+              model: "$items.model_name",
+              muic: "$items.muic",
+              part_id: "$items.rdl_fls_report.partRequired.part_id",
+            },
+            count: { $sum: 1 },
+          },
+        },
+        {
+          $group: {
+            _id: {
+              brand: "$_id.brand",
+              model: "$_id.model",
+              muic: "$_id.muic",
+            },
+            parts: {
+              $push: {
+                part_id: "$_id.part_id",
+                count: "$count",
+              },
+            },
+          },
+        },
+      ]);
+
+      const partCodes = findItem.flatMap((x) =>
+        x.parts.map((part) => part.part_id[0])
+      );
+      const partAndColorData = await partAndColor.find({
+        part_code: { $in: partCodes },
+      });
+
+      const newArr = findItem.map((x) => {
+        let required_qty = 0;
+        x.parts.forEach((y) => {
+          const checkThePart = partAndColorData.find(
+            (part) => part.part_code === y.part_id[0]
+          );
+          if (checkThePart) {
+            let qty = checkThePart.avl_stock - y.count;
+            if (qty < 0) {
+              let required = Math.abs(qty);
+              required_qty += required;
+            }
+          } else {
+            required_qty += y.count;
+          }
+        });
+
+        if (required_qty !== 0) {
+          x["required_qty"] = required_qty;
+          return x;
+        }
+      });
+      const resolvedArr = newArr.filter(Boolean); // Remove any null values from the array
+      resolve(resolvedArr);
+    });
+  },
   whtToRpMuicListToRepairAssignForRepair: (location, brand, model) => {
     return new Promise(async (resolve, reject) => {
       const findItem = await masters.aggregate([
@@ -5085,13 +5165,7 @@ module.exports = {
       let arr = [];
       let arr1 = [];
       for (let x of arr) {
-        let checkPresentIntray = await delivery.findOne({
-          "uic_code.code": x.uic?.toString(),
-        });
-
-        if (checkPresentIntray == null) {
-          arr1.push(x.uic);
-        }
+        let createTo = await stxUtility.create(x);
       }
       resolve({ status: 1, data: arr1 });
     });
@@ -5162,7 +5236,7 @@ module.exports = {
           if (findStxTray.length !== 0) {
             for (let spt of findStxTray) {
               // CHECK TRAY IS FULL OR NOT
-              if (parseInt(spt.limit) > parseInt(spt.items.length + 1)) {
+              if (parseInt(spt.limit) > parseInt(spt.items.length)) {
                 spArr.push(spt);
               }
             }

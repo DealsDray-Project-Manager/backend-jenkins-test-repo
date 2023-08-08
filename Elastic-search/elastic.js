@@ -533,6 +533,50 @@ module.exports = {
 
     return { searchResult: arr, count: count, dataForDownload: arr1 };
   },
+  searchForUpgradeUnits: async (searchInput, limit, skip, location) => {
+    let data = await client.search({
+      index: "prexo-delivery",
+      // type: '_doc', // uncomment for Elasticsearch ≤ 6
+      body: {
+        from: skip,
+        size: limit,
+        query: {
+          bool: {
+            must: [
+              {
+                multi_match: {
+                  query: searchInput,
+                  fields: ["*"],
+                },
+              },
+              {
+                match: {
+                  partner_shop: location,
+                },
+              },
+              {
+                match: {
+                  "audit_report.stage": "Upgrade",
+                },
+              },
+            ],
+          },
+        },
+      },
+      track_total_hits: true,
+    });
+    
+    let arr = [];
+    let count = data?.hits?.total?.value;
+
+    for (let result of data.hits.hits) {
+      console.log(result["_source"]);
+
+      arr.push(result["_source"]);
+    }
+
+    return { searchResult: arr, count: count };
+  },
   searchRdlOneDoneUnits: async (searchInput, limit, skip, location) => {
     let data = await client.search({
       index: "prexo-delivery",
