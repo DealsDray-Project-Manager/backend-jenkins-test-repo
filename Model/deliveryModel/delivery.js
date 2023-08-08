@@ -286,11 +286,11 @@ const deliverySchema = mongoose.Schema({
   unverified_imei_status: {
     type: String,
   },
-  rdl_two_user_name:{
-    type:String
+  rdl_two_user_name: {
+    type: String,
   },
-  issued_to_rdl_two_date:{
-  type:Date
+  issued_to_rdl_two_date: {
+    type: Date,
   },
   rdl_two_closed_date: {
     type: Date,
@@ -303,6 +303,9 @@ const deliverySchema = mongoose.Schema({
   },
   rdl_two_done_close_by_warehouse: {
     type: Date,
+  },
+  price_from_pricing_agent: {
+    type: String,
   },
 });
 

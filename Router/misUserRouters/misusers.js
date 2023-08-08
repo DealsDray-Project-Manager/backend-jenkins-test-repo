@@ -906,6 +906,7 @@ router.post("/toWhtTrayForMerge", async (req, res, next) => {
       sortId,
       grade,
     } = req.body;
+    console.log(req.body);
     let data = await misUserController.toWhtTrayForMerging(
       location,
       brand,
@@ -1701,6 +1702,20 @@ router.post("/whToRp/muicList/repair/:location", async (req, res, next) => {
     next(error);
   }
 });
+// PROCUREMENT SCREEN
+router.post("/procurmentRepair/:location", async (req, res, next) => {
+  try {
+    const { location } = req.params;
+    let data = await misUserController.procurmentRepairScreen(location);
+    if (data) {
+      res.status(200).json({
+        data: data,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
 // ASSIGN FOR REPAIR AND SORTING
 router.post("/whToRpAssignForRepair", async (req, res, next) => {
   try {
@@ -1856,7 +1871,7 @@ router.post("/stxUtilityImportXlsx", async (req, res, next) => {
     if (data.status == 1) {
       res.status(200).json({
         message: "Successfully added",
-        data:data.data
+        data: data.data,
       });
     } else {
       res.status(202).json({

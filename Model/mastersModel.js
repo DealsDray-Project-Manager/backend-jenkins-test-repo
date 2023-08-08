@@ -17,12 +17,7 @@ const mastersSchema = mongoose.Schema({
   sort_id: {
     type: String,
   },
-  from_time: {
-    type: String,
-  },
-  to_time: {
-    type: String,
-  },
+  
   prefix: {
     type: String,
     index: true,
@@ -123,6 +118,12 @@ const mastersSchema = mongoose.Schema({
   },
   tray_grade: {
     type: String,
+  },
+  sp_price:{
+    type:Number
+  },
+  mrp_price:{
+    type:Number
   },
   sp_tray: String,
   rdl_2_user_temp: String,

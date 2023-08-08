@@ -6,11 +6,26 @@ const salesController = require("../../Controller/sales-controller/sales-control
 
 /* DASHBOARD sales */
 
-router.post("/dashboard/:username", async (req, res, next) => {
+router.post("/dashboard/:location", async (req, res, next) => {
   try {
-    const { username } = req.params;
+    const { location } = req.params;
 
-    let data = await salesController.dashboardCount(username);
+    let data = await salesController.dashboardCount(location);
+    if (data) {
+      res.status(200).json({
+        data: data,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
+// VIEW THE PRICE
+router.post("/viewPrice/:location", async (req, res, next) => {
+  try {
+    const { location } = req.params;
+    let data = await salesController.viewPrice(location);
     if (data) {
       res.status(200).json({
         data: data,

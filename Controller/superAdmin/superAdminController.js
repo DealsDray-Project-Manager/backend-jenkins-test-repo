@@ -29,8 +29,8 @@ const {
 const moment = require("moment");
 const elasticsearch = require("../../Elastic-search/elastic");
 
-const IISDOMAIN = "https://prexo-v8-4-adminapi.dealsdray.com/user/profile/";
-const IISDOMAINPRDT = "https://prexo-v8-4-adminapi.dealsdray.com/product/image/";
+const IISDOMAIN = "https://prexo-v8-5-dev-api.dealsdray.com/user/profile/";
+const IISDOMAINPRDT = "https://prexo-v8-5-dev-api.dealsdray.com/product/image/";
 
 /************************************************************************************************** */
 
@@ -5019,453 +5019,80 @@ module.exports = {
   },
   addCategoryExtra: () => {
     return new Promise(async (resolve, reject) => {
-      let arr = [
-        {
-          part_code: "SPN001741",
-          Category: "BACK CAMERA",
-          "Technical QC": "Y",
-          sp_category: "BACK CAMERA",
-        },
-        {
-          part_code: "SPN001726",
-          Category: "BACK CAMERA",
-          "Technical QC": "Y",
-          sp_category: "BACK CAMERA",
-        },
-        {
-          part_code: "SPN001721",
-          Category: "BACK CAMERA",
-          "Technical QC": "Y",
-          sp_category: "BACK CAMERA",
-        },
-        {
-          part_code: "SPN001738",
-          Category: "BACK CAMERA",
-          "Technical QC": "Y",
-          sp_category: "BACK CAMERA",
-        },
-        {
-          part_code: "SPN001764",
-          Category: "BACK CAMERA",
-          "Technical QC": "Y",
-          sp_category: "BACK CAMERA",
-        },
-        {
-          part_code: "SPN001757",
-          Category: "BACK PANEL",
-          "Technical QC": "Y",
-          sp_category: "BACK PANEL",
-        },
-        {
-          part_code: "SPN001756",
-          Category: "BACK PANEL",
-          "Technical QC": "Y",
-          sp_category: "BACK PANEL",
-        },
-        {
-          part_code: "SPN001725",
-          Category: "BACK PANEL",
-          "Technical QC": "Y",
-          sp_category: "BACK PANEL",
-        },
-        {
-          part_code: "SPN001724",
-          Category: "BACK PANEL",
-          "Technical QC": "Y",
-          sp_category: "BACK PANEL",
-        },
-        {
-          part_code: "SPN001766",
-          Category: "BACK PANEL",
-          "Technical QC": "Y",
-          sp_category: "BACK PANEL",
-        },
-        {
-          part_code: "SPN001743",
-          Category: "BATTERY",
-          "Technical QC": "Y",
-          sp_category: "BATTERY",
-        },
-        {
-          part_code: "SPN001742",
-          Category: "CAMERA GLASS",
-          "Technical QC": "Y",
-          sp_category: "CAMERA GLASS",
-        },
-        {
-          part_code: "SPN001762",
-          Category: "CAMERA GLASS",
-          "Technical QC": "Y",
-          sp_category: "CAMERA GLASS",
-        },
-        {
-          part_code: "SPN001717",
-          Category: "CAMERA GLASS",
-          "Technical QC": "Y",
-          sp_category: "CAMERA GLASS",
-        },
-        {
-          part_code: "SPN001755",
-          Category: "CHARGING PCB",
-          "Technical QC": "Y",
-          sp_category: "CHARGING PCB",
-        },
-        {
-          part_code: "SPN001735",
-          Category: "CHARGING PCB",
-          "Technical QC": "Y",
-          sp_category: "CHARGING PCB",
-        },
-        {
-          part_code: "SPN001710",
-          Category: "CHROME WITH BUTTONS",
-          "Technical QC": "Y",
-          sp_category: "CHROME WITH BUTTONS",
-        },
-        {
-          part_code: "SPN001720",
-          Category: "CHROME WITH BUTTONS",
-          "Technical QC": "Y",
-          sp_category: "CHROME WITH BUTTONS",
-        },
-        {
-          part_code: "SPN001722",
-          Category: "CHROME WITH BUTTONS",
-          "Technical QC": "Y",
-          sp_category: "CHROME WITH BUTTONS",
-        },
-        {
-          part_code: "SPN001759",
-          Category: "DISPLAY FLEX",
-          "Technical QC": "Y",
-          sp_category: "DISPLAY FLEX",
-        },
-        {
-          part_code: "SPN001744",
-          Category: "DISPLAY REFLECTOR",
-          "Technical QC": "Y",
-          sp_category: "DISPLAY REFLECTOR",
-        },
-        {
-          part_code: "SPN001747",
-          Category: "FINGERPRINT SIDE",
-          "Technical QC": "Y",
-          sp_category: "FINGERPRINT SIDE",
-        },
-        {
-          part_code: "SPN001746",
-          Category: "FINGERPRINT SIDE",
-          "Technical QC": "Y",
-          sp_category: "FINGERPRINT SIDE",
-        },
-        {
-          part_code: "SPN001745",
-          Category: "FINGERPRINT SIDE",
-          "Technical QC": "Y",
-          sp_category: "FINGERPRINT SIDE",
-        },
-        {
-          part_code: "SPN001733",
-          Category: "FRONT CAMERA",
-          "Technical QC": "Y",
-          sp_category: "FRONT CAMERA",
-        },
-        {
-          part_code: "SPN001765",
-          Category: "FRONT CAMERA",
-          "Technical QC": "Y",
-          sp_category: "FRONT CAMERA",
-        },
-        {
-          part_code: "SPN001739",
-          Category: "LCD FRAME",
-          "Technical QC": "Y",
-          sp_category: "LCD FRAME",
-        },
-        {
-          part_code: "SPN001740",
-          Category: "LCD FRAME",
-          "Technical QC": "Y",
-          sp_category: "LCD FRAME",
-        },
-        {
-          part_code: "SPN001761",
-          Category: "MAIN FLEX CONNECTOR",
-          "Technical QC": "Y",
-          sp_category: "MAIN FLEX CONNECTOR",
-        },
-        {
-          part_code: "SPN001727",
-          Category: "MICROPHONE (MIC)",
-          "Technical QC": "Y",
-          sp_category: "MICROPHONE (MIC)",
-        },
-        {
-          part_code: "SPN001760",
-          Category: "MICROPHONE (MIC)",
-          "Technical QC": "Y",
-          sp_category: "MICROPHONE (MIC)",
-        },
-        {
-          part_code: "SPN001730",
-          Category: "MICROPHONE (MIC)",
-          "Technical QC": "Y",
-          sp_category: "MICROPHONE (MIC)",
-        },
-        {
-          part_code: "SPN001763",
-          Category: "POLORIZER FILM",
-          "Technical QC": "Y",
-          sp_category: "POLORIZER FILM",
-        },
-        {
-          part_code: "SPN001734",
-          Category: "POWER BUTTON",
-          "Technical QC": "Y",
-          sp_category: "POWER BUTTON",
-        },
-        {
-          part_code: "SPN001737",
-          Category: "POWER BUTTON",
-          "Technical QC": "Y",
-          sp_category: "POWER BUTTON",
-        },
-        {
-          part_code: "SPN001706",
-          Category: "POWER BUTTON",
-          "Technical QC": "Y",
-          sp_category: "POWER BUTTON",
-        },
-        {
-          part_code: "SPN001709",
-          Category: "POWER BUTTON",
-          "Technical QC": "Y",
-          sp_category: "POWER BUTTON",
-        },
-        {
-          part_code: "SPN001718",
-          Category: "POWER BUTTON",
-          "Technical QC": "Y",
-          sp_category: "POWER BUTTON",
-        },
-        {
-          part_code: "SPN001751",
-          Category: "RECEIVER NET",
-          "Technical QC": "Y",
-          sp_category: "RECEIVER NET",
-        },
-        {
-          part_code: "SPN001736",
-          Category: "RINGER",
-          "Technical QC": "Y",
-          sp_category: "RINGER",
-        },
-        {
-          part_code: "SPN001729",
-          Category: "RINGER",
-          "Technical QC": "Y",
-          sp_category: "RINGER",
-        },
-        {
-          part_code: "SPN001750",
-          Category: "SIM TRAY",
-          "Technical QC": "Y",
-          sp_category: "SIM TRAY",
-        },
-        {
-          part_code: "SPN001715",
-          Category: "SIM TRAY",
-          "Technical QC": "Y",
-          sp_category: "SIM TRAY",
-        },
-        {
-          part_code: "SPN001749",
-          Category: "SIM TRAY",
-          "Technical QC": "Y",
-          sp_category: "SIM TRAY",
-        },
-        {
-          part_code: "SPN001708",
-          Category: "SIM TRAY",
-          "Technical QC": "Y",
-          sp_category: "SIM TRAY",
-        },
-        {
-          part_code: "SPN001748",
-          Category: "SIM TRAY",
-          "Technical QC": "Y",
-          sp_category: "SIM TRAY",
-        },
-        {
-          part_code: "SPN001758",
-          Category: "TOUCH GLASS",
-          "Technical QC": "Y",
-          sp_category: "TOUCH GLASS",
-        },
-        {
-          part_code: "SPN001714",
-          Category: "TOUCH GLASS",
-          "Technical QC": "Y",
-          sp_category: "TOUCH GLASS",
-        },
-        {
-          part_code: "SPN001716",
-          Category: "TOUCH GLASS",
-          "Technical QC": "Y",
-          sp_category: "TOUCH GLASS",
-        },
-        {
-          part_code: "SPN001723",
-          Category: "TOUCH GLASS",
-          "Technical QC": "Y",
-          sp_category: "TOUCH GLASS",
-        },
-        {
-          part_code: "SPN001705",
-          Category: "VIBRATOR",
-          "Technical QC": "Y",
-          sp_category: "VIBRATOR",
-        },
-        {
-          part_code: "SPN001728",
-          Category: "VIBRATOR",
-          "Technical QC": "Y",
-          sp_category: "VIBRATOR",
-        },
-        {
-          part_code: "SPN001713",
-          Category: "VOLUME BUTTON",
-          "Technical QC": "Y",
-          sp_category: "VOLUME BUTTON",
-        },
-        {
-          part_code: "SPN001754",
-          Category: "VOLUME BUTTON",
-          "Technical QC": "Y",
-          sp_category: "VOLUME BUTTON",
-        },
-        {
-          part_code: "SPN001719",
-          Category: "VOLUME BUTTON",
-          "Technical QC": "Y",
-          sp_category: "VOLUME BUTTON",
-        },
-        {
-          part_code: "SPN001707",
-          Category: "VOLUME BUTTON",
-          "Technical QC": "Y",
-          sp_category: "VOLUME BUTTON",
-        },
-        {
-          part_code: "SPN001753",
-          Category: "VOLUME BUTTON",
-          "Technical QC": "Y",
-          sp_category: "VOLUME BUTTON",
-        },
-        {
-          part_code: "SPN001732",
-          Category: "VOLUME BUTTON",
-          "Technical QC": "Y",
-          sp_category: "VOLUME BUTTON",
-        },
-        {
-          part_code: "SPN001711",
-          Category: "VOLUME BUTTON",
-          "Technical QC": "Y",
-          sp_category: "VOLUME BUTTON",
-        },
-        {
-          part_code: "SPN001712",
-          Category: "VOLUME BUTTON",
-          "Technical QC": "Y",
-          sp_category: "VOLUME BUTTON",
-        },
-        {
-          part_code: "SPN001752",
-          Category: "VOLUME BUTTON",
-          "Technical QC": "Y",
-          sp_category: "VOLUME BUTTON",
-        },
-        {
-          part_code: "SPN001731",
-          Category: "VOLUME BUTTON",
-          "Technical QC": "Y",
-          sp_category: "VOLUME BUTTON",
-        },
-      ];
-      let str = "SPC000058";
-      let str2 = "BOX000000";
-      for (let x of arr) {
-        // let checkBoxId = await box.findOne({ name: x.box_id });
-        // if (
-        //   checkBoxId == null &&
-        //   x.box_id !== undefined &&
-        //   x.box_id !== "" &&
-        //   x.box_id !== "BOX-99"
-        // ) {
-        //   let num1 = parseInt(str2.substring(3)) + 1;
-        //   let updatedStr2 =
-        //     str2.substring(0, 3) + num1.toString().padStart(6, "0");
-        //   str2 = updatedStr2;
-        //   let createBox = await box.create({
-        //     box_id: str2,
-        //     name: x.box_id,
-        //     description: x.box_id,
-        //     display: str2,
-        //     created_at: Date.now(),
-        //   });
-        //   x.box_id = createBox.box_id;
-        // } else {
-        //   if (checkBoxId) {
-        //     x.box_id = checkBoxId.box_id;
-        //   }
-        // }
-        let findCategory = await spareCategories.findOne({
-          category_name: x.sp_category,
-        });
+      // let arr = []
+      // let str = "SPC000058";
+      // let str2 = "BOX000000";
+      // for (let x of arr) {
+      //   // let checkBoxId = await box.findOne({ name: x.box_id });
+      //   // if (
+      //   //   checkBoxId == null &&
+      //   //   x.box_id !== undefined &&
+      //   //   x.box_id !== "" &&
+      //   //   x.box_id !== "BOX-99"
+      //   // ) {
+      //   //   let num1 = parseInt(str2.substring(3)) + 1;
+      //   //   let updatedStr2 =
+      //   //     str2.substring(0, 3) + num1.toString().padStart(6, "0");
+      //   //   str2 = updatedStr2;
+      //   //   let createBox = await box.create({
+      //   //     box_id: str2,
+      //   //     name: x.box_id,
+      //   //     description: x.box_id,
+      //   //     display: str2,
+      //   //     created_at: Date.now(),
+      //   //   });
+      //   //   x.box_id = createBox.box_id;
+      //   // } else {
+      //   //   if (checkBoxId) {
+      //   //     x.box_id = checkBoxId.box_id;
+      //   //   }
+      //   // }
+      //   // let findCategory = await spareCategories.findOne({
+      //   //   category_name: x.sp_category,
+      //   // });
 
-        if (
-          findCategory == null &&
-          x.sp_category !== undefined &&
-          x.sp_category !== ""
-        ) {
-          let num = parseInt(str.substring(3)) + 1;
-          let updatedStr =
-            str.substring(0, 3) + num.toString().padStart(6, "0");
-          str = updatedStr;
-          let createCategory = await spareCategories.create({
-            spcategory_id: str,
-            category_name: x.sp_category,
-            description: x.sp_category,
-            creation_date: Date.now(),
-          });
-        }
-        let updateSp = await partAndColor.findOneAndUpdate(
+      //   // if (
+      //   //   findCategory == null &&
+      //   //   x.sp_category !== undefined &&
+      //   //   x.sp_category !== ""
+      //   // ) {
+      //   //   let num = parseInt(str.substring(3)) + 1;
+      //   //   let updatedStr =
+      //   //     str.substring(0, 3) + num.toString().padStart(6, "0");
+      //   //   str = updatedStr;
+      //   //   let createCategory = await spareCategories.create({
+      //   //     spcategory_id: str,
+      //   //     category_name: x.sp_category,
+      //   //     description: x.sp_category,
+      //   //     creation_date: Date.now(),
+      //   //   });
+      //   // }
+      //   // let updateSp = await partAndColor.findOneAndUpdate(
+      //   //   {
+      //   //     part_code: x.part_code,
+      //   //     type: "part-list",
+      //   //   },
+      //   //   {
+      //   //     $set: {
+      //   //       sp_category: x.sp_category,
+      //   //       // box_id: x.box_id,
+      //   //     },
+      //   //   }
+      //   // );
+      // }
+      // if (x.box_id == "BOX-99") {
+        let updateSp = await partAndColor.updateMany(
           {
-            part_code: x.part_code,
             type: "part-list",
+            box_id:"SPN000015"
           },
           {
             $set: {
-              sp_category: x.sp_category,
-              // box_id: x.box_id,
+              box_id: "BOX000015",
             },
           }
         );
-        // if (x.box_id == "BOX-99") {
-        //   let updateSp = await partAndColor.findOneAndUpdate(
-        //     {
-        //       part_code: x.part_code,
-        //       type: "part-list",
-        //     },
-        //     {
-        //       $set: {
-        //         box_id: "SPN000015",
-        //       },
-        //     }
-        //   );
-        // }
-      }
+      // }
       resolve({ status: true });
     });
   },

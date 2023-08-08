@@ -9,17 +9,71 @@ const { badOrders } = require("../../Model/ordersModel/bad-orders-model");
 const { badDelivery } = require("../../Model/deliveryModel/bad-delivery");
 
 module.exports = {
-  dashboardCount: (username) => {
+  dashboardCount: (location) => {
     return new Promise(async (resolve, reject) => {
       let count = {
-        charging: 0,
+        viewPriceCount: 0,
       };
-      count.charging = await masters.count({
-        $or: [{ issued_user_name: username, sort_id: "Issued to pricing" }],
-      });
+      count.viewPriceCount = await masters.aggregate([
+        {
+          $match: {
+            type_taxanomy: "ST",
+            cpc: location,
+            sort_id: "Ready to Pricing",
+            sp_price: { $exists: true, $ne: null }, // Filter out documents with null or missing sp_price
+            mrp_price: { $exists: true, $ne: null }, // Filter out documents with null or missing mrp_price
+          },
+        },
+        {
+          $group: {
+            _id: {
+              model: "$model",
+              brand: "$brand",
+              grade: "$tray_grade",
+            },
+            itemCount: { $sum: { $size: "$items" } },
+            muic: { $first: "$items.muic" },
+            sp: { $first: "$sp_price" },
+            mrp: { $first: "$mrp_price" },
+          },
+        },
+      ]);
+      count.viewPriceCount = count.viewPriceCount.length;
       if (count) {
         resolve(count);
       }
+    });
+  },
+  /*----------------------------------VIEW PRICE--------------------------------------------*/
+
+  viewPrice: (location) => {
+    //PROMISE
+    return new Promise(async (resolve, reject) => {
+      const getBasedOnMuic = await masters.aggregate([
+        {
+          $match: {
+            type_taxanomy: "ST",
+            cpc: location,
+            sort_id: "Ready to Pricing",
+            sp_price: { $exists: true, $ne: null }, // Filter out documents with null or missing sp_price
+            mrp_price: { $exists: true, $ne: null }, // Filter out documents with null or missing mrp_price
+          },
+        },
+        {
+          $group: {
+            _id: {
+              model: "$model",
+              brand: "$brand",
+              grade: "$tray_grade",
+            },
+            itemCount: { $sum: { $size: "$items" } },
+            muic: { $first: "$items.muic" },
+            sp: { $first: "$sp_price" },
+            mrp: { $first: "$mrp_price" },
+          },
+        },
+      ]);
+      resolve(getBasedOnMuic);
     });
   },
 };
