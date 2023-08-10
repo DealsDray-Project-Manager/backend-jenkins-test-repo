@@ -123,11 +123,11 @@ module.exports = {
       count.partList = await partAndColor.count({ type: "part-list" });
       count.colorList = await partAndColor.count({ type: "color-list" });
       count.storageList = await storagemodel.count({});
-      count.warrantyList = await warranty.count({ });
-      count.paymentList = await payment.count({ });
-      count.ramList = await rammodel.count({ });
-      count.boxList = await box.count({  });
-      count.trayRacks = await trayRack.count({  });
+      count.warrantyList = await warranty.count({});
+      count.paymentList = await payment.count({});
+      count.ramList = await rammodel.count({});
+      count.boxList = await box.count({});
+      count.trayRacks = await trayRack.count({});
       count.readyForTransferSales = await masters.count({
         prefix: "tray-master",
         sort_id: "Audit Done Closed By Warehouse",
@@ -3901,6 +3901,148 @@ module.exports = {
       }
     });
   },
+  getUnVerifiedImeiUpdationScreen: (limit, skip) => {
+    return new Promise(async (resolve, reject) => {
+      const findUnverifiedImei = await delivery
+        .find({
+          unverified_imei_status: "Unverified",
+        })
+        .skip(skip)
+        .limit(limit);
+      const count = await delivery.count({
+        unverified_imei_status: "Unverified",
+      });
+      resolve({ unverifiedImei: findUnverifiedImei, count: count });
+    });
+  },
+  unVerifiedReportItemFilter: (fromDate, toDate, limit, skip, type) => {
+    return new Promise(async (resolve, reject) => {
+      let monthWiseReport, getCount, forXlsxDownload;
+      if (type == "Order Date") {
+        const fromDateTimestamp = Date.parse(fromDate);
+        const toDateTimestamp = Date.parse(toDate);
+        let monthWiseReport = await orders.aggregate([
+          {
+            $match: {
+              delivery_status: "Delivered",
+              imei_verification_status: "Unverified",
+              order_date: {
+                $gte: new Date(fromDateTimestamp),
+                $lte: new Date(toDateTimestamp),
+              },
+            },
+          },
+          {
+            $lookup: {
+              from: "deliveries",
+              localField: "order_id",
+              foreignField: "order_id",
+              as: "delivery",
+            },
+          },
+          {
+            $facet: {
+              results: [{ $skip: skip }, { $limit: limit }],
+              count: [{ $count: "count" }],
+            },
+          },
+        ]);
+
+        let forXlsxDownload = await orders.aggregate([
+          {
+            $match: {
+              delivery_status: "Delivered",
+              imei_verification_status: "Unverified",
+              order_date: {
+                $gte: new Date(fromDateTimestamp),
+                $lte: new Date(toDateTimestamp),
+              },
+            },
+          },
+          {
+            $lookup: {
+              from: "deliveries",
+              localField: "order_id",
+              foreignField: "order_id",
+              as: "delivery",
+            },
+          },
+        ]);
+        let arrLimit = [];
+        for (let x of monthWiseReport?.[0].results) {
+          arrLimit.push(...x.delivery);
+        }
+        let arrWithoutLimit = [];
+        for (let y of forXlsxDownload) {
+          arrWithoutLimit.push(...y.delivery);
+        }
+        resolve({
+          getCount: arrWithoutLimit.length,
+          monthWiseReport: arrLimit,
+          forXlsxDownload: arrWithoutLimit,
+        });
+      } else {
+        const fromDateISO = new Date(fromDate).toISOString();
+        const toDateISO = new Date(toDate).toISOString();
+        monthWiseReport = await delivery
+          .find({
+            unverified_imei_status: "Unverified",
+            delivery_date: { $gte: fromDateISO, $lte: toDateISO },
+          })
+          .limit(limit)
+          .skip(skip);
+        getCount = await delivery.count({
+          unverified_imei_status: "Unverified",
+          delivery_date: { $gte: fromDateISO, $lte: toDateISO },
+        });
+        forXlsxDownload = await delivery.find({
+          unverified_imei_status: "Unverified",
+          delivery_date: { $gte: fromDateISO, $lte: toDateISO },
+        });
+      }
+      resolve({
+        monthWiseReport: monthWiseReport,
+        forXlsxDownload: forXlsxDownload,
+        getCount: getCount,
+      });
+    });
+  },
+  /* --------------------------------------------UPDATE IMEI NUMBER -------------------------------*/
+  updateUnverifiedImei: (imeiData) => {
+    return new Promise(async (resolve, reject) => {
+      let status = "Unverified";
+      if (
+        imeiData?.delivery_imei?.match(/[0-9]/g)?.join("") ==
+          imeiData?.bqc_ro_ril_imei ||
+        imeiData?.delivery_imei?.match(/[0-9]/g)?.join("") ==
+          imeiData?.bqc_ro_mob_one_imei ||
+        imeiData?.delivery_imei?.match(/[0-9]/g)?.join("") ==
+          imeiData?.bqc_ro_mob_two_imei
+      ) {
+        status = "Verified";
+      }
+      const updateData = await delivery.updateOne(
+        { "uic_code.code": imeiData.uic },
+        {
+          $set: {
+            "bqc_software_report._ro_ril_miui_imei0": imeiData.bqc_ro_ril_imei,
+            "bqc_software_report.mobile_imei": imeiData.bqc_ro_mob_one_imei,
+            "bqc_software_report.mobile_imei2": imeiData.bqc_ro_mob_two_imei,
+            unverified_imei_status: status,
+          },
+        }
+      );
+      if (updateData.modifiedCount !== 0) {
+        if (status == "Verified") {
+          resolve({ status: 1 });
+        } else {
+          resolve({ status: 2 });
+        }
+      } else {
+        resolve({ status: 0 });
+      }
+    });
+  },
   getAssignedTrayForMerging: () => {
     return new Promise(async (resolve, reject) => {
       const tray = await masters
@@ -4338,37 +4480,41 @@ module.exports = {
   botTrayTransfer: () => {
     return new Promise(async (resolve, reject) => {
       let arr = [
-        "91010004259",
-        "92030003380",
-        "91010004256",
-        "90010000726",
-        "91010006115",
-        "91010006055",
-        "90010000037",
-        "91010006052",
-        "90010001122",
-        "92030003383",
-        "92030000136",
-        "92030004000",
-        "92030004444",
-        "91010005538",
-        "90010002163",
-        "91010002254",
-        "91010002379",
-        "91010005383",
-        "92030002271",
-        "90010000542",
-        "92030000851",
-        "90010000057",
-        "92030000394",
-        "92030000068",
-        "92030000641",
-        "90010001135",
-        "91010006045",
-        "92030004043",
-        "92030004952",
-        "91010006034",
-        "92030004775",
+        "92030001979",
+        "92030001298",
+        "92030001850",
+        "92030001057",
+        "92030003602",
+        "92030000083",
+        "91010002245",
+        "91010002169",
+        "91010002130",
+        "92030000801",
+        "92030004358",
+        "92030001737",
+        "92030000255",
+        "92030001811",
+        "92030004261",
+        "92030001423",
+        "91010002331",
+        "91010001923",
+        "91010003312",
+        "91010002158",
+        "91010003256",
+        "91010005339",
+        "91010000943",
+        "91010003623",
+        "91010003169",
+        "92030001470",
+        "91010003440",
+        "92030000426",
+        "91010003433",
+        "91010003639",
+        "92030002650",
+        "91010003238",
+        "91010003365",
+        "91010004516",
+        "91010004785",          
       ];
 
       let arr2 = [];
@@ -4378,9 +4524,9 @@ module.exports = {
         if (findTray) {
           for (let y of findTray.items) {
             if (y.uic == x) {
-              y.tray_id = "BOT2177";
+              y.tray_id = "BOT2054";
               let updateTheTray = await masters.updateOne(
-                { code: "BOT2177" },
+                { code: "BOT2054" },
                 {
                   $push: {
                     items: y,
@@ -4417,7 +4563,7 @@ module.exports = {
           }
         }
       }
-      arr2.push("BOT2177");
+      arr2.push("BOT2054");
       for (let tray of arr2) {
         let take = await masters.findOne({ code: tray });
         for (let x of take.items) {
@@ -4892,9 +5038,7 @@ module.exports = {
       let i = 0;
       for (let x of findDelivery) {
         // check imei verified or not
-        if (
-          x.bqc_software_report != undefined 
-        ) {
+        if (x.bqc_software_report != undefined) {
           let status = "Unverified";
           if (
             x.imei?.match(/[0-9]/g)?.join("") ==
@@ -5081,17 +5225,17 @@ module.exports = {
       //   // );
       // }
       // if (x.box_id == "BOX-99") {
-        let updateSp = await partAndColor.updateMany(
-          {
-            type: "part-list",
-            box_id:"SPN000015"
+      let updateSp = await partAndColor.updateMany(
+        {
+          type: "part-list",
+          box_id: "SPN000015",
+        },
+        {
+          $set: {
+            box_id: "BOX000015",
           },
-          {
-            $set: {
-              box_id: "BOX000015",
-            },
-          }
-        );
+        }
+      );
       // }
       resolve({ status: true });
     });

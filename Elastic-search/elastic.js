@@ -243,21 +243,17 @@ module.exports = {
     console.log(data);
   },
   bulkImportToElastic: async () => {
-    let findDeliveryData = await delivery.find(
-      {},
-      { _id: 0, __v: 0 }
-    );
+    let findDeliveryData = await delivery.find({}, { _id: 0, __v: 0 });
     console.log(findDeliveryData[0]);
-    
+
     for (let x of findDeliveryData) {
-      if(x.bqc_software_report !== undefined){
-        let obj={
+      if (x.bqc_software_report !== undefined) {
+        let obj = {
           _ro_ril_miui_imei0: x?.bqc_software_report?._ro_ril_miui_imei0,
           mobile_imei: x?.bqc_software_report?.mobile_imei,
-          mobile_imei2: x?.bqc_software_report?.mobile_imei2
-        }
-        x.bqc_software_report = obj
-  
+          mobile_imei2: x?.bqc_software_report?.mobile_imei2,
+        };
+        x.bqc_software_report = obj;
       }
       const checkOrder = await orders.findOne({ order_id: x.order_id });
       if (checkOrder) {
@@ -533,6 +529,41 @@ module.exports = {
 
     return { searchResult: arr, count: count, dataForDownload: arr1 };
   },
+  searchUnverifiedImeiSupAdmin: async (searchInput, limit, skip) => {
+    let data = await client.search({
+      index: "prexo-delivery",
+      // type: '_doc', // uncomment for Elasticsearch ≤ 6
+      body: {
+        from: skip,
+        size: limit,
+        query: {
+          bool: {
+            must: [
+              {
+                multi_match: {
+                  query: searchInput,
+                  fields: ["*"],
+                },
+              },
+              {
+                match: {
+                  unverified_imei_status: "Unverified",
+                },
+              },
+            ],
+          },
+        },
+      },
+      track_total_hits: true,
+    });
+    let arr = [];
+    let count = data?.hits?.total?.value;
+    for (let result of data.hits.hits) {
+      arr.push(result["_source"]);
+    }
+
+    return { searchResult: arr, count: count };
+  },
   searchForUpgradeUnits: async (searchInput, limit, skip, location) => {
     let data = await client.search({
       index: "prexo-delivery",
@@ -565,7 +596,7 @@ module.exports = {
       },
       track_total_hits: true,
     });
-    
+
     let arr = [];
     let count = data?.hits?.total?.value;
 

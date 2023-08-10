@@ -1,6 +1,7 @@
 const { delivery } = require("../../Model/deliveryModel/delivery");
 const { masters } = require("../../Model/mastersModel");
 const Elasticsearch = require("../../Elastic-search/elastic");
+const { unitsActionLog } = require("../../Model/units-log/units-action-log");
 /****************************************************************** */
 module.exports = {
   getAssignedTray: (username) => {
@@ -230,9 +231,6 @@ module.exports = {
               projection: { _id: 0 },
             }
           );
-          // let updateElasticSearch = await Elasticsearch.uicCodeGen(
-          //   deliveryUpdate
-          // );
         }
         resolve(data);
       } else {
@@ -270,6 +268,14 @@ module.exports = {
               } else {
                 x.bqc_report.bqc_status = x.bqc_status;
               }
+              const addLogsofUnits = await unitsActionLog.create({
+                action_type: "BQC Done",
+                created_at: Date.now(),
+                uic: x.uic,
+                tray_id: trayData.trayId,
+                user_name_of_action: data.issued_user_name,
+                report: x.bqc_report,
+              });
               let deliveryUpdate = await delivery.findOneAndUpdate(
                 {
                   tracking_id: x.tracking_id,
@@ -281,7 +287,6 @@ module.exports = {
                     tray_location: "BQC",
                     bqc_report: x.bqc_report,
                     updated_at: Date.now(),
-
                   },
                 },
                 {
@@ -289,19 +294,15 @@ module.exports = {
                   projection: { _id: 0 },
                 }
               );
-
-            // let updateElasticSearch = await Elasticsearch.uicCodeGen(
-            //   deliveryUpdate
-            // );
+            }
+            resolve(data);
+          } else {
+            resolve();
           }
-          resolve(data);
         } else {
           resolve();
         }
-      } else {
-        resolve();
       }
-    }
-    })
-  }
+    });
+  },
 };

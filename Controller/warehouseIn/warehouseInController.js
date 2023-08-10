@@ -8,6 +8,7 @@ const { products } = require("../../Model/productModel/product");
 const moment = require("moment");
 const elasticsearch = require("../../Elastic-search/elastic");
 const { trayRack } = require("../../Model/tray-rack/tray-rack");
+const { unitsActionLog } = require("../../Model/units-log/units-action-log");
 
 /********************************************************************/
 /* 
@@ -800,6 +801,7 @@ module.exports = {
 
   closeBag: (bagData) => {
     return new Promise(async (resolve, reject) => {
+      // UPDATE BAG
       let data = await masters.findOneAndUpdate(
         { code: bagData.bagId },
         {
@@ -813,10 +815,8 @@ module.exports = {
         }
       );
       if (data) {
+        // UPDATE DELIVERY DATA
         for (let x of data.items) {
-          // let updateElastic = await elasticsearch.closeBagAfterItemPuted(
-          //   x.awbn_number
-          // );
           let updateDelivery = await delivery.updateOne(
             { tracking_id: x.awbn_number },
             {
@@ -826,6 +826,15 @@ module.exports = {
               },
             }
           );
+          // ADD ACTION LOG
+          const addActionLog = await unitsActionLog
+            .create({
+              created_at: Date.now(),
+              awbn_numner: x.awbn_number,
+              agent_name: bagData.username,
+              action_type: "Bagging",
+            })
+            .catch((err) => reject(err));
         }
         resolve(data);
       } else {
@@ -920,7 +929,13 @@ module.exports = {
                 projection: { _id: 0 },
               }
             );
-            // let updateElastic = await elasticsearch.uicCodeGen(updateDelivery);
+            const addLogsofUnits = await unitsActionLog.create({
+              action_type: "Issued to BOT",
+              created_at: Date.now(),
+              awbn_numner: x.awbn_number,
+              agent_name: data.issued_user_name,
+              user_name_of_action: issueData.username,
+            });
           }
           for (let i = 0; i < issueData.try.length; i++) {
             let assignTray = await masters.findOneAndUpdate(
@@ -935,14 +950,14 @@ module.exports = {
                 },
               }
             );
-            let updateRack = await trayRack.findOneAndUpdate(
-              { rack_id: assignTray?.rackId },
-              {
-                $push: {
-                  bag_or_tray: assignTray?.code,
-                },
-              }
-            );
+            // let updateRack = await trayRack.findOneAndUpdate(
+            //   { rack_id: assignTray?.rackId },
+            //   {
+            //     $push: {
+            //       bag_or_tray: assignTray?.code,
+            //     },
+            //   }
+            // );
           }
           let newAssing = await masters.updateMany(
             {
@@ -1260,9 +1275,11 @@ module.exports = {
               }
             );
             if (data) {
+            
               resolve({ status: 1 });
             }
           }
+
         } else {
           resolve({ status: 3 });
         }
@@ -1306,9 +1323,6 @@ module.exports = {
                   projection: { _id: 0 },
                 }
               );
-              // let updateElasticSearch = await elasticsearch.uicCodeGen(
-              //   deliveryTrack
-              // );
             }
             resolve({ status: 1 });
           } else {
@@ -1345,9 +1359,7 @@ module.exports = {
                     projection: { _id: 0 },
                   }
                 );
-                // let updateElasticSearch = await elasticsearch.uicCodeGen(
-                //   deliveryTrack
-                // );
+                
               }
               resolve({ status: 1 });
             } else {
@@ -1378,9 +1390,7 @@ module.exports = {
                     projection: { _id: 0 },
                   }
                 );
-                // let updateElasticSearch = await elasticsearch.uicCodeGen(
-                //   deliveryTrack
-                // );
+               
               }
               resolve({ status: 1 });
             } else {
@@ -1411,9 +1421,7 @@ module.exports = {
                     projection: { _id: 0 },
                   }
                 );
-                // let updateElasticSearch = await elasticsearch.uicCodeGen(
-                //   deliveryTrack
-                // );
+               
               }
               resolve({ status: 1 });
             } else {
@@ -1444,9 +1452,7 @@ module.exports = {
                     projection: { _id: 0 },
                   }
                 );
-                // let updateElasticSearch = await elasticsearch.uicCodeGen(
-                //   deliveryTrack
-                // );
+                
               }
               resolve({ status: 1 });
             } else {
@@ -1477,9 +1483,7 @@ module.exports = {
                     projection: { _id: 0 },
                   }
                 );
-                // let updateElasticSearch = await elasticsearch.uicCodeGen(
-                //   deliveryTrack
-                // );
+               
               }
               resolve({ status: 1 });
             } else {
@@ -1503,6 +1507,14 @@ module.exports = {
           );
           if (data) {
             for (let x of data.items) {
+              const addLogsofUnits = await unitsActionLog.create({
+                action_type: "Received from RDL-two",
+                created_at: Date.now(),
+                uic: x.uic,
+                tray_id:trayData.trayId,
+                agent_name: data.issued_user_name,
+                user_name_of_action: trayData.username,
+              });
               let deliveryTrack = await delivery.findOneAndUpdate(
                 { "uic_code.code": x.uic },
                 {
@@ -1540,6 +1552,14 @@ module.exports = {
           );
           if (data) {
             for (let i = 0; i < data.items.length; i++) {
+              const addLogsofUnits = await unitsActionLog.create({
+                action_type: "Received From BOT",
+                created_at: Date.now(),
+                uic: x.uic,
+                tray_id:trayData.trayId,
+                agent_name: data.issued_user_name,
+                user_name_of_action: trayData.username,
+              });
               let deliveryTrack = await delivery.findOneAndUpdate(
                 { tracking_id: data.items[i].awbn_number },
                 {
@@ -1652,14 +1672,6 @@ module.exports = {
             },
           }
         );
-        let updateRack = await trayRack.findOneAndUpdate(
-          { rack_id: trayData.rackId },
-          {
-            $push: {
-              bag_or_tray: data.code,
-            },
-          }
-        );
       } else {
         data = await masters.findOneAndUpdate(
           { code: trayData.trayId },
@@ -1672,14 +1684,7 @@ module.exports = {
             },
           }
         );
-        let updateRack = await trayRack.findOneAndUpdate(
-          { rack_id: trayData.rackId },
-          {
-            $push: {
-              bag_or_tray: data.code,
-            },
-          }
-        );
+       
       }
       if (data) {
         for (let x of data?.items) {
@@ -1698,7 +1703,6 @@ module.exports = {
               projection: { _id: 0 },
             }
           );
-          // let updateElastic = await elasticsearch.uicCodeGen(deliveryTrack);
         }
         resolve(data);
       } else {
@@ -2214,18 +2218,41 @@ module.exports = {
   getWhtTrayWareHouse: (location, type) => {
     return new Promise(async (resolve, reject) => {
       if (type == "all-wht-tray") {
-        let data = await masters.find(
+        let data = await masters.aggregate([
           {
-            prefix: "tray-master",
-            type_taxanomy: "WHT",
-            cpc: location,
+            $match: {
+              prefix: "tray-master",
+              type_taxanomy: "WHT",
+              cpc: location,
+            },
           },
           {
-            temp_array: 0,
-            wht_tray: 0,
-            track_tray: 0,
-          }
-        );
+            $project: {
+              code: 1,
+              rack_id: 1,
+              brand: 1,
+              model: 1,
+              sort_id: 1,
+              created_at: 1,
+              limit: 1,
+              items_length: {
+                $cond: {
+                  if: { $isArray: "$items" },
+                  then: { $size: "$items" },
+                  else: 0,
+                },
+              },
+              actual_items: {
+                $cond: {
+                  if: { $isArray: "$actual_items" },
+                  then: { $size: "$actual_items" },
+                  else: 0,
+                },
+              },
+            },
+          },
+        ]);
+        console.log(data);
         resolve(data);
       } else {
         let data = await masters.find({
@@ -7172,23 +7199,23 @@ module.exports = {
   upgardeUnitsFilter: (location, fromDate, toDate, limit, skip, type) => {
     return new Promise(async (resolve, reject) => {
       let monthWiseReport, getCount;
-      
-        const fromDateISO = new Date(fromDate).toISOString();
-        const toDateISO = new Date(toDate).toISOString();
-        monthWiseReport = await delivery
-          .find({
-            partner_shop: location,
-            "audit_report.stage": "Upgrade",
-            audit_done_date: { $gte: fromDateISO, $lte: toDateISO },
-          })
-          .limit(limit)
-          .skip(skip);
-        getCount = await delivery.count({
+
+      const fromDateISO = new Date(fromDate).toISOString();
+      const toDateISO = new Date(toDate).toISOString();
+      monthWiseReport = await delivery
+        .find({
           partner_shop: location,
           "audit_report.stage": "Upgrade",
           audit_done_date: { $gte: fromDateISO, $lte: toDateISO },
-        });
-      
+        })
+        .limit(limit)
+        .skip(skip);
+      getCount = await delivery.count({
+        partner_shop: location,
+        "audit_report.stage": "Upgrade",
+        audit_done_date: { $gte: fromDateISO, $lte: toDateISO },
+      });
+
       resolve({
         monthWiseReport: monthWiseReport,
         getCount: getCount,

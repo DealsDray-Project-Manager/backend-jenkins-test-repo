@@ -70,10 +70,62 @@ module.exports = {
             muic: { $first: "$items.muic" },
             sp: { $first: "$sp_price" },
             mrp: { $first: "$mrp_price" },
+            price_updation_date: { $first: "$price_updation_date" },
+            price_creation_date: { $first: "$price_creation_date" },
           },
         },
       ]);
+      for (let x of getBasedOnMuic) {
+        x["muic_one"] = x.muic[0];
+      }
       resolve(getBasedOnMuic);
+    });
+  },
+  getItemsForReadyForSales: (location, brand, model, grade, date) => {
+    //PROMISE
+    return new Promise(async (resolve, reject) => {
+      const getBasedOnMuic = await masters.aggregate([
+        {
+          $match: {
+            type_taxanomy: "ST",
+            cpc: location,
+            sort_id: "Ready to Pricing",
+            brand:brand,
+            model:model,
+            tray_grade:grade,
+            price_creation_date:new Date(
+              new Date(date)
+            ),
+          },
+        },
+        {
+          $unwind: "$items",
+        },
+        {
+          $project: {
+            items: "$items",
+            mrp_price:"$mrp_price",
+            sp_price:"$sp_price",
+            tray_grade:"$tray_grade",
+            code: "$code",
+          },
+        },
+      ]);
+      let arr=[]
+      for(let x of getBasedOnMuic){
+         let obj={
+          uic:x.items.uic,
+          muic:x.items.muic,
+          brand_name:x.items.brand_name,
+          model_name:x.items.model_name,
+          code:x.code,
+          tray_grade:x.tray_grade,
+          mrp_price:x.mrp_price,
+          sp_price:x.sp_price
+         }
+         arr.push(obj)
+      }
+      resolve(arr);
     });
   },
 };

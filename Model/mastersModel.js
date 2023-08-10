@@ -17,7 +17,7 @@ const mastersSchema = mongoose.Schema({
   sort_id: {
     type: String,
   },
-  
+
   prefix: {
     type: String,
     index: true,
@@ -119,11 +119,11 @@ const mastersSchema = mongoose.Schema({
   tray_grade: {
     type: String,
   },
-  sp_price:{
-    type:Number
+  sp_price: {
+    type: Number,
   },
-  mrp_price:{
-    type:Number
+  mrp_price: {
+    type: Number,
   },
   sp_tray: String,
   rdl_2_user_temp: String,
@@ -159,13 +159,19 @@ const mastersSchema = mongoose.Schema({
     ctx_issued_sorting: Date,
     ctx_sorting_done: Date,
     wht_to_rp_sorting_issued: Date,
-    wht_to_rp_assigned_to_sorting:Date,
-    wht_to_rp_sorting_done_sorting:Date,
+    wht_to_rp_assigned_to_sorting: Date,
+    wht_to_rp_sorting_done_sorting: Date,
     issued_to_rdl_two: Date,
-    rdl_two_done_closed_by_agent:Date
+    rdl_two_done_closed_by_agent: Date,
   },
   rack_id: {
     type: String,
+  },
+  price_creation_date: {
+    type: Date,
+  },
+  price_updation_date: {
+    type: Date,
   },
 });
 const masters = mongoose.model("masters", mastersSchema);

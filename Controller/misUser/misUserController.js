@@ -16,6 +16,7 @@ const {
 } = require("../../Model/Part-list-and-color/part-list-and-color");
 const elasticsearch = require("../../Elastic-search/elastic");
 const { stxUtility } = require("../../Model/Stx-utility/stx-utility");
+const {  unitsActionLog  } = require("../../Model/units-log/units-action-log");
 /******************************************************************* */
 
 module.exports = {
@@ -2469,7 +2470,7 @@ module.exports = {
         }
       }
       if (check === true) {
-        let data = await masters.updateOne(
+        let data = await masters.findOneAndUpdate(
           { code: bagData.bagId },
           {
             $set: {
@@ -2479,7 +2480,17 @@ module.exports = {
             },
           }
         );
-        if (data.modifiedCount != 0) {
+        if (data) {
+          for(let x of data?.items){
+            let unitsLogCreation=await unitsActionLog.create({
+              action_type:"Assigned to BOT",
+              action_date:Date.now(),
+              user_name_of_action:bagData.username,
+              agent_name:bagData.bot_name,
+              user_type:"MIS",
+              awbn_numner:x.awbn_number
+            })
+          }
           resolve({ status: 1 });
         } else {
           resolve();

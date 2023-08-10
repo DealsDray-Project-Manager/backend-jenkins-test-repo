@@ -8,6 +8,7 @@ const { masters } = require("../../Model/mastersModel");
 const { badOrders } = require("../../Model/ordersModel/bad-orders-model");
 const { badDelivery } = require("../../Model/deliveryModel/bad-delivery");
 const Elasticsearch = require("../../Elastic-search/elastic");
+const { unitsActionLog } = require("../../Model/units-log/units-action-log");
 /********************************************************************************** */
 
 module.exports = {
@@ -143,6 +144,14 @@ module.exports = {
       }
       if (data) {
         for (let x of data.actual_items) {
+          const addLogsofUnits = await unitsActionLog.create({
+            action_type: "Charging Done",
+            created_at: Date.now(),
+            uic: x.uic,
+            tray_id: trayData.trayId,
+            user_name_of_action: data.issued_user_name,
+            report: x.charging,
+          });
           let deliveryUpdate = await delivery.findOneAndUpdate(
             {
               tracking_id: x.tracking_id,

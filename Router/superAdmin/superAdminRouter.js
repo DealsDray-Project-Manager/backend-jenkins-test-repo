@@ -3369,6 +3369,109 @@ router.post("/tray/assignedToSorting/botToWh", async (req, res, next) => {
     next(error);
   }
 });
+/*------------------------------------------UNVERIFIED IMEI UPDATION------------------------------------------------------*/
+router.post("/unverifiedImeiReport/:page/:size", async (req, res, next) => {
+  try {
+    let { page, size } = req.params;
+    page++;
+    const limit = parseInt(size);
+    const skip = (page - 1) * size;
+    let data = await superAdminController.getUnVerifiedImeiUpdationScreen(
+      limit,
+      skip
+    );
+    if (data) {
+      res.status(200).json({
+        data: data.unverifiedImei,
+        count: data.count,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+// DATE RANGE FILTER
+router.post("/unverifiedImei/item/filter", async (req, res, next) => {
+  try {
+    let { fromDate, toDate, page, size, type } = req.body;
+    page++;
+    const limit = parseInt(size);
+    const skip = (page - 1) * size;
+    const filterData = await superAdminController.unVerifiedReportItemFilter(
+      fromDate,
+      toDate,
+      limit,
+      skip,
+      type
+    );
+    if (filterData.monthWiseReport.length !== 0) {
+      res.status(200).json({
+        data: filterData.monthWiseReport,
+        count: filterData.getCount,
+      });
+    } else {
+      res.status(202).json({
+        data: filterData.monthWiseReport,
+        count: filterData.getCount,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+// SEARCH DATA FROM UNVERIFIED IMEI SCREEN
+router.post("/search/unverifiedImei", async (req, res, next) => {
+  try {
+    let { searchData, location, rowsPerPage, page } = req.body;
+    page++;
+    const limit = parseInt(rowsPerPage);
+    const skip = (page - 1) * rowsPerPage;
+    let data = await elasticsearch.searchUnverifiedImeiSupAdmin(
+      searchData,
+      limit,
+      skip
+    );
+    if (data.searchResult.length !== 0) {
+      res.status(200).json({
+        data: data.searchResult,
+        count: data.count,
+      });
+    } else {
+      res.status(202).json({
+        data: data.searchResult,
+        count: data.count,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+// UPDATE UNVERIFIED IMEI FROM SUPER ADMIN
+router.post("/updateUnverifiedImei", async (req, res, next) => {
+  try {
+    // const { trayType, sort_id } = req.body;
+    console.log(req.body);
+    const data = await superAdminController.updateUnverifiedImei(req.body);
+    if (data.status == 1) {
+      res.status(200).json({
+        message:"Successfully verified and updated"
+      });
+    }
+    else if(data.status == 2){
+      res.status(202).json({
+        message:"Unverified IMEI"
+      });
+    }
+    else{
+      res.status(202).json({
+        message:"Updation Failed please try again"
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+/*---------------------------------------------------------------------------------------------------------------------------*/
 
 /***********************************************EXTRA  SECTION*********************************************************** */
 

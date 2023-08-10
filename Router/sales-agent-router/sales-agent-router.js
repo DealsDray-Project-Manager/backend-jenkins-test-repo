@@ -35,6 +35,31 @@ router.post("/viewPrice/:location", async (req, res, next) => {
     next(error);
   }
 });
+//VIEW ITEMS 
 
+router.post("/viewItemsForReadyForSales", async (req, res, next) => {
+  try {
+    console.log(req.body);
+    const { location, brand, model,grade,date } = req.body;
+    let data = await salesController.getItemsForReadyForSales(
+      location,
+      brand,
+      model,
+      grade,
+      date
+    );
+    if (data) {
+      res.status(200).json({
+        data: data,
+      });
+    } else {
+      res.status(202).json({
+        message: "",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
 /************************************************************************************************************** */
 module.exports = router;
