@@ -25,6 +25,9 @@ const userSchema = mongoose.Schema({
   warehouse: {
     type: String,
   },
+  sales_users:{
+    type: String,
+  },
   department: {
     type: String,
   },
