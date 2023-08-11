@@ -6,11 +6,11 @@ const salesController = require("../../Controller/sales-controller/sales-control
 
 /* DASHBOARD sales */
 
-router.post("/dashboard/:location", async (req, res, next) => {
+router.post("/dashboard/:location/:username", async (req, res, next) => {
   try {
-    const { location } = req.params;
-
-    let data = await salesController.dashboardCount(location);
+    const { location,username } = req.params;
+console.log("req.params:",req.params)
+    let data = await salesController.dashboardCount(location,username);
     if (data) {
       res.status(200).json({
         data: data,
