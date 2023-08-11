@@ -27,7 +27,7 @@ const unitsActionLogSchema = mongoose.Schema({
     type: String,
   },
   report: {
-    type: String,
+    type: Object,
   },
   uic: {
     type: String,

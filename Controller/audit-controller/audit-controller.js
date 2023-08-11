@@ -161,18 +161,20 @@ module.exports = {
               obj.preBqcData = {};
               obj.preChargeData = {};
               const previousBqc = await unitsActionLog
-                .findOne({ action_type: "BQC Done" })
+                .findOne({ uic:uic, action_type: "BQC Done" })
                 .sort({ _id: -1 })
                 .skip(1);
+               
               if (previousBqc) {
                 obj.preBqcData = previousBqc;
               }
               const previousCharging = await unitsActionLog
-                .findOne({ action_type: "Charging Done" })
+                .findOne({uic:uic, action_type: "Charging Done" })
                 .sort({ _id: -1 })
                 .skip(1);
+                console.log(previousCharging);
               if (previousCharging) {
-                obj.preBqcData = previousCharging;
+                obj.preChargeData = previousCharging;
               }
               obj.delivery = uicExists;
               obj.order = getOrder;

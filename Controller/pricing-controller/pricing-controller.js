@@ -13,8 +13,55 @@ module.exports = {
     return new Promise(async (resolve, reject) => {
       let count = {
         radyForPricing: 0,
-        viewPriceCount:0
+        viewPriceCount:0,
+        unitsCount:0,
+        unitsCountSales:0
       };
+      count.unitsCount = await masters.aggregate([
+        {
+          $match: {
+            type_taxanomy: "ST",
+            cpc: location,
+            sort_id: "Ready to Pricing",
+            sp_price: { $exists: false },
+            mrp_price: { $exists: false},
+          },
+        },
+        {
+          $group: {
+            _id: null, // Group all documents together
+            itemCountSum: { $sum: { $size: "$items" } }, // Sum the itemCount for all documents
+          },
+        },
+      ]) // Convert aggregation result to an array
+      if (count.unitsCount.length > 0) {
+        count.unitsCount = count.unitsCount[0].itemCountSum; // Extract the sum from the result
+      } else {
+        count.unitsCount = 0; // If there are no results, set unitsCount to 0
+      }
+      count.unitsCountSales = await masters.aggregate([
+        {
+          $match: {
+            type_taxanomy: "ST",
+            cpc: location,
+            sort_id: "Ready to Pricing",
+            sp_price: { $exists: true },
+            mrp_price: { $exists: true},
+          },
+        },
+        {
+          $group: {
+            _id: null, // Group all documents together
+            itemCountSum: { $sum: { $size: "$items" } }, // Sum the itemCount for all documents
+          },
+        },
+      ]) // Convert aggregation result to an array
+      if (count.unitsCountSales.length > 0) {
+        count.unitsCountSales = count.unitsCountSales[0].itemCountSum; // Extract the sum from the result
+      } else {
+        count.unitsCountSales = 0; // If there are no results, set unitsCount to 0
+      }
+      
       count.radyForPricing = await masters.aggregate([
         {
           $match: {
@@ -62,6 +109,7 @@ module.exports = {
       ]);
       count.viewPriceCount = count.viewPriceCount.length;
       count.radyForPricing = count.radyForPricing.length;
+      console.log(count);
       if (count) {
         resolve(count);
       }
@@ -115,10 +163,7 @@ module.exports = {
      
         let updatePriceTrayWise;
         const findSkuId = await products.findOne({ muic: x.muic });
-        if (screen =="Price updation" && new Date(x?.price_creation_date).toISOString().split("T")[0] === new Date().toISOString().split("T")[0]) {
-          // FIND OUT SKUID OF THE PRODUCT USING MUIC
-          // UPDATE THE PRICE IN TRAY WAISE
-          console.log("working");
+         if(screen =="Price updation"){
           updatePriceTrayWise = await masters.updateMany(
             {
               brand: findSkuId.brand_name,
@@ -127,9 +172,8 @@ module.exports = {
               type_taxanomy: "ST",
               cpc: location,
               sort_id: "Ready to Pricing",
-              price_creation_date:new Date(
-                new Date(x?.price_creation_date).toISOString().split("T")[0]
-              ),
+              sp_price: { $exists: true }, // Filter out documents with null or missing sp_price
+              mrp_price: { $exists: true },
             },
             {
               $set: {
@@ -139,18 +183,22 @@ module.exports = {
               },
             }
           );
-        } else {
+        }
+         else {
           // FIND OUT SKUID OF THE PRODUCT USING MUIC
           // UPDATE THE PRICE IN TRAY WAISE
           updatePriceTrayWise = await masters.updateMany(
-            {
-              brand: findSkuId.brand_name,
-              model: findSkuId.model_name,
-              tray_grade: x.grade,
-              type_taxanomy: "ST",
-              cpc: location,
-              sort_id: "Ready to Pricing",
-            },
+           { $or:[
+              {
+                brand: findSkuId.brand_name,
+                model: findSkuId.model_name,
+                tray_grade: x.grade,
+                type_taxanomy: "ST",
+                cpc: location,
+                sort_id: "Ready to Pricing",
+              },
+            
+            ]},
             {
               $set: {
                 price_creation_date: new Date(
