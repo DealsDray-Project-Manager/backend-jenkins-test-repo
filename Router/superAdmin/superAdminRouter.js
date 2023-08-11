@@ -31,6 +31,7 @@ router.post(
         req.body,
         req.file ? req.file.filename : undefined
       );
+      console.log(data);
       if (data) {
         if (data.status) {
           res.status(200).json({ status: 0, data: { message: "User Exist" } });
@@ -175,6 +176,39 @@ router.post("/changePassword", async (req, res, next) => {
   }
 });
 
+/*----------------------------Get sales location for buyer ---------------------------------------*/
+router.get("/getCpcSalesLocation/", async (req, res) => {
+  let data = await superAdminController.getCpcSalesLocation();
+
+  if (data) {
+    res.status(200).json({ status: 1, data: { data } });
+  } else {
+    response.status(501).json({ status: 0, data: { message: "worng" } });
+  }
+});
+
+/*----------------------------Get sales users ---------------------------------------*/
+router.post("/getsalesUsers", async (req, res) => {
+  try {
+    const { warehouse, cpc } = req.body;
+    console.log(req.body);
+    let data = await superAdminController.getsalesUsers(warehouse, cpc);
+    console.log("req:",req.body);
+    if (data) {
+      res.status(200).json({
+        data: data,
+        message: "Success",
+      });
+    } else {
+      res.status(202).json({
+        message: "Data Not Found",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
 /*----------------------------CPC---------------------------------------*/
 router.get("/getCpc/", async (req, res) => {
   let data = await superAdminController.getCpc();
@@ -216,7 +250,15 @@ router.post("/getUsers", async (req, res) => {
     }
   } catch (error) {}
 });
-
+/*-------------------------BUYERS CONNECTED TO SALES MIS------------------------------------------*/
+router.post("/buyerConSalesMis", async (req, res) => {
+  try {
+    let user = await superAdminController.buyerConSalesMis();
+    if (user) {
+      res.status(200).json({ data: { user } });
+    }
+  } catch (error) {}
+});
 /*-----------------------------DEACTIVATE USER--------------------------------------*/
 router.post("/userDeactivate/:username", async (req, res) => {
   try {

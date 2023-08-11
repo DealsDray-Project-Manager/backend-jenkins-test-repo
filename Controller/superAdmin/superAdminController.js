@@ -257,6 +257,7 @@ module.exports = {
       }
     });
   },
+
   /*-------------------------------LOCATION TYPE -------------------------------*/
   getLocationType: (code) => {
     return new Promise(async (resolve, reject) => {
@@ -284,6 +285,27 @@ module.exports = {
       resolve(cpc);
     });
   },
+
+   /*--------------------------------Find Sales Location-----------------------------------*/
+
+   getCpcSalesLocation: () => {
+    return new Promise(async (resolve, rejects) => {
+      let data = await infra.find({ location_type: "Sales" });
+      resolve(data);
+    });
+  },
+ /*--------------------------------Find Sales Users-----------------------------------*/
+ 
+    getsalesUsers: (warehouse, cpc ) => {
+      return new Promise(async (resolve, reject) => {
+        let data = await user.find({ user_type:"Sales Agent",warehouse: warehouse, cpc: cpc });
+        if (data) {
+          resolve(data);
+        } else {
+          resolve();
+        }
+      });
+    },
   /*--------------------------------FIND WAREHOUSE-----------------------------------*/
 
   getWarehouse: (code, type) => {
@@ -327,6 +349,14 @@ module.exports = {
   getUsers: () => {
     return new Promise(async (resolve, reject) => {
       let usersData = await user.find({});
+      resolve(usersData);
+    });
+  },
+  /*--------------------------------FIND BUYER CONNECTED TO SALES MIS-----------------------------------*/
+
+  buyerConSalesMis: () => {
+    return new Promise(async (resolve, reject) => {
+      let usersData = await user.find({user_type:"Buyer"});
       resolve(usersData);
     });
   },
