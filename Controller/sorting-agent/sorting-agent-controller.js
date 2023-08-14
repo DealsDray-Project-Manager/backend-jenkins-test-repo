@@ -2,6 +2,7 @@ const brand = require("../../Model/brandModel/brand");
 const { delivery } = require("../../Model/deliveryModel/delivery");
 const { masters } = require("../../Model/mastersModel");
 const Elasticsearch = require("../../Elastic-search/elastic");
+const {unitsActionLog} = require("../../Model/units-log/units-action-log");
 module.exports = {
   getAssignedSortingTray: (username) => {
     return new Promise(async (resolve, reject) => {
@@ -23,8 +24,8 @@ module.exports = {
         pickup: 0,
         pickupToTray: 0,
         ctxtoStxSorting: 0,
-        whtToRpTraySorting:0,
-        rpTrayCount:0
+        whtToRpTraySorting: 0,
+        rpTrayCount: 0,
       };
       count.rpTrayCount = await masters.count({
         issued_user_name: username,
@@ -137,6 +138,7 @@ module.exports = {
             actual_items: { $elemMatch: { uic: trayData.uic } },
           });
           let obj;
+         
           if (alreadyAdded) {
             for (let x of checkItemExistsInTheTray?.items) {
               if (x.uic == trayData.uic) {
@@ -186,7 +188,7 @@ module.exports = {
         "items.uic": obj.uic,
       });
       if (checkItemExist == null) {
-        let assignToWht = await masters.updateOne(
+        let assignToWht = await masters.findOneAndUpdate(
           {
             code: itemData.wht_tray,
           },
@@ -215,6 +217,15 @@ module.exports = {
           }
         );
         if (data.modifiedCount != 0) {
+          let unitsLogCreation = await unitsActionLog.create({
+            action_type: "Item transfered to WHT",
+            created_at: Date.now(),
+            user_name_of_action: assignToWht.issued_user_name,
+            user_type: "PRC Sorting",
+            uic: itemData.uic,
+            tray_id:itemData.wht_tray,
+            description:`Item transfered to WHT by agent ${assignToWht.issued_user_name}`
+          });
           let updateDelivery = await delivery.findOneAndUpdate(
             { tracking_id: itemData.awbn_number },
             {
@@ -956,7 +967,6 @@ module.exports = {
     });
   },
   sortingGetAssignedTrayForWhtToRp: (user_name, trayType) => {
-   
     return new Promise(async (resolve, reject) => {
       let data = await masters.find({
         issued_user_name: user_name,
@@ -1109,7 +1119,6 @@ module.exports = {
     });
   },
   whtToTRpSortingDoneCloseTray: (trayDetails) => {
-   
     return new Promise(async (resolve, reject) => {
       let data;
       let rpTray;
@@ -1137,7 +1146,7 @@ module.exports = {
             $set: {
               sort_id: "Sorting done (Wht to rp)",
               temp_array: [],
-              "track_tray.wht_to_rp_sorting_done_sorting":Date.now(),
+              "track_tray.wht_to_rp_sorting_done_sorting": Date.now(),
               closed_date_agent: Date.now(),
             },
           }
@@ -1148,7 +1157,7 @@ module.exports = {
             $set: {
               sort_id: "Sorting done (Wht to rp)",
               temp_array: [],
-              "track_tray.wht_to_rp_sorting_done_sorting":Date.now(),
+              "track_tray.wht_to_rp_sorting_done_sorting": Date.now(),
               actual_items: [],
               closed_date_agent: Date.now(),
             },
@@ -1161,7 +1170,7 @@ module.exports = {
             $set: {
               sort_id: "Sorting done (Wht to rp)",
               temp_array: [],
-              "track_tray.wht_to_rp_sorting_done_sorting":Date.now(),
+              "track_tray.wht_to_rp_sorting_done_sorting": Date.now(),
               actual_items: [],
               closed_date_agent: Date.now(),
             },

@@ -86,6 +86,14 @@ module.exports = {
       }
       if (data) {
         for (let x of data.items) {
+          const addLogsofUnits = await unitsActionLog.create({
+            action_type: "Charging In",
+            created_at: Date.now(),
+            uic: x.uic,
+            user_name_of_action: issueData.issued_user_name,
+            tray_id:trayData.trayId,
+            user_type:"Charging",
+          });
           let deliveryUpdate = await delivery.findOneAndUpdate(
             {
               tracking_id: x.tracking_id,

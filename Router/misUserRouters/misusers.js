@@ -1099,6 +1099,7 @@ router.post(
   "/toMmtTrayForMerge/:fromTray/:location/:itemsCount",
   async (req, res, next) => {
     try {
+      console.log(req.params);
       const { fromTray, location, itemsCount } = req.params;
       let mmtTray = await misUserController.getToTrayMmtMerge(
         fromTray,

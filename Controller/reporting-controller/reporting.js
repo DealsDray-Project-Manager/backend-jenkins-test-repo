@@ -2,6 +2,7 @@ const { delivery } = require("../../Model/deliveryModel/delivery");
 const { masters } = require("../../Model/mastersModel");
 const { orders } = require("../../Model/ordersModel/ordersModel");
 const { products } = require("../../Model/productModel/product");
+const {unitsActionLog} = require("../../Model/units-log/units-action-log");
 /*--------------------------------------------------------------*/
 
 /************************************************** */
@@ -2339,8 +2340,35 @@ module.exports = {
         ])
         .catch((err) => reject(err));
       if (data.length == 0) {
+        
         resolve({ status: 0 });
       } else {
+        let findAllHistory
+        if(data[0]?.uic_code?.code == undefined){
+          findAllHistory = await unitsActionLog.find({
+            $or: [
+             
+              { awbn_number: data[0]?.tracking_id },
+            ],
+          }).sort({_id:1});
+        }
+        else{
+          findAllHistory = await unitsActionLog.find({
+            $or: [
+              {uic:data[0]?.uic_code?.code},
+              { awbn_number: data[0]?.tracking_id },
+            ],
+          }).sort({_id:1});
+        }
+        
+       if(findAllHistory){
+         console.log(findAllHistory);
+         data[0]['uic_history']=findAllHistory
+       }
+       else{
+        data[0]['uic_history']=[]
+       }
+       console.log(data);
         resolve({ status: 1, data: data });
       }
     });

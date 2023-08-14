@@ -4,15 +4,11 @@ const unitsActionLogSchema = mongoose.Schema({
   action_type: {
     type: String,
   },
-  action_date: {
-    type: String,
-  
+  tray_id:{
+     type:String
   },
   bag_id:{
     type:String
-  },
-  tray_id:{
-     type:String
   },
   agent_name: {
     type: String,
@@ -36,9 +32,12 @@ const unitsActionLogSchema = mongoose.Schema({
   created_at: {
     type: Date,
   },
-  awbn_numner:{
+  awbn_number:{
     type:String,
     index: true,
+  },
+  description:{
+    type:String
   }
 });
 const unitsActionLog = mongoose.model("unitsActionLog", unitsActionLogSchema);

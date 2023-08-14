@@ -205,11 +205,13 @@ module.exports = {
           const addLogsofUnits = await unitsActionLog.create({
             action_type: "Item transferred to tray",
             created_at: Date.now(),
-            awbn_numner: trayData.awbn_number,
-            user_name_of_action: trayData.username,
+            awbn_number: trayData.awbn_number,
+            user_name_of_action: res.issued_user_name,
             tray_id: trayData.tray_id,
             report: obj,
             uic: trayData.uic,
+            user_type: "BOT",
+            description: `Item transferred to bot tray by ${res.issued_user_name}`,
           });
           let updateDelivery = await delivery.findOneAndUpdate(
             { tracking_id: trayData.awbn_number },
@@ -291,6 +293,15 @@ module.exports = {
         );
         if (data) {
           for (let x of data.items) {
+            let unitsLogCreation = await unitsActionLog.create({
+              action_type: "Closed By Bot",
+              created_at: Date.now(),
+              user_name_of_action: data.issued_user_name,
+              user_type: "BOT",
+              awbn_number: x.awbn_number,
+              tray_id: trayId,
+              description: `Closed by bot agent :${data.issued_user_name}`,
+            });
             let deliveryTrack = await delivery.findOneAndUpdate(
               { tracking_id: x.awbn_number },
               {
@@ -305,9 +316,6 @@ module.exports = {
                 projection: { _id: 0 },
               }
             );
-            // let updateElasticSearch = await Elasticsearch.uicCodeGen(
-            //   this.deleteTrayItem
-            // );
           }
           resolve({ status: 1 });
         } else {
