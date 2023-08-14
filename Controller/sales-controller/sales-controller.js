@@ -9,11 +9,14 @@ const { badOrders } = require("../../Model/ordersModel/bad-orders-model");
 const { badDelivery } = require("../../Model/deliveryModel/bad-delivery");
 
 module.exports = {
-  dashboardCount: (location) => {
+  dashboardCount: (location,username) => {
     return new Promise(async (resolve, reject) => {
       let count = {
         viewPriceCount: 0,
-      };
+        buyerCount: 0,
+      }; 
+       count.buyerCount = await user.count({
+      user_type: 'Buyer',sales_users:username});
       count.viewPriceCount = await masters.aggregate([
         {
           $match: {

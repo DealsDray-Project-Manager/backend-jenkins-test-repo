@@ -187,28 +187,6 @@ router.get("/getCpcSalesLocation/", async (req, res) => {
   }
 });
 
-/*----------------------------Get sales users ---------------------------------------*/
-router.post("/getsalesUsers", async (req, res) => {
-  try {
-    const { warehouse, cpc } = req.body;
-    console.log(req.body);
-    let data = await superAdminController.getsalesUsers(warehouse, cpc);
-    console.log("req:",req.body);
-    if (data) {
-      res.status(200).json({
-        data: data,
-        message: "Success",
-      });
-    } else {
-      res.status(202).json({
-        message: "Data Not Found",
-      });
-    }
-  } catch (error) {
-    next(error);
-  }
-});
-
 /*----------------------------CPC---------------------------------------*/
 router.get("/getCpc/", async (req, res) => {
   let data = await superAdminController.getCpc();
@@ -250,12 +228,42 @@ router.post("/getUsers", async (req, res) => {
     }
   } catch (error) {}
 });
-/*-------------------------BUYERS CONNECTED TO SALES MIS------------------------------------------*/
-router.post("/buyerConSalesMis", async (req, res) => {
+
+/*----------------------------Get sales users ---------------------------------------*/
+router.post("/getsalesUsers", async (req, res) => {
   try {
-    let user = await superAdminController.buyerConSalesMis();
+    const { warehouse, cpc } = req.body;
+    let data = await superAdminController.getsalesUsers(warehouse, cpc);
+    if (data) {
+      res.status(200).json({
+        data: data,
+        message: "Success",
+      });
+    } else {
+      res.status(202).json({
+        message: "Data Not Found",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.post("/getBuyers", async (req, res) => {
+  try {
+    let user = await superAdminController.getBuyers();
     if (user) {
       res.status(200).json({ data: { user } });
+    }
+  } catch (error) {}
+});
+/*-------------------------BUYERS CONNECTED TO SALES MIS------------------------------------------*/
+router.post("/buyerConSalesAgent/:username", async (req, res) => {
+  try {
+    const { username } = req.params;
+    let buyer = await superAdminController.buyerConSalesAgent(username);
+    if (buyer) {
+      res.status(200).json({ data: { buyer } });
     }
   } catch (error) {}
 });

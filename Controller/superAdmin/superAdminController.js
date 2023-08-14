@@ -111,6 +111,7 @@ module.exports = {
     return new Promise(async (resolve, reject) => {
       let count = {};
       count.usersCount = await user.count({});
+      count.buyerCount = await user.count({user_type:"Buyer"});
       count.location = await infra.count({ type_taxanomy: "CPC" });
       count.warehouse = await infra.count({ type_taxanomy: "Warehouse" });
       count.brand = await brands.count({});
@@ -348,16 +349,24 @@ module.exports = {
 
   getUsers: () => {
     return new Promise(async (resolve, reject) => {
-      let usersData = await user.find({});
+      let usersData = await user.find({ user_type: { $ne: 'Buyer' }});
       resolve(usersData);
     });
   },
-  /*--------------------------------FIND BUYER CONNECTED TO SALES MIS-----------------------------------*/
 
-  buyerConSalesMis: () => {
+  getBuyers: () => {
     return new Promise(async (resolve, reject) => {
-      let usersData = await user.find({user_type:"Buyer"});
-      resolve(usersData);
+      let BuyerData = await user.find({user_type:'Buyer'});
+      resolve(BuyerData);
+    });
+  },
+  /*--------------------------------FIND BUYER CONNECTED TO SALES AGENT-----------------------------------*/
+
+  buyerConSalesAgent: (username) => {
+    return new Promise(async (resolve, reject) => {
+      let BuyerData = await user.find({user_type:"Buyer",sales_users:username});
+      console.log(BuyerData);
+      resolve(BuyerData);
     });
   },
 
