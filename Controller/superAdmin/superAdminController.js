@@ -2598,10 +2598,41 @@ module.exports = {
   },
   getAllTrayRacks: () => {
     return new Promise(async (resolve, reject) => {
-      const data = await trayRack.find();
-      resolve(data);
+        try {
+            const aggregatePipeline = [
+                {
+                    $lookup: {
+                        from: "masters", // Replace with the actual collection name
+                        localField: "rack_id",
+                        foreignField: "rack_id",
+                        as: "rack_counts"
+                    }
+                },
+                {
+                    $project: {
+                        _id: 1,
+                        rack_id: 1,
+                        name:1,
+                        display:1,
+                        limit:1,
+                        warehouse:1,
+                        parent_id:1,
+                        // Other fields you want to include
+                        rack_count: { $size: "$rack_counts" }
+                    }
+                },
+                { $sort: { rack_id: 1 } }
+            ];
+
+            const rackCounts = await trayRack.aggregate(aggregatePipeline);
+            console.log(rackCounts);
+            resolve(rackCounts);
+        } catch (error) {
+            reject(error);
+        }
     });
-  },
+},
+
   /*--------------------GET RACK BASED ON THE LIMIT AND WAREHOUSE---------------------------*/
   getRackBasedOnTheWarehouse: (warehouse) => {
     return new Promise(async (resolve, reject) => {

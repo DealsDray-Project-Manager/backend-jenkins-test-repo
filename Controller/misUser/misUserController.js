@@ -4241,6 +4241,7 @@ module.exports = {
             cpc: location,
             brand: brand,
             model: model,
+            type_taxanomy:"WHT",
             sort_id: "Ready to RDL-Repair",
           },
         },
