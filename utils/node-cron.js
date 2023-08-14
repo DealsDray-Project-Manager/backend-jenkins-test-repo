@@ -115,25 +115,25 @@ exports = module.exports = () => {
     console.log(error);
   }
   try {
-    const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-    corn.schedule("*/30 * * * *", async () => {
-      /*----------------------------------------------CSV READ-----------------------------*/
-      let lastUpdateData = await delivery
-        .find({}, { _id: 0 })
-        .sort({ updated_at: -1 })
-        .limit(500);
-      for (let x of lastUpdateData) {
-        let obj = {
-          _ro_ril_miui_imei0: x?.bqc_software_report?._ro_ril_miui_imei0,
-          mobile_imei: x?.bqc_software_report?.mobile_imei,
-          mobile_imei2: x?.bqc_software_report?.mobile_imei2,
-        };
-        x.bqc_software_report = obj;
-        await elasticSearch.uicCodeGen(x);
-        // Introduce a delay of 500 milliseconds (adjust as needed)
-        await delay(500);
-      }
-    });
+    // const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+    // corn.schedule("*/30 * * * *", async () => {
+    //   /*----------------------------------------------CSV READ-----------------------------*/
+    //   let lastUpdateData = await delivery
+    //     .find({}, { _id: 0 })
+    //     .sort({ updated_at: -1 })
+    //     .limit(500);
+    //   for (let x of lastUpdateData) {
+    //     let obj = {
+    //       _ro_ril_miui_imei0: x?.bqc_software_report?._ro_ril_miui_imei0,
+    //       mobile_imei: x?.bqc_software_report?.mobile_imei,
+    //       mobile_imei2: x?.bqc_software_report?.mobile_imei2,
+    //     };
+    //     x.bqc_software_report = obj;
+    //     await elasticSearch.uicCodeGen(x);
+    //     // Introduce a delay of 500 milliseconds (adjust as needed)
+    //     await delay(500);
+    //   }
+    // });
   } catch (error) {
     console.log(error);
   }

@@ -660,7 +660,7 @@ router.post("/issueRequestSend", async (req, res, next) => {
     let data = await misUserController.sendIssueRequest(req.body);
     if (data.status == 1) {
       res.status(200).json({
-        message: "Requested",
+        message: "Successfully Assigned",
       });
     } else if (data.status == 0) {
       res.status(202).json({
@@ -1099,6 +1099,7 @@ router.post(
   "/toMmtTrayForMerge/:fromTray/:location/:itemsCount",
   async (req, res, next) => {
     try {
+      console.log(req.params);
       const { fromTray, location, itemsCount } = req.params;
       let mmtTray = await misUserController.getToTrayMmtMerge(
         fromTray,
@@ -1122,6 +1123,7 @@ router.post(
 /* MMT TRAY MERGE REQUEST SEND TO WAREHOUSE */
 router.post("/TrayMergeRequestSend", async (req, res, next) => {
   try {
+    console.log(req.body);
     const { sort_agent, fromTray, toTray } = req.body;
     let data = await misUserController.mmtMergeRequestSendToWh(
       sort_agent,

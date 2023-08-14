@@ -2,7 +2,8 @@ const { orders } = require("../../Model/ordersModel/ordersModel");
 const { delivery } = require("../../Model/deliveryModel/delivery");
 const { masters } = require("../../Model/mastersModel");
 const Elasticsearch = require("../../Elastic-search/elastic");
-const {partAndColor}=require("../../Model/Part-list-and-color/part-list-and-color")
+const {partAndColor}=require("../../Model/Part-list-and-color/part-list-and-color");
+const {unitsActionLog} = require("../../Model/units-log/units-action-log");
 
 module.exports = {
   getAssignedTray: (username) => {
@@ -45,7 +46,6 @@ module.exports = {
       }
     });
   },
-
   addWhtActual: (trayItemData) => {
     return new Promise(async (resolve, reject) => {
       let dupEntrey = await masters.findOne({
@@ -98,6 +98,7 @@ module.exports = {
             temp_array: [],
             sort_id: "Closed by RDL-FLS",
             closed_date_agent: Date.now(),
+
           },
         },
         {
@@ -106,6 +107,14 @@ module.exports = {
       );
       if (dataSwitch) {
         for (let x of dataSwitch.items) {
+          const addLogsofUnits = await unitsActionLog.create({
+            action_type: "Closed by RDL-FLS",
+            created_at: Date.now(),
+            uic: x.uic,
+            tray_id: trayData.trayId,
+            user_name_of_action: dataSwitch.issued_user_name,
+            report: x.rdl_fls_report,
+          });
           let deliveryUpdate = await delivery.findOneAndUpdate(
             { tracking_id: x.tracking_id },
             {

@@ -9,6 +9,7 @@ const {
 } = require("../../Model/Part-list-and-color/part-list-and-color");
 const { rammodel } = require("../../Model/ramModel/ram");
 const { storagemodel } = require("../../Model/storageModel/storage");
+const { unitsActionLog } = require("../../Model/units-log/units-action-log");
 
 module.exports = {
   getAssigendOtherTray: (username) => {
@@ -140,9 +141,12 @@ module.exports = {
               agent_name_bqc: 1,
               bqc_out_date: 1,
               tray_closed_by_bot: 1,
-              imei:1
+              imei: 1,
+              rdl_fls_one_report: 1,
+              rdl_two_report: 1,
             }
           );
+
           if (uicExists) {
             if (uicExists.bqc_done_close !== undefined) {
               let getOrder = await orders.findOne({
@@ -154,7 +158,24 @@ module.exports = {
               let otherAudFeedBackData = await audtiorFeedback.findOne({
                 uic: uicExists.uic_code.code,
               });
-
+              obj.preBqcData = {};
+              obj.preChargeData = {};
+              const previousBqc = await unitsActionLog
+                .findOne({ uic:uic, action_type: "BQC Done" })
+                .sort({ _id: -1 })
+                .skip(1);
+               
+              if (previousBqc) {
+                obj.preBqcData = previousBqc;
+              }
+              const previousCharging = await unitsActionLog
+                .findOne({uic:uic, action_type: "Charging Done" })
+                .sort({ _id: -1 })
+                .skip(1);
+                console.log(previousCharging);
+              if (previousCharging) {
+                obj.preChargeData = previousCharging;
+              }
               obj.delivery = uicExists;
               obj.order = getOrder;
               obj.checkIntray = checkIntray;
@@ -198,9 +219,9 @@ module.exports = {
           description: itemData.description,
           orgGrade: itemData.orgGrade,
           wht_tray: itemData.trayId,
-          color:itemData.color,
-          storage_verification:itemData.storage_verification,
-          ram_verification:itemData.ram_verification,
+          color: itemData.color,
+          storage_verification: itemData.storage_verification,
+          ram_verification: itemData.ram_verification,
         };
         let findTray = await masters.findOne({
           $or: [
@@ -378,6 +399,14 @@ module.exports = {
       }
 
       for (let x of data.items) {
+        const addLogsofUnits = await unitsActionLog.create({
+          action_type: "Audit Done",
+          created_at: Date.now(),
+          uic: x.uic,
+          tray_id: trayId,
+          user_name_of_action: data.issued_user_name,
+          report: x.audit_report,
+        });
         let updateDelivery = await delivery.findOneAndUpdate(
           { tracking_id: x.tracking_id },
           {
@@ -393,9 +422,6 @@ module.exports = {
             projection: { _id: 0 },
           }
         );
-        // let updateElasticSearch = await Elasticsearch.uicCodeGen(
-        //   updateDelivery
-        // );
       }
       resolve(data);
     });
@@ -419,7 +445,7 @@ module.exports = {
         .find({})
         .sort({ name: 1 })
         .collation({ locale: "en_US", numericOrdering: true });
-       
+
       resolve(obj);
     });
   },

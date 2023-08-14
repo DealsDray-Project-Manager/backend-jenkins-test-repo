@@ -107,7 +107,7 @@ router.post("/repairDone/action", async (req, res, next) => {
     let data = await Rdl2Controller.repairDoneAction(req.body);
     if (data.status === 1) {
       res.status(200).json({
-        message: "Succssully submited",
+        message: "Successfully submited",
       });
     } else if (data.status === 3) {
       res.status(202).json({

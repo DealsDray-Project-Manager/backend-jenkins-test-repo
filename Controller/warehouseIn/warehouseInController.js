@@ -8,6 +8,7 @@ const { products } = require("../../Model/productModel/product");
 const moment = require("moment");
 const elasticsearch = require("../../Elastic-search/elastic");
 const { trayRack } = require("../../Model/tray-rack/tray-rack");
+const { unitsActionLog } = require("../../Model/units-log/units-action-log");
 
 /********************************************************************/
 /* 
@@ -732,10 +733,6 @@ module.exports = {
         }
       );
       if (data.status !== "Duplicate" && data.status !== "Invalid") {
-        // let updateElastic = await elasticsearch.updateUic(
-        //   data.awbn_number,
-        //   data.bag_id
-        // );
         if (data.order_date !== null && data.order_date !== undefined) {
           let updateDelivery = await delivery.updateOne(
             { tracking_id: data.awbn_number },
@@ -800,6 +797,7 @@ module.exports = {
 
   closeBag: (bagData) => {
     return new Promise(async (resolve, reject) => {
+      // UPDATE BAG
       let data = await masters.findOneAndUpdate(
         { code: bagData.bagId },
         {
@@ -813,10 +811,8 @@ module.exports = {
         }
       );
       if (data) {
+        // UPDATE DELIVERY DATA
         for (let x of data.items) {
-          // let updateElastic = await elasticsearch.closeBagAfterItemPuted(
-          //   x.awbn_number
-          // );
           let updateDelivery = await delivery.updateOne(
             { tracking_id: x.awbn_number },
             {
@@ -826,6 +822,18 @@ module.exports = {
               },
             }
           );
+          // ADD ACTION LOG
+          await unitsActionLog
+            .create({
+              created_at: Date.now(),
+              awbn_number: x.awbn_number,
+              user_name_of_action: bagData.username,
+              action_type: "Bagging",
+              user_type: "PRC Warehouse",
+              description: `Bagging done by ${bagData.username}`,
+              bag_id: bagData.bagId,
+            })
+            .catch((err) => reject(err));
         }
         resolve(data);
       } else {
@@ -920,7 +928,16 @@ module.exports = {
                 projection: { _id: 0 },
               }
             );
-            // let updateElastic = await elasticsearch.uicCodeGen(updateDelivery);
+            const addLogsofUnits = await unitsActionLog.create({
+              action_type: "Issued to BOT",
+              created_at: Date.now(),
+              awbn_number: x.awbn_number,
+              agent_name: data.issued_user_name,
+              user_name_of_action: issueData.username,
+              bag_id: issueData.bagId,
+              user_type: "PRC Warehouse",
+              description: `Issued to bot agent name :${data.issued_user_name} by WH : ${issueData.username}`,
+            });
           }
           for (let i = 0; i < issueData.try.length; i++) {
             let assignTray = await masters.findOneAndUpdate(
@@ -935,14 +952,14 @@ module.exports = {
                 },
               }
             );
-            let updateRack = await trayRack.findOneAndUpdate(
-              { rack_id: assignTray?.rackId },
-              {
-                $push: {
-                  bag_or_tray: assignTray?.code,
-                },
-              }
-            );
+            // let updateRack = await trayRack.findOneAndUpdate(
+            //   { rack_id: assignTray?.rackId },
+            //   {
+            //     $push: {
+            //       bag_or_tray: assignTray?.code,
+            //     },
+            //   }
+            // );
           }
           let newAssing = await masters.updateMany(
             {
@@ -1290,9 +1307,18 @@ module.exports = {
             );
           }
           if (data) {
-            for (let i = 0; i < data.actual_items.length; i++) {
+            for (let x of data.actual_items) {
+              let unitsLogCreation = await unitsActionLog.create({
+                action_type: "Received From Charging",
+                action_date: Date.now(),
+                user_name_of_action: trayData.actioUser,
+                user_type: "PRC WH",
+                agent_name: data.issued_user_name,
+                uic: x.uic,
+                tray_id: trayData.trayId,
+              });
               let deliveryTrack = await delivery.findOneAndUpdate(
-                { tracking_id: data.actual_items[i].tracking_id },
+                { tracking_id: x.tracking_id },
                 {
                   $set: {
                     tray_status: "Received From Charging",
@@ -1306,9 +1332,6 @@ module.exports = {
                   projection: { _id: 0 },
                 }
               );
-              // let updateElasticSearch = await elasticsearch.uicCodeGen(
-              //   deliveryTrack
-              // );
             }
             resolve({ status: 1 });
           } else {
@@ -1345,9 +1368,6 @@ module.exports = {
                     projection: { _id: 0 },
                   }
                 );
-                // let updateElasticSearch = await elasticsearch.uicCodeGen(
-                //   deliveryTrack
-                // );
               }
               resolve({ status: 1 });
             } else {
@@ -1378,9 +1398,6 @@ module.exports = {
                     projection: { _id: 0 },
                   }
                 );
-                // let updateElasticSearch = await elasticsearch.uicCodeGen(
-                //   deliveryTrack
-                // );
               }
               resolve({ status: 1 });
             } else {
@@ -1411,9 +1428,6 @@ module.exports = {
                     projection: { _id: 0 },
                   }
                 );
-                // let updateElasticSearch = await elasticsearch.uicCodeGen(
-                //   deliveryTrack
-                // );
               }
               resolve({ status: 1 });
             } else {
@@ -1444,9 +1458,6 @@ module.exports = {
                     projection: { _id: 0 },
                   }
                 );
-                // let updateElasticSearch = await elasticsearch.uicCodeGen(
-                //   deliveryTrack
-                // );
               }
               resolve({ status: 1 });
             } else {
@@ -1477,9 +1488,6 @@ module.exports = {
                     projection: { _id: 0 },
                   }
                 );
-                // let updateElasticSearch = await elasticsearch.uicCodeGen(
-                //   deliveryTrack
-                // );
               }
               resolve({ status: 1 });
             } else {
@@ -1503,6 +1511,14 @@ module.exports = {
           );
           if (data) {
             for (let x of data.items) {
+              const addLogsofUnits = await unitsActionLog.create({
+                action_type: "Received from RDL-two",
+                created_at: Date.now(),
+                uic: x.uic,
+                tray_id: trayData.trayId,
+                agent_name: data.issued_user_name,
+                user_name_of_action: trayData.username,
+              });
               let deliveryTrack = await delivery.findOneAndUpdate(
                 { "uic_code.code": x.uic },
                 {
@@ -1539,9 +1555,19 @@ module.exports = {
             }
           );
           if (data) {
-            for (let i = 0; i < data.items.length; i++) {
+            for (let x of data.items) {
+              const addLogsofUnits = await unitsActionLog.create({
+                action_type: "Received From BOT",
+                created_at: Date.now(),
+                uic: x.uic,
+                tray_id: trayData.trayId,
+                agent_name: data.issued_user_name,
+                user_name_of_action: trayData.username,
+                user_type: "PRC Warehouse",
+                description: `Received From BOT agent:${data.issued_user_name} WH : ${trayData.username}`,
+              });
               let deliveryTrack = await delivery.findOneAndUpdate(
-                { tracking_id: data.items[i].awbn_number },
+                { tracking_id: x.awbn_number },
                 {
                   $set: {
                     tray_status: "Received From BOT",
@@ -1555,9 +1581,6 @@ module.exports = {
                   projection: { _id: 0 },
                 }
               );
-              // let updateElasticSearch = await elasticsearch.uicCodeGen(
-              //   deliveryTrack
-              // );
             }
             resolve({ status: 1 });
           } else {
@@ -1652,14 +1675,6 @@ module.exports = {
             },
           }
         );
-        let updateRack = await trayRack.findOneAndUpdate(
-          { rack_id: trayData.rackId },
-          {
-            $push: {
-              bag_or_tray: data.code,
-            },
-          }
-        );
       } else {
         data = await masters.findOneAndUpdate(
           { code: trayData.trayId },
@@ -1672,17 +1687,18 @@ module.exports = {
             },
           }
         );
-        let updateRack = await trayRack.findOneAndUpdate(
-          { rack_id: trayData.rackId },
-          {
-            $push: {
-              bag_or_tray: data.code,
-            },
-          }
-        );
       }
       if (data) {
         for (let x of data?.items) {
+          let unitsLogCreation = await unitsActionLog.create({
+            action_type: "Closed By Warehouse",
+            created_at: Date.now(),
+            user_name_of_action: trayData.username,
+            user_type: "PRC Warehouse",
+            uic: x.uic,
+            tray_id: trayData.trayId,
+            description: `Bot done closed by warehouse agent :${trayData.username}`,
+          });
           let deliveryTrack = await delivery.findOneAndUpdate(
             { tracking_id: x.awbn_number },
             {
@@ -1698,7 +1714,6 @@ module.exports = {
               projection: { _id: 0 },
             }
           );
-          // let updateElastic = await elasticsearch.uicCodeGen(deliveryTrack);
         }
         resolve(data);
       } else {
@@ -1728,14 +1743,6 @@ module.exports = {
             },
           }
         );
-        let updateRack = await trayRack.findOneAndUpdate(
-          { rack_id: trayData.rackId },
-          {
-            $push: {
-              bag_or_tray: data.code,
-            },
-          }
-        );
       } else {
         data = await masters.findOneAndUpdate(
           { code: trayData.trayId },
@@ -1748,17 +1755,18 @@ module.exports = {
             },
           }
         );
-        let updateRack = await trayRack.findOneAndUpdate(
-          { rack_id: trayData.rackId },
-          {
-            $push: {
-              bag_or_tray: data.code,
-            },
-          }
-        );
       }
       if (data) {
         for (let x of data.items) {
+          let unitsLogCreation = await unitsActionLog.create({
+            action_type: "Closed By Warehouse",
+            created_at: Date.now(),
+            user_name_of_action: trayData.username,
+            user_type: "PRC Warehouse",
+            uic: x.uic,
+            tray_id: trayData.trayId,
+            description: `Bot done closed by warehouse agent :${trayData.username}`,
+          });
           let getItemId = await delivery.findOneAndUpdate(
             {
               tracking_id: x.awbn_number,
@@ -1776,7 +1784,7 @@ module.exports = {
               projection: { _id: 0 },
             }
           );
-          // let updateElastic = await elasticsearch.uicCodeGen(getItemId);
+
           let findProduct = await products.findOne({
             vendor_sku_id: getItemId.item_id,
           });
@@ -2214,18 +2222,41 @@ module.exports = {
   getWhtTrayWareHouse: (location, type) => {
     return new Promise(async (resolve, reject) => {
       if (type == "all-wht-tray") {
-        let data = await masters.find(
+        let data = await masters.aggregate([
           {
-            prefix: "tray-master",
-            type_taxanomy: "WHT",
-            cpc: location,
+            $match: {
+              prefix: "tray-master",
+              type_taxanomy: "WHT",
+              cpc: location,
+            },
           },
           {
-            temp_array: 0,
-            wht_tray: 0,
-            track_tray: 0,
-          }
-        );
+            $project: {
+              code: 1,
+              rack_id: 1,
+              brand: 1,
+              model: 1,
+              sort_id: 1,
+              created_at: 1,
+              limit: 1,
+              items_length: {
+                $cond: {
+                  if: { $isArray: "$items" },
+                  then: { $size: "$items" },
+                  else: 0,
+                },
+              },
+              actual_items: {
+                $cond: {
+                  if: { $isArray: "$actual_items" },
+                  then: { $size: "$actual_items" },
+                  else: 0,
+                },
+              },
+            },
+          },
+        ]);
+        console.log(data);
         resolve(data);
       } else {
         let data = await masters.find({
@@ -2794,14 +2825,6 @@ module.exports = {
             },
           }
         );
-        let updateRack = await trayRack.findOneAndUpdate(
-          { rack_id: data.rack_id },
-          {
-            $pull: {
-              bag_or_tray: data.code,
-            },
-          }
-        );
       } else if (trayData.sortId == "Send for BQC") {
         data = await masters.findOneAndUpdate(
           { code: trayData.trayId },
@@ -2818,15 +2841,16 @@ module.exports = {
           }
         );
         if (data) {
-          let updateRack = await trayRack.findOneAndUpdate(
-            { rack_id: data.rack_id },
-            {
-              $pull: {
-                bag_or_tray: data.code,
-              },
-            }
-          );
           for (let x of data.items) {
+            const addLogsofUnits = await unitsActionLog.create({
+              action_type: "Issued to BQC",
+              created_at: Date.now(),
+              uic: x.uic,
+              agent_name: data.issued_user_name,
+              user_name_of_action: trayData.actionUser,
+              tray_id: trayData.trayId,
+              user_type: "PRC WH",
+            });
             let deliveryUpdate = await delivery.findOneAndUpdate(
               { tracking_id: x.tracking_id },
               {
@@ -2843,9 +2867,6 @@ module.exports = {
                 projection: { _id: 0 },
               }
             );
-            // let updateElasticSearch = await elasticsearch.uicCodeGen(
-            //   deliveryUpdate
-            // );
           }
         }
       } else if (trayData.sortId == "Send for Recharging") {
@@ -2865,14 +2886,16 @@ module.exports = {
         );
         if (data) {
           for (let x of data.items) {
-            let updateRack = await trayRack.findOneAndUpdate(
-              { rack_id: data.rack_id },
-              {
-                $pull: {
-                  bag_or_tray: data.code,
-                },
-              }
-            );
+            const addLogsofUnits = await unitsActionLog.create({
+              action_type: "Issued to Recharging",
+              created_at: Date.now(),
+              uic: x.uic,
+              agent_name: data.issued_user_name,
+              user_name_of_action: trayData.actionUser,
+              tray_id: trayData.trayId,
+              user_type: "PRC Warehouse",
+              description: `Issued to Recharging agent :${data.issued_user_name} by Wh:${trayData.actionUser}`,
+            });
             let deliveryUpdate = await delivery.findOneAndUpdate(
               { tracking_id: x.tracking_id },
               {
@@ -2891,9 +2914,6 @@ module.exports = {
                 projection: { _id: 0 },
               }
             );
-            // let updateElasticSearch = await elasticsearch.uicCodeGen(
-            //   deliveryUpdate
-            // );
           }
         }
       } else if (trayData.sortId == "Send for RDL-FLS") {
@@ -2914,14 +2934,6 @@ module.exports = {
           }
         );
         if (data) {
-          let updateRack = await trayRack.findOneAndUpdate(
-            { rack_id: data.rack_id },
-            {
-              $pull: {
-                bag_or_tray: data.code,
-              },
-            }
-          );
           for (let x of data.items) {
             let deliveryUpdate = await delivery.findOneAndUpdate(
               { tracking_id: x.tracking_id },
@@ -2939,9 +2951,7 @@ module.exports = {
                 projection: { _id: 0 },
               }
             );
-            // let updateElasticSearch = await elasticsearch.uicCodeGen(
-            //   deliveryUpdate
-            // );
+
             if (deliveryUpdate) {
               resolve(data);
             } else {
@@ -2967,14 +2977,6 @@ module.exports = {
         );
         if (data) {
           for (let x of data.items) {
-            let updateRack = await trayRack.findOneAndUpdate(
-              { rack_id: data.rack_id },
-              {
-                $pull: {
-                  bag_or_tray: data.code,
-                },
-              }
-            );
             let deliveryUpdate = await delivery.findOneAndUpdate(
               { tracking_id: x.tracking_id },
               {
@@ -3014,15 +3016,17 @@ module.exports = {
           }
         );
         if (data) {
-          let updateRack = await trayRack.findOneAndUpdate(
-            { rack_id: data.rack_id },
-            {
-              $pull: {
-                bag_or_tray: data.code,
-              },
-            }
-          );
           for (let x of data.items) {
+            const addLogsofUnits = await unitsActionLog.create({
+              action_type: "Issued to Charging",
+              created_at: Date.now(),
+              uic: x.uic,
+              agent_name: data.issued_user_name,
+              user_name_of_action: trayData.actionUser,
+              tray_id: trayData.trayId,
+              user_type: "PRC Warehouse",
+              description: `Issued to Charging agent :${data.issued_user_name} by Wh :${trayData.actionUser}`,
+            });
             let deliveryUpdate = await delivery.findOneAndUpdate(
               { tracking_id: x.tracking_id },
               {
@@ -3039,10 +3043,6 @@ module.exports = {
                 projection: { _id: 0 },
               }
             );
-
-            // let updateElasticSearch = await elasticsearch.uicCodeGen(
-            //   deliveryUpdate
-            // );
           }
         }
       }
@@ -3284,15 +3284,15 @@ module.exports = {
           }
         );
         if (data) {
-          let updateRack = await trayRack.findOneAndUpdate(
-            { rack_id: trayData.rackId },
-            {
-              $push: {
-                bag_or_tray: data.code,
-              },
-            }
-          );
           for (let x of data.items) {
+            let unitsLogCreation = await unitsActionLog.create({
+              action_type: "Ready to Audit",
+              action_date: Date.now(),
+              user_name_of_action: trayData.actioUser,
+              user_type: "PRC WH",
+              uic: x.uic,
+              tray_id: trayData.trayId,
+            });
             let deliveryUpdate = await delivery.findOneAndUpdate(
               {
                 tracking_id: x.tracking_id,
@@ -3310,9 +3310,6 @@ module.exports = {
                 projection: { _id: 0 },
               }
             );
-            // let updateElasticSearch = await elasticsearch.uicCodeGen(
-            //   deliveryUpdate
-            // );
           }
           resolve(data);
         } else {
@@ -3351,15 +3348,15 @@ module.exports = {
           );
         }
         if (data) {
-          let updateRack = await trayRack.findOneAndUpdate(
-            { rack_id: trayData.rackId },
-            {
-              $push: {
-                bag_or_tray: data.code,
-              },
-            }
-          );
           for (let x of data.items) {
+            let unitsLogCreation = await unitsActionLog.create({
+              action_type: "Ready to BQC",
+              action_date: Date.now(),
+              user_name_of_action: trayData.actioUser,
+              user_type: "PRC WH",
+              uic: x.uic,
+              tray_id: trayData.trayId,
+            });
             let deliveryUpdate = await delivery.findOneAndUpdate(
               {
                 tracking_id: x.tracking_id,
@@ -3377,9 +3374,6 @@ module.exports = {
                 projection: { _id: 0 },
               }
             );
-            // let updateElasticSearch = await elasticsearch.uicCodeGen(
-            //   deliveryUpdate
-            // );
           }
           resolve(data);
         } else {
@@ -3468,15 +3462,15 @@ module.exports = {
         }
       }
       if (data) {
-        let updateRack = await trayRack.findOneAndUpdate(
-          { rack_id: trayData.rackId },
-          {
-            $push: {
-              bag_or_tray: data.code,
-            },
-          }
-        );
         for (let x of data.items) {
+          let unitsLogCreation = await unitsActionLog.create({
+            action_type: stage,
+            action_date: Date.now(),
+            user_name_of_action: trayData.actioUser,
+            user_type: "PRC WH",
+            uic: x.uic,
+            tray_id: trayData.trayId,
+          });
           let deliveryUpdate = await delivery.findOneAndUpdate(
             {
               tracking_id: x.tracking_id,
@@ -3494,9 +3488,6 @@ module.exports = {
               projection: { _id: 0 },
             }
           );
-          // let updateElasticSearch = await elasticsearch.uicCodeGen(
-          //   deliveryUpdate
-          // );
         }
         if (falg == true) {
           resolve({ status: 1 });
@@ -3599,9 +3590,18 @@ module.exports = {
           }
         );
         if (data) {
-          for (let i = 0; i < data.actual_items.length; i++) {
+          for (let x of data.actual_items) {
+            let unitsLogCreation = await unitsActionLog.create({
+              action_type: "Received From BQC",
+              action_date: Date.now(),
+              user_name_of_action: trayData.actioUser,
+              user_type: "PRC WH",
+              uic: x.uic,
+              agent_name: data.issued_user_name,
+              tray_id: trayData.trayId,
+            });
             let deliveryTrack = await delivery.findOneAndUpdate(
-              { tracking_id: data.actual_items[i].tracking_id },
+              { tracking_id: x.tracking_id },
               {
                 $set: {
                   tray_status: "Received From BQC",
@@ -3645,6 +3645,15 @@ module.exports = {
         );
         if (data) {
           for (let x of data?.items) {
+            let unitsLogCreation = await unitsActionLog.create({
+              action_type: "Received From Audit",
+              action_date: Date.now(),
+              user_name_of_action: trayData.actioUser,
+              user_type: "PRC WH",
+              uic: x.uic,
+              agent_name: data.issued_user_name,
+              tray_id: trayData.trayId,
+            });
             let deliveryTrack = await delivery.findOneAndUpdate(
               { tracking_id: x.tracking_id },
               {
@@ -3708,9 +3717,6 @@ module.exports = {
                   projection: { _id: 0 },
                 }
               );
-              // let updateElasticSearch = await elasticsearch.uicCodeGen(
-              //   updateDelivery
-              // );
             }
             resolve({ status: 1 });
           }
@@ -3726,6 +3732,16 @@ module.exports = {
           );
           if (data) {
             for (let x of data.items) {
+              let unitsLogCreation = await unitsActionLog.create({
+                action_type: "Received From Sorting (BOT TO WHT)",
+                created_at: Date.now(),
+                user_name_of_action: trayData.username,
+                agent_name: data.issued_user_name,
+                user_type: "PRC Warehouse",
+                uic: x.uic,
+                tray_id: trayData.trayId,
+                description: `Received From Sorting (BOT TO WHT) agent ${data.issued_user_name} By Wh:${trayData.username}`,
+              });
               let updateDelivery = await delivery.findOneAndUpdate(
                 {
                   tracking_id: x.tracking_id,
@@ -3743,9 +3759,6 @@ module.exports = {
                   projection: { _id: 0 },
                 }
               );
-              // let updateElasticSearch = await elasticsearch.uicCodeGen(
-              //   updateDelivery
-              // );
             }
             resolve({ status: 1 });
           }
@@ -3826,21 +3839,24 @@ module.exports = {
             },
           }
         );
-        let updateRack = await trayRack.findOneAndUpdate(
-          { rack_id: data?.rack_id },
-          {
-            $pull: {
-              bag_or_tray: data.code,
-            },
-          }
-        );
+
         if (
           trayData.type == "Issued to sorting agent" &&
           x.type_taxanomy == "BOT"
         ) {
-          for (let x of data.items) {
+          for (let y of data.items) {
+            let unitsLogCreation = await unitsActionLog.create({
+              action_type: "Issued to Sorting (BOT TO WHT)",
+              created_at: Date.now(),
+              user_name_of_action: trayData.actionUser,
+              agent_name: data.issued_user_name,
+              user_type: "PRC Warehouse",
+              uic: y.uic,
+              tray_id: x.code,
+              description: `Issued to Sorting (BOT TO WHT) agent : ${data.issued_user_name} By Wh: ${trayData.actionUser}`,
+            });
             let deliveryUpdate = await delivery.findOneAndUpdate(
-              { tracking_id: x.awbn_number },
+              { tracking_id: y.awbn_number },
               {
                 $set: {
                   tray_location: "Sorting Agent",
@@ -3856,9 +3872,6 @@ module.exports = {
                 projection: { _id: 0 },
               }
             );
-            // let updateElasticSearch = await elasticsearch.uicCodeGen(
-            //   deliveryUpdate
-            // );
           }
         }
       }
@@ -3890,15 +3903,16 @@ module.exports = {
           }
         );
         if (data) {
-          let updateRack = await trayRack.findOneAndUpdate(
-            { rack_id: trayData.rackId },
-            {
-              $push: {
-                bag_or_tray: data.code,
-              },
-            }
-          );
           for (let x of data.items) {
+            let unitsLogCreation = await unitsActionLog.create({
+              action_type: "Ready for Charging",
+              created_at: Date.now(),
+              user_name_of_action: trayData.username,
+              user_type: "PRC Warehouse",
+              uic: x.uic,
+              tray_id: trayData.code,
+              description: `Ready for Charging Closed by Wh :${trayData.username}`,
+            });
             let updateDelivery = await delivery.findOneAndUpdate(
               {
                 tracking_id: x.tracking_id,
@@ -3917,9 +3931,6 @@ module.exports = {
                 projection: { _id: 0 },
               }
             );
-            // let updateElasticSearch = await elasticsearch.uicCodeGen(
-            //   updateDelivery
-            // );
           }
           resolve({ status: 1 });
         }
@@ -3938,15 +3949,16 @@ module.exports = {
           }
         );
         if (data) {
-          let updateRack = await trayRack.findOneAndUpdate(
-            { rack_id: trayData.rackId },
-            {
-              $push: {
-                bag_or_tray: data.code,
-              },
-            }
-          );
           for (let x of data.items) {
+            let unitsLogCreation = await unitsActionLog.create({
+              action_type: "Bot to wht sorting done",
+              created_at: Date.now(),
+              user_name_of_action: trayData.username,
+              user_type: "PRC Warehouse",
+              uic: x.uic,
+              tray_id: trayData.code,
+              description: `Bot to wht sorting done Closed by Wh :${trayData.username}`,
+            });
             let updateDelivery = await delivery.findOneAndUpdate(
               {
                 tracking_id: x.tracking_id,
@@ -3964,9 +3976,6 @@ module.exports = {
                 projection: { _id: 0 },
               }
             );
-            // let updateElasticSearch = await elasticsearch.uicCodeGen(
-            //   updateDelivery
-            // );
           }
           resolve({ status: 2 });
         }
@@ -5168,16 +5177,17 @@ module.exports = {
             },
           }
         );
-        let updateRack = await trayRack.findOneAndUpdate(
-          { rack_id: issue?.rack_id },
-          {
-            $pull: {
-              bag_or_tray: issue?.code,
-            },
-          }
-        );
+
         if (issue.type_taxanomy == "WHT") {
           for (let y of issue.items) {
+            let unitsLogCreation = await unitsActionLog.create({
+              action_type: "Issued to Audit",
+              action_date: Date.now(),
+              user_name_of_action: trayData.actioUser,
+              user_type: "PRC WH",
+              uic: y.uic,
+              tray_id: x,
+            });
             let updateTrack = await delivery.findOneAndUpdate(
               { tracking_id: y.tracking_id },
               {
@@ -7172,23 +7182,23 @@ module.exports = {
   upgardeUnitsFilter: (location, fromDate, toDate, limit, skip, type) => {
     return new Promise(async (resolve, reject) => {
       let monthWiseReport, getCount;
-      
-        const fromDateISO = new Date(fromDate).toISOString();
-        const toDateISO = new Date(toDate).toISOString();
-        monthWiseReport = await delivery
-          .find({
-            partner_shop: location,
-            "audit_report.stage": "Upgrade",
-            audit_done_date: { $gte: fromDateISO, $lte: toDateISO },
-          })
-          .limit(limit)
-          .skip(skip);
-        getCount = await delivery.count({
+
+      const fromDateISO = new Date(fromDate).toISOString();
+      const toDateISO = new Date(toDate).toISOString();
+      monthWiseReport = await delivery
+        .find({
           partner_shop: location,
           "audit_report.stage": "Upgrade",
           audit_done_date: { $gte: fromDateISO, $lte: toDateISO },
-        });
-      
+        })
+        .limit(limit)
+        .skip(skip);
+      getCount = await delivery.count({
+        partner_shop: location,
+        "audit_report.stage": "Upgrade",
+        audit_done_date: { $gte: fromDateISO, $lte: toDateISO },
+      });
+
       resolve({
         monthWiseReport: monthWiseReport,
         getCount: getCount,

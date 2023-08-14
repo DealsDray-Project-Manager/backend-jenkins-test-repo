@@ -16,6 +16,7 @@ const {
 } = require("../../Model/Part-list-and-color/part-list-and-color");
 const elasticsearch = require("../../Elastic-search/elastic");
 const { stxUtility } = require("../../Model/Stx-utility/stx-utility");
+const { unitsActionLog } = require("../../Model/units-log/units-action-log");
 /******************************************************************* */
 
 module.exports = {
@@ -2469,7 +2470,7 @@ module.exports = {
         }
       }
       if (check === true) {
-        let data = await masters.updateOne(
+        let data = await masters.findOneAndUpdate(
           { code: bagData.bagId },
           {
             $set: {
@@ -2479,7 +2480,19 @@ module.exports = {
             },
           }
         );
-        if (data.modifiedCount != 0) {
+        if (data) {
+          for (let x of data?.items) {
+            let unitsLogCreation = await unitsActionLog.create({
+              action_type: "Assigned to BOT",
+              created_at: Date.now(),
+              user_name_of_action: bagData.username,
+              agent_name: bagData.bot_name,
+              user_type: "MIS",
+              awbn_number: x.awbn_number,
+              bag_id:bagData.bagId,
+              description:`Assigned to agent :${bagData.bot_name} by MIS: ${bagData.username}`
+            });
+          }
           resolve({ status: 1 });
         } else {
           resolve();
@@ -2629,6 +2642,18 @@ module.exports = {
             },
           }
         );
+        for (let y of data.items) {
+          let unitsLogCreation = await unitsActionLog.create({
+            action_type: "Assigned for BOT to WHT Sorting",
+            created_at: Date.now(),
+            user_name_of_action: botTrayData.username,
+            agent_name: botTrayData.agent_name,
+            user_type: "PRC MIS",
+            uic: y.uic,
+            tray_id:x,
+            description:`Assigned for BOT to WHT Sorting agent : ${botTrayData.agent_name} by Mis: ${botTrayData.username}`
+          });
+        }
         for (let y of data.wht_tray) {
           dataWht = await masters.findOneAndUpdate(
             { code: y },
@@ -2937,7 +2962,7 @@ module.exports = {
       for (let x of whtTrayData.tray) {
         let checkTray = await masters.findOne({ code: x });
         if (checkTray.sort_id == "Recharging") {
-          data = await masters.updateOne(
+          data = await masters.findOneAndUpdate(
             { code: x },
             {
               $set: {
@@ -2947,7 +2972,7 @@ module.exports = {
             }
           );
         } else {
-          data = await masters.updateOne(
+          data = await masters.findOneAndUpdate(
             { code: x },
             {
               $set: {
@@ -2959,9 +2984,23 @@ module.exports = {
             }
           );
         }
+        for(let y of data.items){
+          let unitsLogCreation = await unitsActionLog.create({
+            action_type:whtTrayData.sort_id,
+            created_at: Date.now(),
+            user_name_of_action: whtTrayData.actionUser,
+            agent_name: whtTrayData.user_name,
+            user_type: "PRC MIS",
+            uic: y.uic,
+            tray_id:x,
+            description:`${whtTrayData.sort_id} agent :${whtTrayData.user_name} by mis :${whtTrayData.actionUser}`
+          });
+        }
       }
-      if (data.matchedCount != 0) {
+      if (data) {
+       
         resolve(data);
+        
       } else {
         resolve();
       }
@@ -3082,7 +3121,7 @@ module.exports = {
           code: { $ne: toTray },
         })
         .catch((err) => reject(err));
-
+       
       if (whtTray.length !== 0) {
         for (let x of whtTray) {
           let count = x.limit - x.items.length;

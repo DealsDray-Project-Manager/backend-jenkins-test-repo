@@ -2,6 +2,7 @@ const { masters } = require("../../Model/mastersModel");
 const { delivery } = require("../../Model/deliveryModel/delivery");
 const { products } = require("../../Model/productModel/product");
 const { orders } = require("../../Model/ordersModel/ordersModel");
+const { unitsActionLog } = require("../../Model/units-log/units-action-log");
 
 module.exports = {
   dashboardCount: (username) => {
@@ -70,7 +71,7 @@ module.exports = {
         for (const item of tray.items) {
           selectedQtySum += parseInt(item.selected_qty);
         }
-       
+
         if (selectedQtySum == trayData.counts) {
           let data = await masters.findOneAndUpdate(
             { code: trayData.trayId },
@@ -146,7 +147,7 @@ module.exports = {
               tray_closed_by_bot: 1,
               rdl_fls_one_report: 1,
               bqc_software_report: 1,
-              imei:1
+              imei: 1,
             }
           );
           if (uicExists) {
@@ -183,10 +184,7 @@ module.exports = {
       }
 
       for (let x of trayItemData.rdl_repair_report.rdl_two_part_status) {
-      
-        if (
-          x.rdl_two_status !== "Used" 
-        ) {
+        if (x.rdl_two_status !== "Used") {
           await masters.updateOne(
             {
               code: trayItemData.spTray,
@@ -197,9 +195,13 @@ module.exports = {
               },
             }
           );
-        } 
+        }
 
-         if(x.rdl_two_status == "Used" || x.rdl_two_status == "Not used" || x.rdl_two_status == "Not required") {
+        if (
+          x.rdl_two_status == "Used" ||
+          x.rdl_two_status == "Not used" ||
+          x.rdl_two_status == "Not required"
+        ) {
           await masters.updateOne(
             {
               code: trayItemData.trayId,
@@ -342,6 +344,14 @@ module.exports = {
           );
           if (updateRpTray) {
             for (let x of getRpTray.actual_items) {
+              const addLogsofUnits = await unitsActionLog.create({
+                action_type: "Closed by RDL-two",
+                created_at: Date.now(),
+                uic: x.uic,
+                tray_id: trayData.trayId,
+                user_name_of_action: getRpTray.issued_user_name,
+                report: x.rdl_repair_report,
+              });
               let updateDelivery = await delivery.findOneAndUpdate(
                 { "uic_code.code": x.uic },
                 {
