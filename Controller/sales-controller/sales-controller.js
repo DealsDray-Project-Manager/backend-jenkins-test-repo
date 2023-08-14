@@ -15,10 +15,8 @@ module.exports = {
         viewPriceCount: 0,
         buyerCount: 0,
       }; 
-      console.log("count:",count)
        count.buyerCount = await user.count({
       user_type: 'Buyer',sales_users:username});
-      console.log(" count.buyerCount :",count.buyerCount )
       count.viewPriceCount = await masters.aggregate([
         {
           $match: {
