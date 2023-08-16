@@ -1307,16 +1307,20 @@ module.exports = {
             );
           }
           if (data) {
+            let state = "Tray";
             for (let x of data.actual_items) {
               let unitsLogCreation = await unitsActionLog.create({
                 action_type: "Received From Charging",
-                action_date: Date.now(),
+                created_at: Date.now(),
                 user_name_of_action: trayData.actioUser,
                 user_type: "PRC WH",
                 agent_name: data.issued_user_name,
                 uic: x.uic,
                 tray_id: trayData.trayId,
+                track_tray: state,
+                description: `Received From Charging to agent:${data.issued_user_name} by WH :${trayData.actioUser}`,
               });
+              state = "Units";
               let deliveryTrack = await delivery.findOneAndUpdate(
                 { tracking_id: x.tracking_id },
                 {
@@ -1353,9 +1357,22 @@ module.exports = {
               }
             );
             if (data) {
-              for (let i = 0; i < data.actual_items.length; i++) {
+              let state = "Tray";
+              for (let x of data.actual_items) {
+                let unitsLogCreation = await unitsActionLog.create({
+                  action_type: "Audit Done  Received From Merging",
+                  created_at: Date.now(),
+                  user_name_of_action: trayData.actioUser,
+                  user_type: "PRC WH",
+                  agent_name: data.issued_user_name,
+                  uic: x.uic,
+                  tray_id: trayData.trayId,
+                  track_tray: state,
+                  description: `Audit Done  Received From Merging to agent:${data.issued_user_name} by WH :${trayData.actioUser}`,
+                });
+                state = "Units";
                 let deliveryTrack = await delivery.findOneAndUpdate(
-                  { tracking_id: data.items[i].awbn_number },
+                  { tracking_id: x.awbn_number },
                   {
                     $set: {
                       tray_status: "Audit Done  Received From Merging",
@@ -1383,9 +1400,21 @@ module.exports = {
               }
             );
             if (data) {
-              for (let i = 0; i < data.actual_items.length; i++) {
+              for (let x of data.actual_items) {
+                let unitsLogCreation = await unitsActionLog.create({
+                  action_type: "Ready to Audit Received From Merging",
+                  created_at: Date.now(),
+                  user_name_of_action: trayData.actioUser,
+                  user_type: "PRC WH",
+                  agent_name: data.issued_user_name,
+                  uic: x.uic,
+                  tray_id: trayData.trayId,
+                  track_tray: state,
+                  description: `Ready to Audit Received From Merging to agent:${data.issued_user_name} by WH :${trayData.actioUser}`,
+                });
+                state = "Units";
                 let deliveryTrack = await delivery.findOneAndUpdate(
-                  { tracking_id: data.items[i].awbn_number },
+                  { tracking_id: x.awbn_number },
                   {
                     $set: {
                       tray_status: "Ready to Audit Received From Merging",
@@ -1413,9 +1442,22 @@ module.exports = {
               }
             );
             if (data) {
-              for (let i = 0; i < data.actual_items.length; i++) {
+              let state = "Tray";
+              for (let x of data.actual_items) {
+                let unitsLogCreation = await unitsActionLog.create({
+                  action_type: "Ready to BQC Received From Merging",
+                  created_at: Date.now(),
+                  user_name_of_action: trayData.actioUser,
+                  user_type: "PRC WH",
+                  agent_name: data.issued_user_name,
+                  uic: x.uic,
+                  tray_id: trayData.trayId,
+                  track_tray: state,
+                  description: `Ready to BQC Received From Merging to agent:${data.issued_user_name} by WH :${trayData.actioUser}`,
+                });
+                state = "Units";
                 let deliveryTrack = await delivery.findOneAndUpdate(
-                  { tracking_id: data.items[i].awbn_number },
+                  { tracking_id: x.awbn_number },
                   {
                     $set: {
                       tray_status: "Ready to BQC Received From Merging",
@@ -1443,9 +1485,22 @@ module.exports = {
               }
             );
             if (data) {
-              for (let i = 0; i < data.actual_items.length; i++) {
+              let state = "Tray";
+              for (let x of data.actual_items) {
+                let unitsLogCreation = await unitsActionLog.create({
+                  action_type: "Ready to BQC Received From Merging",
+                  created_at: Date.now(),
+                  user_name_of_action: trayData.actioUser,
+                  user_type: "PRC WH",
+                  agent_name: data.issued_user_name,
+                  uic: x.uic,
+                  tray_id: trayData.trayId,
+                  track_tray: state,
+                  description: `Ready to RDL-Repair Received From Merging to agent:${data.issued_user_name} by WH :${trayData.actioUser}`,
+                });
+                state = "Units";
                 let deliveryTrack = await delivery.findOneAndUpdate(
-                  { tracking_id: data.items[i].awbn_number },
+                  { tracking_id: x.awbn_number },
                   {
                     $set: {
                       tray_status: "Ready to RDL-Repair Received From Merging",
@@ -1473,9 +1528,21 @@ module.exports = {
               }
             );
             if (data) {
-              for (let i = 0; i < data.actual_items.length; i++) {
+              for (let x of data.actual_items) {
+                let unitsLogCreation = await unitsActionLog.create({
+                  action_type: "Received From Merging",
+                  created_at: Date.now(),
+                  user_name_of_action: trayData.actioUser,
+                  user_type: "PRC WH",
+                  agent_name: data.issued_user_name,
+                  uic: x.uic,
+                  tray_id: trayData.trayId,
+                  track_tray: state,
+                  description: `Received From Merging to agent:${data.issued_user_name} by WH :${trayData.actioUser}`,
+                });
+                state = "Units";
                 let deliveryTrack = await delivery.findOneAndUpdate(
-                  { tracking_id: data.items[i].awbn_number },
+                  { tracking_id: x.awbn_number },
                   {
                     $set: {
                       tray_status: "Received From Merging",
@@ -1555,6 +1622,7 @@ module.exports = {
             }
           );
           if (data) {
+            let state = "Tray";
             for (let x of data.items) {
               const addLogsofUnits = await unitsActionLog.create({
                 action_type: "Received From BOT",
@@ -1564,6 +1632,7 @@ module.exports = {
                 agent_name: data.issued_user_name,
                 user_name_of_action: trayData.username,
                 user_type: "PRC Warehouse",
+                track_tray: state,
                 description: `Received From BOT agent:${data.issued_user_name} WH : ${trayData.username}`,
               });
               let deliveryTrack = await delivery.findOneAndUpdate(
@@ -1581,6 +1650,7 @@ module.exports = {
                   projection: { _id: 0 },
                 }
               );
+              state = "Units";
             }
             resolve({ status: 1 });
           } else {
@@ -1689,6 +1759,7 @@ module.exports = {
         );
       }
       if (data) {
+        let state = "Tray";
         for (let x of data?.items) {
           let unitsLogCreation = await unitsActionLog.create({
             action_type: "Closed By Warehouse",
@@ -1697,6 +1768,7 @@ module.exports = {
             user_type: "PRC Warehouse",
             uic: x.uic,
             tray_id: trayData.trayId,
+            track_tray: state,
             description: `Bot done closed by warehouse agent :${trayData.username}`,
           });
           let deliveryTrack = await delivery.findOneAndUpdate(
@@ -1714,6 +1786,7 @@ module.exports = {
               projection: { _id: 0 },
             }
           );
+          state = "Units";
         }
         resolve(data);
       } else {
@@ -1757,6 +1830,7 @@ module.exports = {
         );
       }
       if (data) {
+        let state = "Tray";
         for (let x of data.items) {
           let unitsLogCreation = await unitsActionLog.create({
             action_type: "Closed By Warehouse",
@@ -1764,9 +1838,11 @@ module.exports = {
             user_name_of_action: trayData.username,
             user_type: "PRC Warehouse",
             uic: x.uic,
+            track_tray: state,
             tray_id: trayData.trayId,
             description: `Bot done closed by warehouse agent :${trayData.username}`,
           });
+          state = "Units";
           let getItemId = await delivery.findOneAndUpdate(
             {
               tracking_id: x.awbn_number,
@@ -2841,16 +2917,20 @@ module.exports = {
           }
         );
         if (data) {
+          let state = "Tray";
           for (let x of data.items) {
             const addLogsofUnits = await unitsActionLog.create({
-              action_type: "Issued to BQC",
+              action_type: "Issued for BQC",
               created_at: Date.now(),
               uic: x.uic,
               agent_name: data.issued_user_name,
               user_name_of_action: trayData.actionUser,
               tray_id: trayData.trayId,
               user_type: "PRC WH",
+              track_tray: state,
+              description: `Issued for BQC to agent :${data.issued_user_name} by WH :${trayData.actionUser}`,
             });
+            state = "Units";
             let deliveryUpdate = await delivery.findOneAndUpdate(
               { tracking_id: x.tracking_id },
               {
@@ -2885,6 +2965,7 @@ module.exports = {
           }
         );
         if (data) {
+          let state = "Tray";
           for (let x of data.items) {
             const addLogsofUnits = await unitsActionLog.create({
               action_type: "Issued to Recharging",
@@ -2894,8 +2975,10 @@ module.exports = {
               user_name_of_action: trayData.actionUser,
               tray_id: trayData.trayId,
               user_type: "PRC Warehouse",
+              track_tray: state,
               description: `Issued to Recharging agent :${data.issued_user_name} by Wh:${trayData.actionUser}`,
             });
+            state = "Units";
             let deliveryUpdate = await delivery.findOneAndUpdate(
               { tracking_id: x.tracking_id },
               {
@@ -2934,7 +3017,20 @@ module.exports = {
           }
         );
         if (data) {
+          let state = "Tray";
           for (let x of data.items) {
+            const addLogsofUnits = await unitsActionLog.create({
+              action_type: "Issued to RDL-FLS",
+              created_at: Date.now(),
+              uic: x.uic,
+              agent_name: data.issued_user_name,
+              user_name_of_action: trayData.actionUser,
+              tray_id: trayData.trayId,
+              user_type: "PRC WH",
+              track_tray: state,
+              description: `Issued to RDL-FLS to agent :${data.issued_user_name} by WH :${trayData.actionUser}`,
+            });
+            state = "Units";
             let deliveryUpdate = await delivery.findOneAndUpdate(
               { tracking_id: x.tracking_id },
               {
@@ -2976,7 +3072,20 @@ module.exports = {
           }
         );
         if (data) {
+          let state = "Tray";
           for (let x of data.items) {
+            const addLogsofUnits = await unitsActionLog.create({
+              action_type: "Issued to RDL-two",
+              created_at: Date.now(),
+              uic: x.uic,
+              agent_name: data.issued_user_name,
+              user_name_of_action: trayData.actionUser,
+              tray_id: trayData.trayId,
+              user_type: "PRC Warehouse",
+              track_tray: state,
+              description: `Issued to RDL-two :${data.issued_user_name} by WH :${trayData.actionUser}`,
+            });
+            state = "Units";
             let deliveryUpdate = await delivery.findOneAndUpdate(
               { tracking_id: x.tracking_id },
               {
@@ -3016,6 +3125,7 @@ module.exports = {
           }
         );
         if (data) {
+          let state = "Tray";
           for (let x of data.items) {
             const addLogsofUnits = await unitsActionLog.create({
               action_type: "Issued to Charging",
@@ -3025,8 +3135,10 @@ module.exports = {
               user_name_of_action: trayData.actionUser,
               tray_id: trayData.trayId,
               user_type: "PRC Warehouse",
+              track_tray: state,
               description: `Issued to Charging agent :${data.issued_user_name} by Wh :${trayData.actionUser}`,
             });
+            state = "Units";
             let deliveryUpdate = await delivery.findOneAndUpdate(
               { tracking_id: x.tracking_id },
               {
@@ -3287,11 +3399,12 @@ module.exports = {
           for (let x of data.items) {
             let unitsLogCreation = await unitsActionLog.create({
               action_type: "Ready to Audit",
-              action_date: Date.now(),
+              created_at: Date.now(),
               user_name_of_action: trayData.actioUser,
               user_type: "PRC WH",
               uic: x.uic,
               tray_id: trayData.trayId,
+              description: `Bqc done closed by Wh :${trayData.actioUser}`,
             });
             let deliveryUpdate = await delivery.findOneAndUpdate(
               {
@@ -3348,15 +3461,19 @@ module.exports = {
           );
         }
         if (data) {
+          let state = "Tray";
           for (let x of data.items) {
             let unitsLogCreation = await unitsActionLog.create({
               action_type: "Ready to BQC",
-              action_date: Date.now(),
+              created_at: Date.now(),
               user_name_of_action: trayData.actioUser,
               user_type: "PRC WH",
               uic: x.uic,
               tray_id: trayData.trayId,
+              description: `Charging done closed by WH :${trayData.actioUser}`,
+              track_tray: state,
             });
+            state = "Units";
             let deliveryUpdate = await delivery.findOneAndUpdate(
               {
                 tracking_id: x.tracking_id,
@@ -3465,11 +3582,12 @@ module.exports = {
         for (let x of data.items) {
           let unitsLogCreation = await unitsActionLog.create({
             action_type: stage,
-            action_date: Date.now(),
+            created_at: Date.now(),
             user_name_of_action: trayData.actioUser,
             user_type: "PRC WH",
             uic: x.uic,
             tray_id: trayData.trayId,
+            description: `${stage} closed by Wh:${trayData.actioUser}`,
           });
           let deliveryUpdate = await delivery.findOneAndUpdate(
             {
@@ -3593,12 +3711,13 @@ module.exports = {
           for (let x of data.actual_items) {
             let unitsLogCreation = await unitsActionLog.create({
               action_type: "Received From BQC",
-              action_date: Date.now(),
+              created_at: Date.now(),
               user_name_of_action: trayData.actioUser,
               user_type: "PRC WH",
               uic: x.uic,
               agent_name: data.issued_user_name,
               tray_id: trayData.trayId,
+              description: `Received From BQC agent :${data.issued_user_name} by Wh:${trayData.actioUser}`,
             });
             let deliveryTrack = await delivery.findOneAndUpdate(
               { tracking_id: x.tracking_id },
@@ -3644,16 +3763,20 @@ module.exports = {
           }
         );
         if (data) {
+          let state = "Tray";
           for (let x of data?.items) {
             let unitsLogCreation = await unitsActionLog.create({
               action_type: "Received From Audit",
-              action_date: Date.now(),
+              created_at: Date.now(),
               user_name_of_action: trayData.actioUser,
               user_type: "PRC WH",
               uic: x.uic,
               agent_name: data.issued_user_name,
               tray_id: trayData.trayId,
+              track_tray: state,
+              description: `Received From Audit agent :${data.issued_user_name} by Wh: ${trayData.actioUser}`,
             });
+            state = "Units";
             let deliveryTrack = await delivery.findOneAndUpdate(
               { tracking_id: x.tracking_id },
               {
@@ -3699,7 +3822,19 @@ module.exports = {
             }
           );
           if (data) {
+            let state = "Tray";
             for (let x of data.items) {
+              let unitsLogCreation = await unitsActionLog.create({
+                action_type: "Received From Sorting Agent After Ctx to Stx",
+                created_at: Date.now(),
+                agent_name: data.issued_user_name,
+                user_type: "PRC Warehouse",
+                uic: x.uic,
+                tray_id: trayData.trayId,
+                track_tray: state,
+                description: `Received From Sorting Agent After Ctx to Stx agent: ${data.issued_user_name} By Wh:${trayData.username}`,
+              });
+              state = "Units";
               let updateDelivery = await delivery.findOneAndUpdate(
                 {
                   tracking_id: x.tracking_id,
@@ -3731,6 +3866,7 @@ module.exports = {
             }
           );
           if (data) {
+            let state = "Tray";
             for (let x of data.items) {
               let unitsLogCreation = await unitsActionLog.create({
                 action_type: "Received From Sorting (BOT TO WHT)",
@@ -3740,8 +3876,10 @@ module.exports = {
                 user_type: "PRC Warehouse",
                 uic: x.uic,
                 tray_id: trayData.trayId,
+                track_tray: state,
                 description: `Received From Sorting (BOT TO WHT) agent ${data.issued_user_name} By Wh:${trayData.username}`,
               });
+              state = "Units";
               let updateDelivery = await delivery.findOneAndUpdate(
                 {
                   tracking_id: x.tracking_id,
@@ -3844,6 +3982,7 @@ module.exports = {
           trayData.type == "Issued to sorting agent" &&
           x.type_taxanomy == "BOT"
         ) {
+          let state = "Tray";
           for (let y of data.items) {
             let unitsLogCreation = await unitsActionLog.create({
               action_type: "Issued to Sorting (BOT TO WHT)",
@@ -3853,8 +3992,10 @@ module.exports = {
               user_type: "PRC Warehouse",
               uic: y.uic,
               tray_id: x.code,
+              track_tray: state,
               description: `Issued to Sorting (BOT TO WHT) agent : ${data.issued_user_name} By Wh: ${trayData.actionUser}`,
             });
+            state = "Units";
             let deliveryUpdate = await delivery.findOneAndUpdate(
               { tracking_id: y.awbn_number },
               {
@@ -3903,6 +4044,7 @@ module.exports = {
           }
         );
         if (data) {
+          let state = "Tray";
           for (let x of data.items) {
             let unitsLogCreation = await unitsActionLog.create({
               action_type: "Ready for Charging",
@@ -3911,8 +4053,10 @@ module.exports = {
               user_type: "PRC Warehouse",
               uic: x.uic,
               tray_id: trayData.code,
+              track_tray: state,
               description: `Ready for Charging Closed by Wh :${trayData.username}`,
             });
+            state = "Units";
             let updateDelivery = await delivery.findOneAndUpdate(
               {
                 tracking_id: x.tracking_id,
@@ -4282,7 +4426,7 @@ module.exports = {
 
   /*-----------------ASSIGN TO SORTING AGENT-------------------------*/
 
-  assignToSortingAgent: (user_name, fromTray, toTray) => {
+  assignToSortingAgent: (user_name, fromTray, toTray, actionUser) => {
     return new Promise(async (resolve, reject) => {
       let checkFromTray = await masters.findOne({ code: fromTray });
       let updaFromTray, updaToTray;
@@ -4300,14 +4444,7 @@ module.exports = {
             },
           }
         );
-        let updateRack = await trayRack.findOneAndUpdate(
-          { rack_id: updaFromTray?.rack_id },
-          {
-            $pull: {
-              bag_or_tray: updaFromTray.code,
-            },
-          }
-        );
+
         if (updaFromTray) {
           updaToTray = await masters.findOneAndUpdate(
             { code: toTray },
@@ -4317,14 +4454,6 @@ module.exports = {
                 rack_id: null,
                 sort_id: "Audit Done Issued to Merging",
                 "track_tray.issue_to_merging": Date.now(),
-              },
-            }
-          );
-          let updateRack = await trayRack.findOneAndUpdate(
-            { rack_id: updaToTray?.rack_id },
-            {
-              $pull: {
-                bag_or_tray: updaToTray?.code,
               },
             }
           );
@@ -4346,14 +4475,6 @@ module.exports = {
           }
         );
         if (updaFromTray) {
-          let updateRack = await trayRack.findOneAndUpdate(
-            { rack_id: updaFromTray?.rack_id },
-            {
-              $pull: {
-                bag_or_tray: updaFromTray?.code,
-              },
-            }
-          );
           updaToTray = await masters.findOneAndUpdate(
             { code: toTray },
             {
@@ -4362,14 +4483,6 @@ module.exports = {
                 rack_id: null,
                 sort_id: "Ready to BQC Issued to Merging",
                 "track_tray.issue_to_merging": Date.now(),
-              },
-            }
-          );
-          let updaToTrayRack = await trayRack.findOneAndUpdate(
-            { rack_id: updaToTray?.rack_id },
-            {
-              $pull: {
-                bag_or_tray: updaToTray.code,
               },
             }
           );
@@ -4392,14 +4505,6 @@ module.exports = {
           }
         );
         if (updaFromTray) {
-          let updaFromTray = await trayRack.findOneAndUpdate(
-            { rack_id: updaFromTray?.rack_id },
-            {
-              $pull: {
-                bag_or_tray: updaFromTray.code,
-              },
-            }
-          );
           updaToTray = await masters.findOneAndUpdate(
             { code: toTray },
             {
@@ -4408,14 +4513,6 @@ module.exports = {
                 rack_id: null,
                 sort_id: "Ready to Audit Issued to Merging",
                 "track_tray.issue_to_merging": Date.now(),
-              },
-            }
-          );
-          let updaToTrayRack = await trayRack.findOneAndUpdate(
-            { rack_id: updaToTray?.rack_id },
-            {
-              $pull: {
-                bag_or_tray: updaToTray.code,
               },
             }
           );
@@ -4438,14 +4535,6 @@ module.exports = {
           }
         );
         if (updaFromTray) {
-          let updaFromTrayRack = await trayRack.findOneAndUpdate(
-            { rack_id: updaFromTray?.rack_id },
-            {
-              $pull: {
-                bag_or_tray: updaFromTray.code,
-              },
-            }
-          );
           updaToTray = await masters.findOneAndUpdate(
             { code: toTray },
             {
@@ -4454,14 +4543,6 @@ module.exports = {
                 rack_id: null,
                 sort_id: "Ready to RDL-Repair Issued to Merging",
                 "track_tray.issue_to_merging": Date.now(),
-              },
-            }
-          );
-          let updaToTrayRack = await trayRack.findOneAndUpdate(
-            { rack_id: updaToTray?.rack_id },
-            {
-              $pull: {
-                bag_or_tray: updaToTray.code,
               },
             }
           );
@@ -4481,14 +4562,6 @@ module.exports = {
           }
         );
         if (updaFromTray) {
-          let updaToTrayRack = await trayRack.findOneAndUpdate(
-            { rack_id: updaFromTray?.rack_id },
-            {
-              $pull: {
-                bag_or_tray: updaFromTray.code,
-              },
-            }
-          );
           updaToTray = await masters.findOneAndUpdate(
             { code: toTray },
             {
@@ -4497,14 +4570,6 @@ module.exports = {
                 rack_id: null,
                 sort_id: "Issued to Sorting for Ctx to Stx",
                 "track_tray.ctx_issued_sorting": Date.now(),
-              },
-            }
-          );
-          let updaTrayRack = await trayRack.findOneAndUpdate(
-            { rack_id: updaToTray?.rack_id },
-            {
-              $pull: {
-                bag_or_tray: updaToTray.code,
               },
             }
           );
@@ -4524,14 +4589,6 @@ module.exports = {
           }
         );
         if (updaFromTray) {
-          let updaFromTrayRack = await trayRack.findOneAndUpdate(
-            { rack_id: updaFromTray?.rack_id },
-            {
-              $pull: {
-                bag_or_tray: updaFromTray.code,
-              },
-            }
-          );
           updaToTray = await masters.findOneAndUpdate(
             { code: toTray },
             {
@@ -4543,21 +4600,13 @@ module.exports = {
               },
             }
           );
-          let updaFromToRack = await trayRack.findOneAndUpdate(
-            { rack_id: updaToTray?.rack_id },
-            {
-              $pull: {
-                bag_or_tray: updaToTray.code,
-              },
-            }
-          );
         } else {
           resolve({ status: 0 });
         }
       }
       if (updaToTray) {
-        const joinedArray = updaToTray?.items?.concat(updaFromTray?.items);
-        for (let x of joinedArray) {
+        let state = "Tray";
+        for (let x of updaFromTray) {
           let deliveryUpdate = await delivery.findOneAndUpdate(
             { tracking_id: x.tracking_id },
             {
@@ -4572,9 +4621,47 @@ module.exports = {
               projection: { _id: 0 },
             }
           );
-          // let updateElasticSearch = await elasticsearch.uicCodeGen(
-          //   deliveryUpdate
-          // );
+          const addLogsofUnits = await unitsActionLog.create({
+            action_type: "Issued to merging",
+            created_at: Date.now(),
+            uic: x.uic,
+            agent_name: data.issued_user_name,
+            user_name_of_action: actionUser,
+            tray_id: updaFromTray.code,
+            user_type: "PRC Warehouse",
+            track_tray: state,
+            description: `Issued for merging to agent :${data.issued_user_name} by WH :${actionUser}`,
+          });
+          state = "Units";
+        }
+        let state1 = "Tray";
+        for (let x of updaToTray) {
+          let deliveryUpdate = await delivery.findOneAndUpdate(
+            { tracking_id: x.tracking_id },
+            {
+              $set: {
+                tray_status: "Issued to merging",
+                tray_location: "Sorting Agent",
+                updated_at: Date.now(),
+              },
+            },
+            {
+              new: true,
+              projection: { _id: 0 },
+            }
+          );
+          const addLogsofUnits = await unitsActionLog.create({
+            action_type: "Issued to merging",
+            created_at: Date.now(),
+            uic: x.uic,
+            agent_name: data.issued_user_name,
+            user_name_of_action: actionUser,
+            tray_id: updaToTray.code,
+            user_type: "PRC Warehouse",
+            track_tray: state1,
+            description: `Issued for merging to agent :${data.issued_user_name} by WH :${actionUser}`,
+          });
+          state = "Units";
         }
         resolve({ status: 1 });
       } else {
@@ -4680,7 +4767,8 @@ module.exports = {
     length,
     limit,
     status,
-    rackId
+    rackId,
+    actioUser
   ) => {
     let data;
     let stage;
@@ -4935,15 +5023,19 @@ module.exports = {
         }
       }
       if (data) {
-        let updateRack = await trayRack.findOneAndUpdate(
-          { rack_id: rackId },
-          {
-            $push: {
-              bag_or_tray: data.code,
-            },
-          }
-        );
+        let state = "Tray";
         for (let x of data.items) {
+          let unitsLogCreation = await unitsActionLog.create({
+            action_type: stage,
+            created_at: Date.now(),
+            user_name_of_action: actioUser,
+            user_type: "PRC WH",
+            uic: x.uic,
+            tray_id: toTray,
+            track_tray: state,
+            description: `${stage}  by WH :${actioUser}`,
+          });
+          state = "Units";
           let update = await delivery.findOneAndUpdate(
             {
               $or: [
@@ -4982,14 +5074,7 @@ module.exports = {
               },
             }
           );
-          let updateRackmmT = await trayRack.findOneAndUpdate(
-            { rack_id: rackId },
-            {
-              $push: {
-                bag_or_tray: updateFromTray.code,
-              },
-            }
-          );
+
           if (updateFromTray) {
             resolve({ status: 1 });
           } else {
@@ -5179,15 +5264,19 @@ module.exports = {
         );
 
         if (issue.type_taxanomy == "WHT") {
+          let state = "Tray";
           for (let y of issue.items) {
             let unitsLogCreation = await unitsActionLog.create({
               action_type: "Issued to Audit",
-              action_date: Date.now(),
+              created_at: Date.now(),
               user_name_of_action: trayData.actioUser,
               user_type: "PRC WH",
               uic: y.uic,
               tray_id: x,
+              description: `Issued for Audit to agent :${issue.issued_user_name}`,
+              track_tray: state,
             });
+            state = "Units";
             let updateTrack = await delivery.findOneAndUpdate(
               { tracking_id: y.tracking_id },
               {
@@ -5205,9 +5294,6 @@ module.exports = {
                 projection: { _id: 0 },
               }
             );
-            // let updateElasticSearch = await elasticsearch.uicCodeGen(
-            //   updateTrack
-            // );
           }
         }
       }
@@ -5786,17 +5872,22 @@ module.exports = {
           },
         }
       );
-      let updateRack = await trayRack.findOneAndUpdate(
-        { rack_id: toTray },
-        {
-          $pull: {
-            bag_or_tray: updateToTray.code,
-          },
-        }
-      );
 
       if (updateFromTray && updateToTray) {
+        let state = "Tray";
         for (let x of updateFromTray?.items) {
+          let unitsLogCreation = await unitsActionLog.create({
+            action_type: "Issued to Sorting for Pickup",
+            created_at: Date.now(),
+            user_name_of_action: trayData.actUser,
+            agent_name: updateFromTray.issued_user_name,
+            user_type: "PRC Warehouse",
+            uic: x.uic,
+            tray_id: fromTray,
+            track_tray: state,
+            description: `Issued to Sorting for Pickup to agent :${updateFromTray.issued_user_name} by Wh :${trayData.actUser}`,
+          });
+          state = "Units";
           let deliveryUpdate = await delivery.findOneAndUpdate(
             { tracking_id: x.tracking_id },
             {
@@ -5812,9 +5903,6 @@ module.exports = {
               projection: { _id: 0 },
             }
           );
-          // let updateElasticSearch = await elasticsearch.uicCodeGen(
-          //   deliveryUpdate
-          // );
         }
         resolve({ status: 1 });
       } else {
@@ -5854,12 +5942,24 @@ module.exports = {
           }
         );
         if (update) {
+          let state = "Tray";
           for (let x of update?.items) {
+            let unitsLogCreation = await unitsActionLog.create({
+              action_type: "Pickup Done Received",
+              created_at: Date.now(),
+              agent_name: update.issued_user_name,
+              user_type: "PRC Warehouse",
+              uic: x.uic,
+              tray_id: update.code,
+              track_tray: state,
+              description: `Pickup Done Received to agent :${update.issued_user_name} by Wh :${trayData.actUser}`,
+            });
+            state = "Units";
             let deliveryUpdate = await delivery.findOneAndUpdate(
               { tracking_id: x.tracking_id },
               {
                 $set: {
-                  tray_status: "Pickup Done",
+                  tray_status: "Pickup Done Received",
                   tray_location: "Warehouse",
                   updated_at: Date.now(),
                 },
@@ -5869,9 +5969,6 @@ module.exports = {
                 projection: { _id: 0 },
               }
             );
-            // let updateElasticSearch = await elasticsearch.uicCodeGen(
-            //   deliveryUpdate
-            // );
           }
           resolve({ status: 1 });
         } else {
@@ -6024,15 +6121,19 @@ module.exports = {
         }
       }
       if (data) {
-        let updateRack = await trayRack.findOneAndUpdate(
-          { rack_id: trayData.rackId },
-          {
-            $push: {
-              bag_or_tray: data.code,
-            },
-          }
-        );
+        let state = "Tray";
         for (let x of data?.items) {
+          let unitsLogCreation = await unitsActionLog.create({
+            action_type: status,
+            created_at: Date.now(),
+            agent_name: data.issued_user_name,
+            user_type: "PRC Warehouse",
+            uic: x.uic,
+            tray_id: data.code,
+            track_tray: state,
+            description: `${status} to agent :${data.issued_user_name} by Wh :${trayData.actUser}`,
+          });
+          state = "Units";
           let deliveryTrack = await delivery.findOneAndUpdate(
             { tracking_id: x.tracking_id },
             {
@@ -6047,9 +6148,6 @@ module.exports = {
               projection: { _id: 0 },
             }
           );
-          // let updateElasticSearch = await elasticsearch.uicCodeGen(
-          //   deliveryTrack
-          // );
         }
 
         resolve({ status: 1 });
@@ -6234,9 +6332,22 @@ module.exports = {
           }
         );
         if (data) {
-          for (let i = 0; i < data.items.length; i++) {
+          let state = "Tray";
+          for (let x of data.items) {
+            let unitsLogCreation = await unitsActionLog.create({
+              action_type: "Recevied From RDL-FLS",
+              created_at: Date.now(),
+              user_name_of_action: trayData.actioUser,
+              agent_name: data.issued_user_name,
+              user_type: "PRC Warehouse",
+              uic: x.uic,
+              tray_id: trayData.trayId,
+              track_tray: state,
+              description: `Recevied From RDL-FLS to agent :${data.issued_user_name} by Wh :${trayData.actioUser}`,
+            });
+            state = "Units";
             let deliveryTrack = await delivery.findOneAndUpdate(
-              { tracking_id: data.items[i].tracking_id },
+              { tracking_id: x.tracking_id },
               {
                 $set: {
                   tray_status: "Recevied From RDL-FLS",
@@ -6491,14 +6602,6 @@ module.exports = {
             }
           );
           if (data) {
-            let updateRack = await trayRack.findOneAndUpdate(
-              { rack_id: trayData.rackId },
-              {
-                $push: {
-                  bag_or_tray: data.code,
-                },
-              }
-            );
             for (let x of data.items) {
               let updateTrack = await delivery.findOneAndUpdate(
                 { tracking_id: x.tracking_id },
@@ -6514,9 +6617,6 @@ module.exports = {
                   projection: { _id: 0 },
                 }
               );
-              // let updateElasticSearch = await elasticsearch.uicCodeGen(
-              //   updateTrack
-              // );
             }
             resolve({ status: 4 });
           } else {
@@ -6733,6 +6833,25 @@ module.exports = {
       resolve(tray);
     });
   },
+  sortingDonectxTostxCloseLogData: (items, trayId, stage, username) => {
+    return new Promise(async (resolve, reject) => {
+      let state = "Tray";
+      for (let x of items) {
+        const addLogsofUnits = await unitsActionLog.create({
+          action_type: stage,
+          created_at: Date.now(),
+          uic: x.uic,
+          tray_id: trayId,
+          user_name_of_action: data.issued_user_name,
+          description: `${stage} closed by agent :${username}`,
+          track_tray: state,
+          user_type: "PRC Warehouse",
+        });
+        state = "Units";
+      }
+      resolve();
+    });
+  },
   sortingDoneCtxStxClose: (trayData) => {
     return new Promise(async (resolve, reject) => {
       let dataUpdate;
@@ -6756,15 +6875,7 @@ module.exports = {
             }
           );
           if (dataUpdate) {
-            let updateRack = await trayRack.findOneAndUpdate(
-              { rack_id: trayData.rackId },
-              {
-                $push: {
-                  bag_or_tray: dataUpdate.code,
-                },
-              }
-            );
-            resolve({ status: 1 });
+            resolve({ status: 1, tray: dataUpdate });
           } else {
             resolve({ status: 0 });
           }
@@ -6787,14 +6898,6 @@ module.exports = {
             }
           );
           if (dataUpdate) {
-            let updateRack = await trayRack.findOneAndUpdate(
-              { rack_id: trayData.rackId },
-              {
-                $push: {
-                  bag_or_tray: dataUpdate.code,
-                },
-              }
-            );
             resolve({ status: 3 });
           } else {
             resolve({ status: 0 });
@@ -6820,15 +6923,7 @@ module.exports = {
           );
         }
         if (dataUpdate) {
-          let updateRack = await trayRack.findOneAndUpdate(
-            { rack_id: trayData.rackId },
-            {
-              $push: {
-                bag_or_tray: dataUpdate.code,
-              },
-            }
-          );
-          resolve({ status: 3 });
+          resolve({ status: 3, tray: dataUpdate });
         } else {
           resolve({ status: 0 });
         }
@@ -6851,15 +6946,7 @@ module.exports = {
             }
           );
           if (dataUpdate) {
-            let updateRack = await trayRack.findOneAndUpdate(
-              { rack_id: trayData.rackId },
-              {
-                $push: {
-                  bag_or_tray: dataUpdate.code,
-                },
-              }
-            );
-            resolve({ status: 2 });
+            resolve({ status: 2, tray: dataUpdate });
           } else {
             resolve({ status: 0 });
           }
@@ -6881,15 +6968,7 @@ module.exports = {
             }
           );
           if (dataUpdate) {
-            let updateRack = await trayRack.findOneAndUpdate(
-              { rack_id: trayData.rackId },
-              {
-                $push: {
-                  bag_or_tray: dataUpdate.code,
-                },
-              }
-            );
-            resolve({ status: 3 });
+            resolve({ status: 3, tray: dataUpdate });
           } else {
             resolve({ status: 0 });
           }
@@ -7041,6 +7120,7 @@ module.exports = {
         cpc: location,
         sort_id: "Assigned to sorting (Wht to rp)",
       });
+      console.log(getTray);
       resolve(getTray);
     });
   },
@@ -7056,7 +7136,7 @@ module.exports = {
       resolve(trayData);
     });
   },
-  whtToRpIssueToAgent: (rpTray, whtTray) => {
+  whtToRpIssueToAgent: (rpTray, whtTray, actUser) => {
     return new Promise(async (resolve, reject) => {
       whtTray.push(rpTray);
       let rptTrayUpdate;
@@ -7074,15 +7154,20 @@ module.exports = {
           }
         );
         if (rptTrayUpdate) {
-          let updateRack = await trayRack.findOneAndUpdate(
-            { rack_id: rptTrayUpdate.rack_id },
-            {
-              $pull: {
-                bag_or_tray: rptTrayUpdate.code,
-              },
-            }
-          );
+          let state = "Tray";
           for (let x of rptTrayUpdate?.items) {
+            let unitsLogCreation = await unitsActionLog.create({
+              action_type: "Issued to sorting (Wht to rp)",
+              created_at: Date.now(),
+              user_name_of_action: actUser,
+              agent_name: rptTrayUpdate.issued_user_name,
+              user_type: "PRC Warehouse",
+              uic: x.uic,
+              tray_id: tray,
+              track_tray: state,
+              description: `Issued to sorting (Wht to rp) to agent :${rptTrayUpdate.issued_user_name} by Wh :${actUser}`,
+            });
+            state = "Units";
             const updateDelivery = await delivery.findOneAndUpdate(
               { "uic_code.code": x.uic },
               {
@@ -7137,9 +7222,20 @@ module.exports = {
           }
         );
         if (data) {
-          for (let i = 0; i < data.items.length; i++) {
+          for (let x of data.items) {
+            let unitsLogCreation = await unitsActionLog.create({
+              action_type: "Received from sorting (Wht to rp)",
+              created_at: Date.now(),
+              user_name_of_action: trayData.actUser,
+              agent_name: data.issued_user_name,
+              user_type: "PRC Warehouse",
+              uic: y.uic,
+              tray_id: trayData.trayId,
+              track_tray: state,
+              description: `Received from sorting (Wht to rp) to agent :${data.issued_user_name} by Wh :${trayData.actUser}`,
+            });
             let deliveryTrack = await delivery.findOneAndUpdate(
-              { tracking_id: data.items[i].tracking_id },
+              { tracking_id: x.tracking_id },
               {
                 $set: {
                   tray_status: "Received from sorting (Wht to rp)",
