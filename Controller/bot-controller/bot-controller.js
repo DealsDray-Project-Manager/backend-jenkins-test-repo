@@ -211,6 +211,7 @@ module.exports = {
             report: obj,
             uic: trayData.uic,
             user_type: "BOT",
+            track_tray:"Tray",
             description: `Item transferred to bot tray by ${res.issued_user_name}`,
           });
           let updateDelivery = await delivery.findOneAndUpdate(
@@ -292,6 +293,7 @@ module.exports = {
           }
         );
         if (data) {
+          let state="Tray"
           for (let x of data.items) {
             let unitsLogCreation = await unitsActionLog.create({
               action_type: "Closed By Bot",
@@ -300,6 +302,7 @@ module.exports = {
               user_type: "BOT",
               awbn_number: x.awbn_number,
               tray_id: trayId,
+              track_tray:state,
               description: `Closed by bot agent :${data.issued_user_name}`,
             });
             let deliveryTrack = await delivery.findOneAndUpdate(
@@ -316,6 +319,7 @@ module.exports = {
                 projection: { _id: 0 },
               }
             );
+            state = "Units"
           }
           resolve({ status: 1 });
         } else {

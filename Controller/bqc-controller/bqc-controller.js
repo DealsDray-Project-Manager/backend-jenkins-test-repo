@@ -257,7 +257,6 @@ module.exports = {
       if (!getTray) {
         return null;
       }
-  
       const updatedItems = getTray.actual_items.map((item) => {
         const bqc_report = item.bqc_report || {};
         bqc_report.bqc_status = item.bqc_status;
@@ -277,7 +276,6 @@ module.exports = {
           report: item.bqc_report,
         }))
       );
-  
       await delivery.updateMany(
         { tracking_id: { $in: getTray.actual_items.map((item) => item.tracking_id) } },
         {

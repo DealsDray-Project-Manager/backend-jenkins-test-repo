@@ -224,6 +224,7 @@ module.exports = {
             user_type: "PRC Sorting",
             uic: itemData.uic,
             tray_id:itemData.wht_tray,
+            track_tray:"Tray",
             description:`Item transfered to WHT by agent ${assignToWht.issued_user_name}`
           });
           let updateDelivery = await delivery.findOneAndUpdate(

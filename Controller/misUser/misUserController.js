@@ -2642,6 +2642,7 @@ module.exports = {
             },
           }
         );
+        let state="Tray"
         for (let y of data.items) {
           let unitsLogCreation = await unitsActionLog.create({
             action_type: "Assigned for BOT to WHT Sorting",
@@ -2651,8 +2652,10 @@ module.exports = {
             user_type: "PRC MIS",
             uic: y.uic,
             tray_id:x,
+            track_tray:state,
             description:`Assigned for BOT to WHT Sorting agent : ${botTrayData.agent_name} by Mis: ${botTrayData.username}`
           });
+          state="Units"
         }
         for (let y of data.wht_tray) {
           dataWht = await masters.findOneAndUpdate(
@@ -2984,6 +2987,7 @@ module.exports = {
             }
           );
         }
+        let state="Tray"
         for(let y of data.items){
           let unitsLogCreation = await unitsActionLog.create({
             action_type:whtTrayData.sort_id,
@@ -2993,8 +2997,10 @@ module.exports = {
             user_type: "PRC MIS",
             uic: y.uic,
             tray_id:x,
+            track_tray:state,
             description:`${whtTrayData.sort_id} agent :${whtTrayData.user_name} by mis :${whtTrayData.actionUser}`
           });
+          state="Tray"
         }
       }
       if (data) {

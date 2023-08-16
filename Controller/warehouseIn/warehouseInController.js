@@ -1307,6 +1307,7 @@ module.exports = {
             );
           }
           if (data) {
+            let state="Tray"
             for (let x of data.actual_items) {
               let unitsLogCreation = await unitsActionLog.create({
                 action_type: "Received From Charging",
@@ -1316,7 +1317,10 @@ module.exports = {
                 agent_name: data.issued_user_name,
                 uic: x.uic,
                 tray_id: trayData.trayId,
+                track_tray:state,
+                description:`Received From Charging by agent:${data.issued_user_name} by WH :${trayData.actioUser}`
               });
+              state="Units"
               let deliveryTrack = await delivery.findOneAndUpdate(
                 { tracking_id: x.tracking_id },
                 {
@@ -1555,6 +1559,7 @@ module.exports = {
             }
           );
           if (data) {
+            let state="Tray"
             for (let x of data.items) {
               const addLogsofUnits = await unitsActionLog.create({
                 action_type: "Received From BOT",
@@ -1564,6 +1569,7 @@ module.exports = {
                 agent_name: data.issued_user_name,
                 user_name_of_action: trayData.username,
                 user_type: "PRC Warehouse",
+                track_tray:state,
                 description: `Received From BOT agent:${data.issued_user_name} WH : ${trayData.username}`,
               });
               let deliveryTrack = await delivery.findOneAndUpdate(
@@ -1581,6 +1587,7 @@ module.exports = {
                   projection: { _id: 0 },
                 }
               );
+              state = "Units"
             }
             resolve({ status: 1 });
           } else {
@@ -1689,6 +1696,7 @@ module.exports = {
         );
       }
       if (data) {
+        let state="Tray"
         for (let x of data?.items) {
           let unitsLogCreation = await unitsActionLog.create({
             action_type: "Closed By Warehouse",
@@ -1697,6 +1705,7 @@ module.exports = {
             user_type: "PRC Warehouse",
             uic: x.uic,
             tray_id: trayData.trayId,
+            track_tray:state,
             description: `Bot done closed by warehouse agent :${trayData.username}`,
           });
           let deliveryTrack = await delivery.findOneAndUpdate(
@@ -1714,6 +1723,7 @@ module.exports = {
               projection: { _id: 0 },
             }
           );
+          state="Units"
         }
         resolve(data);
       } else {
@@ -1757,6 +1767,7 @@ module.exports = {
         );
       }
       if (data) {
+        let state="Tray"
         for (let x of data.items) {
           let unitsLogCreation = await unitsActionLog.create({
             action_type: "Closed By Warehouse",
@@ -1764,9 +1775,11 @@ module.exports = {
             user_name_of_action: trayData.username,
             user_type: "PRC Warehouse",
             uic: x.uic,
+            track_tray:state,
             tray_id: trayData.trayId,
             description: `Bot done closed by warehouse agent :${trayData.username}`,
           });
+          state = "Units"
           let getItemId = await delivery.findOneAndUpdate(
             {
               tracking_id: x.awbn_number,
@@ -2841,16 +2854,20 @@ module.exports = {
           }
         );
         if (data) {
+          let state="Tray"
           for (let x of data.items) {
             const addLogsofUnits = await unitsActionLog.create({
-              action_type: "Issued to BQC",
+              action_type: "Issued for BQC",
               created_at: Date.now(),
               uic: x.uic,
               agent_name: data.issued_user_name,
               user_name_of_action: trayData.actionUser,
               tray_id: trayData.trayId,
               user_type: "PRC WH",
+              track_tray:state,
+              description:`Issued for BQC to agent :${data.issued_user_name} by WH :${trayData.actionUser}`
             });
+            state="Units"
             let deliveryUpdate = await delivery.findOneAndUpdate(
               { tracking_id: x.tracking_id },
               {
@@ -2881,10 +2898,12 @@ module.exports = {
               rack_id: null,
               "track_tray.issued_to_recharging": Date.now(),
               temp_array: [],
+              
             },
           }
         );
         if (data) {
+          let state="Tray"
           for (let x of data.items) {
             const addLogsofUnits = await unitsActionLog.create({
               action_type: "Issued to Recharging",
@@ -2894,8 +2913,10 @@ module.exports = {
               user_name_of_action: trayData.actionUser,
               tray_id: trayData.trayId,
               user_type: "PRC Warehouse",
+              track_tray:state,
               description: `Issued to Recharging agent :${data.issued_user_name} by Wh:${trayData.actionUser}`,
             });
+            state="Units"
             let deliveryUpdate = await delivery.findOneAndUpdate(
               { tracking_id: x.tracking_id },
               {
@@ -3016,6 +3037,7 @@ module.exports = {
           }
         );
         if (data) {
+          let state="Tray"
           for (let x of data.items) {
             const addLogsofUnits = await unitsActionLog.create({
               action_type: "Issued to Charging",
@@ -3025,8 +3047,10 @@ module.exports = {
               user_name_of_action: trayData.actionUser,
               tray_id: trayData.trayId,
               user_type: "PRC Warehouse",
+              track_tray:state,
               description: `Issued to Charging agent :${data.issued_user_name} by Wh :${trayData.actionUser}`,
             });
+            state="Units"
             let deliveryUpdate = await delivery.findOneAndUpdate(
               { tracking_id: x.tracking_id },
               {
@@ -3348,15 +3372,19 @@ module.exports = {
           );
         }
         if (data) {
+          let state="Tray"
           for (let x of data.items) {
             let unitsLogCreation = await unitsActionLog.create({
               action_type: "Ready to BQC",
-              action_date: Date.now(),
+              created_at: Date.now(),
               user_name_of_action: trayData.actioUser,
               user_type: "PRC WH",
               uic: x.uic,
               tray_id: trayData.trayId,
+              description:`Charging done closed by WH :${trayData.actioUser}`,
+              track_tray:state
             });
+            state="Units"
             let deliveryUpdate = await delivery.findOneAndUpdate(
               {
                 tracking_id: x.tracking_id,
@@ -3731,6 +3759,7 @@ module.exports = {
             }
           );
           if (data) {
+            let state="Tray"
             for (let x of data.items) {
               let unitsLogCreation = await unitsActionLog.create({
                 action_type: "Received From Sorting (BOT TO WHT)",
@@ -3740,8 +3769,10 @@ module.exports = {
                 user_type: "PRC Warehouse",
                 uic: x.uic,
                 tray_id: trayData.trayId,
+                track_tray:state,
                 description: `Received From Sorting (BOT TO WHT) agent ${data.issued_user_name} By Wh:${trayData.username}`,
               });
+              state="Units"
               let updateDelivery = await delivery.findOneAndUpdate(
                 {
                   tracking_id: x.tracking_id,
@@ -3844,6 +3875,7 @@ module.exports = {
           trayData.type == "Issued to sorting agent" &&
           x.type_taxanomy == "BOT"
         ) {
+          let state="Tray"
           for (let y of data.items) {
             let unitsLogCreation = await unitsActionLog.create({
               action_type: "Issued to Sorting (BOT TO WHT)",
@@ -3853,8 +3885,10 @@ module.exports = {
               user_type: "PRC Warehouse",
               uic: y.uic,
               tray_id: x.code,
+              track_tray:state,
               description: `Issued to Sorting (BOT TO WHT) agent : ${data.issued_user_name} By Wh: ${trayData.actionUser}`,
             });
+            state="Units"
             let deliveryUpdate = await delivery.findOneAndUpdate(
               { tracking_id: y.awbn_number },
               {
@@ -3903,6 +3937,7 @@ module.exports = {
           }
         );
         if (data) {
+          let state="Tray"
           for (let x of data.items) {
             let unitsLogCreation = await unitsActionLog.create({
               action_type: "Ready for Charging",
@@ -3911,8 +3946,10 @@ module.exports = {
               user_type: "PRC Warehouse",
               uic: x.uic,
               tray_id: trayData.code,
+              track_tray:state,
               description: `Ready for Charging Closed by Wh :${trayData.username}`,
             });
+            state="Units"
             let updateDelivery = await delivery.findOneAndUpdate(
               {
                 tracking_id: x.tracking_id,
