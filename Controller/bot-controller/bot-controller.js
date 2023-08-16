@@ -211,7 +211,7 @@ module.exports = {
             report: obj,
             uic: trayData.uic,
             user_type: "BOT",
-            track_tray:"Tray",
+            track_tray:"Units",
             description: `Item transferred to bot tray by ${res.issued_user_name}`,
           });
           let updateDelivery = await delivery.findOneAndUpdate(

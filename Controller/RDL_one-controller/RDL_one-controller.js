@@ -106,15 +106,20 @@ module.exports = {
         }
       );
       if (dataSwitch) {
+        let state="Tray"
         for (let x of dataSwitch.items) {
           const addLogsofUnits = await unitsActionLog.create({
-            action_type: "Closed by RDL-FLS",
+            action_type: "Closed by RDL-One",
             created_at: Date.now(),
             uic: x.uic,
             tray_id: trayData.trayId,
             user_name_of_action: dataSwitch.issued_user_name,
             report: x.rdl_fls_report,
+            user_type:"PRC RDL-One",
+            description:`Closed by RDL-One agent :${dataSwitch.issued_user_name}`,
+            track_tray:state
           });
+          state="Units"
           let deliveryUpdate = await delivery.findOneAndUpdate(
             { tracking_id: x.tracking_id },
             {

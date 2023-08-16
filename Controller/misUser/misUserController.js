@@ -2489,8 +2489,8 @@ module.exports = {
               agent_name: bagData.bot_name,
               user_type: "MIS",
               awbn_number: x.awbn_number,
-              bag_id:bagData.bagId,
-              description:`Assigned to agent :${bagData.bot_name} by MIS: ${bagData.username}`
+              bag_id: bagData.bagId,
+              description: `Assigned to agent :${bagData.bot_name} by MIS: ${bagData.username}`,
             });
           }
           resolve({ status: 1 });
@@ -2642,7 +2642,7 @@ module.exports = {
             },
           }
         );
-        let state="Tray"
+        let state = "Tray";
         for (let y of data.items) {
           let unitsLogCreation = await unitsActionLog.create({
             action_type: "Assigned for BOT to WHT Sorting",
@@ -2651,11 +2651,11 @@ module.exports = {
             agent_name: botTrayData.agent_name,
             user_type: "PRC MIS",
             uic: y.uic,
-            tray_id:x,
-            track_tray:state,
-            description:`Assigned for BOT to WHT Sorting agent : ${botTrayData.agent_name} by Mis: ${botTrayData.username}`
+            tray_id: x,
+            track_tray: state,
+            description: `Assigned for BOT to WHT Sorting agent : ${botTrayData.agent_name} by Mis: ${botTrayData.username}`,
           });
-          state="Units"
+          state = "Units";
         }
         for (let y of data.wht_tray) {
           dataWht = await masters.findOneAndUpdate(
@@ -2987,26 +2987,24 @@ module.exports = {
             }
           );
         }
-        let state="Tray"
-        for(let y of data.items){
+        let state = "Tray";
+        for (let y of data.items) {
           let unitsLogCreation = await unitsActionLog.create({
-            action_type:whtTrayData.sort_id,
+            action_type: whtTrayData.sort_id,
             created_at: Date.now(),
             user_name_of_action: whtTrayData.actionUser,
             agent_name: whtTrayData.user_name,
             user_type: "PRC MIS",
             uic: y.uic,
-            tray_id:x,
-            track_tray:state,
-            description:`${whtTrayData.sort_id} agent :${whtTrayData.user_name} by mis :${whtTrayData.actionUser}`
+            tray_id: x,
+            track_tray: state,
+            description: `${whtTrayData.sort_id} to agent :${whtTrayData.user_name} by mis :${whtTrayData.actionUser}`,
           });
-          state="Tray"
+          state = "Units";
         }
       }
       if (data) {
-       
         resolve(data);
-        
       } else {
         resolve();
       }
@@ -3127,7 +3125,7 @@ module.exports = {
           code: { $ne: toTray },
         })
         .catch((err) => reject(err));
-       
+
       if (whtTray.length !== 0) {
         for (let x of whtTray) {
           let count = x.limit - x.items.length;
@@ -3145,14 +3143,16 @@ module.exports = {
       }
     });
   },
-  mmtMergeRequestSendToWh: (sortingAgent, fromTray, toTray) => {
+  mmtMergeRequestSendToWh: (sortingAgent, fromTray, toTray, actionUser) => {
     return new Promise(async (resolve, reject) => {
       let whtTray = await masters.findOne({ code: fromTray });
+      let updateFromTray, updateToTray, stage;
       if (
         whtTray.sort_id === "Audit Done Closed By Warehouse" &&
         whtTray.type_taxanomy == "WHT"
       ) {
-        let updateFromTray = await masters.updateOne(
+        stage = "Audit Done Merge Request Sent To Wharehouse";
+        updateFromTray = await masters.findOneAndUpdate(
           { code: fromTray },
           {
             $set: {
@@ -3164,8 +3164,8 @@ module.exports = {
             },
           }
         );
-        if (updateFromTray.modifiedCount !== 0) {
-          let updateToTray = await masters.updateOne(
+        if (updateFromTray) {
+          updateToTray = await masters.findOneAndUpdate(
             { code: toTray },
             {
               $set: {
@@ -3178,9 +3178,6 @@ module.exports = {
               },
             }
           );
-          if (updateToTray.modifiedCount !== 0) {
-            resolve({ status: 1 });
-          }
         } else {
           resolve({ status: 0 });
         }
@@ -3188,7 +3185,8 @@ module.exports = {
         whtTray.sort_id === "Ready to BQC" &&
         whtTray.type_taxanomy == "WHT"
       ) {
-        let updateFromTray = await masters.updateOne(
+        stage = "Ready to BQC Merge Request Sent To Wharehouse";
+        updateFromTray = await masters.findOneAndUpdate(
           { code: fromTray },
           {
             $set: {
@@ -3200,8 +3198,8 @@ module.exports = {
             },
           }
         );
-        if (updateFromTray.modifiedCount !== 0) {
-          let updateToTray = await masters.updateOne(
+        if (updateFromTray) {
+          updateToTray = await masters.findOneAndUpdate(
             { code: toTray },
             {
               $set: {
@@ -3214,9 +3212,6 @@ module.exports = {
               },
             }
           );
-          if (updateToTray.modifiedCount !== 0) {
-            resolve({ status: 1 });
-          }
         } else {
           resolve({ status: 0 });
         }
@@ -3224,7 +3219,8 @@ module.exports = {
         whtTray.sort_id === "Ready to Audit" &&
         whtTray.type_taxanomy == "WHT"
       ) {
-        let updateFromTray = await masters.updateOne(
+        stage = "Ready to Audit Merge Request Sent To Wharehouse";
+        updateFromTray = await masters.findOneAndUpdate(
           { code: fromTray },
           {
             $set: {
@@ -3236,8 +3232,8 @@ module.exports = {
             },
           }
         );
-        if (updateFromTray.modifiedCount !== 0) {
-          let updateToTray = await masters.updateOne(
+        if (updateFromTray) {
+          updateToTray = await masters.findOneAndUpdate(
             { code: toTray },
             {
               $set: {
@@ -3250,9 +3246,6 @@ module.exports = {
               },
             }
           );
-          if (updateToTray.modifiedCount !== 0) {
-            resolve({ status: 1 });
-          }
         } else {
           resolve({ status: 0 });
         }
@@ -3260,7 +3253,8 @@ module.exports = {
         whtTray.sort_id === "Ready to RDL-Repair" &&
         whtTray.type_taxanomy == "WHT"
       ) {
-        let updateFromTray = await masters.updateOne(
+        stage = "Ready to RDL-Repair Merge Request Sent To Wharehouse";
+        updateFromTray = await masters.findOneAndUpdate(
           { code: fromTray },
           {
             $set: {
@@ -3272,8 +3266,8 @@ module.exports = {
             },
           }
         );
-        if (updateFromTray.modifiedCount !== 0) {
-          let updateToTray = await masters.updateOne(
+        if (updateFromTray) {
+          updateToTray = await masters.findOneAndUpdate(
             { code: toTray },
             {
               $set: {
@@ -3286,14 +3280,12 @@ module.exports = {
               },
             }
           );
-          if (updateToTray.modifiedCount !== 0) {
-            resolve({ status: 1 });
-          }
         } else {
           resolve({ status: 0 });
         }
       } else {
-        let updateFromTray = await masters.updateOne(
+        stage = "Merge Request Sent To Wharehouse";
+        updateFromTray = await masters.findOneAndUpdate(
           { code: fromTray },
           {
             $set: {
@@ -3305,8 +3297,8 @@ module.exports = {
             },
           }
         );
-        if (updateFromTray.modifiedCount !== 0) {
-          let updateToTray = await masters.updateOne(
+        if (updateFromTray) {
+          let updateToTray = await masters.findOneAndUpdate(
             { code: toTray },
             {
               $set: {
@@ -3319,11 +3311,40 @@ module.exports = {
               },
             }
           );
-          if (updateToTray.modifiedCount !== 0) {
-            resolve({ status: 1 });
-          }
         } else {
           resolve({ status: 0 });
+        }
+      }
+      if (updateFromTray) {
+        let state1 = "Tray";
+        for (let x of updateFromTray.items) {
+          let unitsLogCreation = await unitsActionLog.create({
+            action_type: stage,
+            created_at: Date.now(),
+            user_name_of_action: actionUser,
+            agent_name: sortingAgent,
+            user_type: "PRC MIS",
+            uic: x.uic,
+            tray_id: updateFromTray.code,
+            track_tray: state1,
+            description: `${stage} to agent :${whtTrayData.user_name} by mis :${actionUser}`,
+          });
+          state1 = "Units";
+        }
+        let state2 = "Tray";
+        for (let x of updateToTray.items) {
+          let unitsLogCreation = await unitsActionLog.create({
+            action_type: stage,
+            created_at: Date.now(),
+            user_name_of_action: actionUser,
+            agent_name: sortingAgent,
+            user_type: "PRC MIS",
+            uic: y.uic,
+            tray_id: updateToTray.code,
+            track_tray: state2,
+            description: `${stage} to agent :${whtTrayData.user_name} by mis :${actionUser}`,
+          });
+          state2 = "Units";
         }
       }
     });
@@ -3982,10 +4003,11 @@ module.exports = {
   pickupRequestSendToWh: (itemData) => {
     return new Promise(async (resolve, reject) => {
       let sendtoPickupRequest;
+      let arr=[]
       for (let x of itemData.isCheck) {
         let getDeliveryData = await delivery.findOne({ "uic_code.code": x });
         if (getDeliveryData) {
-          let toTray = await masters.updateOne(
+          let toTray = await masters.findOneAndUpdate(
             { code: itemData.toTray },
             {
               $set: {
@@ -4000,7 +4022,7 @@ module.exports = {
             }
           );
           if (itemData.value == "RDL two done closed by warehouse") {
-            sendtoPickupRequest = await masters.updateOne(
+            sendtoPickupRequest = await masters.findOneAndUpdate(
               {
                 $or: [{ "items.uic": x, type_taxanomy: "RPT" }],
               },
@@ -4018,7 +4040,7 @@ module.exports = {
               }
             );
           } else {
-            sendtoPickupRequest = await masters.updateOne(
+            sendtoPickupRequest = await masters.findOneAndUpdate(
               {
                 $or: [{ "items.uic": x, type_taxanomy: "WHT" }],
               },
@@ -4037,6 +4059,20 @@ module.exports = {
             );
           }
         }
+        let state="Tray"
+        if(arr.includes(findOneAndUpdate.code)){
+            state="Units"
+        }
+        let unitsLogCreation = await unitsActionLog.create({
+          action_type: "Pickup Request sent to Warehouse",
+          created_at: Date.now(),
+          agent_name: itemData.user_name,
+          user_type: "PRC Mis",
+          uic: x,
+          tray_id: findOneAndUpdate.code,
+          track_tray: state,
+          description: `Pickup Request sent to Warehouse to agent :${itemData.user_name} by Mis :${itemData.actUser}`,
+        });
         let updateDelivery = await delivery.updateOne(
           { "uic_code.code": x },
           {
@@ -4067,7 +4103,7 @@ module.exports = {
       }
     });
   },
-  assignToAgentRequestToWhRdlFls: (tray, user_name, sortId) => {
+  assignToAgentRequestToWhRdlFls: (tray, user_name, sortId, actUser) => {
     return new Promise(async (resolve, reject) => {
       let sendtoRdlMis;
       for (let x of tray) {
@@ -4086,6 +4122,23 @@ module.exports = {
             }
           );
           if (sendtoRdlMis) {
+            if (sendtoRdlMis.items?.length !== 0) {
+              let state = "Tray";
+              for (let y of sendtoRdlMis.items) {
+                let unitsLogCreation = await unitsActionLog.create({
+                  action_type: sortId,
+                  created_at: Date.now(),
+                  user_name_of_action: actUser,
+                  agent_name: user_name,
+                  user_type: "PRC MIS",
+                  uic: y.uic,
+                  tray_id: x,
+                  track_tray: state,
+                  description: `${sortId} to agent :${user_name} by mis :${actUser}`,
+                });
+                state = "Units";
+              }
+            }
             const updateSp = await masters.findOneAndUpdate(
               { code: sendtoRdlMis.sp_tray },
               {
@@ -4109,6 +4162,23 @@ module.exports = {
               },
             }
           );
+        }
+        if (sendtoRdlMis.items?.length !== 0) {
+          let state = "Tray";
+          for (let y of sendtoRdlMis.items) {
+            let unitsLogCreation = await unitsActionLog.create({
+              action_type: sortId,
+              created_at: Date.now(),
+              user_name_of_action: actUser,
+              agent_name: user_name,
+              user_type: "PRC MIS",
+              uic: y.uic,
+              tray_id: x,
+              track_tray: state,
+              description: `${sortId} to agent :${user_name} by mis :${actUser}`,
+            });
+            state = "Units";
+          }
         }
       }
       if (sendtoRdlMis) {
@@ -4621,7 +4691,8 @@ module.exports = {
     rpTray,
     spwhuser,
     sortingUser,
-    selectedUic
+    selectedUic,
+    actUser
   ) => {
     return new Promise(async (resolve, reject) => {
       let whtTrayArr = [];
@@ -4643,6 +4714,21 @@ module.exports = {
         );
         if (updateItem) {
           if (whtTrayArr.includes(updateItem.code) == false) {
+            state = "Tray";
+            for (let y of updateItem.items) {
+              let unitsLogCreation = await unitsActionLog.create({
+                action_type: "Assigned to sorting (Wht to rp)",
+                created_at: Date.now(),
+                user_name_of_action: actUser,
+                agent_name: sortingUser,
+                user_type: "PRC MIS",
+                uic: y.uic,
+                tray_id: updateItem.code,
+                track_tray: state,
+                description: `Assigned to sorting (Wht to rp) to agent :${sortingUser} by mis :${actUser}`,
+              });
+              state = "Units";
+            }
             whtTrayArr.push(updateItem.code);
           }
         }
@@ -4715,9 +4801,10 @@ module.exports = {
       }
     });
   },
-  sortingCtxtoStxRequestSendToWh: (sortingAgent, fromTray, toTray) => {
+  sortingCtxtoStxRequestSendToWh: (sortingAgent, fromTray, toTray,actionUser) => {
+    let updateFromTray
     return new Promise(async (resolve, reject) => {
-      const updateFromTray = await masters.updateOne(
+       updateFromTray = await masters.updateOne(
         { code: fromTray },
         {
           $set: {
@@ -4730,7 +4817,7 @@ module.exports = {
           },
         }
       );
-      if (updateFromTray.modifiedCount !== 0) {
+      if (updateFromTray) {
         const updateToTray = await masters.updateOne(
           { code: toTray },
           {
@@ -4745,6 +4832,20 @@ module.exports = {
           }
         );
         if (updateToTray.modifiedCount !== 0) {
+          let state="Tray"
+          for (let x of updateFromTray.items){
+            let unitsLogCreation = await unitsActionLog.create({
+              action_type: "Ctx to Stx Send for Sorting",
+              created_at: Date.now(),
+              agent_name:sortingAgent,
+              user_type: "PRC Mis",
+              uic: x.uic,
+              tray_id: updateFromTray.code,
+              track_tray: state,
+              description: `Ctx to Stx Send for Sorting to agent :${sortingAgent} by Mis :${actionUser}`,
+            });
+            state="Units"
+          }
           resolve({ status: 1 });
         } else {
           resolve({ status: 0 });

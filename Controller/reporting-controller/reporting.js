@@ -2378,12 +2378,10 @@ module.exports = {
         const findTrayJourney = await unitsActionLog.find({
           tray_id: tray.code,
           track_tray: "Tray",
-        });
-        if (findTrayJourney) {
-          tray["tray_journey"] = findTrayJourney;
-        } else {
-          tray["tray_journey"] = [];
-        }
+        }).sort({_id:1});
+        tray.actual_items = findTrayJourney;
+        console.log(findTrayJourney);
+        
         resolve({ tray: tray, status: 1 });
       } else {
         resolve({ status: 0 });

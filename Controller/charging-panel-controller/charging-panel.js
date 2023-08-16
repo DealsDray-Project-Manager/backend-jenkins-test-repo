@@ -161,6 +161,7 @@ module.exports = {
             user_name_of_action: data.issued_user_name,
             report: x.charging,
             track_tray:state,
+            user_type:"PRC Charging",
             description:`Charging done sent to warehouse by agent:${data.issued_user_name}`
           });
           state="Units"
