@@ -9,7 +9,6 @@ const salesController = require("../../Controller/sales-controller/sales-control
 router.post("/dashboard/:location/:username", async (req, res, next) => {
   try {
     const { location,username } = req.params;
-console.log("req.params:",req.params)
     let data = await salesController.dashboardCount(location,username);
     if (data) {
       res.status(200).json({

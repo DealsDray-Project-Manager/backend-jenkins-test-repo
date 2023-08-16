@@ -14,6 +14,7 @@ module.exports = {
       let count = {
         viewPriceCount: 0,
         buyerCount: 0,
+        readyForSalesCount: 0,
       }; 
        count.buyerCount = await user.count({
       user_type: 'Buyer',sales_users:username});
@@ -42,6 +43,27 @@ module.exports = {
         },
       ]);
       count.viewPriceCount = count.viewPriceCount.length;
+      count.readyForSalesCount = await masters.aggregate([
+        {
+          $match: {
+            type_taxanomy: "ST",
+            cpc: location,
+            sort_id: "Ready to Pricing",
+            sp_price: { $exists: true, $ne: null },
+            mrp_price: { $exists: true, $ne: null },
+          },
+        },
+        {
+          $group: {
+            _id: null,
+            itemCount: { $sum: { $size: "$items" } },
+            muic: { $first: "$items.muic" },
+            sp: { $first: "$sp_price" },
+            mrp: { $first: "$mrp_price" },
+          },
+        },
+      ]);
+      count.readyForSalesCount = count.readyForSalesCount.length > 0 ? count.readyForSalesCount[0].itemCount : 0;
       if (count) {
         resolve(count);
       }
