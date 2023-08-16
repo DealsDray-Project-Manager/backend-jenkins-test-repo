@@ -131,4 +131,50 @@ module.exports = {
       resolve(arr);
     });
   },
+
+  ReadyForSalesUnits: (location) => {
+    //PROMISE
+    return new Promise(async (resolve, reject) => {
+      const getBasedOnMuic = await masters.aggregate([
+        {
+          $match: {
+            type_taxanomy: "ST",
+            cpc: location,
+            sort_id: "Ready to Pricing",
+            sp_price: { $exists: true, $ne: null }, 
+            mrp_price: { $exists: true, $ne: null },
+          },
+        },
+        {
+          $unwind: "$items",
+        },
+        {
+          $project: {
+            items: "$items",
+            mrp_price:"$mrp_price",
+            sp_price:"$sp_price",
+            tray_grade:"$tray_grade",
+            code: "$code",
+          },
+        },
+      ]);
+      let arr=[]
+      for(let x of getBasedOnMuic){
+         let obj={
+          uic:x.items.uic,
+          muic:x.items.muic,
+          brand_name:x.items.brand_name,
+          model_name:x.items.model_name,
+          code:x.code,
+          tray_grade:x.tray_grade,
+          mrp_price:x.mrp_price,
+          sp_price:x.sp_price
+         }
+         arr.push(obj)
+      }
+      resolve(arr);
+    });
+  },
+
+
 };
