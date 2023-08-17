@@ -276,6 +276,16 @@ module.exports = {
                 }
               );
               if (updateOther) {
+                const addLogsofUnits = await unitsActionLog.create({
+                  action_type: "Item not transfferd to ctx",
+                  created_at: Date.now(),
+                  uic: x.uic,
+                  tray_id: itemData.trayId,
+                  user_name_of_action: data.issued_user_name,
+                  report: obj,
+                  description:`Item not transfferd to ctx tray by agent :${findTray.issued_user_name}`,
+                  track_tray:state
+                });
                 let update = await delivery.findOneAndUpdate(
                   { "uic_code.code": itemData.uic },
                   {
@@ -293,9 +303,7 @@ module.exports = {
                     projection: { _id: 0 },
                   }
                 );
-                // let elasticSearchUpdate = await Elasticsearch.uicCodeGen(
-                //   update
-                // );
+               
                 resolve({ status: 1, trayId: findTray.code });
               }
             } else {
@@ -335,6 +343,17 @@ module.exports = {
                 }
               );
               if (updateOther) {
+                const addLogsofUnits = await unitsActionLog.create({
+                  action_type: "Item transfferd to ctx",
+                  created_at: Date.now(),
+                  uic: itemData.uic,
+                  tray_id: findTray.code ,
+                  user_name_of_action: findTray.issued_user_name,
+                  report: obj,
+                  user_type:"Audit",
+                  description:`Item transfferd to ctx tray by agent :${findTray.issued_user_name}`,
+                  track_tray:"Units"
+                });
                 let update = await delivery.findOneAndUpdate(
                   { "uic_code.code": itemData.uic },
                   {
@@ -351,9 +370,7 @@ module.exports = {
                     projection: { _id: 0 },
                   }
                 );
-                // let updateElasticSearch = await Elasticsearch.uicCodeGen(
-                //   update
-                // );
+               
                 resolve({ status: 1, trayId: findTray.code });
               }
             } else {
@@ -397,7 +414,7 @@ module.exports = {
           }
         );
       }
-
+      let state="Tray"
       for (let x of data.items) {
         const addLogsofUnits = await unitsActionLog.create({
           action_type: "Audit Done",
@@ -406,7 +423,10 @@ module.exports = {
           tray_id: trayId,
           user_name_of_action: data.issued_user_name,
           report: x.audit_report,
+          track_tray:state,
+          description:`Audit done closed by agent :${data.issued_user_name}`
         });
+        state="Units"
         let updateDelivery = await delivery.findOneAndUpdate(
           { tracking_id: x.tracking_id },
           {

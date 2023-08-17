@@ -1548,11 +1548,12 @@ router.post(
   "/assignToAgent/rdl-fls/sentToWarehouse",
   async (req, res, next) => {
     try {
-      const { tray, user_name, sortId } = req.body;
+      const { tray, user_name, sortId,actUser } = req.body;
       let data = await misUserController.assignToAgentRequestToWhRdlFls(
         tray,
         user_name,
-        sortId
+        sortId,
+        actUser
       );
       if (data.status == true) {
         res.status(200).json({
@@ -1670,11 +1671,12 @@ router.post("/sorting/ctxToStx/stxTray", async (req, res, next) => {
 //CTX AND STX TRAY SEND TO WAREHOUSE FOR SORTING APPOROVEL
 router.post("/sorting/ctxToStx/request/sendToWh", async (req, res, next) => {
   try {
-    const { sort_agent, fromTray, toTray } = req.body;
+    const { sort_agent, fromTray, toTray,actionUser } = req.body;
     let data = await misUserController.sortingCtxtoStxRequestSendToWh(
       sort_agent,
       fromTray,
-      toTray
+      toTray,
+      actionUser
     );
     if (data.status === 1) {
       res.status(200).json({
@@ -1842,7 +1844,7 @@ router.post("/assignForRepiar/getTheRequrements", async (req, res, next) => {
 // WHT TO RP SORTING ASSIGN
 router.post("/whtToRpSorting/assign", async (req, res, next) => {
   try {
-    const { spDetails, spTray, rpTray, spwhuser, sortingUser, selectedUic } =
+    const { spDetails, spTray, rpTray, spwhuser, sortingUser, selectedUic,actUser } =
       req.body;
     let data = await misUserController.whtToRpSortingAssign(
       spDetails,
@@ -1850,7 +1852,8 @@ router.post("/whtToRpSorting/assign", async (req, res, next) => {
       rpTray,
       spwhuser,
       sortingUser,
-      selectedUic
+      selectedUic,
+      actUser
     );
     if (data.status == 1) {
       res.status(200).json({

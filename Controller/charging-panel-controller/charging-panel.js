@@ -151,6 +151,7 @@ module.exports = {
         );
       }
       if (data) {
+        let state="Tray"
         for (let x of data.actual_items) {
           let addLogsofUnits = await unitsActionLog.create({
             action_type: "Charging Done",
@@ -159,8 +160,11 @@ module.exports = {
             tray_id: trayData.trayId,
             user_name_of_action: data.issued_user_name,
             report: x.charging,
+            track_tray:state,
+            user_type:"PRC Charging",
+            description:`Charging done sent to warehouse by agent:${data.issued_user_name}`
           });
-          console.log(addLogsofUnits);
+          state="Units"
           let deliveryUpdate = await delivery.findOneAndUpdate(
             {
               tracking_id: x.tracking_id,

@@ -1506,11 +1506,12 @@ router.post(
 /*---------------------MMT TRAY SEND TO SORTING AGENT CONFIRM--------------------------------*/
 router.post("/mmtTraySendToSorting", async (req, res, next) => {
   try {
-    const { username, fromTray, toTray } = req.body;
+    const { username, fromTray, toTray,actionUser } = req.body;
     let data = await warehouseInController.assignToSortingAgent(
       username,
       fromTray,
-      toTray
+      toTray,
+      actionUser
     );
     if (data.status === 1) {
       res.status(200).json({
@@ -1548,7 +1549,7 @@ router.post("/returnFromMerging/:location", async (req, res, next) => {
 /*--------------------- AFTER MERGE IS DONE CLOSE MMT TRAY--------------------------------*/
 router.post("/mergeDoneMmttrayClose", async (req, res, next) => {
   try {
-    const { toTray, fromTray, type, length, limit, status, rackId } = req.body;
+    const { toTray, fromTray, type, length, limit, status, rackId,actioUser } = req.body;
     let data = await warehouseInController.mergeDoneTrayClose(
       fromTray,
       toTray,
@@ -1556,7 +1557,8 @@ router.post("/mergeDoneMmttrayClose", async (req, res, next) => {
       length,
       limit,
       status,
-      rackId
+      rackId,
+      actioUser
     );
     if (data.status == 1) {
       res.status(200).json({
@@ -2485,14 +2487,19 @@ router.post(
     try {
       let data = await warehouseInController.sortingDoneCtxStxClose(req.body);
       if (data.status == 1) {
+        let logUpdate=await warehouseInController.sortingDonectxTostxCloseLogData(data.tray.items,data.tray.code,"Ready for Pricing",req.body.actUser)
         res.status(200).json({
           message: "Successfully Closed and Ready for Pricing",
         });
       } else if (data.status == 2) {
+        let logUpdate=await warehouseInController.sortingDonectxTostxCloseLogData(data.tray.items,data.tray.code,"Ready to Transfer to Processing",req.body.actUser)
+
         res.status(200).json({
           message: "Successfully Closed and Ready to Transfer to Processing",
         });
       } else if (data.status == 3) {
+        let logUpdate=await warehouseInController.sortingDonectxTostxCloseLogData(data.tray.items,data.tray.code,"Merging Done Closed by Wh",req.body.actUser)
+
         res.status(200).json({
           message: "Successfully Closed",
         });

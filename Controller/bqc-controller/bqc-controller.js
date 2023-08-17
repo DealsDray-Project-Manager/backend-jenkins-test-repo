@@ -238,64 +238,77 @@ module.exports = {
       }
     });
   },
-  bqcOut: async (trayData) => {
-    try {
-      const getTray = await masters.findOneAndUpdate(
-        { code: trayData.trayId, sort_id: { $ne: "BQC Done" } },
-        {
-          $set: {
-            sort_id: "BQC Done",
-            closed_time_bot: Date.now(),
-            description: trayData.description,
-            temp_array: [],
-          },
-          $push: { items: { $each: getTray.temp_array } },
-        },
-        { new: true }
-      );
-  
-      if (!getTray) {
-        return null;
-      }
-  
-      const updatedItems = getTray.actual_items.map((item) => {
-        const bqc_report = item.bqc_report || {};
-        bqc_report.bqc_status = item.bqc_status;
-        return {
-          ...item,
-          bqc_report,
-        };
-      });
-  
-      await unitsActionLog.create(
-        getTray.actual_items.map((item) => ({
-          action_type: "BQC Done",
-          created_at: Date.now(),
-          uic: item.uic,
-          tray_id: trayData.trayId,
-          user_name_of_action: getTray.issued_user_name,
-          report: item.bqc_report,
-        }))
-      );
-  
-      await delivery.updateMany(
-        { tracking_id: { $in: getTray.actual_items.map((item) => item.tracking_id) } },
-        {
-          $set: {
-            bqc_out_date: Date.now(),
-            tray_status: "BQC Done",
-            tray_location: "BQC",
-            bqc_report: { $mergeObjects: ["$bqc_report", "$$newReport"] },
-            updated_at: Date.now(),
-          },
+  bqcOut: (trayData) => {
+    return new Promise(async (resolve, reject) => {
+      let getTray = await masters.findOne({ code: trayData.trayId });
+      if (getTray) {
+        if (getTray.sort_id !== "BQC Done") {
+          Array.prototype.push.apply(getTray.items, getTray.temp_array);
+          let data = await masters.findOneAndUpdate(
+            { code: trayData.trayId ,sort_id:{$ne:"BQC Done"}},
+            {
+              $set: {
+                sort_id: "BQC Done",
+                closed_time_bot: Date.now(),
+                description: trayData.description,
+                actual_items: getTray.items,
+                temp_array: [],
+                items: [],
+              },
+            },
+            { new: true }
+          );
+          if (data) {
+            let state="Tray"
+            for (let x of data.actual_items) {
+              if (x.bqc_report == undefined) {
+                let obj = {
+                  bqc_status: x.bqc_status,
+                };
+                x["bqc_report"] = obj;
+              } else {
+                x.bqc_report.bqc_status = x.bqc_status;
+              }
+              const addLogsofUnits = await unitsActionLog.create({
+                action_type: "BQC Done",
+                created_at: Date.now(),
+                uic: x.uic,
+                tray_id: trayData.trayId,
+                user_name_of_action: data.issued_user_name,
+                report: x.bqc_report,
+                description:`BQC Done closed by agent :${data.issued_user_name}`,
+                track_tray:state,
+                user_type:"PRC Warehouse"
+              });
+              state="Units"
+              let deliveryUpdate = await delivery.findOneAndUpdate(
+                {
+                  tracking_id: x.tracking_id,
+                },
+                {
+                  $set: {
+                    bqc_out_date: Date.now(),
+                    tray_status: "BQC Done",
+                    tray_location: "BQC",
+                    bqc_report: x.bqc_report,
+                    updated_at: Date.now(),
+                  },
+                },
+                {
+                  new: true,
+                  projection: { _id: 0 },
+                }
+              );
+            }
+            resolve(data);
+          } else {
+            resolve();
+          }
+        } else {
+          resolve();
         }
-      );
-  
-      return getTray;
-    } catch (error) {
-      console.error("Error in bqcOut:", error);
-      throw error;
-    }
+      }
+    });
   },
   
 };
