@@ -61,23 +61,26 @@ router.post("/spTrayPartIssue", async (req, res, next) => {
   }
 });
 // ADD THE PARTS
-router.post("/spTray/addParts/:partId/:trayId/:boxId", async (req, res, next) => {
-  try {
-    const { partId, trayId ,boxId} = req.params;
-    let data = await rmuserController.spTrayAddParts(partId, trayId,boxId);
-    if (data.status == 1) {
-      res.status(200).json({
-        message: "Successfully added",
-      });
-    } else {
-      res.status(202).json({
-        message: "Failed please try again...",
-      });
+router.post(
+  "/spTray/addParts/:partId/:trayId",
+  async (req, res, next) => {
+    try {
+      const { partId, trayId, boxId } = req.params;
+      let data = await rmuserController.spTrayAddParts(partId, trayId, boxId);
+      if (data.status == 1) {
+        res.status(200).json({
+          message: "Successfully added",
+        });
+      } else {
+        res.status(202).json({
+          message: "Failed please try again...",
+        });
+      }
+    } catch (error) {
+      next(error);
     }
-  } catch (error) {
-    next(error);
   }
-});
+);
 // CLOSE THE SP TRAY
 router.post("/spTrayClose", async (req, res, next) => {
   try {

@@ -1313,7 +1313,7 @@ module.exports = {
                 action_type: "Received From Charging",
                 created_at: Date.now(),
                 user_name_of_action: trayData.actioUser,
-                user_type: "PRC WH",
+                user_type: "PRC Warehouse",
                 agent_name: data.issued_user_name,
                 uic: x.uic,
                 tray_id: trayData.trayId,
@@ -1363,7 +1363,7 @@ module.exports = {
                   action_type: "Audit Done  Received From Merging",
                   created_at: Date.now(),
                   user_name_of_action: trayData.actioUser,
-                  user_type: "PRC WH",
+                  user_type: "PRC Warehouse",
                   agent_name: data.issued_user_name,
                   uic: x.uic,
                   tray_id: trayData.trayId,
@@ -1405,7 +1405,7 @@ module.exports = {
                   action_type: "Ready to Audit Received From Merging",
                   created_at: Date.now(),
                   user_name_of_action: trayData.actioUser,
-                  user_type: "PRC WH",
+                  user_type: "PRC Warehouse",
                   agent_name: data.issued_user_name,
                   uic: x.uic,
                   tray_id: trayData.trayId,
@@ -1448,7 +1448,7 @@ module.exports = {
                   action_type: "Ready to BQC Received From Merging",
                   created_at: Date.now(),
                   user_name_of_action: trayData.actioUser,
-                  user_type: "PRC WH",
+                  user_type: "PRC Warehouse",
                   agent_name: data.issued_user_name,
                   uic: x.uic,
                   tray_id: trayData.trayId,
@@ -1491,7 +1491,7 @@ module.exports = {
                   action_type: "Ready to BQC Received From Merging",
                   created_at: Date.now(),
                   user_name_of_action: trayData.actioUser,
-                  user_type: "PRC WH",
+                  user_type: "PRC Warehouse",
                   agent_name: data.issued_user_name,
                   uic: x.uic,
                   tray_id: trayData.trayId,
@@ -1533,7 +1533,7 @@ module.exports = {
                   action_type: "Received From Merging",
                   created_at: Date.now(),
                   user_name_of_action: trayData.actioUser,
-                  user_type: "PRC WH",
+                  user_type: "PRC Warehouse",
                   agent_name: data.issued_user_name,
                   uic: x.uic,
                   tray_id: trayData.trayId,
@@ -2926,7 +2926,7 @@ module.exports = {
               agent_name: data.issued_user_name,
               user_name_of_action: trayData.actionUser,
               tray_id: trayData.trayId,
-              user_type: "PRC WH",
+              user_type: "PRC Warehouse",
               track_tray: state,
               description: `Issued for BQC to agent :${data.issued_user_name} by WH :${trayData.actionUser}`,
             });
@@ -3007,7 +3007,6 @@ module.exports = {
               actual_items: [],
               description: trayData.description,
               sort_id: "Issued to RDL-FLS",
-
               requested_date: Date.now(),
               "track_tray.issued_rdl_1_wh": Date.now(),
               assigned_date: Date.now(),
@@ -3026,7 +3025,7 @@ module.exports = {
               agent_name: data.issued_user_name,
               user_name_of_action: trayData.actionUser,
               tray_id: trayData.trayId,
-              user_type: "PRC WH",
+              user_type: "PRC Warehouse",
               track_tray: state,
               description: `Issued to RDL-One to agent :${data.issued_user_name} by WH :${trayData.actionUser}`,
             });
@@ -3396,16 +3395,19 @@ module.exports = {
           }
         );
         if (data) {
+          let state = "Tray";
           for (let x of data.items) {
             let unitsLogCreation = await unitsActionLog.create({
               action_type: "Ready to Audit",
               created_at: Date.now(),
               user_name_of_action: trayData.actioUser,
-              user_type: "PRC WH",
+              user_type: "PRC Warehouse",
               uic: x.uic,
               tray_id: trayData.trayId,
+              track_tray: state,
               description: `Bqc done closed by Wh :${trayData.actioUser}`,
             });
+            state = "Units";
             let deliveryUpdate = await delivery.findOneAndUpdate(
               {
                 tracking_id: x.tracking_id,
@@ -3467,7 +3469,7 @@ module.exports = {
               action_type: "Ready to BQC",
               created_at: Date.now(),
               user_name_of_action: trayData.actioUser,
-              user_type: "PRC WH",
+              user_type: "PRC Warehouse",
               uic: x.uic,
               tray_id: trayData.trayId,
               description: `Charging done closed by WH :${trayData.actioUser}`,
@@ -3579,16 +3581,19 @@ module.exports = {
         }
       }
       if (data) {
+        let state="Tray"
         for (let x of data.items) {
           let unitsLogCreation = await unitsActionLog.create({
             action_type: stage,
             created_at: Date.now(),
             user_name_of_action: trayData.actioUser,
-            user_type: "PRC WH",
+            user_type: "PRC Warehouse",
             uic: x.uic,
             tray_id: trayData.trayId,
+            track_tray:state,
             description: `${stage} closed by Wh:${trayData.actioUser}`,
           });
+          state="Units"
           let deliveryUpdate = await delivery.findOneAndUpdate(
             {
               tracking_id: x.tracking_id,
@@ -3708,17 +3713,20 @@ module.exports = {
           }
         );
         if (data) {
+          let state = "Tray";
           for (let x of data.actual_items) {
             let unitsLogCreation = await unitsActionLog.create({
               action_type: "Received From BQC",
               created_at: Date.now(),
               user_name_of_action: trayData.actioUser,
-              user_type: "PRC WH",
+              user_type: "PRC Warehouse",
               uic: x.uic,
               agent_name: data.issued_user_name,
               tray_id: trayData.trayId,
+              track_tray: state,
               description: `Received From BQC agent :${data.issued_user_name} by Wh:${trayData.actioUser}`,
             });
+            state = "Units";
             let deliveryTrack = await delivery.findOneAndUpdate(
               { tracking_id: x.tracking_id },
               {
@@ -3769,7 +3777,7 @@ module.exports = {
               action_type: "Received From Audit",
               created_at: Date.now(),
               user_name_of_action: trayData.actioUser,
-              user_type: "PRC WH",
+              user_type: "PRC Warehouse",
               uic: x.uic,
               agent_name: data.issued_user_name,
               tray_id: trayData.trayId,
@@ -4610,7 +4618,7 @@ module.exports = {
       }
       if (updaToTray) {
         let state = "Tray";
-        for (let x of updaFromTray) {
+        for (let x of updaFromTray.items) {
           let deliveryUpdate = await delivery.findOneAndUpdate(
             { tracking_id: x.tracking_id },
             {
@@ -4640,7 +4648,7 @@ module.exports = {
           state = "Units";
         }
         let state1 = "Tray";
-        for (let x of updaToTray) {
+        for (let x of updaToTray.items) {
           let deliveryUpdate = await delivery.findOneAndUpdate(
             { tracking_id: x.tracking_id },
             {
@@ -5034,7 +5042,7 @@ module.exports = {
             action_type: stage,
             created_at: Date.now(),
             user_name_of_action: actioUser,
-            user_type: "PRC WH",
+            user_type: "PRC Warehouse",
             uic: x.uic,
             tray_id: toTray,
             track_tray: state,
@@ -5275,7 +5283,7 @@ module.exports = {
               action_type: "Issued to Audit",
               created_at: Date.now(),
               user_name_of_action: trayData.actioUser,
-              user_type: "PRC WH",
+              user_type: "PRC Warehouse",
               uic: y.uic,
               tray_id: x,
               description: `Issued for Audit to agent :${issue.issued_user_name}`,

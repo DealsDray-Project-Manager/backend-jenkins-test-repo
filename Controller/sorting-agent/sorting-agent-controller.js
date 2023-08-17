@@ -706,6 +706,10 @@ module.exports = {
           });
           state1="Units"
         }
+        resolve({status:1})
+      }
+      else{
+        resolve({status:0})
       }
     });
   },

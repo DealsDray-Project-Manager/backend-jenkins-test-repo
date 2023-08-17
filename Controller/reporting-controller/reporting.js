@@ -2375,13 +2375,39 @@ module.exports = {
     return new Promise(async (resolve, reject) => {
       const tray = await masters.findOne({ code: trayId, cpc: location });
       if (tray) {
-        const findTrayJourney = await unitsActionLog.find({
-          tray_id: tray.code,
-          track_tray: "Tray",
-        }).sort({_id:1});
+        const findTrayJourney = await unitsActionLog
+          .find({
+            tray_id: tray.code,
+            track_tray: "Tray",
+          })
+          .sort({ _id: 1 });
         tray.actual_items = findTrayJourney;
-        console.log(findTrayJourney);
-        
+        const auditData = await unitsActionLog
+          .find({ action_type: "Issued to Audit", tray_id: trayId })
+          .sort({ _id: 1 })
+          .limit(tray.limit);
+        let trayIdArr = [];
+        let uicArr = [];
+        let obj = {};
+        auditData.map(async (data) => {
+          if (uicArr.push(data.uic)) {
+            const findCurrentTray = await masters.findOne({
+              "item.uic": data.uic,
+            });
+            if (findCurrentTray) {
+              if (trayIdArr.includes(findCurrentTray.code)) {
+                obj[findCurrentTray.code] = Number(
+                  obj[findCurrentTray.code] + 1
+                );
+              } else {
+                obj[findCurrentTray.code] = 1;
+              }
+              trayIdArr.push(findCurrentTray.code);
+            }
+          }
+          uicArr.push(data.uic);
+        });
+
         resolve({ tray: tray, status: 1 });
       } else {
         resolve({ status: 0 });

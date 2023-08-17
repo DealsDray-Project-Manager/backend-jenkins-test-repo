@@ -131,13 +131,11 @@ router.post("/traySegrigation", async (req, res, next) => {
         res.status(200).json({
           message: `UIC is accepted with no Grade Change. Please put it in Tray ${data.trayId}`,
         });
-      }
-      else if (stage == "Direct Downgrade" || stage == "Direct Upgrade") {
+      } else if (stage == "Direct Downgrade" || stage == "Direct Upgrade") {
         res.status(200).json({
           message: `UIC is ${stage} with Grade Change. Please put it in Tray ${data.trayId}`,
         });
-      }
-       else if (stage == "Upgrade") {
+      } else if (stage == "Upgrade") {
         res.status(200).json({
           message: `UIC Planned for an Upgrade, leave it in the WHT Tray`,
         });
@@ -207,13 +205,12 @@ router.post("/trayClose/:trayId", async (req, res, next) => {
 // GET COLOR AND STORAGE AND RAM
 router.post("/getColorStorageRam", async (req, res, next) => {
   try {
-    
     let data = await auditController.getAllStorageAndRamAndColor();
     if (data) {
       res.status(200).json({
-        data: data
+        data: data,
       });
-    } 
+    }
   } catch (error) {
     next(error);
   }

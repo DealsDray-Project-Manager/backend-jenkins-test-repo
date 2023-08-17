@@ -281,10 +281,10 @@ module.exports = {
                   created_at: Date.now(),
                   uic: itemData.uic,
                   tray_id: itemData.trayId,
-                  user_name_of_action: data.issued_user_name,
+                  user_name_of_action: item.issued_user_name,
                   report: obj,
                   description: `Item not transfferd to ctx tray by agent :${findTray.issued_user_name}`,
-                  track_tray: state,
+                  track_tray: "Units",
                 });
                 let update = await delivery.findOneAndUpdate(
                   { "uic_code.code": itemData.uic },
@@ -424,6 +424,7 @@ module.exports = {
           user_name_of_action: data.issued_user_name,
           report: x.audit_report,
           track_tray: state,
+          user_type: "PRC Audit",
           description: `Audit done closed by agent :${data.issued_user_name}`,
         });
         state = "Units";

@@ -3303,7 +3303,7 @@ module.exports = {
           }
         );
         if (updateFromTray) {
-          let updateToTray = await masters.findOneAndUpdate(
+           updateToTray = await masters.findOneAndUpdate(
             { code: toTray },
             {
               $set: {
@@ -3335,7 +3335,7 @@ module.exports = {
             uic: x.uic,
             tray_id: updateFromTray.code,
             track_tray: state1,
-            description: `${stage} to agent :${whtTrayData.user_name} by mis :${actionUser}`,
+            description: `${stage} to agent :${sortingAgent} by mis :${actionUser}`,
           });
           state1 = "Units";
         }
@@ -3347,14 +3347,18 @@ module.exports = {
             created_at: Date.now(),
             user_name_of_action: actionUser,
             agent_name: sortingAgent,
-            user_type: "PRC MIS",
-            uic: y.uic,
+            user_type: dep,
+            uic: x.uic,
             tray_id: updateToTray.code,
             track_tray: state2,
-            description: `${stage} to agent :${whtTrayData.user_name} by mis :${actionUser}`,
+            description: `${stage} to agent :${sortingAgent} by mis :${actionUser}`,
           });
           state2 = "Units";
         }
+        resolve({status:1})
+      }
+      else{
+        resolve({status:0})
       }
     });
   },
@@ -4445,6 +4449,7 @@ module.exports = {
             cpc: location,
             brand: brand,
             model: model,
+            type_taxanomy:"WHT",
             sort_id: "Ready to RDL-Repair",
           },
         },

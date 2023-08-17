@@ -2637,10 +2637,41 @@ module.exports = {
   },
   getAllTrayRacks: () => {
     return new Promise(async (resolve, reject) => {
-      const data = await trayRack.find();
-      resolve(data);
+        try {
+            const aggregatePipeline = [
+                {
+                    $lookup: {
+                        from: "masters", // Replace with the actual collection name
+                        localField: "rack_id",
+                        foreignField: "rack_id",
+                        as: "rack_counts"
+                    }
+                },
+                {
+                    $project: {
+                        _id: 1,
+                        rack_id: 1,
+                        name:1,
+                        display:1,
+                        limit:1,
+                        warehouse:1,
+                        parent_id:1,
+                        // Other fields you want to include
+                        rack_count: { $size: "$rack_counts" }
+                    }
+                },
+                { $sort: { rack_id: 1 } }
+            ];
+
+            const rackCounts = await trayRack.aggregate(aggregatePipeline);
+            console.log(rackCounts);
+            resolve(rackCounts);
+        } catch (error) {
+            reject(error);
+        }
     });
-  },
+},
+
   /*--------------------GET RACK BASED ON THE LIMIT AND WAREHOUSE---------------------------*/
   getRackBasedOnTheWarehouse: (warehouse) => {
     return new Promise(async (resolve, reject) => {
@@ -4250,32 +4281,20 @@ module.exports = {
   },
   extraBqcDoneBugFix: () => {
     return new Promise(async (resolve, reject) => {
-      let bqcDoneTray = await masters.find({ sort_id: "BQC Done" });
+      let bqcDoneTray = await masters.find({ code: "WHT10072" });
+      console.log(bqcDoneTray);
       for (let x of bqcDoneTray) {
         if (x.actual_items.length == 0) {
           let getDelivery = [];
-          //x.code == "WHT1564"
 
-          if (x.code == "WHT1141") {
-            getDelivery = await delivery.find({
-              wht_tray: "WHT1141",
-              sales_bin_status: { $exists: false },
-              stx_tray_id: { $exists: false },
-            });
-          } else if (x.code == "WHT1521") {
-            getDelivery = await delivery.find({
-              wht_tray: x.code,
-              sales_bin_status: { $exists: false },
-            });
-          } else {
-            getDelivery = await delivery.find({ wht_tray: x.code });
-          }
+            getDelivery = await delivery.find({ wht_tray: x.code ,ctx_tray_id:{$exists:false}});
+          
           let findMuic = await products.findOne({
             brand_name: x.brand,
             model_name: x.model,
           });
           // x.code == "WHT1501" || x.code == "WHT1521" ||  x.code == "WHT1564" || x.code == "WHT1593" || x.code == "WHT1190"
-          if (x.code == "WHT1300") {
+          if (x.code == "WHT10072") {
             for (let y of getDelivery) {
               let obj = {
                 tracking_id: y.tracking_id,

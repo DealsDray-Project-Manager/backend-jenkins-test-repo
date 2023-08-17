@@ -88,7 +88,7 @@ module.exports = {
       }
     });
   },
-  spTrayAddParts: (partId, trayId, boxId) => {
+  spTrayAddParts: (partId, trayId) => {
     return new Promise(async (resolve, reject) => {
       const updatePart = await masters.findOneAndUpdate(
         { code: trayId, "items.partId": partId },

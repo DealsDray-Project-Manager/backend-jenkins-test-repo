@@ -1848,7 +1848,6 @@ router.get("/geteditSPcategory/:code", async (req, res) => {
     next(error);
   }
 });
-
 /*----------------------------------------------Tray Racks ----------------------------------------------------*/
 // GET ALL THE Tray Racks
 router.post("/trayracks/view", async (req, res, next) => {
@@ -3935,7 +3934,7 @@ router.post("/extra/manageOldSpn", async (req, res, next) => {
     next(error);
   }
 });
-// RDL FLS TO RDL ONE 
+// RDL FLS TO RDL ONE
 router.post("/extra/rdlFlsToRdlOne", async (req, res, next) => {
   try {
     let data = await superAdminController.manageRdlFlsToRdlOne();
