@@ -3020,7 +3020,7 @@ module.exports = {
           let state = "Tray";
           for (let x of data.items) {
             const addLogsofUnits = await unitsActionLog.create({
-              action_type: "Issued to RDL-FLS",
+              action_type: "Issued to RDL-One",
               created_at: Date.now(),
               uic: x.uic,
               agent_name: data.issued_user_name,
@@ -3028,17 +3028,17 @@ module.exports = {
               tray_id: trayData.trayId,
               user_type: "PRC WH",
               track_tray: state,
-              description: `Issued to RDL-FLS to agent :${data.issued_user_name} by WH :${trayData.actionUser}`,
+              description: `Issued to RDL-One to agent :${data.issued_user_name} by WH :${trayData.actionUser}`,
             });
             state = "Units";
             let deliveryUpdate = await delivery.findOneAndUpdate(
               { tracking_id: x.tracking_id },
               {
                 $set: {
-                  tray_status: "Issued to RDL-FLS",
+                  tray_status: "Issued to RDL-One",
                   rdl_fls_one_user_name: data?.issued_user_name,
                   rdl_fls_issued_date: Date.now(),
-                  tray_location: "RDL-FLS",
+                  tray_location: "RDL-One",
                   updated_at: Date.now(),
                 },
               },
@@ -4604,6 +4604,10 @@ module.exports = {
           resolve({ status: 0 });
         }
       }
+      let actUser = "PRC Warehouse";
+      if (updaToTray.type_taxanomy == "ST") {
+        actUser = "PRC Sales";
+      }
       if (updaToTray) {
         let state = "Tray";
         for (let x of updaFromTray) {
@@ -4621,6 +4625,7 @@ module.exports = {
               projection: { _id: 0 },
             }
           );
+
           const addLogsofUnits = await unitsActionLog.create({
             action_type: "Issued to merging",
             created_at: Date.now(),
@@ -4628,7 +4633,7 @@ module.exports = {
             agent_name: data.issued_user_name,
             user_name_of_action: actionUser,
             tray_id: updaFromTray.code,
-            user_type: "PRC Warehouse",
+            user_type: actUser,
             track_tray: state,
             description: `Issued for merging to agent :${data.issued_user_name} by WH :${actionUser}`,
           });
@@ -4657,7 +4662,7 @@ module.exports = {
             agent_name: data.issued_user_name,
             user_name_of_action: actionUser,
             tray_id: updaToTray.code,
-            user_type: "PRC Warehouse",
+            user_type: actUser,
             track_tray: state1,
             description: `Issued for merging to agent :${data.issued_user_name} by WH :${actionUser}`,
           });
@@ -6335,7 +6340,7 @@ module.exports = {
           let state = "Tray";
           for (let x of data.items) {
             let unitsLogCreation = await unitsActionLog.create({
-              action_type: "Recevied From RDL-FLS",
+              action_type: "Recevied From RDL-One",
               created_at: Date.now(),
               user_name_of_action: trayData.actioUser,
               agent_name: data.issued_user_name,
@@ -6343,14 +6348,14 @@ module.exports = {
               uic: x.uic,
               tray_id: trayData.trayId,
               track_tray: state,
-              description: `Recevied From RDL-FLS to agent :${data.issued_user_name} by Wh :${trayData.actioUser}`,
+              description: `Recevied From RDL-One to agent :${data.issued_user_name} by Wh :${trayData.actioUser}`,
             });
             state = "Units";
             let deliveryTrack = await delivery.findOneAndUpdate(
               { tracking_id: x.tracking_id },
               {
                 $set: {
-                  tray_status: "Recevied From RDL-FLS",
+                  tray_status: "Recevied From RDL-One",
                   tray_location: "Warehouse",
                   rdl_fls_done_recieved_date: Date.now(),
                   updated_at: Date.now(),

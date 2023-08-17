@@ -679,7 +679,7 @@ module.exports = {
       }
       if(fromtray){
         let state="Tray"
-        for(let x of fromtray){
+        for(let x of fromtray.items){
           const addLogsofUnits = await unitsActionLog.create({
             action_type: "Merging Done",
             created_at: Date.now(),
@@ -693,7 +693,7 @@ module.exports = {
           state="Units"
         }
         let state1="Tray"
-        for(let x of updateToTray){
+        for(let x of updateToTray.items){
           const addLogsofUnits = await unitsActionLog.create({
             action_type: "Merging Done",
             created_at: Date.now(),

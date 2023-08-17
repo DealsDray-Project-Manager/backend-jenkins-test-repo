@@ -90,9 +90,10 @@ module.exports = {
             action_type: "Charging In",
             created_at: Date.now(),
             uic: x.uic,
-            user_name_of_action: issueData.issued_user_name,
+            user_name_of_action: data.issued_user_name,
             tray_id:trayData.trayId,
-            user_type:"Charging",
+            user_type:"PRC Charging",
+            description:`Charging station in by agent:${data.issued_user_name}`
           });
           let deliveryUpdate = await delivery.findOneAndUpdate(
             {
@@ -111,9 +112,7 @@ module.exports = {
               projection: { _id: 0 },
             }
           );
-          // let updateElasticSearch = await Elasticsearch.uicCodeGen(
-          //   deliveryUpdate
-          // );
+         
         }
         resolve(data);
       } else {

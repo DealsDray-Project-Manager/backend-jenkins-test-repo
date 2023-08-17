@@ -3504,17 +3504,15 @@ router.post("/updateUnverifiedImei", async (req, res, next) => {
     const data = await superAdminController.updateUnverifiedImei(req.body);
     if (data.status == 1) {
       res.status(200).json({
-        message:"Successfully verified and updated"
+        message: "Successfully verified and updated",
       });
-    }
-    else if(data.status == 2){
+    } else if (data.status == 2) {
       res.status(202).json({
-        message:"Unverified IMEI"
+        message: "Unverified IMEI",
       });
-    }
-    else{
+    } else {
       res.status(202).json({
-        message:"Updation Failed please try again"
+        message: "Updation Failed please try again",
       });
     }
   } catch (error) {
@@ -3924,6 +3922,23 @@ router.post("/extra/addCategory", async (req, res, next) => {
 router.post("/extra/manageOldSpn", async (req, res, next) => {
   try {
     let data = await superAdminController.manageOldSpnData();
+    if (data.status == true) {
+      res.status(200).json({
+        message: "done",
+      });
+    } else {
+      res.status(202).json({
+        message: "Failed",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+// RDL FLS TO RDL ONE 
+router.post("/extra/rdlFlsToRdlOne", async (req, res, next) => {
+  try {
+    let data = await superAdminController.manageRdlFlsToRdlOne();
     if (data.status == true) {
       res.status(200).json({
         message: "done",

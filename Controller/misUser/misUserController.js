@@ -3146,11 +3146,12 @@ module.exports = {
   mmtMergeRequestSendToWh: (sortingAgent, fromTray, toTray, actionUser) => {
     return new Promise(async (resolve, reject) => {
       let whtTray = await masters.findOne({ code: fromTray });
-      let updateFromTray, updateToTray, stage;
+      let updateFromTray, updateToTray, stage,dep;
       if (
         whtTray.sort_id === "Audit Done Closed By Warehouse" &&
         whtTray.type_taxanomy == "WHT"
       ) {
+        dep="PRC MIS"
         stage = "Audit Done Merge Request Sent To Wharehouse";
         updateFromTray = await masters.findOneAndUpdate(
           { code: fromTray },
@@ -3185,6 +3186,7 @@ module.exports = {
         whtTray.sort_id === "Ready to BQC" &&
         whtTray.type_taxanomy == "WHT"
       ) {
+        dep="PRC MIS"
         stage = "Ready to BQC Merge Request Sent To Wharehouse";
         updateFromTray = await masters.findOneAndUpdate(
           { code: fromTray },
@@ -3219,6 +3221,7 @@ module.exports = {
         whtTray.sort_id === "Ready to Audit" &&
         whtTray.type_taxanomy == "WHT"
       ) {
+        dep="PRC MIS"
         stage = "Ready to Audit Merge Request Sent To Wharehouse";
         updateFromTray = await masters.findOneAndUpdate(
           { code: fromTray },
@@ -3253,6 +3256,7 @@ module.exports = {
         whtTray.sort_id === "Ready to RDL-Repair" &&
         whtTray.type_taxanomy == "WHT"
       ) {
+        dep="PRC MIS"
         stage = "Ready to RDL-Repair Merge Request Sent To Wharehouse";
         updateFromTray = await masters.findOneAndUpdate(
           { code: fromTray },
@@ -3284,6 +3288,7 @@ module.exports = {
           resolve({ status: 0 });
         }
       } else {
+        dep="PRC MIS"
         stage = "Merge Request Sent To Wharehouse";
         updateFromTray = await masters.findOneAndUpdate(
           { code: fromTray },
@@ -3315,6 +3320,9 @@ module.exports = {
           resolve({ status: 0 });
         }
       }
+      if(whtTray.type_taxanomy == "ST"){
+        dep="Sales MIS"
+      }
       if (updateFromTray) {
         let state1 = "Tray";
         for (let x of updateFromTray.items) {
@@ -3323,7 +3331,7 @@ module.exports = {
             created_at: Date.now(),
             user_name_of_action: actionUser,
             agent_name: sortingAgent,
-            user_type: "PRC MIS",
+            user_type: dep,
             uic: x.uic,
             tray_id: updateFromTray.code,
             track_tray: state1,
@@ -3331,6 +3339,7 @@ module.exports = {
           });
           state1 = "Units";
         }
+       
         let state2 = "Tray";
         for (let x of updateToTray.items) {
           let unitsLogCreation = await unitsActionLog.create({

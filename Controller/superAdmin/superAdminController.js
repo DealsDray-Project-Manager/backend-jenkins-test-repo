@@ -5326,4 +5326,14 @@ module.exports = {
       resolve({ status: true });
     });
   },
+  manageRdlFlsToRdlOne:()=>{
+    return new Promise(async(resolve,reject)=>{
+      const updateRdl=await user.updateMany({user_type:"RDL-FLS"},{
+        $set:{
+          user_type:"RDL-One"
+        }
+      })
+      resolve({status:true})
+    })
+  }
 };
