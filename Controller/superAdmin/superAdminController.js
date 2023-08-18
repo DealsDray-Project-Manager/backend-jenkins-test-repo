@@ -365,6 +365,7 @@ module.exports = {
   buyerConSalesAgent: (username) => {
     return new Promise(async (resolve, reject) => {
       let BuyerData = await user.find({user_type:"Buyer",sales_users:username});
+      console.log(BuyerData);
       resolve(BuyerData);
     });
   },
