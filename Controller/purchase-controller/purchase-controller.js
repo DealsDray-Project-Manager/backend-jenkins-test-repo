@@ -87,6 +87,38 @@ module.exports = {
       }
     });
   },
+  placeOrderDateFilter:(fromDate,toDate,type,vendors)=>{
+    return new Promise(async(resolve,reject)=>{
+      let dataofOrderRm
+      if(type == "Date"){
+        const fromDateTimestamp = Date.parse(fromDate)
+        const toDateTimestamp = Date.parse(toDate)
+         dataofOrderRm=await purchaseOrderPlaced.find({
+          placed_date:{
+            $gte: new Date(fromDateTimestamp),
+            $lte: new Date(toDateTimestamp),
+          }
+        })
+      }
+      else{
+        dataofOrderRm=await purchaseOrderPlaced.find({
+          vendor_id:vendors
+        }) 
+      }
+     let totalAmount=0
+      if(dataofOrderRm.length == 0){
+        resolve({filterData:dataofOrderRm,totalAmount:totalAmount})
+      }
+      else{
+        for(let x of dataofOrderRm){
+          console.log(x.total_price);
+          totalAmount= totalAmount + Number(x.total_price)
+        }
+        console.log(totalAmount);
+        resolve({filterData:dataofOrderRm,totalAmount:totalAmount})
+      }
+    })
+  },
   fetchWarrantyAndTerms: () => {
     return new Promise(async (resolve, reject) => {
       let obj = {

@@ -575,6 +575,7 @@ router.post("/track-tray", async (req, res, next) => {
     if (trayData.status == 1) {
       res.status(200).json({
         data: trayData.tray,
+        TrayDetails:trayData.TrayDetails
       });
     } else {
       res.status(202).json({

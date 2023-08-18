@@ -77,6 +77,22 @@ router.post("/placeOrder", async (req, res, next) => {
     next(error);
   }
 });
+router.post("/placeOrderDateFilter", async (req, res, next) => {
+  try {
+    console.log(req.body);
+    const {toDate,fromDate,type,vendors}=req.body
+    let data = await purchaseController.placeOrderDateFilter(fromDate,toDate,type,vendors);
+    if (data) {
+
+      res.status(200).json({
+        data: data.filterData,
+        totalPrice:data.totalAmount
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
 // GET WARRANTY TERMS AND PAYMENTS TERMS
 router.post("/getWarrantyAndTerms", async (req, res, next) => {
   try {

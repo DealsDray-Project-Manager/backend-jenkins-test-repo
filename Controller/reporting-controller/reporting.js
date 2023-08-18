@@ -2405,10 +2405,11 @@ module.exports = {
               trayIdArr.push(findCurrentTray.code);
             }
           }
+          console.log(obj);
           uicArr.push(data.uic);
         });
-
-        resolve({ tray: tray, status: 1 });
+        tray['otherDetails']=obj
+        resolve({ tray: tray, status: 1, });
       } else {
         resolve({ status: 0 });
       }

@@ -592,7 +592,7 @@ module.exports = {
         }
       } else if (finedTray.sort_id == "Ready to RDL-Repair Issued to Merging") {
         stage="Ready to RDL-Repair Merging Done"
-        let fromtray = await masters.findOneAndUpdate(
+         fromtray = await masters.findOneAndUpdate(
           { code: trayData.fromTray },
           {
             $set: {
@@ -604,7 +604,7 @@ module.exports = {
           }
         );
         if (fromtray) {
-          let updateToTray = await masters.findOneAndUpdate(
+           updateToTray = await masters.findOneAndUpdate(
             { code: trayData.toTray },
             {
               $set: {
@@ -621,7 +621,7 @@ module.exports = {
         }
       } else if (finedTray.sort_id == "Issued to Sorting for Ctx to Stx") {
         stage="Ctx to Stx Sorting Done"
-        let fromtray = await masters.findOneAndUpdate(
+         fromtray = await masters.findOneAndUpdate(
           { code: trayData.fromTray },
           {
             $set: {
@@ -633,7 +633,7 @@ module.exports = {
           }
         );
         if (fromtray) {
-          let updateToTray = await masters.findOneAndUpdate(
+           updateToTray = await masters.findOneAndUpdate(
             { code: trayData.toTray },
             {
               $set: {
@@ -648,7 +648,7 @@ module.exports = {
           resolve({ status: 0 });
         }
       } else {
-        let fromtray = await masters.findOneAndUpdate(
+         fromtray = await masters.findOneAndUpdate(
           { code: trayData.fromTray },
           {
             $set: {
@@ -660,7 +660,7 @@ module.exports = {
           }
         );
         if (fromtray) {
-          let updateToTray = await masters.findOneAndUpdate(
+           updateToTray = await masters.findOneAndUpdate(
             { code: trayData.toTray },
             {
               $set: {
