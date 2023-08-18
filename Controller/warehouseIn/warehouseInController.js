@@ -4632,18 +4632,17 @@ module.exports = {
               new: true,
               projection: { _id: 0 },
             }
-          );
-
+          )
           const addLogsofUnits = await unitsActionLog.create({
             action_type: "Issued to merging",
             created_at: Date.now(),
             uic: x.uic,
-            agent_name: data.issued_user_name,
+            agent_name: updaFromTray.issued_user_name,
             user_name_of_action: actionUser,
             tray_id: updaFromTray.code,
             user_type: actUser,
             track_tray: state,
-            description: `Issued for merging to agent :${data.issued_user_name} by WH :${actionUser}`,
+            description: `Issued for merging to agent :${updaFromTray.issued_user_name} by WH :${actionUser}`,
           });
           state = "Units";
         }
@@ -4667,14 +4666,14 @@ module.exports = {
             action_type: "Issued to merging",
             created_at: Date.now(),
             uic: x.uic,
-            agent_name: data.issued_user_name,
+            agent_name: updaFromTray.issued_user_name,
             user_name_of_action: actionUser,
             tray_id: updaToTray.code,
             user_type: actUser,
             track_tray: state1,
-            description: `Issued for merging to agent :${data.issued_user_name} by WH :${actionUser}`,
+            description: `Issued for merging to agent :${updaFromTray.issued_user_name} by WH :${actionUser}`,
           });
-          state = "Units";
+          state1 = "Units";
         }
         resolve({ status: 1 });
       } else {
@@ -6471,14 +6470,7 @@ module.exports = {
         }
       );
       if (data) {
-        let updateRack = await trayRack.findOneAndUpdate(
-          { rack_id: trayData.rackId },
-          {
-            $push: {
-              bag_or_tray: data.code,
-            },
-          }
-        );
+       
         for (let x of data.items) {
           if (trayData.screen == "return-from-wht-to-rp-sorting") {
             let deliveryUpdate = await delivery.findOneAndUpdate(
@@ -6497,6 +6489,7 @@ module.exports = {
                 projection: { _id: 0 },
               }
             );
+
           } else {
             let deliveryUpdate = await delivery.findOneAndUpdate(
               { tracking_id: x.tracking_id },
@@ -6513,9 +6506,15 @@ module.exports = {
               }
             );
           }
-          // let elasticSearchUpdate = await elasticsearch.uicCodeGen(
-          //   deliveryUpdate
-          // );
+          const addLogsofUnits = await unitsActionLog.create({
+            action_type:"Ready to RDL-Repair",
+            created_at: Date.now(),
+            uic: x.uic,
+            tray_id: data.code,
+            description:`Ready to RDL-Repair closed by agent :${trayData.actUser}`,
+            track_tray:state,
+            user_type:"PRC Warehouse"
+          });
         }
       }
 

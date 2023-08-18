@@ -1124,11 +1124,12 @@ router.post(
 router.post("/TrayMergeRequestSend", async (req, res, next) => {
   try {
     console.log(req.body);
-    const { sort_agent, fromTray, toTray } = req.body;
+    const { sort_agent, fromTray, toTray,actionUser } = req.body;
     let data = await misUserController.mmtMergeRequestSendToWh(
       sort_agent,
       fromTray,
-      toTray
+      toTray,
+      actionUser
     );
     if (data.status === 1) {
       res.status(200).json({

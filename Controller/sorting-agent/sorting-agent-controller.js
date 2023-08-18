@@ -644,7 +644,6 @@ module.exports = {
               },
             }
           );
-        
         } else {
           resolve({ status: 0 });
         }
@@ -686,7 +685,7 @@ module.exports = {
             uic: x.uic,
             agent_name: fromtray.issued_user_name,
             tray_id: fromtray.code,
-            user_type: "PRC Warehouse",
+            user_type: "PRC Sorting",
             track_tray: state,
             description: `Merging Done by agent :${fromtray.issued_user_name}`,
           });
@@ -700,7 +699,7 @@ module.exports = {
             uic: x.uic,
             agent_name: fromtray.issued_user_name,
             tray_id: updateToTray.code,
-            user_type: "PRC Warehouse",
+            user_type: "PRC Sorting",
             track_tray: state1,
             description: `Merging Done by agent :${fromtray.issued_user_name}`,
           });
