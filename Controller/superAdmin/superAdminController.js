@@ -110,7 +110,7 @@ module.exports = {
   getDashboardData: () => {
     return new Promise(async (resolve, reject) => {
       let count = {};
-      count.usersCount = await user.count({});
+      count.usersCount = await user.count({ user_type: { $ne: 'Buyer' }});
       count.buyerCount = await user.count({user_type:"Buyer"});
       count.location = await infra.count({ type_taxanomy: "CPC" });
       count.warehouse = await infra.count({ type_taxanomy: "Warehouse" });
@@ -365,7 +365,6 @@ module.exports = {
   buyerConSalesAgent: (username) => {
     return new Promise(async (resolve, reject) => {
       let BuyerData = await user.find({user_type:"Buyer",sales_users:username});
-      console.log(BuyerData);
       resolve(BuyerData);
     });
   },
