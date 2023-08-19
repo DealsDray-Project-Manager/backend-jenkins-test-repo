@@ -299,7 +299,7 @@ module.exports = {
  
     getsalesUsers: (warehouse, cpc ) => {
       return new Promise(async (resolve, reject) => {
-        let data = await user.find({ user_type:"Sales Agent",warehouse: warehouse, cpc: cpc });
+        let data = await user.find({ user_type:"Sales Agent",warehouse: warehouse, cpc: cpc,status: { $ne: "Deactivated" }});
         if (data) {
           resolve(data);
         } else {
