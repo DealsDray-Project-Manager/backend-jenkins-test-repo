@@ -2373,46 +2373,60 @@ module.exports = {
   },
   trackTray: (location, trayId) => {
     return new Promise(async (resolve, reject) => {
-      const tray = await masters.findOne({ code: trayId, cpc: location });
-      if (tray) {
+      try {
+        const tray = await masters.findOne({ code: trayId, cpc: location },{actual_items:0,track_tray:0});
+        
+        if (!tray) {
+          resolve({ status: 0 });
+          return;
+        }
+  
         const findTrayJourney = await unitsActionLog
           .find({
             tray_id: tray.code,
             track_tray: "Tray",
           })
           .sort({ _id: 1 });
+  
         tray.actual_items = findTrayJourney;
+  
         const auditData = await unitsActionLog
           .find({ action_type: "Issued to Audit", tray_id: trayId })
           .sort({ _id: 1 })
           .limit(tray.limit);
+  
         let trayIdArr = [];
         let uicArr = [];
         let obj = {};
-        auditData.map(async (data) => {
-          if (uicArr.push(data.uic)) {
-            const findCurrentTray = await masters.findOne({
-              "item.uic": data.uic,
-            });
-            if (findCurrentTray) {
+  
+        await Promise.all(auditData.map(async (data) => {
+          if (uicArr.includes(data.uic)) {
+            return;
+          }
+  
+          uicArr.push(data.uic);
+  
+          const findCurrentTray = await masters.findOne({
+            "items.uic": data.uic,
+          },{code:1,type_taxanomy:1});
+  
+          if (findCurrentTray) {
+            if(findCurrentTray.type_taxanomy !== "WHT"){
               if (trayIdArr.includes(findCurrentTray.code)) {
-                obj[findCurrentTray.code] = Number(
-                  obj[findCurrentTray.code] + 1
-                );
+                obj[findCurrentTray.code] = (obj[findCurrentTray.code] || 0) + 1;
               } else {
                 obj[findCurrentTray.code] = 1;
               }
-              trayIdArr.push(findCurrentTray.code);
             }
+            trayIdArr.push(findCurrentTray.code);
           }
-          console.log(obj);
-          uicArr.push(data.uic);
-        });
-        tray['otherDetails']=obj
-        resolve({ tray: tray, status: 1, });
-      } else {
-        resolve({ status: 0 });
+        }));
+       
+        resolve({ tray: tray, status: 1,otherDetails:obj });
+      } catch (error) {
+        reject(error);
       }
     });
-  },
+  }
+  ,
 };

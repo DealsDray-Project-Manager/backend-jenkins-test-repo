@@ -4073,7 +4073,7 @@ module.exports = {
           }
         }
         let state="Tray"
-        if(arr.includes(findOneAndUpdate.code)){
+        if(arr.includes(sendtoPickupRequest.code)){
             state="Units"
         }
         let unitsLogCreation = await unitsActionLog.create({
@@ -4082,7 +4082,7 @@ module.exports = {
           agent_name: itemData.user_name,
           user_type: "PRC Mis",
           uic: x,
-          tray_id: findOneAndUpdate.code,
+          tray_id: sendtoPickupRequest.code,
           track_tray: state,
           description: `Pickup Request sent to Warehouse to agent :${itemData.user_name} by Mis :${itemData.actUser}`,
         });

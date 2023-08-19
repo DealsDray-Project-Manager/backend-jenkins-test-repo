@@ -676,6 +676,10 @@ module.exports = {
           resolve({ status: 0 });
         }
       }
+      let actUser = "PRC Sorting";
+      if (fromtray.type_taxanomy == "ST") {
+        actUser = "Sales Sorting";
+      }
       if(fromtray){
         let state="Tray"
         for(let x of fromtray.items){
@@ -685,7 +689,7 @@ module.exports = {
             uic: x.uic,
             agent_name: fromtray.issued_user_name,
             tray_id: fromtray.code,
-            user_type: "PRC Sorting",
+            user_type: actUser,
             track_tray: state,
             description: `Merging Done by agent :${fromtray.issued_user_name}`,
           });
@@ -699,7 +703,7 @@ module.exports = {
             uic: x.uic,
             agent_name: fromtray.issued_user_name,
             tray_id: updateToTray.code,
-            user_type: "PRC Sorting",
+            user_type: actUser,
             track_tray: state1,
             description: `Merging Done by agent :${fromtray.issued_user_name}`,
           });
@@ -893,7 +897,7 @@ module.exports = {
         let unitsLogCreation = await unitsActionLog.create({
           action_type: "Pickup Done Closed by Sorting Agent",
           created_at: Date.now(),
-          agent_name: data.issued_user_name,
+          agent_name: updateFromTray.issued_user_name,
           user_type: "PRC Sorting",
           uic: x.uic,
           tray_id: trayData.trayId,
@@ -1221,7 +1225,7 @@ module.exports = {
           let unitsLogCreation = await unitsActionLog.create({
             action_type: "Sorting done (Wht to rp)",
             created_at: Date.now(),
-            user_name_of_action: whtTrayData.actionUser,
+            user_name_of_action: trayDetails.actionUser,
             agent_name: data.issued_user_name,
             user_type: "PRC Soriting",
             uic: x.uic,

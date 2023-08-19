@@ -4614,7 +4614,7 @@ module.exports = {
       }
       let actUser = "PRC Warehouse";
       if (updaToTray.type_taxanomy == "ST") {
-        actUser = "PRC Sales";
+        actUser = "Sales Warehouse";
       }
       if (updaToTray) {
         let state = "Tray";
@@ -5033,6 +5033,10 @@ module.exports = {
             }
           }
         }
+      }
+      let actUser = "PRC Warehouse";
+      if (data.type_taxanomy == "ST") {
+        actUser = "Sales Warehouse";
       }
       if (data) {
         let state = "Tray";
@@ -5846,7 +5850,7 @@ module.exports = {
       }
     });
   },
-  assigntoSoringForPickUp: (username, fromTray, toTray) => {
+  assigntoSoringForPickUp: (username, fromTray, toTray,actUser) => {
     return new Promise(async (resolve, reject) => {
       let updateFromTray = await masters.findOneAndUpdate(
         {
@@ -5891,13 +5895,13 @@ module.exports = {
           let unitsLogCreation = await unitsActionLog.create({
             action_type: "Issued to Sorting for Pickup",
             created_at: Date.now(),
-            user_name_of_action: trayData.actUser,
+            user_name_of_action: actUser,
             agent_name: updateFromTray.issued_user_name,
             user_type: "PRC Warehouse",
             uic: x.uic,
             tray_id: fromTray,
             track_tray: state,
-            description: `Issued to Sorting for Pickup to agent :${updateFromTray.issued_user_name} by Wh :${trayData.actUser}`,
+            description: `Issued to Sorting for Pickup to agent :${updateFromTray.issued_user_name} by Wh :${actUser}`,
           });
           state = "Units";
           let deliveryUpdate = await delivery.findOneAndUpdate(
@@ -6470,7 +6474,7 @@ module.exports = {
         }
       );
       if (data) {
-       
+       let state="Tray"
         for (let x of data.items) {
           if (trayData.screen == "return-from-wht-to-rp-sorting") {
             let deliveryUpdate = await delivery.findOneAndUpdate(
@@ -6515,6 +6519,7 @@ module.exports = {
             track_tray:state,
             user_type:"PRC Warehouse"
           });
+          state="Units"
         }
       }
 
@@ -6651,14 +6656,7 @@ module.exports = {
               },
             }
           );
-          let updateRack = await trayRack.findOneAndUpdate(
-            { rack_id: trayData.rackId },
-            {
-              $push: {
-                bag_or_tray: data.code,
-              },
-            }
-          );
+          
           if (data) {
             resolve({ status: 5 });
           }
@@ -6686,14 +6684,7 @@ module.exports = {
               },
             }
           );
-          let updateRack = await trayRack.findOneAndUpdate(
-            { rack_id: data.rack_id },
-            {
-              $pull: {
-                bag_or_tray: data.code,
-              },
-            }
-          );
+        
         } else {
           data = await masters.findOneAndUpdate(
             { code: trayData.trayId },
@@ -6710,17 +6701,22 @@ module.exports = {
               },
             }
           );
-          let updateRack = await trayRack.findOneAndUpdate(
-            { rack_id: data.rack_id },
-            {
-              $pull: {
-                bag_or_tray: data.code,
-              },
-            }
-          );
+        
         }
         if (data) {
+          let state="Tray"
           for (let x of data.items) {
+            const addLogsofUnits = await unitsActionLog.create({
+              action_type: "CTX Transffer",
+              created_at: Date.now(),
+              uic: x.uic,
+              tray_id: trayData.trayId,
+              report: x.bqc_report,
+              description:`${trayData.sortId} by agent :${trayData.actUser}`,
+              track_tray:state,
+              user_type:`${trayData.userCpcType} Warehouse`
+            });
+            state="Units"
             let updateTrack = await delivery.findOneAndUpdate(
               { tracking_id: x.tracking_id },
               {
@@ -6736,9 +6732,7 @@ module.exports = {
                 projection: { _id: 0 },
               }
             );
-            // let updateElasticSearch = await elasticsearch.uicCodeGen(
-            //   updateTrack
-            // );
+           
           }
           resolve({ status: 1 });
         } else {

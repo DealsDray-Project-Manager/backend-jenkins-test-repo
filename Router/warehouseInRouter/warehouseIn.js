@@ -1549,8 +1549,16 @@ router.post("/returnFromMerging/:location", async (req, res, next) => {
 /*--------------------- AFTER MERGE IS DONE CLOSE MMT TRAY--------------------------------*/
 router.post("/mergeDoneMmttrayClose", async (req, res, next) => {
   try {
-    const { toTray, fromTray, type, length, limit, status, rackId, actioUser } =
-      req.body;
+    const {
+      toTray,
+      fromTray,
+      type,
+      length,
+      limit,
+      status,
+      rackId,
+      actionUser,
+    } = req.body;
     let data = await warehouseInController.mergeDoneTrayClose(
       fromTray,
       toTray,
@@ -1559,7 +1567,7 @@ router.post("/mergeDoneMmttrayClose", async (req, res, next) => {
       limit,
       status,
       rackId,
-      actioUser
+      actionUser
     );
     if (data.status == 1) {
       res.status(200).json({
@@ -2092,11 +2100,12 @@ router.post("/pickup/approve/ex-vs-act/:trayId", async (req, res, next) => {
 // PICKUP REQUEST APPROVE ISSUE TO SORTING AGENET
 router.post("/pickup/issueToAgent", async (req, res, next) => {
   try {
-    const { username, fromTray, toTray } = req.body;
+    const { username, fromTray, toTray, actUser } = req.body;
     let data = await warehouseInController.assigntoSoringForPickUp(
       username,
       fromTray,
-      toTray
+      toTray,
+      actUser
     );
     if (data.status === 1) {
       res.status(200).json({
