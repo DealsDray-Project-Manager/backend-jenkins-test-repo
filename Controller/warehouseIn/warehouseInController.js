@@ -3581,7 +3581,7 @@ module.exports = {
         }
       }
       if (data) {
-        let state="Tray"
+        let state = "Tray";
         for (let x of data.items) {
           let unitsLogCreation = await unitsActionLog.create({
             action_type: stage,
@@ -3590,10 +3590,10 @@ module.exports = {
             user_type: "PRC Warehouse",
             uic: x.uic,
             tray_id: trayData.trayId,
-            track_tray:state,
+            track_tray: state,
             description: `${stage} closed by Wh:${trayData.actioUser}`,
           });
-          state="Units"
+          state = "Units";
           let deliveryUpdate = await delivery.findOneAndUpdate(
             {
               tracking_id: x.tracking_id,
@@ -4632,7 +4632,7 @@ module.exports = {
               new: true,
               projection: { _id: 0 },
             }
-          )
+          );
           const addLogsofUnits = await unitsActionLog.create({
             action_type: "Issued to merging",
             created_at: Date.now(),
@@ -5850,7 +5850,7 @@ module.exports = {
       }
     });
   },
-  assigntoSoringForPickUp: (username, fromTray, toTray,actUser) => {
+  assigntoSoringForPickUp: (username, fromTray, toTray, actUser) => {
     return new Promise(async (resolve, reject) => {
       let updateFromTray = await masters.findOneAndUpdate(
         {
@@ -6474,7 +6474,7 @@ module.exports = {
         }
       );
       if (data) {
-       let state="Tray"
+        let state = "Tray";
         for (let x of data.items) {
           if (trayData.screen == "return-from-wht-to-rp-sorting") {
             let deliveryUpdate = await delivery.findOneAndUpdate(
@@ -6493,7 +6493,6 @@ module.exports = {
                 projection: { _id: 0 },
               }
             );
-
           } else {
             let deliveryUpdate = await delivery.findOneAndUpdate(
               { tracking_id: x.tracking_id },
@@ -6511,15 +6510,15 @@ module.exports = {
             );
           }
           const addLogsofUnits = await unitsActionLog.create({
-            action_type:"Ready to RDL-Repair",
+            action_type: "Ready to RDL-Repair",
             created_at: Date.now(),
             uic: x.uic,
             tray_id: data.code,
-            description:`Ready to RDL-Repair closed by agent :${trayData.actUser}`,
-            track_tray:state,
-            user_type:"PRC Warehouse"
+            description: `Ready to RDL-Repair closed by agent :${trayData.actUser}`,
+            track_tray: state,
+            user_type: "PRC Warehouse",
           });
-          state="Units"
+          state = "Units";
         }
       }
 
@@ -6656,7 +6655,7 @@ module.exports = {
               },
             }
           );
-          
+
           if (data) {
             resolve({ status: 5 });
           }
@@ -6684,7 +6683,6 @@ module.exports = {
               },
             }
           );
-        
         } else {
           data = await masters.findOneAndUpdate(
             { code: trayData.trayId },
@@ -6701,10 +6699,9 @@ module.exports = {
               },
             }
           );
-        
         }
         if (data) {
-          let state="Tray"
+          let state = "Tray";
           for (let x of data.items) {
             const addLogsofUnits = await unitsActionLog.create({
               action_type: "CTX Transffer",
@@ -6712,11 +6709,11 @@ module.exports = {
               uic: x.uic,
               tray_id: trayData.trayId,
               report: x.bqc_report,
-              description:`${trayData.sortId} by agent :${trayData.actUser}`,
-              track_tray:state,
-              user_type:`${trayData.userCpcType} Warehouse`
+              description: `${trayData.sortId} by agent :${trayData.actUser}`,
+              track_tray: state,
+              user_type: `${trayData.userCpcType} Warehouse`,
             });
-            state="Units"
+            state = "Units";
             let updateTrack = await delivery.findOneAndUpdate(
               { tracking_id: x.tracking_id },
               {
@@ -6732,7 +6729,6 @@ module.exports = {
                 projection: { _id: 0 },
               }
             );
-           
           }
           resolve({ status: 1 });
         } else {
@@ -7228,6 +7224,7 @@ module.exports = {
           }
         );
         if (data) {
+          let state = "Tray";
           for (let x of data.items) {
             let unitsLogCreation = await unitsActionLog.create({
               action_type: "Received from sorting (Wht to rp)",
@@ -7235,11 +7232,12 @@ module.exports = {
               user_name_of_action: trayData.actUser,
               agent_name: data.issued_user_name,
               user_type: "PRC Warehouse",
-              uic: y.uic,
+              uic: x.uic,
               tray_id: trayData.trayId,
               track_tray: state,
               description: `Received from sorting (Wht to rp) to agent :${data.issued_user_name} by Wh :${trayData.actUser}`,
             });
+            state = "Units";
             let deliveryTrack = await delivery.findOneAndUpdate(
               { tracking_id: x.tracking_id },
               {

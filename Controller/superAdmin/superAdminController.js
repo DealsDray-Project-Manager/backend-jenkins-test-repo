@@ -29,8 +29,8 @@ const {
 const moment = require("moment");
 const elasticsearch = require("../../Elastic-search/elastic");
 
-const IISDOMAIN = "https://prexo-v8-5-dev-api.dealsdray.com/user/profile/";
-const IISDOMAINPRDT = "https://prexo-v8-5-dev-api.dealsdray.com/product/image/";
+const IISDOMAIN = "https://prexo-v8-5-uat-api.dealsdray.com/user/profile/";
+const IISDOMAINPRDT = "https://prexo-v8-5-uat-api.dealsdray.com/product/image/";
 
 /************************************************************************************************** */
 
@@ -110,8 +110,8 @@ module.exports = {
   getDashboardData: () => {
     return new Promise(async (resolve, reject) => {
       let count = {};
-      count.usersCount = await user.count({ user_type: { $ne: 'Buyer' }});
-      count.buyerCount = await user.count({user_type:"Buyer"});
+      count.usersCount = await user.count({ user_type: { $ne: "Buyer" } });
+      count.buyerCount = await user.count({ user_type: "Buyer" });
       count.location = await infra.count({ type_taxanomy: "CPC" });
       count.warehouse = await infra.count({ type_taxanomy: "Warehouse" });
       count.brand = await brands.count({});
@@ -287,26 +287,31 @@ module.exports = {
     });
   },
 
-   /*--------------------------------Find Sales Location-----------------------------------*/
+  /*--------------------------------Find Sales Location-----------------------------------*/
 
-   getCpcSalesLocation: () => {
+  getCpcSalesLocation: () => {
     return new Promise(async (resolve, rejects) => {
       let data = await infra.find({ location_type: "Sales" });
       resolve(data);
     });
   },
- /*--------------------------------Find Sales Users-----------------------------------*/
- 
-    getsalesUsers: (warehouse, cpc ) => {
-      return new Promise(async (resolve, reject) => {
-        let data = await user.find({ user_type:"Sales Agent",warehouse: warehouse, cpc: cpc,status: { $ne: "Deactivated" }});
-        if (data) {
-          resolve(data);
-        } else {
-          resolve();
-        }
+  /*--------------------------------Find Sales Users-----------------------------------*/
+
+  getsalesUsers: (warehouse, cpc) => {
+    return new Promise(async (resolve, reject) => {
+      let data = await user.find({
+        user_type: "Sales Agent",
+        warehouse: warehouse,
+        cpc: cpc,
+        status: { $ne: "Deactivated" },
       });
-    },
+      if (data) {
+        resolve(data);
+      } else {
+        resolve();
+      }
+    });
+  },
   /*--------------------------------FIND WAREHOUSE-----------------------------------*/
 
   getWarehouse: (code, type) => {
@@ -349,14 +354,14 @@ module.exports = {
 
   getUsers: () => {
     return new Promise(async (resolve, reject) => {
-      let usersData = await user.find({ user_type: { $ne: 'Buyer' }});
+      let usersData = await user.find({ user_type: { $ne: "Buyer" } });
       resolve(usersData);
     });
   },
 
   getBuyers: () => {
     return new Promise(async (resolve, reject) => {
-      let BuyerData = await user.find({user_type:'Buyer'});
+      let BuyerData = await user.find({ user_type: "Buyer" });
       resolve(BuyerData);
     });
   },
@@ -364,7 +369,10 @@ module.exports = {
 
   buyerConSalesAgent: (username) => {
     return new Promise(async (resolve, reject) => {
-      let BuyerData = await user.find({user_type:"Buyer",sales_users:username});
+      let BuyerData = await user.find({
+        user_type: "Buyer",
+        sales_users: username,
+      });
       resolve(BuyerData);
     });
   },
@@ -2636,40 +2644,40 @@ module.exports = {
   },
   getAllTrayRacks: () => {
     return new Promise(async (resolve, reject) => {
-        try {
-            const aggregatePipeline = [
-                {
-                    $lookup: {
-                        from: "masters", // Replace with the actual collection name
-                        localField: "rack_id",
-                        foreignField: "rack_id",
-                        as: "rack_counts"
-                    }
-                },
-                {
-                    $project: {
-                        _id: 1,
-                        rack_id: 1,
-                        name:1,
-                        display:1,
-                        limit:1,
-                        warehouse:1,
-                        parent_id:1,
-                        // Other fields you want to include
-                        rack_count: { $size: "$rack_counts" }
-                    }
-                },
-                { $sort: { rack_id: 1 } }
-            ];
+      try {
+        const aggregatePipeline = [
+          {
+            $lookup: {
+              from: "masters", // Replace with the actual collection name
+              localField: "rack_id",
+              foreignField: "rack_id",
+              as: "rack_counts",
+            },
+          },
+          {
+            $project: {
+              _id: 1,
+              rack_id: 1,
+              name: 1,
+              display: 1,
+              limit: 1,
+              warehouse: 1,
+              parent_id: 1,
+              // Other fields you want to include
+              rack_count: { $size: "$rack_counts" },
+            },
+          },
+          { $sort: { rack_id: 1 } },
+        ];
 
-            const rackCounts = await trayRack.aggregate(aggregatePipeline);
-            console.log(rackCounts);
-            resolve(rackCounts);
-        } catch (error) {
-            reject(error);
-        }
+        const rackCounts = await trayRack.aggregate(aggregatePipeline);
+        console.log(rackCounts);
+        resolve(rackCounts);
+      } catch (error) {
+        reject(error);
+      }
     });
-},
+  },
 
   /*--------------------GET RACK BASED ON THE LIMIT AND WAREHOUSE---------------------------*/
   getRackBasedOnTheWarehouse: (warehouse) => {
@@ -2677,7 +2685,11 @@ module.exports = {
       let arr = [];
       const rackIdData = await trayRack.find({ warehouse: warehouse });
       for (let x of rackIdData) {
-        if (x.limit > x?.bag_or_tray?.length) {
+        const findRack = await masters.find(
+          { rack_id: x.rack_id },
+          { rack_id: 1 }
+        );
+        if (x.limit > findRack.length) {
           arr.push(x);
         }
       }
@@ -4171,6 +4183,22 @@ module.exports = {
       }
     });
   },
+  openPacketDataFetch: () => {
+    return new Promise(async (resolve, reject) => {
+      const today = new Date();
+      const oneWeekAgo = new Date(today);
+      oneWeekAgo.setDate(today.getDate() - 7);
+      const dataFetch = await delivery.find(
+        {
+          created_at: { $gte: oneWeekAgo },
+          assign_to_agent: { $exists: true },
+        },
+        { "uic_code.code": 1, tracking_id: 1, old_item_details: 1 }
+      );
+      resolve(dataFetch);
+    });
+  },
+  /*-----------------------------------------EXTRA------------------------------------------------------------*/
   addCpcType: () => {
     return new Promise(async (resolve, reject) => {
       let findAllUsers = await user.find();
@@ -4286,8 +4314,11 @@ module.exports = {
         if (x.actual_items.length == 0) {
           let getDelivery = [];
 
-            getDelivery = await delivery.find({ wht_tray: x.code ,ctx_tray_id:{$exists:false}});
-          
+          getDelivery = await delivery.find({
+            wht_tray: x.code,
+            ctx_tray_id: { $exists: false },
+          });
+
           let findMuic = await products.findOne({
             brand_name: x.brand,
             model_name: x.model,
@@ -4571,7 +4602,7 @@ module.exports = {
         "91010003238",
         "91010003365",
         "91010004516",
-        "91010004785",          
+        "91010004785",
       ];
 
       let arr2 = [];
@@ -5344,14 +5375,17 @@ module.exports = {
       resolve({ status: true });
     });
   },
-  manageRdlFlsToRdlOne:()=>{
-    return new Promise(async(resolve,reject)=>{
-      const updateRdl=await user.updateMany({user_type:"RDL-FLS"},{
-        $set:{
-          user_type:"RDL-One"
+  manageRdlFlsToRdlOne: () => {
+    return new Promise(async (resolve, reject) => {
+      const updateRdl = await user.updateMany(
+        { user_type: "RDL-FLS" },
+        {
+          $set: {
+            user_type: "RDL-One",
+          },
         }
-      })
-      resolve({status:true})
-    })
-  }
+      );
+      resolve({ status: true });
+    });
+  },
 };

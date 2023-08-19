@@ -400,7 +400,8 @@ module.exports = {
               items: findTray.temp_array,
               actual_items: [],
             },
-          }
+          },
+          { new: true } // This option returns the updated document
         );
       } else {
         data = await masters.findOneAndUpdate(
@@ -411,7 +412,8 @@ module.exports = {
               closed_time_bot: Date.now(),
               actual_items: [],
             },
-          }
+          },
+          { new: true } // This option returns the updated document
         );
       }
       let state = "Tray";

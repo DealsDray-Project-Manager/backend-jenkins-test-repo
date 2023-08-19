@@ -9,6 +9,7 @@ const elasticSearch = require("../Elastic-search/elastic");
 const emailNotification = require("../Utils/email-notification");
 const { products } = require("../Model/productModel/product");
 const { orders } = require("../Model/ordersModel/ordersModel");
+const superAdminController = require("../Controller/superAdmin/superAdminController");
 /***************************************** */
 
 exports = module.exports = () => {
@@ -137,6 +138,21 @@ exports = module.exports = () => {
   } catch (error) {
     console.log(error);
   }
+  try {
+    //"0 9 * * 1"
+    corn.schedule("26 10 * * *", async () => {
+      /*----------------------------------------------WEEKLY DELEVERED REPORT-----------------------------*/
+      const deleiveryReportOfLastWeek =
+        await superAdminController.openPacketDataFetch();
+      if (deleiveryReportOfLastWeek) {
+        let check = emailNotification.deleiveryReportOfLastWeek(
+          deleiveryReportOfLastWeek
+        );
+      }
+    });
+  } catch (error) {
+    console.log(error);
+  }
 };
 // BLANCOO AUTOMATION
 async function blancooAutmation(result) {
@@ -202,7 +218,6 @@ async function blancooAutmation(result) {
       }
     }
   }
-
   let check = emailNotification.blancoDataUpdateNotification(
     updatedMuic,
     arrofTray

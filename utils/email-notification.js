@@ -1,5 +1,5 @@
 const nodemailer = require("nodemailer");
-
+let subject=""
 const transporter = nodemailer.createTransport({
   host: "mail.dealsdray.com",
   port: 587,
@@ -17,6 +17,7 @@ module.exports = {
   blancoDataUpdateNotification: (values, trayDetails) => {
     try {
       let tableRows = "";
+      subject="Blancoo task scheduler report"
       for (const value of values) {
         tableRows += `
           <tr>
@@ -27,7 +28,6 @@ module.exports = {
           </tr>
         `;
       }
-
       const htmlContent = `
         <html>
         <body>
@@ -69,6 +69,69 @@ module.exports = {
           month: "2-digit",
           day: "2-digit",
         })}] Blancoo task scheduler report`,
+        html: htmlContent,
+      };
+      transporter.sendMail(mailOptions, (error, info) => {
+        if (error) {
+          console.log("Error occurred:", error.message);
+        } else {
+          console.log("Email sent:", info.response);
+        }
+      });
+    } catch (error) {
+      console.log(error);
+    }
+  },
+  deleiveryReportOfLastWeek: (values) => {
+    try {
+      let tableRows = "";
+      subject="Last week Delivered and Opened Packets Purchase Data"
+      for (const value of values) {
+        tableRows += `
+          <tr>
+            <td style="border: 1px solid black;">${value.uic_code.code}</td>
+            <td style="border: 1px solid black;">${value.tracking_id}</td>
+            <td style="border: 1px solid black;">${value.old_item_details
+              ?.replace(/:/g, " ")
+              ?.toUpperCase()}</td>
+          
+          </tr>
+        `;
+      }
+
+      const htmlContent = `
+        <html>
+        <body>
+          <p>Dear Admin,</p>
+          <p >The following items have been delivered and import into the Prexo System.</p>
+          <p>
+          Date & Time : ${new Date(Date.now()).toLocaleString("en-GB", {
+            hour12: true,
+          })}
+          <br>
+          <p>Unit Details</p>
+          <table style="border-collapse: collapse; width: 100%; height: auto">
+            <tr>
+              <th style="border: 1px solid black;">UIC</th>
+              <th style="border: 1px solid black;">Tracking Id</th>
+              <th style="border: 1px solid black;">Model</th>
+            </tr>
+            ${tableRows}
+          </table>
+          <p>Thanks and regards</p>
+          <p>PREXO Delivery Import MODULE</p>
+        </body>
+        </html>
+      `.trim();
+
+      const mailOptions = {
+        from: "prexo-no-reply@dealsdray.com",
+        to: "muhammedrafnasvk@gmail.com",
+        subject: `[${new Date(Date.now()).toLocaleString("en-GB", {
+          year: "numeric",
+          month: "2-digit",
+          day: "2-digit",
+        })}]  ${subject}`,
         html: htmlContent,
       };
       transporter.sendMail(mailOptions, (error, info) => {
