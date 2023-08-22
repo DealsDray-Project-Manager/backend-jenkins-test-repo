@@ -3158,7 +3158,7 @@ router.post("/muicPage/partAdd", async (req, res, next) => {
       });
     } else {
       res.status(202).json({
-        message: "Failed please tray again...",
+        message: "Failed please try again...",
       });
     }
   } catch (error) {
@@ -3176,7 +3176,7 @@ router.post("/muicAssociation/add", async (req, res, next) => {
       });
     } else {
       res.status(202).json({
-        message: "Failed Please Tray Again...",
+        message: "Failed Please Try Again...",
       });
     }
   } catch (error) {
@@ -3194,7 +3194,7 @@ router.post("/muicAssociation/remove", async (req, res, next) => {
       });
     } else {
       res.status(202).json({
-        message: "Failed Please Tray Again...",
+        message: "Failed Please Try Again...",
       });
     }
   } catch (error) {
@@ -3215,6 +3215,7 @@ router.post("/vendorMaster/view", async (req, res, next) => {
     next(error);
   }
 });
+
 
 // CREATE VENDOR
 router.post("/vendorMaster/create", async (req, res, next) => {

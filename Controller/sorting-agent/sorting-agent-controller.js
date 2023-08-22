@@ -225,7 +225,7 @@ module.exports = {
             uic: itemData.uic,
             tray_id: itemData.wht_tray,
             track_tray: "Units",
-            description: `Item transfered to WHT by agent ${assignToWht.issued_user_name}`,
+            description: `Item transferred to WHT done by agent: ${assignToWht.issued_user_name}`,
           });
           let updateDelivery = await delivery.findOneAndUpdate(
             { tracking_id: itemData.awbn_number },
@@ -483,7 +483,7 @@ module.exports = {
                 uic: mmtTrayData.item.uic,
                 tray_id: data.code,
                 track_tray: "units",
-                description: `Item transfered to tray by agent: ${data.issued_user_name}`,
+                description: `Item transferred to tray done by agent: ${data.issued_user_name}`,
               });
               resolve({ status: 1 });
             } else {
@@ -498,13 +498,13 @@ module.exports = {
   },
   mergeDoneSendToWh: (trayData) => {
     return new Promise(async (resolve, reject) => {
-      let trayCodeArr=[]
+      let trayCodeArr = [];
       let finedTray = await masters.findOne({ code: trayData.fromTray });
-      let fromtray,updateToTray
-      let stage
+      let fromtray, updateToTray;
+      let stage;
       if (finedTray.sort_id == "Audit Done Issued to Merging") {
-        stage="Audit Done Return from Merging"
-         fromtray = await masters.findOneAndUpdate(
+        stage = "Audit Done Return from Merging";
+        fromtray = await masters.findOneAndUpdate(
           { code: trayData.fromTray },
           {
             $set: {
@@ -516,8 +516,7 @@ module.exports = {
           }
         );
         if (fromtray) {
-         
-           updateToTray = await masters.findOneAndUpdate(
+          updateToTray = await masters.findOneAndUpdate(
             { code: trayData.toTray },
             {
               $set: {
@@ -528,13 +527,12 @@ module.exports = {
               },
             }
           );
-        
         } else {
           resolve({ status: 0 });
         }
       } else if (finedTray.sort_id == "Ready to BQC Issued to Merging") {
-        stage="Ready to BQC Merging Done"
-         fromtray = await masters.findOneAndUpdate(
+        stage = "Ready to BQC Merging Done";
+        fromtray = await masters.findOneAndUpdate(
           { code: trayData.fromTray },
           {
             $set: {
@@ -546,7 +544,7 @@ module.exports = {
           }
         );
         if (fromtray) {
-           updateToTray = await masters.findOneAndUpdate(
+          updateToTray = await masters.findOneAndUpdate(
             { code: trayData.toTray },
             {
               $set: {
@@ -557,13 +555,12 @@ module.exports = {
               },
             }
           );
-         
         } else {
           resolve({ status: 0 });
         }
       } else if (finedTray.sort_id == "Ready to Audit Issued to Merging") {
-        stage="Ready to Audit Merging Done"
-         fromtray = await masters.findOneAndUpdate(
+        stage = "Ready to Audit Merging Done";
+        fromtray = await masters.findOneAndUpdate(
           { code: trayData.fromTray },
           {
             $set: {
@@ -575,7 +572,7 @@ module.exports = {
           }
         );
         if (fromtray) {
-           updateToTray = await masters.findOneAndUpdate(
+          updateToTray = await masters.findOneAndUpdate(
             { code: trayData.toTray },
             {
               $set: {
@@ -586,13 +583,12 @@ module.exports = {
               },
             }
           );
-         
         } else {
           resolve({ status: 0 });
         }
       } else if (finedTray.sort_id == "Ready to RDL-Repair Issued to Merging") {
-        stage="Ready to RDL-Repair Merging Done"
-         fromtray = await masters.findOneAndUpdate(
+        stage = "Ready to RDL-Repair Merging Done";
+        fromtray = await masters.findOneAndUpdate(
           { code: trayData.fromTray },
           {
             $set: {
@@ -604,7 +600,7 @@ module.exports = {
           }
         );
         if (fromtray) {
-           updateToTray = await masters.findOneAndUpdate(
+          updateToTray = await masters.findOneAndUpdate(
             { code: trayData.toTray },
             {
               $set: {
@@ -615,13 +611,12 @@ module.exports = {
               },
             }
           );
-         
         } else {
           resolve({ status: 0 });
         }
       } else if (finedTray.sort_id == "Issued to Sorting for Ctx to Stx") {
-        stage="Ctx to Stx Sorting Done"
-         fromtray = await masters.findOneAndUpdate(
+        stage = "Ctx to Stx Sorting Done";
+        fromtray = await masters.findOneAndUpdate(
           { code: trayData.fromTray },
           {
             $set: {
@@ -633,7 +628,7 @@ module.exports = {
           }
         );
         if (fromtray) {
-           updateToTray = await masters.findOneAndUpdate(
+          updateToTray = await masters.findOneAndUpdate(
             { code: trayData.toTray },
             {
               $set: {
@@ -648,7 +643,7 @@ module.exports = {
           resolve({ status: 0 });
         }
       } else {
-         fromtray = await masters.findOneAndUpdate(
+        fromtray = await masters.findOneAndUpdate(
           { code: trayData.fromTray },
           {
             $set: {
@@ -660,7 +655,7 @@ module.exports = {
           }
         );
         if (fromtray) {
-           updateToTray = await masters.findOneAndUpdate(
+          updateToTray = await masters.findOneAndUpdate(
             { code: trayData.toTray },
             {
               $set: {
@@ -671,7 +666,6 @@ module.exports = {
               },
             }
           );
-         
         } else {
           resolve({ status: 0 });
         }
@@ -680,9 +674,9 @@ module.exports = {
       if (fromtray.type_taxanomy == "ST") {
         actUser = "Sales Sorting";
       }
-      if(fromtray){
-        let state="Tray"
-        for(let x of fromtray.items){
+      if (fromtray) {
+        let state = "Tray";
+        for (let x of fromtray.items) {
           const addLogsofUnits = await unitsActionLog.create({
             action_type: "Merging Done",
             created_at: Date.now(),
@@ -691,12 +685,12 @@ module.exports = {
             tray_id: fromtray.code,
             user_type: actUser,
             track_tray: state,
-            description: `Merging Done by agent :${fromtray.issued_user_name}`,
+            description: `Merging Done and sent to warehouse by agent:${fromtray.issued_user_name}`,
           });
-          state="Units"
+          state = "Units";
         }
-        let state1="Tray"
-        for(let x of updateToTray.items){
+        let state1 = "Tray";
+        for (let x of updateToTray.items) {
           const addLogsofUnits = await unitsActionLog.create({
             action_type: "Merging Done",
             created_at: Date.now(),
@@ -707,12 +701,11 @@ module.exports = {
             track_tray: state1,
             description: `Merging Done by agent :${fromtray.issued_user_name}`,
           });
-          state1="Units"
+          state1 = "Units";
         }
-        resolve({status:1})
-      }
-      else{
-        resolve({status:0})
+        resolve({ status: 1 });
+      } else {
+        resolve({ status: 0 });
       }
     });
   },
@@ -890,7 +883,8 @@ module.exports = {
             closed_date_agent: Date.now(),
             items: trayData.allItem,
           },
-        }
+        },
+        { new: true } // This option returns the updated document
       );
       let state = "Tray";
       for (let x of updateFromTray?.items) {
@@ -900,7 +894,7 @@ module.exports = {
           agent_name: updateFromTray.issued_user_name,
           user_type: "PRC Sorting",
           uic: x.uic,
-          tray_id: trayData.trayId,
+          tray_id: updateFromTray.trayId,
           track_tray: state,
           description: `Pickup Done Closed by Sorting Agent :${updateFromTray.issued_user_name}`,
         });
@@ -934,10 +928,23 @@ module.exports = {
                 sort_id: "Pickup Done Closed by Sorting Agent",
                 closed_date_agent: Date.now(),
               },
-            }
+            },
+            { new: true } // This option returns the updated document
           );
           if (updateToTray) {
+            let state1 = "Tray";
             for (let x of updateToTray?.items) {
+              let unitsLogCreation = await unitsActionLog.create({
+                action_type: "Pickup Done Closed by Sorting Agent",
+                created_at: Date.now(),
+                agent_name: updateToTray.issued_user_name,
+                user_type: "PRC Sorting",
+                uic: x.uic,
+                tray_id: updateToTray.trayId,
+                track_tray: state1,
+                description: `Pickup Done Closed by Sorting Agent :${updateToTray.issued_user_name}`,
+              });
+              state1 = "Units";
               let deliveryUpdate = await delivery.findOneAndUpdate(
                 { tracking_id: x.tracking_id },
                 {
@@ -952,9 +959,6 @@ module.exports = {
                   projection: { _id: 0 },
                 }
               );
-              // let updateElasticSearch = await Elasticsearch.uicCodeGen(
-              //   deliveryUpdate
-              // );
             }
             resolve({ status: 1 });
           }
@@ -968,7 +972,7 @@ module.exports = {
   },
   pickupDoneEodClose: (trayId) => {
     return new Promise(async (resolve, reject) => {
-      let updateToTray = await masters.updateOne(
+      let updateToTray = await masters.findOneAndUpdate(
         { code: trayId },
         {
           $set: {
@@ -979,7 +983,36 @@ module.exports = {
           },
         }
       );
-      if (updateToTray.modifiedCount !== 0) {
+
+      if (updateToTray) {
+        let state1 = "Tray";
+        for (let x of updateToTray?.items) {
+          let unitsLogCreation = await unitsActionLog.create({
+            action_type: "Pickup Done Closed by Sorting Agent",
+            created_at: Date.now(),
+            agent_name: updateToTray.issued_user_name,
+            user_type: "PRC Sorting",
+            uic: x.uic,
+            tray_id: updateToTray.trayId,
+            track_tray: state1,
+            description: `Pickup Done Closed by Sorting Agent :${updateToTray.issued_user_name}`,
+          });
+          state1 = "Units";
+          let deliveryUpdate = await delivery.findOneAndUpdate(
+            { tracking_id: x.tracking_id },
+            {
+              $set: {
+                tray_status: "Pickup Done Closed by Sorting Agent",
+                tray_location: "Warehouse",
+                updated_at: Date.now(),
+              },
+            },
+            {
+              new: true,
+              projection: { _id: 0 },
+            }
+          );
+        }
         resolve({ status: 1 });
       } else {
         resolve({ status: 0 });

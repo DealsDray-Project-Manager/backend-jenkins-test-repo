@@ -23,7 +23,7 @@ module.exports = {
           $match: {
             type_taxanomy: "ST",
             cpc: location,
-            sort_id: "Ready to Pricing",
+            sort_id:{$in:["Ready to Pricing","Inuse"]},
             sp_price: { $exists: true, $ne: null }, // Filter out documents with null or missing sp_price
             mrp_price: { $exists: true, $ne: null }, // Filter out documents with null or missing mrp_price
           },
@@ -48,7 +48,7 @@ module.exports = {
           $match: {
             type_taxanomy: "ST",
             cpc: location,
-            sort_id: "Ready to Pricing",
+            sort_id:{$in:["Ready to Pricing","Inuse"]},
             sp_price: { $exists: true, $ne: null },
             mrp_price: { $exists: true, $ne: null },
           },
@@ -79,9 +79,9 @@ module.exports = {
           $match: {
             type_taxanomy: "ST",
             cpc: location,
-            sort_id: "Ready to Pricing",
-            sp_price: { $exists: true, $ne: null }, // Filter out documents with null or missing sp_price
-            mrp_price: { $exists: true, $ne: null }, // Filter out documents with null or missing mrp_price
+            sort_id: { $in: ["Ready to Pricing", "Inuse"] },
+            sp_price: { $exists: true, $ne: null },
+            mrp_price: { $exists: true, $ne: null },
           },
         },
         {
@@ -99,7 +99,16 @@ module.exports = {
             price_creation_date: { $first: "$price_creation_date" },
           },
         },
+        {
+          $lookup: {
+            from: "products", // Replace with the name of the collection you want to lookup from
+            localField: "muic",
+            foreignField: "muic",
+            as: "muicDetails",
+          },
+        },
       ]);
+     
       for (let x of getBasedOnMuic) {
         x["muic_one"] = x.muic[0];
       }
@@ -114,7 +123,7 @@ module.exports = {
           $match: {
             type_taxanomy: "ST",
             cpc: location,
-            sort_id: "Ready to Pricing",
+            sort_id:{$in:["Ready to Pricing","Inuse"]},
             brand:brand,
             model:model,
             tray_grade:grade,
@@ -162,7 +171,7 @@ module.exports = {
           $match: {
             type_taxanomy: "ST",
             cpc: location,
-            sort_id: "Ready to Pricing",
+            sort_id:{$in:["Ready to Pricing","Inuse"]},
             sp_price: { $exists: true, $ne: null }, 
             mrp_price: { $exists: true, $ne: null },
           },

@@ -762,6 +762,20 @@ router.post("/whtTray/:location/:type", async (req, res, next) => {
     next(error);
   }
 });
+// GET BOT / PMT /MMT 
+router.post("/botPmtMMtTray/:location/:taxanomy", async (req, res, next) => {
+  try {
+    const { location,taxanomy } = req.params;
+    let data = await warehouseInController.getBotPmtMmtTray(location,taxanomy);
+    if (data) {
+      res.status(200).json({
+        data: data,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
 /*-----------------------GET RPT TRAY BASED ON THE STATUS -----------------------------*/
 router.post("/rptTray", async (req, res, next) => {
   try {
@@ -2647,10 +2661,11 @@ router.post("/whtToRp/whtTray", async (req, res, next) => {
 // ISSUED TO SORTING
 router.post("/whtToRp/issueToAgent", async (req, res, next) => {
   try {
-    const { rpTray, whtTray } = req.body;
+    const { rpTray, whtTray,actUser } = req.body;
     const data = await warehouseInController.whtToRpIssueToAgent(
       rpTray,
-      whtTray
+      whtTray,
+      actUser
     );
     if (data.status == 1) {
       res.status(200).json({
@@ -2703,21 +2718,14 @@ router.post("/recieved-from-sortingWhtToRp", async (req, res, next) => {
   }
 });
 /*---------------------------------------UPGRADE UNITS REPORT ----------------------------------------------------*/
-router.post("/upgradeUnits/:location/:page/:size", async (req, res, next) => {
+router.post("/upgradeUnits/:location", async (req, res, next) => {
   try {
-    let { location, page, size } = req.params;
-    page++;
-    const limit = parseInt(size);
-    const skip = (page - 1) * size;
-    let data = await warehouseInController.getUpgradeUnistData(
-      location,
-      limit,
-      skip
-    );
+    let { location } = req.params;
+
+    let data = await warehouseInController.getUpgradeUnistData(location);
     if (data) {
       res.status(200).json({
         data: data.upgaradeReport,
-        count: data.count,
       });
     }
   } catch (error) {
@@ -2727,28 +2735,20 @@ router.post("/upgradeUnits/:location/:page/:size", async (req, res, next) => {
 // DATE RANGE FILTER
 router.post("/upgardeUnitsFilter/item/filter", async (req, res, next) => {
   try {
-    let { location, fromDate, toDate, page, size, type } = req.body;
-    page++;
-    const limit = parseInt(size);
-    const skip = (page - 1) * size;
+    let { location, fromDate, toDate } = req.body;
+
     const filterData = await warehouseInController.upgardeUnitsFilter(
       location,
       fromDate,
-      toDate,
-      limit,
-      skip,
-      type
+      toDate
     );
     if (filterData.monthWiseReport.length !== 0) {
       res.status(200).json({
         data: filterData.monthWiseReport,
-        count: filterData.getCount,
       });
     } else {
       res.status(202).json({
         data: filterData.monthWiseReport,
-
-        count: filterData.getCount,
       });
     }
   } catch (error) {
@@ -2783,4 +2783,55 @@ router.post("/search/upgradeReport", async (req, res, next) => {
     next(error);
   }
 });
+/*----------------------------------------RACK ID UPDATE -----------------------------------------*/
+router.post(
+  "/rackIdUpdateGetTray/:trayId/:location",
+  async (req, res, next) => {
+    try {
+      let { trayId, location } = req.params;
+      let data = await warehouseInController.rackIdUpdateGetTrayData(
+        trayId,
+        location
+      );
+      if (data.status == 1) {
+        res.status(200).json({
+          data: data.tray,
+        });
+      } else if (data.status == 2) {
+        res.status(202).json({
+          message: "Tray not found in any rack",
+        });
+      } else {
+        res.status(202).json({
+          message: "Tray not found",
+        });
+      }
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+// CHANGE RACK ID
+router.post("/updateRackId", async (req, res, next) => {
+  try {
+    let { trayId, rackId, description } = req.body;
+    let data = await warehouseInController.updateTheRackId(
+      trayId,
+      rackId,
+      description
+    );
+    if (data.status == 1) {
+      res.status(200).json({
+        message: "Successfully updated",
+      });
+    } else {
+      res.status(202).json({
+        message: "Failed try again...",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
 module.exports = router;

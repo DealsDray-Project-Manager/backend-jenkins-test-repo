@@ -110,4 +110,17 @@ router.post("/getWarrantyAndTerms", async (req, res, next) => {
     next(error);
   }
 });
+// GET VENDOR FOR FILTER 
+router.post("/vendorMasterforDrp/view", async (req, res, next) => {
+  try {
+    const vendorData = await purchaseController.getVendorsForDrop();
+    if (vendorData) {
+      res.status(200).json({
+        data: vendorData,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
 module.exports = router;

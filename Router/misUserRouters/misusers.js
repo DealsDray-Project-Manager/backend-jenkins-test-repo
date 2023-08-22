@@ -1124,7 +1124,7 @@ router.post(
 router.post("/TrayMergeRequestSend", async (req, res, next) => {
   try {
     console.log(req.body);
-    const { sort_agent, fromTray, toTray,actionUser } = req.body;
+    const { sort_agent, fromTray, toTray, actionUser } = req.body;
     let data = await misUserController.mmtMergeRequestSendToWh(
       sort_agent,
       fromTray,
@@ -1315,6 +1315,23 @@ router.post("/pickup/requestSendToWh", async (req, res, next) => {
     if (data) {
       res.status(200).json({
         message: "Request sent to warehouse",
+      });
+    } else {
+      res.status(202).json({
+        message: "Failed tray again...",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+// PICKUP REASSIGN
+router.post("/pickup/reAssign", async (req, res, next) => {
+  try {
+    let data = await misUserController.pickUpReassign(req.body);
+    if (data.status == 1) {
+      res.status(200).json({
+        message: "Request Successfully Sent to Warehouse",
       });
     } else {
       res.status(202).json({
@@ -1925,7 +1942,7 @@ router.post("/stxUtilityGetStx", async (req, res, next) => {
     // PARAMS
     const { uic, location, grade } = req.body;
     // FUNCTION FROM CONTROLLER
-    let data = await misUserController.stxUtilityGetStx(uic, location, grade);
+    let data = await misUserController.stxUtilityImportXlsxstxUtilityGetStx(uic, location, grade);
     if (data.status == 2) {
       res.status(200).json({
         data: data.trayData,

@@ -3146,12 +3146,12 @@ module.exports = {
   mmtMergeRequestSendToWh: (sortingAgent, fromTray, toTray, actionUser) => {
     return new Promise(async (resolve, reject) => {
       let whtTray = await masters.findOne({ code: fromTray });
-      let updateFromTray, updateToTray, stage,dep;
+      let updateFromTray, updateToTray, stage, dep;
       if (
         whtTray.sort_id === "Audit Done Closed By Warehouse" &&
         whtTray.type_taxanomy == "WHT"
       ) {
-        dep="PRC MIS"
+        dep = "PRC MIS";
         stage = "Audit Done Merge Request Sent To Wharehouse";
         updateFromTray = await masters.findOneAndUpdate(
           { code: fromTray },
@@ -3186,7 +3186,7 @@ module.exports = {
         whtTray.sort_id === "Ready to BQC" &&
         whtTray.type_taxanomy == "WHT"
       ) {
-        dep="PRC MIS"
+        dep = "PRC MIS";
         stage = "Ready to BQC Merge Request Sent To Wharehouse";
         updateFromTray = await masters.findOneAndUpdate(
           { code: fromTray },
@@ -3221,7 +3221,7 @@ module.exports = {
         whtTray.sort_id === "Ready to Audit" &&
         whtTray.type_taxanomy == "WHT"
       ) {
-        dep="PRC MIS"
+        dep = "PRC MIS";
         stage = "Ready to Audit Merge Request Sent To Wharehouse";
         updateFromTray = await masters.findOneAndUpdate(
           { code: fromTray },
@@ -3256,7 +3256,7 @@ module.exports = {
         whtTray.sort_id === "Ready to RDL-Repair" &&
         whtTray.type_taxanomy == "WHT"
       ) {
-        dep="PRC MIS"
+        dep = "PRC MIS";
         stage = "Ready to RDL-Repair Merge Request Sent To Wharehouse";
         updateFromTray = await masters.findOneAndUpdate(
           { code: fromTray },
@@ -3288,7 +3288,7 @@ module.exports = {
           resolve({ status: 0 });
         }
       } else {
-        dep="PRC MIS"
+        dep = "PRC MIS";
         stage = "Merge Request Sent To Wharehouse";
         updateFromTray = await masters.findOneAndUpdate(
           { code: fromTray },
@@ -3303,7 +3303,7 @@ module.exports = {
           }
         );
         if (updateFromTray) {
-           updateToTray = await masters.findOneAndUpdate(
+          updateToTray = await masters.findOneAndUpdate(
             { code: toTray },
             {
               $set: {
@@ -3320,8 +3320,8 @@ module.exports = {
           resolve({ status: 0 });
         }
       }
-      if(whtTray.type_taxanomy == "ST"){
-        dep="Sales MIS"
+      if (whtTray.type_taxanomy == "ST") {
+        dep = "Sales MIS";
       }
       if (updateFromTray) {
         let state1 = "Tray";
@@ -3339,7 +3339,7 @@ module.exports = {
           });
           state1 = "Units";
         }
-       
+
         let state2 = "Tray";
         for (let x of updateToTray.items) {
           let unitsLogCreation = await unitsActionLog.create({
@@ -3355,10 +3355,9 @@ module.exports = {
           });
           state2 = "Units";
         }
-        resolve({status:1})
-      }
-      else{
-        resolve({status:0})
+        resolve({ status: 1 });
+      } else {
+        resolve({ status: 0 });
       }
     });
   },
@@ -4016,7 +4015,7 @@ module.exports = {
   pickupRequestSendToWh: (itemData) => {
     return new Promise(async (resolve, reject) => {
       let sendtoPickupRequest;
-      let arr=[]
+      let arr = [];
       for (let x of itemData.isCheck) {
         let getDeliveryData = await delivery.findOne({ "uic_code.code": x });
         if (getDeliveryData) {
@@ -4072,10 +4071,11 @@ module.exports = {
             );
           }
         }
-        let state="Tray"
-        if(arr.includes(sendtoPickupRequest.code)){
-            state="Units"
+        let state = "Tray";
+        if (arr.includes(sendtoPickupRequest.code)) {
+          state = "Units";
         }
+        arr.push(sendtoPickupRequest.code);
         let unitsLogCreation = await unitsActionLog.create({
           action_type: "Pickup Request sent to Warehouse",
           created_at: Date.now(),
@@ -4104,6 +4104,35 @@ module.exports = {
       }
     });
   },
+  pickUpReassign: (reAssignData) => {
+    return new Promise(async (resolve, reject) => {
+      const fromTray = await masters.updateOne(
+        { code: reAssignData.fromTray },
+        {
+          $set: {
+            issued_user_name: reAssignData.sort_agent,
+          },
+        }
+      );
+      if (fromTray.modifiedCount !== 0) {
+        const toTray = await masters.updateOne(
+          { code: reAssignData.toTray },
+          {
+            $set: {
+              issued_user_name: reAssignData.sort_agent,
+            },
+          }
+        );
+        if (toTray.modifiedCount !== 0) {
+          resolve({ status: 1 });
+        } else {
+          resolve({ status: 2 });
+        }
+      } else {
+        resolve({ status: 2 });
+      }
+    });
+  },
   getAuditDone: (location) => {
     return new Promise(async (resolve, reject) => {
       let data = await masters.find({
@@ -4120,6 +4149,7 @@ module.exports = {
     return new Promise(async (resolve, reject) => {
       let sendtoRdlMis;
       for (let x of tray) {
+        console.log(x);
         if (sortId == "Send for RDL-two") {
           sendtoRdlMis = await masters.findOneAndUpdate(
             { code: x },
@@ -4135,23 +4165,6 @@ module.exports = {
             }
           );
           if (sendtoRdlMis) {
-            if (sendtoRdlMis.items?.length !== 0) {
-              let state = "Tray";
-              for (let y of sendtoRdlMis.items) {
-                let unitsLogCreation = await unitsActionLog.create({
-                  action_type: sortId,
-                  created_at: Date.now(),
-                  user_name_of_action: actUser,
-                  agent_name: user_name,
-                  user_type: "PRC MIS",
-                  uic: y.uic,
-                  tray_id: x,
-                  track_tray: state,
-                  description: `${sortId} to agent :${user_name} by mis :${actUser}`,
-                });
-                state = "Units";
-              }
-            }
             const updateSp = await masters.findOneAndUpdate(
               { code: sendtoRdlMis.sp_tray },
               {
@@ -4449,7 +4462,7 @@ module.exports = {
             cpc: location,
             brand: brand,
             model: model,
-            type_taxanomy:"WHT",
+            type_taxanomy: "WHT",
             sort_id: "Ready to RDL-Repair",
           },
         },
@@ -4815,10 +4828,15 @@ module.exports = {
       }
     });
   },
-  sortingCtxtoStxRequestSendToWh: (sortingAgent, fromTray, toTray,actionUser) => {
-    let updateFromTray
+  sortingCtxtoStxRequestSendToWh: (
+    sortingAgent,
+    fromTray,
+    toTray,
+    actionUser
+  ) => {
+    let updateFromTray;
     return new Promise(async (resolve, reject) => {
-       updateFromTray = await masters.updateOne(
+      updateFromTray = await masters.updateOne(
         { code: fromTray },
         {
           $set: {
@@ -4846,19 +4864,19 @@ module.exports = {
           }
         );
         if (updateToTray.modifiedCount !== 0) {
-          let state="Tray"
-          for (let x of updateFromTray.items){
+          let state = "Tray";
+          for (let x of updateFromTray.items) {
             let unitsLogCreation = await unitsActionLog.create({
               action_type: "Ctx to Stx Send for Sorting",
               created_at: Date.now(),
-              agent_name:sortingAgent,
+              agent_name: sortingAgent,
               user_type: "PRC Mis",
               uic: x.uic,
               tray_id: updateFromTray.code,
               track_tray: state,
               description: `Ctx to Stx Send for Sorting to agent :${sortingAgent} by Mis :${actionUser}`,
             });
-            state="Units"
+            state = "Units";
           }
           resolve({ status: 1 });
         } else {
@@ -5322,7 +5340,7 @@ module.exports = {
   /*--------------------------------------------STX UTILITY ---------------------------------------*/
   stxUtilityImportXlsx: () => {
     return new Promise(async (resolve, reject) => {
-      let arr = [];
+      let arr = []
       let arr1 = [];
       for (let x of arr) {
         let createTo = await stxUtility.create(x);
@@ -5353,7 +5371,7 @@ module.exports = {
     });
   },
   // STX UTILITY GET MATCH BRAND AND MODEL
-  stxUtilityGetStx: (uic, location, grade) => {
+  stxUtilityImportXlsxstxUtilityGetStx: (uic, location, grade) => {
     // PROMISE
     return new Promise(async (resolve, reject) => {
       // CHECK UIC BRAND AND MODEL AND AVAILABILITY OF UIC

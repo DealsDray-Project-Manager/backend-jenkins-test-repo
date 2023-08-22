@@ -29,8 +29,8 @@ const {
 const moment = require("moment");
 const elasticsearch = require("../../Elastic-search/elastic");
 
-const IISDOMAIN = "https://prexo-v8-5-uat-api.dealsdray.com/user/profile/";
-const IISDOMAINPRDT = "https://prexo-v8-5-uat-api.dealsdray.com/product/image/";
+const IISDOMAIN = "https://prexo-v8-5-dev-api.dealsdray.com/user/profile/";
+const IISDOMAINPRDT = "https://prexo-v8-5-dev-api.dealsdray.com/product/image/";
 
 /************************************************************************************************** */
 
@@ -3879,6 +3879,7 @@ module.exports = {
     });
   },
   getAssignedTray: (trayType, sort_id) => {
+    console.log(sort_id);
     return new Promise(async (resolve, reject) => {
       if (sort_id == "Ctx to Stx Send for Sorting") {
         const res = await masters
@@ -3886,6 +3887,15 @@ module.exports = {
             type_taxanomy: { $in: ["CT", "ST"] },
             to_merge: { $ne: null },
             sort_id: sort_id,
+          })
+          .catch((err) => reject(err));
+        resolve(res);
+      } else if (sort_id == "Pickup Request sent to Warehouse") {
+        const res = await masters
+          .find({
+            prefix: "tray-master",
+            sort_id: sort_id,
+            to_tray_for_pickup: { $ne: null },
           })
           .catch((err) => reject(err));
         resolve(res);
@@ -4193,7 +4203,21 @@ module.exports = {
           created_at: { $gte: oneWeekAgo },
           assign_to_agent: { $exists: true },
         },
-        { "uic_code.code": 1, tracking_id: 1, old_item_details: 1 }
+        {
+          "uic_code.code": 1,
+          tracking_id: 1,
+          order_id:1,
+          old_item_details: 1,
+          imei: 1,
+          item_id: 1,
+          bot_report: 1,
+          tray_type: 1,
+          partner_purchase_price: 1,
+          order_date: 1,
+          partner_shop: 1,
+          delivery_date: 1,
+          assign_to_agent: 1,
+        }
       );
       resolve(dataFetch);
     });

@@ -28,7 +28,18 @@ module.exports = {
     return new Promise(async (resolve, reject) => {
       let data;
       if (status == "Order Placed") {
-        data = await purchaseOrderPlaced.find();
+        data = await purchaseOrderPlaced.aggregate([
+          { $match: {} },
+          {
+            $lookup: {
+              from: "partandcolors",
+              localField: "spn_number",
+              foreignField: "part_code",
+              as: "partDetails",
+            },
+          },
+        ]);
+        console.log(data);
       } else {
         data = await purchaseOrder.find({ status: { $ne: "Order Placed" } });
       }
@@ -87,37 +98,43 @@ module.exports = {
       }
     });
   },
-  placeOrderDateFilter:(fromDate,toDate,type,vendors)=>{
-    return new Promise(async(resolve,reject)=>{
-      let dataofOrderRm
-      if(type == "Date"){
-        const fromDateTimestamp = Date.parse(fromDate)
-        const toDateTimestamp = Date.parse(toDate)
-         dataofOrderRm=await purchaseOrderPlaced.find({
-          placed_date:{
-            $gte: new Date(fromDateTimestamp),
-            $lte: new Date(toDateTimestamp),
-          }
-        })
-      }
-      else{
-        dataofOrderRm=await purchaseOrderPlaced.find({
-          vendor_id:vendors
-        }) 
-      }
-     let totalAmount=0
-      if(dataofOrderRm.length == 0){
-        resolve({filterData:dataofOrderRm,totalAmount:totalAmount})
-      }
-      else{
-        for(let x of dataofOrderRm){
+  placeOrderDateFilter: (fromDate, toDate, type, vendors) => {
+    return new Promise(async (resolve, reject) => {
+      let dataofOrderRm;
+
+      const fromDateTimestamp = Date.parse(fromDate);
+      const toDateTimestamp = Date.parse(toDate);
+      dataofOrderRm = await purchaseOrderPlaced.aggregate([
+        {
+          $match: {
+            placed_date: {
+              $gte: new Date(fromDateTimestamp),
+              $lte: new Date(toDateTimestamp),
+            },
+            vendor_id: vendors,
+          },
+        },
+        {
+          $lookup: {
+            from: "partandcolors",
+            localField: "spn_number",
+            foreignField: "part_code",
+            as: "partDetails",
+          },
+        },
+      ]);
+      let totalAmount = 0;
+      if (dataofOrderRm.length == 0) {
+        resolve({ filterData: dataofOrderRm, totalAmount: totalAmount });
+      } else {
+        for (let x of dataofOrderRm) {
           console.log(x.total_price);
-          totalAmount= totalAmount + Number(x.total_price)
+          totalAmount = totalAmount + Number(x.total_price);
         }
         console.log(totalAmount);
-        resolve({filterData:dataofOrderRm,totalAmount:totalAmount})
+        resolve({ filterData: dataofOrderRm, totalAmount: totalAmount });
       }
-    })
+    });
   },
   fetchWarrantyAndTerms: () => {
     return new Promise(async (resolve, reject) => {
@@ -128,6 +145,24 @@ module.exports = {
       obj.warranty = await warranty.find();
       obj.payments = await payment.find();
       resolve(obj);
+    });
+  },
+  getVendorsForDrop: () => {
+    return new Promise(async (resolve, reject) => {
+      let arr = [];
+      const data = await vendorMaster
+        .find()
+        .sort({ name: 1 })
+        .collation({ locale: "en_US", numericOrdering: true });
+      for (let x of data) {
+        const findOrder = await purchaseOrderPlaced.findOne({
+          vendor_id: x.name,
+        });
+        if (findOrder) {
+          arr.push(x);
+        }
+      }
+      resolve(arr);
     });
   },
 };

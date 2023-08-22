@@ -93,7 +93,7 @@ module.exports = {
             user_name_of_action: data.issued_user_name,
             tray_id:trayData.trayId,
             user_type:"PRC Charging",
-            description:`Charging station in by agent:${data.issued_user_name}`
+            description:`Charging station in by the agent:${data.issued_user_name}`
           });
           let deliveryUpdate = await delivery.findOneAndUpdate(
             {
@@ -161,7 +161,7 @@ module.exports = {
             report: x.charging,
             track_tray:state,
             user_type:"PRC Charging",
-            description:`Charging done sent to warehouse by agent:${data.issued_user_name}`
+            description:`Charging done and sent to warehouse by agent:${data.issued_user_name}`
           });
           state="Units"
           let deliveryUpdate = await delivery.findOneAndUpdate(

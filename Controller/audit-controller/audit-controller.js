@@ -283,7 +283,8 @@ module.exports = {
                   tray_id: itemData.trayId,
                   user_name_of_action: item.issued_user_name,
                   report: obj,
-                  description: `Item not transfferd to ctx tray by agent :${findTray.issued_user_name}`,
+                  user_type: "PRC Audit",
+                  description: `Item not transferred to ctx tray done by an agent :${findTray.issued_user_name}`,
                   track_tray: "Units",
                 });
                 let update = await delivery.findOneAndUpdate(
@@ -350,8 +351,8 @@ module.exports = {
                   tray_id: findTray.code,
                   user_name_of_action: findTray.issued_user_name,
                   report: obj,
-                  user_type: "Audit",
-                  description: `Item transfferd to ctx tray by agent :${findTray.issued_user_name}`,
+                  user_type: "PRC Audit",
+                  description: `Item transferred to ctx tray done by an agent :${findTray.issued_user_name}`,
                   track_tray: "Units",
                 });
                 let update = await delivery.findOneAndUpdate(
@@ -427,7 +428,7 @@ module.exports = {
           report: x.audit_report,
           track_tray: state,
           user_type: "PRC Audit",
-          description: `Audit done closed by agent :${data.issued_user_name}`,
+          description: `Audit done closed by the agent :${data.issued_user_name}`,
         });
         state = "Units";
         let updateDelivery = await delivery.findOneAndUpdate(
