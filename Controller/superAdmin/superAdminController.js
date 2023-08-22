@@ -29,7 +29,8 @@ const {
 const moment = require("moment");
 const elasticsearch = require("../../Elastic-search/elastic");
 
-const IISDOMAIN = "https://prexo-v8-5-dev-api.dealsdray.com/user/profile/";
+// const IISDOMAIN = "https://prexo-v8-5-dev-api.dealsdray.com/user/profile/";
+const IISDOMAIN = "http://localhost:8000/user/document/";
 const IISDOMAINPRDT = "https://prexo-v8-5-dev-api.dealsdray.com/product/image/";
 
 /************************************************************************************************** */
@@ -259,6 +260,37 @@ module.exports = {
     });
   },
 
+    /*--------------------------------CREATE BUYERS-----------------------------------*/
+
+    createBuyer: (buyerData,profile) => {
+      // let doc = {};
+      if (docuemnts != null) {
+        for (let [key, value] of Object.entries(docuemnts)) {
+          doc[key] = IISDOMAIN + value[0].filename;
+        }
+      }
+      if (profile != undefined) {
+        buyerData.profile = IISDOMAIN + profile;
+      }
+      console.log("doc:",doc);
+      buyerData.creation_date = Date.now();
+      return new Promise(async (resolve, rejects) => {
+        let buyerExist = await user.findOne({ user_name: buyerData.user_name });
+        console.log("userExist:",buyerExist);
+        if (buyerExist) {
+          resolve({ status: true, buyer: buyerExist });
+        } else {
+          let data = await user.create(buyerData);
+          if (data) {
+            let history = await usersHistory.create(buyerData);
+            resolve({ status: false, user: data });
+          } else {
+            resolve();
+          }
+        }
+      });
+    },
+
   /*-------------------------------LOCATION TYPE -------------------------------*/
   getLocationType: (code) => {
     return new Promise(async (resolve, reject) => {
@@ -406,6 +438,87 @@ module.exports = {
     return new Promise(async (resolve, reject) => {
       let userData = await user.findOne({ user_name: username });
       resolve(userData);
+    });
+  },
+
+    /*--------------------------------DATA FETCH FOR EDIT Buyer-----------------------------------*/
+
+    getEditBuyerData: (buyername) => {
+      return new Promise(async (resolve, reject) => {
+        let buyerData = await user.findOne({ buyer_name: buyername });
+        resolve(buyerData);
+      });
+    },
+   /*--------------------------------EDIT BUYER DATA-----------------------------------*/
+
+   editBuyerdata: (buyerData, profile) => {
+    if (profile != undefined) {
+      profile = IISDOMAIN + profile;
+    }
+    return new Promise(async (resolve, reject) => {
+      let userDetails = await user.findOneAndUpdate(
+        { buyer_name: buyerData.buyer_name },
+        {
+          $set: {
+            name: buyerData.name,
+            contact: buyerData.contact,
+            email: buyerData.email,
+            cpc: buyerData.cpc,
+            cpc_type: buyerData.cpc_type,
+            warehouse: buyerData.warehouse,
+            billing_address: buyerData.billing_address,
+            city: buyerData.city,
+            state: buyerData.state,
+            country: buyerData.country,
+            pincode: buyerData.pincode,
+            gstin: buyerData.gstin,
+            pan_card_number: buyerData.pan_card_number,
+            mobile_verification_status: buyerData.mobile_verification_status,
+            email_verification_status: buyerData.email_verification_status,
+            last_update_date: Date.now(),
+            profile: profile,
+            
+
+          },
+        },
+        { returnOriginal: false }
+      );
+      
+      if (userDetails) {
+        let obj = {
+          name: userDetails.name,
+          email: userDetails.email,
+          contact: userDetails.contact,
+          buyer_name: userDetails.buyer_name,
+          password: userDetails.password,
+          cpc: userDetails.cpc,
+          cpc_type:userDetails.cpc_type,
+          warehouse:userDetails.warehouse,
+          sales_users:userDetails.sales_users,
+          billing_address:userDetails.billing_address,
+          city:userDetails.city,
+          state:userDetails.state,
+          country:userDetails.country,
+          pincode:userDetails.pincode,
+          sales_users:userDetails.sales_users,
+          gstin: userDetails.gstin,
+          pan_card_number: userDetails.pan_card_number,
+          mobile_verification_status: userDetails.mobile_verification_status,
+          email_verification_status: userDetails.email_verification_status,
+          pan_card_proof: userDetails.pan_card_proof,
+          aadhar_proof: userDetails.aadhar_proof,
+          business_address_proof: userDetails.business_address_proof,
+          profile: userDetails.profile,
+          user_type: userDetails.user_type,
+          status: userDetails.status,
+          creation_date: userDetails.creation_date,
+          last_update_date: userDetails.last_update_date,
+          profile: userDetails.profile,
+        };
+        resolve(userDetails);
+      } else {
+        resolve();
+      }
     });
   },
 
