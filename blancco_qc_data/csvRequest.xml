@@ -2,8 +2,8 @@
 <request>
     <export-report>
         <report mode="original"/>
-        <search path="report.report_date" value="2023-08-22T00:00:00+0000" operator="gt" datatype="date" conjunction="true"/>
-        <search path="report.report_date" value="2023-08-23T00:00:00+0000" operator="lt" datatype="date" conjunction="true"/>
+        <search path="report.report_date" value="2023-08-23T00:00:00+0000" operator="gt" datatype="date" conjunction="true"/>
+        <search path="report.report_date" value="2023-08-24T00:00:00+0000" operator="lt" datatype="date" conjunction="true"/>
         <reportColumns>
             <columnPath>user_data.fields.UIC</columnPath>
             <columnPath>user_data.fields.Tray-ID</columnPath>

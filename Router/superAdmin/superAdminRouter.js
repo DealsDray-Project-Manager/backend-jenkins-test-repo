@@ -31,7 +31,6 @@ router.post(
         req.body,
         req.file ? req.file.filename : undefined
       );
-      console.log(req.file);
       if (data) {
         if (data.status) {
           res.status(200).json({ status: 0, data: { message: "User Exist" } });
@@ -353,6 +352,8 @@ router.get("/getEditBuyerData/:buyername", async (req, res) => {
 
 
 /*-----------------------------EDIT BUYER--------------------------------------*/
+
+
 router.post(
   "/editBuyerDetails",
   upload.documents.fields([
@@ -375,8 +376,6 @@ router.post(
     }
   }
 );
-
-
 /*-----------------------------EDIT USER--------------------------------------*/
 router.post(
   "/edituserDetails",

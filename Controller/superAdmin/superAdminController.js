@@ -246,7 +246,6 @@ module.exports = {
     userData.creation_date = Date.now();
     return new Promise(async (resolve, rejects) => {
       let userExist = await user.findOne({ user_name: userData.user_name });
-      console.log("userExist:-",userExist)
       if (userExist) {
         resolve({ status: true, user: userExist });
       } else {
@@ -264,7 +263,7 @@ module.exports = {
   /*--------------------------------CREATE BUYERS-----------------------------------*/
 
   createBuyer: (buyerData, docuemnts) => {
-    if (docuemnts) {
+    if (docuemnts != null) {
       if (docuemnts.profile && docuemnts.profile[0]) {
         buyerData.profile = IISDOMAINBUYERDOC + docuemnts.profile[0].filename;
       }
@@ -282,7 +281,6 @@ module.exports = {
     buyerData.creation_date = Date.now();
     return new Promise(async (resolve, rejects) => {
       let buyerExist = await user.findOne({ user_name: buyerData.user_name });
-      console.log("userExist:", buyerExist);
       if (buyerExist) {
         resolve({ status: true, buyer: buyerExist });
       } else {
@@ -456,7 +454,6 @@ module.exports = {
     });
   },
   /*--------------------------------EDIT BUYER DATA-----------------------------------*/
-
   editBuyerDetails: (buyerData, documents) => {
     return new Promise(async (resolve, reject) => {
       try {
@@ -474,7 +471,6 @@ module.exports = {
             buyerData.business_address_proof = IISDOMAINBUYERDOC + documents.business_address_proof[0].filename;
           }
         }
-  
         const updatedUserDetails = await user.findOneAndUpdate(
           { user_name: buyerData.user_name },
           {
@@ -511,6 +507,7 @@ module.exports = {
     });
   },
   
+ 
   /*--------------------------------EDIT USER DATA-----------------------------------*/
 
   editUserdata: (userData, profile) => {

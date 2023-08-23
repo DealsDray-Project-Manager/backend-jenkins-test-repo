@@ -7,6 +7,9 @@ const userSchema = mongoose.Schema({
   email: {
     type: String,
   },
+  businessName:{
+    type: String,
+  },
   contact: {
     type: String,
   },
