@@ -1400,7 +1400,7 @@ module.exports = {
               }
             );
             if (data) {
-              let state="Tray"
+              let state = "Tray";
               for (let x of data.items) {
                 let unitsLogCreation = await unitsActionLog.create({
                   action_type: "Ready to Audit Received From Merging",
@@ -1529,7 +1529,7 @@ module.exports = {
               }
             );
             if (data) {
-              let state="Tray"
+              let state = "Tray";
               for (let x of data.items) {
                 let unitsLogCreation = await unitsActionLog.create({
                   action_type: "Received From Merging",
@@ -1579,7 +1579,7 @@ module.exports = {
             }
           );
           if (data) {
-            let state="Tray"
+            let state = "Tray";
             for (let x of data.items) {
               const addLogsofUnits = await unitsActionLog.create({
                 action_type: "Received from RDL-two",
@@ -1588,12 +1588,11 @@ module.exports = {
                 tray_id: trayData.trayId,
                 agent_name: data.issued_user_name,
                 user_name_of_action: trayData.username,
-                track_tray:state,
-                user_type:"PRC WAREHOUSE",
+                track_tray: state,
+                user_type: "PRC WAREHOUSE",
                 description: `Received from RDL-two to agent:${data.issued_user_name} by WH :${trayData.actioUser}`,
-
               });
-              state="Units"
+              state = "Units";
               let deliveryTrack = await delivery.findOneAndUpdate(
                 { "uic_code.code": x.uic },
                 {
@@ -2303,7 +2302,7 @@ module.exports = {
 
   /*------------------------WHT TRAY---------------------------*/
 
-  getWhtTrayWareHouse: (location, type,) => {
+  getWhtTrayWareHouse: (location, type) => {
     return new Promise(async (resolve, reject) => {
       if (type == "all-wht-tray") {
         let data = await masters.aggregate([
@@ -2353,45 +2352,44 @@ module.exports = {
       }
     });
   },
-  getBotPmtMmtTray:(location,taxanomy)=>{
+  getBotPmtMmtTray: (location, taxanomy) => {
     return new Promise(async (resolve, reject) => {
-        let data = await masters.aggregate([
-          {
-            $match: {
-              prefix: "tray-master",
-              type_taxanomy: taxanomy,
-              cpc: location,
-            },
+      let data = await masters.aggregate([
+        {
+          $match: {
+            prefix: "tray-master",
+            type_taxanomy: taxanomy,
+            cpc: location,
           },
-          {
-            $project: {
-              code: 1,
-              rack_id: 1,
-              brand: 1,
-              model: 1,
-              sort_id: 1,
-              created_at: 1,
-              limit: 1,
-              items_length: {
-                $cond: {
-                  if: { $isArray: "$items" },
-                  then: { $size: "$items" },
-                  else: 0,
-                },
-              },
-              actual_items: {
-                $cond: {
-                  if: { $isArray: "$actual_items" },
-                  then: { $size: "$actual_items" },
-                  else: 0,
-                },
+        },
+        {
+          $project: {
+            code: 1,
+            rack_id: 1,
+            brand: 1,
+            model: 1,
+            sort_id: 1,
+            created_at: 1,
+            limit: 1,
+            items_length: {
+              $cond: {
+                if: { $isArray: "$items" },
+                then: { $size: "$items" },
+                else: 0,
               },
             },
+            actual_items: {
+              $cond: {
+                if: { $isArray: "$actual_items" },
+                then: { $size: "$actual_items" },
+                else: 0,
+              },
+            },
           },
-        ]);
-        console.log(data);
-        resolve(data);
-      
+        },
+      ]);
+      console.log(data);
+      resolve(data);
     });
   },
   /*-------------------------GET RPT TRAY ----------------------------------------------*/
@@ -6893,7 +6891,7 @@ module.exports = {
           created_at: Date.now(),
           uic: x.uic,
           tray_id: trayId,
-          user_name_of_action: data.issued_user_name,
+          user_name_of_action: username,
           description: `${stage} closed by agent :${username}`,
           track_tray: state,
           user_type: "PRC Warehouse",
@@ -7314,65 +7312,167 @@ module.exports = {
   },
   getUpgradeUnistData: (location) => {
     return new Promise(async (resolve, reject) => {
-      const findUpgardeUnits = await delivery
-        .find({
-          partner_shop: location,
-          "audit_report.stage": "Upgrade",
-        })
-       
+      const findUpgardeUnits = await delivery.find({
+        partner_shop: location,
+        "audit_report.stage": "Upgrade",
+      });
+
       resolve({ upgaradeReport: findUpgardeUnits });
     });
   },
-  upgardeUnitsFilter: (location, fromDate, toDate,type) => {
+  upgardeUnitsFilter: (location, fromDate, toDate, type) => {
     return new Promise(async (resolve, reject) => {
       let monthWiseReport, getCount;
 
       const fromDateISO = new Date(fromDate).toISOString();
       const toDateISO = new Date(toDate).toISOString();
-      monthWiseReport = await delivery
-        .find({
-          partner_shop: location,
-          "audit_report.stage": "Upgrade",
-          audit_done_date: { $gte: fromDateISO, $lte: toDateISO },
-        })
-       
+      monthWiseReport = await delivery.find({
+        partner_shop: location,
+        "audit_report.stage": "Upgrade",
+        audit_done_date: { $gte: fromDateISO, $lte: toDateISO },
+      });
+
       resolve({
         monthWiseReport: monthWiseReport,
-      
       });
     });
   },
-  rackIdUpdateGetTrayData:(trayId,location)=>{
-    return new Promise(async(resolve,reject)=>{
-      const data=await masters.findOne({code:trayId,cpc:location})
-      if(data){
-         if(data.rack_id !== null && data.rack_id !== undefined){
-             resolve({tray:data,status:1})
-         }
-         else{
-          resolve({status:2})
-         }
-      }
-      else{
-        resolve({status:3})
-      }
-    })
-  },
-  updateTheRackId:(trayId,rackid,description)=>{
-    return new Promise(async(resolve,reject)=>{
-      const updateRackId=await masters.updateOne({code:trayId},{
-        $set:{
-          rack_id:rackid,
-          description:description,
-          actual_items:[]
+  rackIdUpdateGetTrayData: (trayId, location, username) => {
+    return new Promise(async (resolve, reject) => {
+      const data = await masters.findOne({ code: trayId, cpc: location });
+      if (data) {
+        if (username !== data.issued_user_name) {
+          resolve({ tray: data, status: 1 });
+        } else {
+          resolve({ status: 2 });
         }
-      })
-      if(updateRackId.modifiedCount !== 0){
-        resolve({status:1})
+      } else {
+        resolve({ status: 3 });
       }
-      else{
-        resolve({status:0})
+    });
+  },
+  updateTheRackId: (
+    trayId,
+    rackid,
+    description,
+    sortId,
+    agentName,
+    actionUser,
+    prevStatus
+  ) => {
+    return new Promise(async (resolve, reject) => {
+      let updateRackId;
+      if (sortId == "Assigned to warehouae for rack change") {
+        updateRackId = await masters.findOneAndUpdate(
+          { code: trayId },
+          {
+            $set: {
+              sort_id: "Issued to scan in for rack change",
+              issued_user_name: agentName,
+              description: description,
+              actual_items: [],
+              rack_id: null,
+            },
+          }
+        );
+      } else {
+        updateRackId = await masters.findOneAndUpdate(
+          { code: trayId },
+          {
+            $set: {
+              rack_id: rackid,
+              description: description,
+              actual_items: [],
+              issued_user_name: null,
+              rdl_2_user_temp: null,
+              sort_id: prevStatus,
+            },
+          }
+        );
       }
-    })
-  }
+      if (updateRackId) {
+        let state = "Tray";
+        for (let x of updateRackId.items) {
+          const addLogsofUnits = await unitsActionLog.create({
+            action_type: "Rack Changed",
+            created_at: Date.now(),
+            uic: x.uic,
+            tray_id: updateRackId.code,
+            track_tray: state,
+            user_type: "PRC Warehouse",
+            description: `${sortId} closed by the agent :${actionUser}`,
+          });
+          state = "Units";
+        }
+        resolve({ status: 1 });
+      } else {
+        resolve({ status: 0 });
+      }
+    });
+  },
+  getRackChangeRequest: (username, sortId) => {
+    let data = [];
+    return new Promise(async (resolve, reject) => {
+      if (sortId == "Issued to scan in for rack change") {
+        data = await masters.find({
+          $or: [
+            {
+              issued_user_name: username,
+              sort_id: sortId,
+            },
+            {
+              issued_user_name: username,
+              sort_id: "Received for rack change",
+            },
+          ],
+        });
+      } else {
+        data = await masters.find({
+          issued_user_name: username,
+          sort_id: sortId,
+        });
+      }
+      if (data) {
+        resolve(data);
+      }
+    });
+  },
+  receiVeTheTrayForRackChange: (trayData) => {
+    return new Promise(async (resolve, reject) => {
+      const tray = await masters.findOne(
+        { code: trayData.trayId },
+        { items: 1, issued_user_name: 1 }
+      );
+      if (tray?.items?.length == trayData.counts) {
+        let update = await masters.findOneAndUpdate(
+          { code: trayData.trayId },
+          {
+            $set: {
+              sort_id: "Received for rack change",
+            },
+          }
+        );
+        if (update) {
+          let state = "Tray";
+          for (let x of update.items) {
+            let unitsLogCreation = await unitsActionLog.create({
+              action_type: "Received for rack change",
+              created_at: Date.now(),
+              user_type: "PRC Warehouse",
+              uic: x.uic,
+              tray_id: trayData.trayId,
+              track_tray: state,
+              description: `Received for rack change by Wh :${update.issued_user_name}`,
+            });
+            state = "Units";
+          }
+          resolve({ status: 1 });
+        } else {
+          resolve({ status: 2 });
+        }
+      } else {
+        resolve({ status: 3 });
+      }
+    });
+  },
 };

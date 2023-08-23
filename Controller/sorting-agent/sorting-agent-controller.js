@@ -894,7 +894,7 @@ module.exports = {
           agent_name: updateFromTray.issued_user_name,
           user_type: "PRC Sorting",
           uic: x.uic,
-          tray_id: updateFromTray.trayId,
+          tray_id: updateFromTray.code,
           track_tray: state,
           description: `Pickup Done Closed by Sorting Agent :${updateFromTray.issued_user_name}`,
         });
@@ -940,7 +940,7 @@ module.exports = {
                 agent_name: updateToTray.issued_user_name,
                 user_type: "PRC Sorting",
                 uic: x.uic,
-                tray_id: updateToTray.trayId,
+                tray_id: updateToTray.code,
                 track_tray: state1,
                 description: `Pickup Done Closed by Sorting Agent :${updateToTray.issued_user_name}`,
               });
@@ -993,7 +993,7 @@ module.exports = {
             agent_name: updateToTray.issued_user_name,
             user_type: "PRC Sorting",
             uic: x.uic,
-            tray_id: updateToTray.trayId,
+            tray_id: updateToTray.code,
             track_tray: state1,
             description: `Pickup Done Closed by Sorting Agent :${updateToTray.issued_user_name}`,
           });

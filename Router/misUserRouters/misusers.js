@@ -1942,7 +1942,11 @@ router.post("/stxUtilityGetStx", async (req, res, next) => {
     // PARAMS
     const { uic, location, grade } = req.body;
     // FUNCTION FROM CONTROLLER
-    let data = await misUserController.stxUtilityImportXlsxstxUtilityGetStx(uic, location, grade);
+    let data = await misUserController.stxUtilityImportXlsxstxUtilityGetStx(
+      uic,
+      location,
+      grade
+    );
     if (data.status == 2) {
       res.status(200).json({
         data: data.trayData,
@@ -1998,6 +2002,65 @@ router.post("/getStxUtilityInProgress/:location", async (req, res, next) => {
     if (data) {
       res.status(200).json({
         data: data,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+/*-----------------------------------------RACK CHANGE MODULE--------------------------------------------*/
+router.post("/getRackTray/:location", async (req, res, next) => {
+  try {
+    // PARAMS
+    const { location } = req.params;
+    // FUNCTION FROM CONTROLLER
+    let data = await misUserController.getTheTrayInRack(location);
+    if (data) {
+      res.status(200).json({
+        data: data,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+// GET THE WAREHOUSE USERS
+router.post(
+  "/getWarehouseUsers/:location/:warehouse",
+  async (req, res, next) => {
+    try {
+      // PARAMS
+      const { location, warehouse } = req.params;
+      // FUNCTION FROM CONTROLLER
+      let data = await misUserController.getWarehouseUsers(location, warehouse);
+      if (data) {
+        res.status(200).json({
+          data: data,
+        });
+      }
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+// ASSIGN TRAY FOR RACK CHANGE
+
+router.post("/assignToAgent/rackChange", async (req, res, next) => {
+  try {
+    const { tray, scanOutWh, scanInWh, actUser } = req.body;
+    let data = await misUserController.assignForRackChange(
+      tray,
+      scanOutWh,
+      scanInWh,
+      actUser
+    );
+    if (data.status == 1) {
+      res.status(200).json({
+        message: "Successfully Assigned",
+      });
+    } else {
+      res.status(202).json({
+        message: "Request failed please try again...",
       });
     }
   } catch (error) {

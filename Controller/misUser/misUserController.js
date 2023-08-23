@@ -4149,7 +4149,6 @@ module.exports = {
     return new Promise(async (resolve, reject) => {
       let sendtoRdlMis;
       for (let x of tray) {
-        console.log(x);
         if (sortId == "Send for RDL-two") {
           sendtoRdlMis = await masters.findOneAndUpdate(
             { code: x },
@@ -5340,7 +5339,7 @@ module.exports = {
   /*--------------------------------------------STX UTILITY ---------------------------------------*/
   stxUtilityImportXlsx: () => {
     return new Promise(async (resolve, reject) => {
-      let arr = []
+      let arr = [];
       let arr1 = [];
       for (let x of arr) {
         let createTo = await stxUtility.create(x);
@@ -5484,4 +5483,98 @@ module.exports = {
       resolve(getTray);
     });
   },
+  getTheTrayInRack: (location) => {
+    return new Promise(async (resolve, reject) => {
+      const trayInRack = await masters.aggregate([
+        {
+          $match: {
+            prefix: "tray-master",
+            cpc: location,
+            rack_id: { $exists: true, $ne: null },
+            sort_id: { $ne: "Assigned to warehouae for rack change" },
+          },
+        },
+        {
+          $project: {
+            code: 1,
+            rack_id: 1,
+            brand: 1,
+            model: 1,
+            sort_id: 1,
+            created_at: 1,
+            limit: 1,
+            type_taxanomy: 1,
+            items_length: {
+              $cond: {
+                if: { $isArray: "$items" },
+                then: { $size: "$items" },
+                else: 0,
+              },
+            },
+            actual_items: {
+              $cond: {
+                if: { $isArray: "$actual_items" },
+                then: { $size: "$actual_items" },
+                else: 0,
+              },
+            },
+          },
+        },
+      ]);
+      resolve(trayInRack);
+    });
+  },
+  getWarehouseUsers: (location, warehouse) => {
+    return new Promise(async (resolve, reject) => {
+      const getWarehouseUsers = await user.find({
+        cpc: location,
+        warehouse: warehouse,
+        user_type: "Warehouse",
+        status: "Active",
+      });
+      resolve(getWarehouseUsers);
+    });
+  },
+  assignForRackChange:(tray, scanOutWh,scanInWh, actUser)=>{
+    return new Promise(async(resolve,reject)=>{
+      let updateTheTray
+      for(let x of tray){
+        const findTray=await masters.findOne({code:x},{sort_id:1})
+         updateTheTray=await masters.findOneAndUpdate({code:x},{
+          $set:{
+            issued_user_name:scanOutWh,
+            rdl_2_user_temp:scanInWh,
+            requested_date:Date.now(),
+            temp_status:findTray.sort_id,
+            actual_items:[],
+            sort_id:"Assigned to warehouae for rack change",
+          },
+        })
+        if(updateTheTray){
+          let state = "Tray";
+          for (let y of updateTheTray.items) {
+            let unitsLogCreation = await unitsActionLog.create({
+              action_type: "Assigned to warehouae for rack change",
+              created_at: Date.now(),
+              user_name_of_action: actUser,
+              agent_name: scanOutWh,
+              user_type: "PRC MIS",
+              uic: y.uic,
+              tray_id: x,
+              track_tray: state,
+              description: `Assigned to warehouae for rack change to agent scan out :${scanOutWh} by mis :${actUser}`,
+            });
+            state = "Units";
+          }
+        }
+      }
+      if(updateTheTray){
+        resolve({status:1})
+      }
+      else{
+        resolve({status:2})
+      }
+      
+    })
+  }
 };

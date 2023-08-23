@@ -143,6 +143,14 @@ module.exports = {
             // Count the number of items in the 'items' array within each group
           },
         },
+        {
+          $lookup: {
+            from: "products", // Replace with the name of the collection you want to lookup from
+            localField: "muic",
+            foreignField: "muic",
+            as: "muicDetails",
+          },
+        },
       ]);
       for (let x of getBasedOnMuic) {
         x["muic_one"] = x.muic[0];

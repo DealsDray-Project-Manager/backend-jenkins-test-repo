@@ -167,6 +167,9 @@ const mastersSchema = mongoose.Schema({
   rack_id: {
     type: String,
   },
+  temp_status:{
+    type:String
+  },
   price_creation_date: {
     type: Date,
   },

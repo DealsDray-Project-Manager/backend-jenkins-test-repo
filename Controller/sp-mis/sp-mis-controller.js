@@ -225,6 +225,7 @@ module.exports = {
           let checkSpExists = await purchaseOrder.findOne({
             spare_part_number: x.part_id,
             muic: x.muic,
+            status:{$ne:"Order Placed"}
           });
           if (checkSpExists) {
             updateData = await purchaseOrder.findOneAndUpdate(

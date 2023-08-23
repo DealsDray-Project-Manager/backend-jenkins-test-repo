@@ -4206,7 +4206,7 @@ module.exports = {
         {
           "uic_code.code": 1,
           tracking_id: 1,
-          order_id:1,
+          order_id: 1,
           old_item_details: 1,
           imei: 1,
           item_id: 1,

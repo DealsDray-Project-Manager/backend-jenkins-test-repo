@@ -101,9 +101,11 @@ module.exports = {
   placeOrderDateFilter: (fromDate, toDate, type, vendors) => {
     return new Promise(async (resolve, reject) => {
       let dataofOrderRm;
-
-      const fromDateTimestamp = Date.parse(fromDate);
-      const toDateTimestamp = Date.parse(toDate);
+      const fromDateTimestamp = new Date(fromDate);
+      fromDateTimestamp.setHours(0, 0, 0, 0); // Set time to the beginning of the day
+      const toDateTimestamp = new Date(toDate);
+      toDateTimestamp.setHours(23, 59, 59, 999);
+    
       dataofOrderRm = await purchaseOrderPlaced.aggregate([
         {
           $match: {

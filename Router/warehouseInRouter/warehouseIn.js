@@ -762,11 +762,11 @@ router.post("/whtTray/:location/:type", async (req, res, next) => {
     next(error);
   }
 });
-// GET BOT / PMT /MMT 
+// GET BOT / PMT /MMT
 router.post("/botPmtMMtTray/:location/:taxanomy", async (req, res, next) => {
   try {
-    const { location,taxanomy } = req.params;
-    let data = await warehouseInController.getBotPmtMmtTray(location,taxanomy);
+    const { location, taxanomy } = req.params;
+    let data = await warehouseInController.getBotPmtMmtTray(location, taxanomy);
     if (data) {
       res.status(200).json({
         data: data,
@@ -2661,7 +2661,7 @@ router.post("/whtToRp/whtTray", async (req, res, next) => {
 // ISSUED TO SORTING
 router.post("/whtToRp/issueToAgent", async (req, res, next) => {
   try {
-    const { rpTray, whtTray,actUser } = req.body;
+    const { rpTray, whtTray, actUser } = req.body;
     const data = await warehouseInController.whtToRpIssueToAgent(
       rpTray,
       whtTray,
@@ -2785,10 +2785,10 @@ router.post("/search/upgradeReport", async (req, res, next) => {
 });
 /*----------------------------------------RACK ID UPDATE -----------------------------------------*/
 router.post(
-  "/rackIdUpdateGetTray/:trayId/:location",
+  "/rackIdUpdateGetTray/:trayId/:location/:username",
   async (req, res, next) => {
     try {
-      let { trayId, location } = req.params;
+      let { trayId, location,username } = req.params;
       let data = await warehouseInController.rackIdUpdateGetTrayData(
         trayId,
         location
@@ -2799,7 +2799,7 @@ router.post(
         });
       } else if (data.status == 2) {
         res.status(202).json({
-          message: "Tray not found in any rack",
+          message: "You can't access this data",
         });
       } else {
         res.status(202).json({
@@ -2814,11 +2814,15 @@ router.post(
 // CHANGE RACK ID
 router.post("/updateRackId", async (req, res, next) => {
   try {
-    let { trayId, rackId, description } = req.body;
+    let { trayId, rackId, description,sortId,agentName,actionUser,prevStatus } = req.body;
     let data = await warehouseInController.updateTheRackId(
-      trayId,
-      rackId,
-      description
+    trayId,
+    rackId,
+    description,
+    sortId,
+    agentName,
+    actionUser,
+    prevStatus
     );
     if (data.status == 1) {
       res.status(200).json({
@@ -2833,5 +2837,43 @@ router.post("/updateRackId", async (req, res, next) => {
     next(error);
   }
 });
-
+/* -------------------------------GET RACK CHANGE REQUEST ----------------*/
+router.post("/rackChangeRequest", async (req, res, next) => {
+  try {
+    const { username, screen } = req.body;
+    let data = await warehouseInController.getRackChangeRequest(
+      username,
+      screen
+    );
+    if (data) {
+      res.status(200).json({
+        data: data,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+// RECEIVE FOR RACK CHANGE SCAN IN
+router.post("/rackChangeTrayReceive", async (req, res, next) => {
+  try {
+    let data = await warehouseInController.receiVeTheTrayForRackChange(req.body);
+    if (data.status == 1) {
+      res.status(200).json({
+        message: "Successfully Received",
+      });
+    }
+    if (data.status == 3) {
+      res.status(202).json({
+        message: "Please Enter Valid Count",
+      });
+    } else {
+      res.status(202).json({
+        message: "Failed",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
 module.exports = router;
