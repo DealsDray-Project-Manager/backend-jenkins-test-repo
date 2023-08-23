@@ -27,10 +27,10 @@ const {
   mastersEditHistory,
 } = require("../../Model/masterHistoryModel/mastersHistory");
 const moment = require("moment");
-const elasticsearch = require("../../Elastic-search/elastic");
+const elasticsearch = require("../../Elastic-search/elastic");  
 
-// const IISDOMAIN = "https://prexo-v8-5-dev-api.dealsdray.com/user/profile/";
-const IISDOMAIN = "http://localhost:8000/user/document/";
+const IISDOMAIN = "https://localhost:3000/user/profile/";
+const IISDOMAINBUYERDOC = "http://localhost:8000/user/document/";
 const IISDOMAINPRDT = "https://prexo-v8-5-dev-api.dealsdray.com/product/image/";
 
 /************************************************************************************************** */
@@ -111,8 +111,8 @@ module.exports = {
   getDashboardData: () => {
     return new Promise(async (resolve, reject) => {
       let count = {};
-      count.usersCount = await user.count({ user_type: { $ne: 'Buyer' }});
-      count.buyerCount = await user.count({user_type:"Buyer"});
+      count.usersCount = await user.count({ user_type: { $ne: 'Buyer' } });
+      count.buyerCount = await user.count({ user_type: "Buyer" });
       count.location = await infra.count({ type_taxanomy: "CPC" });
       count.warehouse = await infra.count({ type_taxanomy: "Warehouse" });
       count.brand = await brands.count({});
@@ -246,6 +246,7 @@ module.exports = {
     userData.creation_date = Date.now();
     return new Promise(async (resolve, rejects) => {
       let userExist = await user.findOne({ user_name: userData.user_name });
+      console.log("userExist:-",userExist)
       if (userExist) {
         resolve({ status: true, user: userExist });
       } else {
@@ -260,36 +261,41 @@ module.exports = {
     });
   },
 
-    /*--------------------------------CREATE BUYERS-----------------------------------*/
+  /*--------------------------------CREATE BUYERS-----------------------------------*/
 
-    createBuyer: (buyerData,profile) => {
-      // let doc = {};
-      if (docuemnts != null) {
-        for (let [key, value] of Object.entries(docuemnts)) {
-          doc[key] = IISDOMAIN + value[0].filename;
-        }
+  createBuyer: (buyerData, docuemnts) => {
+    if (docuemnts) {
+      if (docuemnts.profile && docuemnts.profile[0]) {
+        buyerData.profile = IISDOMAINBUYERDOC + docuemnts.profile[0].filename;
       }
-      if (profile != undefined) {
-        buyerData.profile = IISDOMAIN + profile;
+      if (docuemnts.aadhar_proof && docuemnts.aadhar_proof[0]) {
+        buyerData.aadhar_proof = IISDOMAINBUYERDOC + docuemnts.aadhar_proof[0].filename;
       }
-      console.log("doc:",doc);
-      buyerData.creation_date = Date.now();
-      return new Promise(async (resolve, rejects) => {
-        let buyerExist = await user.findOne({ user_name: buyerData.user_name });
-        console.log("userExist:",buyerExist);
-        if (buyerExist) {
-          resolve({ status: true, buyer: buyerExist });
+      if (docuemnts.pan_card_proof && docuemnts.pan_card_proof[0]) {
+        buyerData.pan_card_proof = IISDOMAINBUYERDOC + docuemnts.pan_card_proof[0].filename;
+      }
+      if (docuemnts.business_address_proof && docuemnts.business_address_proof[0]) {
+        buyerData.business_address_proof = IISDOMAINBUYERDOC + docuemnts.business_address_proof[0].filename;
+      }
+    }
+    
+    buyerData.creation_date = Date.now();
+    return new Promise(async (resolve, rejects) => {
+      let buyerExist = await user.findOne({ user_name: buyerData.user_name });
+      console.log("userExist:", buyerExist);
+      if (buyerExist) {
+        resolve({ status: true, buyer: buyerExist });
+      } else {
+        let data = await user.create(buyerData);
+        if (data) {
+          let history = await usersHistory.create(buyerData);
+          resolve({ status: false, user: data });
         } else {
-          let data = await user.create(buyerData);
-          if (data) {
-            let history = await usersHistory.create(buyerData);
-            resolve({ status: false, user: data });
-          } else {
-            resolve();
-          }
+          resolve();
         }
-      });
-    },
+      }
+    });
+  },
 
   /*-------------------------------LOCATION TYPE -------------------------------*/
   getLocationType: (code) => {
@@ -319,26 +325,26 @@ module.exports = {
     });
   },
 
-   /*--------------------------------Find Sales Location-----------------------------------*/
+  /*--------------------------------Find Sales Location-----------------------------------*/
 
-   getCpcSalesLocation: () => {
+  getCpcSalesLocation: () => {
     return new Promise(async (resolve, rejects) => {
       let data = await infra.find({ location_type: "Sales" });
       resolve(data);
     });
   },
- /*--------------------------------Find Sales Users-----------------------------------*/
- 
-    getsalesUsers: (warehouse, cpc ) => {
-      return new Promise(async (resolve, reject) => {
-        let data = await user.find({ user_type:"Sales Agent",warehouse: warehouse, cpc: cpc,status: { $ne: "Deactivated" }});
-        if (data) {
-          resolve(data);
-        } else {
-          resolve();
-        }
-      });
-    },
+  /*--------------------------------Find Sales Users-----------------------------------*/
+
+  getsalesUsers: (warehouse, cpc) => {
+    return new Promise(async (resolve, reject) => {
+      let data = await user.find({ user_type: "Sales Agent", warehouse: warehouse, cpc: cpc, status: { $ne: "Deactivated" } });
+      if (data) {
+        resolve(data);
+      } else {
+        resolve();
+      }
+    });
+  },
   /*--------------------------------FIND WAREHOUSE-----------------------------------*/
 
   getWarehouse: (code, type) => {
@@ -381,14 +387,14 @@ module.exports = {
 
   getUsers: () => {
     return new Promise(async (resolve, reject) => {
-      let usersData = await user.find({ user_type: { $ne: 'Buyer' }});
+      let usersData = await user.find({ user_type: { $ne: 'Buyer' } });
       resolve(usersData);
     });
   },
 
   getBuyers: () => {
     return new Promise(async (resolve, reject) => {
-      let BuyerData = await user.find({user_type:'Buyer'});
+      let BuyerData = await user.find({ user_type: 'Buyer' });
       resolve(BuyerData);
     });
   },
@@ -396,7 +402,7 @@ module.exports = {
 
   buyerConSalesAgent: (username) => {
     return new Promise(async (resolve, reject) => {
-      let BuyerData = await user.find({user_type:"Buyer",sales_users:username});
+      let BuyerData = await user.find({ user_type: "Buyer", sales_users: username });
       resolve(BuyerData);
     });
   },
@@ -441,87 +447,70 @@ module.exports = {
     });
   },
 
-    /*--------------------------------DATA FETCH FOR EDIT Buyer-----------------------------------*/
+  /*--------------------------------DATA FETCH FOR EDIT Buyer-----------------------------------*/
 
-    getEditBuyerData: (buyername) => {
-      return new Promise(async (resolve, reject) => {
-        let buyerData = await user.findOne({ buyer_name: buyername });
-        resolve(buyerData);
-      });
-    },
-   /*--------------------------------EDIT BUYER DATA-----------------------------------*/
-
-   editBuyerdata: (buyerData, profile) => {
-    if (profile != undefined) {
-      profile = IISDOMAIN + profile;
-    }
+  getEditBuyerData: (buyername) => {
     return new Promise(async (resolve, reject) => {
-      let userDetails = await user.findOneAndUpdate(
-        { buyer_name: buyerData.buyer_name },
-        {
-          $set: {
-            name: buyerData.name,
-            contact: buyerData.contact,
-            email: buyerData.email,
-            cpc: buyerData.cpc,
-            cpc_type: buyerData.cpc_type,
-            warehouse: buyerData.warehouse,
-            billing_address: buyerData.billing_address,
-            city: buyerData.city,
-            state: buyerData.state,
-            country: buyerData.country,
-            pincode: buyerData.pincode,
-            gstin: buyerData.gstin,
-            pan_card_number: buyerData.pan_card_number,
-            mobile_verification_status: buyerData.mobile_verification_status,
-            email_verification_status: buyerData.email_verification_status,
-            last_update_date: Date.now(),
-            profile: profile,
-            
+      let buyerData = await user.findOne({ user_name: buyername });
+      resolve(buyerData);
+    });
+  },
+  /*--------------------------------EDIT BUYER DATA-----------------------------------*/
 
+  editBuyerDetails: (buyerData, documents) => {
+    return new Promise(async (resolve, reject) => {
+      try {
+        if (documents != null) {
+          if (documents.profile && documents.profile[0]) {
+            buyerData.profile = IISDOMAINBUYERDOC + documents.profile[0].filename;
+          }
+          if (documents.aadhar_proof && documents.aadhar_proof[0]) {
+            buyerData.aadhar_proof = IISDOMAINBUYERDOC + documents.aadhar_proof[0].filename;
+          }
+          if (documents.pan_card_proof && documents.pan_card_proof[0]) {
+            buyerData.pan_card_proof = IISDOMAINBUYERDOC + documents.pan_card_proof[0].filename;
+          }
+          if (documents.business_address_proof && documents.business_address_proof[0]) {
+            buyerData.business_address_proof = IISDOMAINBUYERDOC + documents.business_address_proof[0].filename;
+          }
+        }
+  
+        const updatedUserDetails = await user.findOneAndUpdate(
+          { user_name: buyerData.user_name },
+          {
+            $set: {
+              name: buyerData.name,
+              contact: buyerData.contact,
+              email: buyerData.email,
+              cpc: buyerData.cpc,
+              cpc_type: buyerData.cpc_type,
+              warehouse: buyerData.warehouse,
+              sales_users:buyerData.sales_users,
+              billing_address: buyerData.billing_address,
+              city: buyerData.city,
+              state: buyerData.state,
+              country: buyerData.country,
+              pincode: buyerData.pincode,
+              gstin: buyerData.gstin,
+              pan_card_number: buyerData.pan_card_number,
+              mobile_verification_status: buyerData.mobile_verification_status,
+              email_verification_status: buyerData.email_verification_status,
+              last_update_date: Date.now(),
+              profile: buyerData.profile,
+              pan_card_proof: buyerData.pan_card_proof,
+              aadhar_proof: buyerData.aadhar_proof,
+              business_address_proof: buyerData.business_address_proof,
+            },
           },
-        },
-        { returnOriginal: false }
-      );
-      
-      if (userDetails) {
-        let obj = {
-          name: userDetails.name,
-          email: userDetails.email,
-          contact: userDetails.contact,
-          buyer_name: userDetails.buyer_name,
-          password: userDetails.password,
-          cpc: userDetails.cpc,
-          cpc_type:userDetails.cpc_type,
-          warehouse:userDetails.warehouse,
-          sales_users:userDetails.sales_users,
-          billing_address:userDetails.billing_address,
-          city:userDetails.city,
-          state:userDetails.state,
-          country:userDetails.country,
-          pincode:userDetails.pincode,
-          sales_users:userDetails.sales_users,
-          gstin: userDetails.gstin,
-          pan_card_number: userDetails.pan_card_number,
-          mobile_verification_status: userDetails.mobile_verification_status,
-          email_verification_status: userDetails.email_verification_status,
-          pan_card_proof: userDetails.pan_card_proof,
-          aadhar_proof: userDetails.aadhar_proof,
-          business_address_proof: userDetails.business_address_proof,
-          profile: userDetails.profile,
-          user_type: userDetails.user_type,
-          status: userDetails.status,
-          creation_date: userDetails.creation_date,
-          last_update_date: userDetails.last_update_date,
-          profile: userDetails.profile,
-        };
-        resolve(userDetails);
-      } else {
-        resolve();
+          { new: true }
+        );
+        resolve(updatedUserDetails);
+      } catch (error) {
+        reject(error);
       }
     });
   },
-
+  
   /*--------------------------------EDIT USER DATA-----------------------------------*/
 
   editUserdata: (userData, profile) => {
@@ -4164,11 +4153,11 @@ module.exports = {
       let status = "Unverified";
       if (
         imeiData?.delivery_imei?.match(/[0-9]/g)?.join("") ==
-          imeiData?.bqc_ro_ril_imei ||
+        imeiData?.bqc_ro_ril_imei ||
         imeiData?.delivery_imei?.match(/[0-9]/g)?.join("") ==
-          imeiData?.bqc_ro_mob_one_imei ||
+        imeiData?.bqc_ro_mob_one_imei ||
         imeiData?.delivery_imei?.match(/[0-9]/g)?.join("") ==
-          imeiData?.bqc_ro_mob_two_imei
+        imeiData?.bqc_ro_mob_two_imei
       ) {
         status = "Verified";
       }
@@ -4665,7 +4654,7 @@ module.exports = {
         "91010003238",
         "91010003365",
         "91010004516",
-        "91010004785",          
+        "91010004785",
       ];
 
       let arr2 = [];
@@ -5193,11 +5182,11 @@ module.exports = {
           let status = "Unverified";
           if (
             x.imei?.match(/[0-9]/g)?.join("") ==
-              x.bqc_software_report.mobile_imei ||
+            x.bqc_software_report.mobile_imei ||
             x.imei?.match(/[0-9]/g)?.join("") ==
-              x.bqc_software_report.mobile_imei2 ||
+            x.bqc_software_report.mobile_imei2 ||
             x.imei?.match(/[0-9]/g)?.join("") ==
-              x.bqc_software_report._ro_ril_miui_imei0
+            x.bqc_software_report._ro_ril_miui_imei0
           ) {
             status = "Verified";
           }

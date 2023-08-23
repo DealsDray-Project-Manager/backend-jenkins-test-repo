@@ -73,7 +73,7 @@ app.use("/api/v7/purchase-user", SpPurchasePanel);
 /* User-profile */
 app.use("/user/profile", express.static(__dirname + "/public/user-profile"));
 
-app.use("/document", express.static(__dirname + '/public/documents'));
+app.use("/user/document", express.static(__dirname + '/public/buyer-docs'));
 /* Product Image */
 app.use("/product/image", express.static(__dirname + "/public/product-image"));
 // Error Handling Middlware

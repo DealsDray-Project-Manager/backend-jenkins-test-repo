@@ -52,7 +52,6 @@ router.post(
 
 /*--------------------------------CREATE BUYERS-----------------------------------*/
 
-
 router.post(
   "/createBuyer",
   upload.documents.fields([
@@ -62,24 +61,26 @@ router.post(
     { name: "business_address_proof" },
   ]),
   async (req, res, next) => {
-    1;
     try {
-      let data = await superAdminController.createBuyer(
-        req.body,
-        req.files
-      );
-      // console.log(req.files);
-      if (data) {
-        if (data.status) {
-          res.status(200).json({ status: 0, data: { message: "User Exist" } });
-        } else {
-          res.status(200).json({
-            status: 1,
-            data: {
-              message: "User is created",
-            },
-          });
+      if (req.files && Object.keys(req.files).length > 0) {
+        let data = await superAdminController.createBuyer(
+          req.body,
+          req.files
+        );
+        if (data) {
+          if (data.status) {
+            res.status(200).json({ status: 0, data: { message: "User Exist" } });
+          } else {
+            res.status(200).json({
+              status: 1,
+              data: {
+                message: "User is created",
+              },
+            });
+          }
         }
+      } else {
+        res.status(400).json({ error: "No files uploaded" });
       }
     } catch (error) {
       next(error);
@@ -350,15 +351,21 @@ router.get("/getEditBuyerData/:buyername", async (req, res) => {
 });
 
 
+
 /*-----------------------------EDIT BUYER--------------------------------------*/
 router.post(
   "/editBuyerDetails",
-  upload.userProfile.single("profile"),
+  upload.documents.fields([
+        { name: "profile" },
+        { name: "aadhar_proof" },
+        { name: "pan_card_proof" },
+        { name: "business_address_proof" },
+      ]),
   async (req, res, next) => {
     try {
-      let data = await superAdminController.editBuyerdata(
+      let data = await superAdminController.editBuyerDetails(
         req.body,
-        req.file ? req.file.filename : undefined
+        req.files
       );
       if (data) {
         res.status(200).json({ data: data });
@@ -368,6 +375,7 @@ router.post(
     }
   }
 );
+
 
 /*-----------------------------EDIT USER--------------------------------------*/
 router.post(
