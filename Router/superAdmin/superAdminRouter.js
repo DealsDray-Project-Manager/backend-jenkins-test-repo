@@ -353,20 +353,14 @@ router.get("/getEditBuyerData/:buyername", async (req, res) => {
 
 /*-----------------------------EDIT BUYER--------------------------------------*/
 
-
 router.post(
   "/editBuyerDetails",
-  upload.documents.fields([
-        { name: "profile" },
-        { name: "aadhar_proof" },
-        { name: "pan_card_proof" },
-        { name: "business_address_proof" },
-      ]),
+  upload.userProfile.single("profile"),
   async (req, res, next) => {
     try {
       let data = await superAdminController.editBuyerDetails(
         req.body,
-        req.files
+        req.file ? req.file.filename : undefined
       );
       if (data) {
         res.status(200).json({ data: data });
