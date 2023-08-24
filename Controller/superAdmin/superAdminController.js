@@ -454,60 +454,47 @@ module.exports = {
     });
   },
   /*--------------------------------EDIT BUYER DATA-----------------------------------*/
-  editBuyerDetails: (buyerData, documents) => {
+ 
+  editBuyerDetails: (userData, profile) => {
+    if (profile != undefined) {
+      profile = IISDOMAIN + profile;
+    }
     return new Promise(async (resolve, reject) => {
-      try {
-        if (documents != null) {
-          if (documents.profile && documents.profile[0]) {
-            buyerData.profile = IISDOMAINBUYERDOC + documents.profile[0].filename;
-          }
-          if (documents.aadhar_proof && documents.aadhar_proof[0]) {
-            buyerData.aadhar_proof = IISDOMAINBUYERDOC + documents.aadhar_proof[0].filename;
-          }
-          if (documents.pan_card_proof && documents.pan_card_proof[0]) {
-            buyerData.pan_card_proof = IISDOMAINBUYERDOC + documents.pan_card_proof[0].filename;
-          }
-          if (documents.business_address_proof && documents.business_address_proof[0]) {
-            buyerData.business_address_proof = IISDOMAINBUYERDOC + documents.business_address_proof[0].filename;
-          }
-        }
-        const updatedUserDetails = await user.findOneAndUpdate(
-          { user_name: buyerData.user_name },
-          {
-            $set: {
-              name: buyerData.name,
-              contact: buyerData.contact,
-              email: buyerData.email,
-              cpc: buyerData.cpc,
-              cpc_type: buyerData.cpc_type,
-              warehouse: buyerData.warehouse,
-              sales_users:buyerData.sales_users,
-              billing_address: buyerData.billing_address,
-              city: buyerData.city,
-              state: buyerData.state,
-              country: buyerData.country,
-              pincode: buyerData.pincode,
-              gstin: buyerData.gstin,
-              pan_card_number: buyerData.pan_card_number,
-              mobile_verification_status: buyerData.mobile_verification_status,
-              email_verification_status: buyerData.email_verification_status,
-              last_update_date: Date.now(),
-              profile: buyerData.profile,
-              pan_card_proof: buyerData.pan_card_proof,
-              aadhar_proof: buyerData.aadhar_proof,
-              business_address_proof: buyerData.business_address_proof,
-            },
+      let userDetails = await user.findOneAndUpdate(
+        { user_name: userData.user_name },
+        {
+          $set: {
+            contact: userData.contact,
+            email: userData.email,  
+            password:userData.password,
           },
-          { new: true }
-        );
-        resolve(updatedUserDetails);
-      } catch (error) {
-        reject(error);
+        },
+        { returnOriginal: false }
+      );
+
+      if (userDetails) {
+        let obj = {
+          name: userDetails.name,
+          email: userDetails.email,
+          contact: userDetails.contact,
+          user_name: userDetails.user_name,
+          password: userDetails.password,
+          cpc: userDetails.cpc,
+          profile: userDetails.profile,
+          user_type: userDetails.user_type,
+          status: userDetails.status,
+          creation_date: userDetails.creation_date,
+          last_update_date: userDetails.last_update_date,
+          last_otp: userDetails.last_otp,
+          profile: userDetails.profile,
+        };
+        let historyTab = await usersHistory.create(obj);
+        resolve(userDetails);
+      } else {
+        resolve();
       }
     });
   },
-  
- 
   /*--------------------------------EDIT USER DATA-----------------------------------*/
 
   editUserdata: (userData, profile) => {
