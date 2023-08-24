@@ -157,7 +157,13 @@ module.exports = {
         receiveCtx: 0,
         ctxToStxSorting: 0,
         stxMerge: 0,
+        rackChangeRequest:0
       };
+      count.rackChangeRequest = await masters.count({
+        prefix: "tray-master",
+        sort_id: "Assigned to warehouae for rack change",
+        cpc: location,
+      });
       count.orders = await orders.count({
         partner_shop: location,
         order_status: "NEW",
@@ -5574,7 +5580,21 @@ module.exports = {
       else{
         resolve({status:2})
       }
-      
+    })
+  },
+  changeRackByMis:(trayId,rackId)=>{
+    return new Promise(async(resolve,reject)=>{
+      const updateRack=await masters.updateOne({code:trayId},{
+        $set:{
+          temp_rack:rackId
+        }
+      })
+      if(updateRack.modifiedCount !==0){
+        resolve({status:1})
+      }
+      else{
+        resolve({status:2})
+      }
     })
   }
 };

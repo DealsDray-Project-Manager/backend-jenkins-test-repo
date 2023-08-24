@@ -2067,4 +2067,25 @@ router.post("/assignToAgent/rackChange", async (req, res, next) => {
     next(error);
   }
 });
+// CHANGE THE RACK
+router.post("/rackChangeByMis", async (req, res, next) => {
+  try {
+    const { trayId,rackId } = req.body;
+    let data = await misUserController.changeRackByMis(
+      trayId,
+      rackId
+    );
+    if (data.status == 1) {
+      res.status(200).json({
+        message: "Successfully updated new rack and request sent to warhouse",
+      });
+    } else {
+      res.status(202).json({
+        message: "Request failed please try again...",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
 module.exports = router;

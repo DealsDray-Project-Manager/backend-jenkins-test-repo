@@ -27,9 +27,10 @@ const {
   mastersEditHistory,
 } = require("../../Model/masterHistoryModel/mastersHistory");
 const moment = require("moment");
-const elasticsearch = require("../../Elastic-search/elastic");
+const elasticsearch = require("../../Elastic-search/elastic");  
 
 const IISDOMAIN = "https://prexo-v8-5-dev-api.dealsdray.com/user/profile/";
+const IISDOMAINBUYERDOC = "https://prexo-v8-5-dev-api.dealsdray.com/user/document/";
 const IISDOMAINPRDT = "https://prexo-v8-5-dev-api.dealsdray.com/product/image/";
 
 /************************************************************************************************** */
@@ -110,7 +111,7 @@ module.exports = {
   getDashboardData: () => {
     return new Promise(async (resolve, reject) => {
       let count = {};
-      count.usersCount = await user.count({ user_type: { $ne: "Buyer" } });
+      count.usersCount = await user.count({ user_type: { $ne: 'Buyer' } });
       count.buyerCount = await user.count({ user_type: "Buyer" });
       count.location = await infra.count({ type_taxanomy: "CPC" });
       count.warehouse = await infra.count({ type_taxanomy: "Warehouse" });
@@ -245,12 +246,49 @@ module.exports = {
     userData.creation_date = Date.now();
     return new Promise(async (resolve, rejects) => {
       let userExist = await user.findOne({ user_name: userData.user_name });
+      console.log("userExist:-",userExist)
       if (userExist) {
         resolve({ status: true, user: userExist });
       } else {
         let data = await user.create(userData);
         if (data) {
           let history = await usersHistory.create(userData);
+          resolve({ status: false, user: data });
+        } else {
+          resolve();
+        }
+      }
+    });
+  },
+
+  /*--------------------------------CREATE BUYERS-----------------------------------*/
+
+  createBuyer: (buyerData, docuemnts) => {
+    if (docuemnts) {
+      if (docuemnts.profile && docuemnts.profile[0]) {
+        buyerData.profile = IISDOMAINBUYERDOC + docuemnts.profile[0].filename;
+      }
+      if (docuemnts.aadhar_proof && docuemnts.aadhar_proof[0]) {
+        buyerData.aadhar_proof = IISDOMAINBUYERDOC + docuemnts.aadhar_proof[0].filename;
+      }
+      if (docuemnts.pan_card_proof && docuemnts.pan_card_proof[0]) {
+        buyerData.pan_card_proof = IISDOMAINBUYERDOC + docuemnts.pan_card_proof[0].filename;
+      }
+      if (docuemnts.business_address_proof && docuemnts.business_address_proof[0]) {
+        buyerData.business_address_proof = IISDOMAINBUYERDOC + docuemnts.business_address_proof[0].filename;
+      }
+    }
+    
+    buyerData.creation_date = Date.now();
+    return new Promise(async (resolve, rejects) => {
+      let buyerExist = await user.findOne({ user_name: buyerData.user_name });
+      console.log("userExist:", buyerExist);
+      if (buyerExist) {
+        resolve({ status: true, buyer: buyerExist });
+      } else {
+        let data = await user.create(buyerData);
+        if (data) {
+          let history = await usersHistory.create(buyerData);
           resolve({ status: false, user: data });
         } else {
           resolve();
@@ -299,12 +337,7 @@ module.exports = {
 
   getsalesUsers: (warehouse, cpc) => {
     return new Promise(async (resolve, reject) => {
-      let data = await user.find({
-        user_type: "Sales Agent",
-        warehouse: warehouse,
-        cpc: cpc,
-        status: { $ne: "Deactivated" },
-      });
+      let data = await user.find({ user_type: "Sales Agent", warehouse: warehouse, cpc: cpc, status: { $ne: "Deactivated" } });
       if (data) {
         resolve(data);
       } else {
@@ -354,14 +387,14 @@ module.exports = {
 
   getUsers: () => {
     return new Promise(async (resolve, reject) => {
-      let usersData = await user.find({ user_type: { $ne: "Buyer" } });
+      let usersData = await user.find({ user_type: { $ne: 'Buyer' } });
       resolve(usersData);
     });
   },
 
   getBuyers: () => {
     return new Promise(async (resolve, reject) => {
-      let BuyerData = await user.find({ user_type: "Buyer" });
+      let BuyerData = await user.find({ user_type: 'Buyer' });
       resolve(BuyerData);
     });
   },
@@ -369,10 +402,7 @@ module.exports = {
 
   buyerConSalesAgent: (username) => {
     return new Promise(async (resolve, reject) => {
-      let BuyerData = await user.find({
-        user_type: "Buyer",
-        sales_users: username,
-      });
+      let BuyerData = await user.find({ user_type: "Buyer", sales_users: username });
       resolve(BuyerData);
     });
   },
@@ -417,6 +447,70 @@ module.exports = {
     });
   },
 
+  /*--------------------------------DATA FETCH FOR EDIT Buyer-----------------------------------*/
+
+  getEditBuyerData: (buyername) => {
+    return new Promise(async (resolve, reject) => {
+      let buyerData = await user.findOne({ user_name: buyername });
+      resolve(buyerData);
+    });
+  },
+  /*--------------------------------EDIT BUYER DATA-----------------------------------*/
+
+  editBuyerDetails: (buyerData, documents) => {
+    return new Promise(async (resolve, reject) => {
+      try {
+        if (documents != null) {
+          if (documents.profile && documents.profile[0]) {
+            buyerData.profile = IISDOMAINBUYERDOC + documents.profile[0].filename;
+          }
+          if (documents.aadhar_proof && documents.aadhar_proof[0]) {
+            buyerData.aadhar_proof = IISDOMAINBUYERDOC + documents.aadhar_proof[0].filename;
+          }
+          if (documents.pan_card_proof && documents.pan_card_proof[0]) {
+            buyerData.pan_card_proof = IISDOMAINBUYERDOC + documents.pan_card_proof[0].filename;
+          }
+          if (documents.business_address_proof && documents.business_address_proof[0]) {
+            buyerData.business_address_proof = IISDOMAINBUYERDOC + documents.business_address_proof[0].filename;
+          }
+        }
+  
+        const updatedUserDetails = await user.findOneAndUpdate(
+          { user_name: buyerData.user_name },
+          {
+            $set: {
+              name: buyerData.name,
+              contact: buyerData.contact,
+              email: buyerData.email,
+              cpc: buyerData.cpc,
+              cpc_type: buyerData.cpc_type,
+              warehouse: buyerData.warehouse,
+              sales_users:buyerData.sales_users,
+              billing_address: buyerData.billing_address,
+              city: buyerData.city,
+              state: buyerData.state,
+              country: buyerData.country,
+              pincode: buyerData.pincode,
+              gstin: buyerData.gstin,
+              pan_card_number: buyerData.pan_card_number,
+              mobile_verification_status: buyerData.mobile_verification_status,
+              email_verification_status: buyerData.email_verification_status,
+              last_update_date: Date.now(),
+              profile: buyerData.profile,
+              pan_card_proof: buyerData.pan_card_proof,
+              aadhar_proof: buyerData.aadhar_proof,
+              business_address_proof: buyerData.business_address_proof,
+            },
+          },
+          { new: true }
+        );
+        resolve(updatedUserDetails);
+      } catch (error) {
+        reject(error);
+      }
+    });
+  },
+  
   /*--------------------------------EDIT USER DATA-----------------------------------*/
 
   editUserdata: (userData, profile) => {
@@ -4104,11 +4198,11 @@ module.exports = {
       let status = "Unverified";
       if (
         imeiData?.delivery_imei?.match(/[0-9]/g)?.join("") ==
-          imeiData?.bqc_ro_ril_imei ||
+        imeiData?.bqc_ro_ril_imei ||
         imeiData?.delivery_imei?.match(/[0-9]/g)?.join("") ==
-          imeiData?.bqc_ro_mob_one_imei ||
+        imeiData?.bqc_ro_mob_one_imei ||
         imeiData?.delivery_imei?.match(/[0-9]/g)?.join("") ==
-          imeiData?.bqc_ro_mob_two_imei
+        imeiData?.bqc_ro_mob_two_imei
       ) {
         status = "Verified";
       }
@@ -5154,11 +5248,11 @@ module.exports = {
           let status = "Unverified";
           if (
             x.imei?.match(/[0-9]/g)?.join("") ==
-              x.bqc_software_report.mobile_imei ||
+            x.bqc_software_report.mobile_imei ||
             x.imei?.match(/[0-9]/g)?.join("") ==
-              x.bqc_software_report.mobile_imei2 ||
+            x.bqc_software_report.mobile_imei2 ||
             x.imei?.match(/[0-9]/g)?.join("") ==
-              x.bqc_software_report._ro_ril_miui_imei0
+            x.bqc_software_report._ro_ril_miui_imei0
           ) {
             status = "Verified";
           }

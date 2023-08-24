@@ -2840,10 +2840,11 @@ router.post("/updateRackId", async (req, res, next) => {
 /* -------------------------------GET RACK CHANGE REQUEST ----------------*/
 router.post("/rackChangeRequest", async (req, res, next) => {
   try {
-    const { username, screen } = req.body;
+    const { username, screen,location} = req.body;
     let data = await warehouseInController.getRackChangeRequest(
       username,
-      screen
+      screen,
+      location
     );
     if (data) {
       res.status(200).json({

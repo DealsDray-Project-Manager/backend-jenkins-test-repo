@@ -141,6 +141,11 @@ module.exports = {
             count: { $sum: 1 },
           },
         },
+        {
+          $sort: {
+            _id: 1 // Sort by part_id in ascending order
+          }
+        }
       ]);
 
       if (findItem) {

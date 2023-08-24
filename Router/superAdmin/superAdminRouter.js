@@ -31,7 +31,7 @@ router.post(
         req.body,
         req.file ? req.file.filename : undefined
       );
-      console.log(data);
+      console.log(req.file);
       if (data) {
         if (data.status) {
           res.status(200).json({ status: 0, data: { message: "User Exist" } });
@@ -49,6 +49,45 @@ router.post(
     }
   }
 );
+
+/*--------------------------------CREATE BUYERS-----------------------------------*/
+
+router.post(
+  "/createBuyer",
+  upload.documents.fields([
+    { name: "profile" },
+    { name: "aadhar_proof" },
+    { name: "pan_card_proof" },
+    { name: "business_address_proof" },
+  ]),
+  async (req, res, next) => {
+    try {
+      if (req.files && Object.keys(req.files).length > 0) {
+        let data = await superAdminController.createBuyer(
+          req.body,
+          req.files
+        );
+        if (data) {
+          if (data.status) {
+            res.status(200).json({ status: 0, data: { message: "User Exist" } });
+          } else {
+            res.status(200).json({
+              status: 1,
+              data: {
+                message: "User is created",
+              },
+            });
+          }
+        }
+      } else {
+        res.status(400).json({ error: "No files uploaded" });
+      }
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
 
 /*-----------------------------FETCH LOCATION TYPE--------------------------------------*/
 router.post("/location/type/:code", async (req, res, next) => {
@@ -300,6 +339,43 @@ router.get("/getEditData/:username", async (req, res) => {
     }
   } catch (error) {}
 });
+
+/*------------------------------EDITED BUYER DATA-------------------------------------*/
+router.get("/getEditBuyerData/:buyername", async (req, res) => {
+  try {
+    let buyer = await superAdminController.getEditBuyerData(req.params.buyername);
+    if (buyer) {
+      res.status(200).json({ data: buyer });
+    }
+  } catch (error) {}
+});
+
+
+
+/*-----------------------------EDIT BUYER--------------------------------------*/
+router.post(
+  "/editBuyerDetails",
+  upload.documents.fields([
+        { name: "profile" },
+        { name: "aadhar_proof" },
+        { name: "pan_card_proof" },
+        { name: "business_address_proof" },
+      ]),
+  async (req, res, next) => {
+    try {
+      let data = await superAdminController.editBuyerDetails(
+        req.body,
+        req.files
+      );
+      if (data) {
+        res.status(200).json({ data: data });
+      }
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
 
 /*-----------------------------EDIT USER--------------------------------------*/
 router.post(

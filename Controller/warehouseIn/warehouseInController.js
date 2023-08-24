@@ -7410,10 +7410,15 @@ module.exports = {
       }
     });
   },
-  getRackChangeRequest: (username, sortId) => {
+  getRackChangeRequest: (username, sortId, location) => {
     let data = [];
     return new Promise(async (resolve, reject) => {
-      if (sortId == "Issued to scan in for rack change") {
+      if (sortId == "MIS") {
+        data = await masters.find({
+          cpc: location,
+          sort_id: "Assigned to warehouae for rack change",
+        });
+      } else if (sortId == "Issued to scan in for rack change") {
         data = await masters.find({
           $or: [
             {
@@ -7430,6 +7435,7 @@ module.exports = {
         data = await masters.find({
           issued_user_name: username,
           sort_id: sortId,
+          temp_rack: { $exists: true },
         });
       }
       if (data) {
