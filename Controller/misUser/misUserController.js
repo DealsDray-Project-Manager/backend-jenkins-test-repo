@@ -4841,7 +4841,7 @@ module.exports = {
   ) => {
     let updateFromTray;
     return new Promise(async (resolve, reject) => {
-      updateFromTray = await masters.updateOne(
+      updateFromTray = await masters.findOneAndUpdate(
         { code: fromTray },
         {
           $set: {

@@ -29,9 +29,9 @@ const {
 const moment = require("moment");
 const elasticsearch = require("../../Elastic-search/elastic");  
 
-const IISDOMAIN = "https://prexo-v8-5-dev-api.dealsdray.com/user/profile/";
-const IISDOMAINBUYERDOC = "https://prexo-v8-5-dev-api.dealsdray.com/user/document/";
-const IISDOMAINPRDT = "https://prexo-v8-5-dev-api.dealsdray.com/product/image/";
+const IISDOMAIN = "https://prexo-v8-5-uat-api.dealsdray.com/user/profile/";
+const IISDOMAINBUYERDOC = "https://prexo-v8-5-uat-api.dealsdray.com/user/document/";
+const IISDOMAINPRDT = "https://prexo-v8-5-uat-api.dealsdray.com/product/image/";
 
 /************************************************************************************************** */
 
