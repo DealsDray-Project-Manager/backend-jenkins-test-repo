@@ -61,26 +61,25 @@ router.post(
   ]),
   async (req, res, next) => {
     try {
-      if (req.files && Object.keys(req.files).length > 0) {
+      console.log("api request");
         let data = await superAdminController.createBuyer(
           req.body,
           req.files
         );
         if (data) {
+          console.log(data);
           if (data.status) {
-            res.status(200).json({ status: 0, data: { message: "User Exist" } });
+            res.status(200).json({ status: 0, data: { message: "Buyer Exist" } });
           } else {
             res.status(200).json({
               status: 1,
               data: {
-                message: "User is created",
+                message: "Buyer is created",
               },
             });
           }
         }
-      } else {
-        res.status(400).json({ error: "No files uploaded" });
-      }
+       
     } catch (error) {
       next(error);
     }
