@@ -3507,7 +3507,7 @@ router.post("/unverifiedImeiReport/:page/:size", async (req, res, next) => {
     if (data) {
       res.status(200).json({
         data: data.unverifiedImei,
-        count: data.count,
+       
       });
     }
   } catch (error) {

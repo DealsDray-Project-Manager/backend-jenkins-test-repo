@@ -9,10 +9,11 @@ const { masters } = require("../../Model/mastersModel");
 const elasticsearch = require("../../Elastic-search/elastic");
 /*******************************************************************************************************************/
 /**************************************************Dashboard**************************************************************************/
-router.post("/dashboard/:location", async (req, res, next) => {
+router.post("/dashboard/:location/:username", async (req, res, next) => {
   try {
-    const { location } = req.params;
-    let data = await warehouseInController.dashboard(location);
+    console.log(req.params);
+    const { location,username } = req.params;
+    let data = await warehouseInController.dashboard(location,username);
     if (data) {
       res.status(200).json({
         data: data,

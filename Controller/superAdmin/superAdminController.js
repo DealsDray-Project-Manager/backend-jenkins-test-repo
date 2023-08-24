@@ -4089,12 +4089,8 @@ module.exports = {
         .find({
           unverified_imei_status: "Unverified",
         })
-        .skip(skip)
-        .limit(limit);
-      const count = await delivery.count({
-        unverified_imei_status: "Unverified",
-      });
-      resolve({ unverifiedImei: findUnverifiedImei, count: count });
+       
+      resolve({ unverifiedImei: findUnverifiedImei,  });
     });
   },
   unVerifiedReportItemFilter: (fromDate, toDate, limit, skip, type) => {

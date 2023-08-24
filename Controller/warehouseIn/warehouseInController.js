@@ -21,7 +21,8 @@ const { unitsActionLog } = require("../../Model/units-log/units-action-log");
 
 module.exports = {
   /*------------------------DASHBOARD FOR WAREHOUSE----------------------------*/
-  dashboard: (location) => {
+  dashboard: (location,username) => {
+    console.log(username);
     return new Promise(async (resolve, reject) => {
       let count = {
         bagIssueRequest: 0,
@@ -59,7 +60,26 @@ module.exports = {
         rdlTwoRequests: 0,
         returnFromRdlTwo: 0,
         allRpTray: 0,
+        rackChangeStockin:0,
+        rackChangeStockOut:0
       };
+      count.rackChangeStockin = await masters.count({
+       $or: [
+            {
+              issued_user_name: username,
+              sort_id: "Issued to scan in for rack change",
+            },
+            {
+              issued_user_name: username,
+              sort_id: "Received for rack change",
+            },
+          ]
+      });
+      count.rackChangeStockOut = await masters.count({
+        issued_user_name: username,
+        sort_id: "Assigned to warehouae for rack change",
+        temp_rack: { $exists: true },
+      });
       count.allRpTray = await masters.count({
         prefix: "tray-master",
         cpc: location,
