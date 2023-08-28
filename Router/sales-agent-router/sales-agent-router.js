@@ -8,9 +8,8 @@ const salesController = require("../../Controller/sales-controller/sales-control
 
 router.post("/dashboard/:location/:username", async (req, res, next) => {
   try {
-    const { location,username } = req.params;
-console.log("req.params:",req.params)
-    let data = await salesController.dashboardCount(location,username);
+    const { location, username } = req.params;
+    let data = await salesController.dashboardCount(location, username);
     if (data) {
       res.status(200).json({
         data: data,
@@ -35,12 +34,12 @@ router.post("/viewPrice/:location", async (req, res, next) => {
     next(error);
   }
 });
-//VIEW ITEMS 
+//VIEW ITEMS
 
 router.post("/viewItemsForReadyForSales", async (req, res, next) => {
   try {
     console.log(req.body);
-    const { location, brand, model,grade,date } = req.body;
+    const { location, brand, model, grade, date } = req.body;
     let data = await salesController.getItemsForReadyForSales(
       location,
       brand,
@@ -61,5 +60,25 @@ router.post("/viewItemsForReadyForSales", async (req, res, next) => {
     next(error);
   }
 });
+
+router.post("/ReadyForSalesUnits", async (req, res, next) => {
+  const { location } = req.body;
+  try {
+    let data = await salesController.ReadyForSalesUnits(location);
+    console.log("data:", data);
+    if (data) {
+      res.status(200).json({
+        data: data,
+      });
+    } else {
+      res.status(202).json({
+        message: "",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
 /************************************************************************************************************** */
 module.exports = router;

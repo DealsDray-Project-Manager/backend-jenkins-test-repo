@@ -141,6 +141,11 @@ module.exports = {
             count: { $sum: 1 },
           },
         },
+        {
+          $sort: {
+            _id: 1 // Sort by part_id in ascending order
+          }
+        }
       ]);
 
       if (findItem) {
@@ -161,6 +166,7 @@ module.exports = {
             });
             let checkHistoryOfProcurement = await purchaseOrder.findOne({
               spare_part_number: x._id,
+              status: { $ne: "Order Placed" },
             });
             if (checkThePart) {
               let qty = checkThePart.avl_stock - x.count;
@@ -225,6 +231,7 @@ module.exports = {
           let checkSpExists = await purchaseOrder.findOne({
             spare_part_number: x.part_id,
             muic: x.muic,
+            status:{$ne:"Order Placed"}
           });
           if (checkSpExists) {
             updateData = await purchaseOrder.findOneAndUpdate(

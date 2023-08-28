@@ -22,7 +22,7 @@ module.exports = {
           $match: {
             type_taxanomy: "ST",
             cpc: location,
-            sort_id: "Ready to Pricing",
+            sort_id:{$in:["Ready to Pricing","Inuse"]},
             sp_price: { $exists: false },
             mrp_price: { $exists: false},
           },
@@ -44,7 +44,7 @@ module.exports = {
           $match: {
             type_taxanomy: "ST",
             cpc: location,
-            sort_id: "Ready to Pricing",
+            sort_id:{$in:["Ready to Pricing","Inuse"]},
             sp_price: { $exists: true },
             mrp_price: { $exists: true},
           },
@@ -67,7 +67,7 @@ module.exports = {
           $match: {
             type_taxanomy: "ST",
             cpc: location,
-            sort_id: "Ready to Pricing",
+            sort_id:{$in:["Ready to Pricing","Inuse"]},
             sp_price: { $exists: false }, // Filter out documents with null or missing sp_price
             mrp_price: { $exists: false },
           },
@@ -88,7 +88,7 @@ module.exports = {
           $match: {
             type_taxanomy: "ST",
             cpc: location,
-            sort_id: "Ready to Pricing",
+            sort_id:{$in:["Ready to Pricing","Inuse"]},
             sp_price: { $exists: true, $ne: null }, // Filter out documents with null or missing sp_price
             mrp_price: { $exists: true, $ne: null }, // Filter out documents with null or missing mrp_price
           },
@@ -124,7 +124,7 @@ module.exports = {
           $match: {
             type_taxanomy: "ST",
             cpc: location,
-            sort_id: "Ready to Pricing",
+            sort_id:{$in:["Ready to Pricing","Inuse"]},
             sp_price: { $exists: false }, // Filter out documents with null or missing sp_price
             mrp_price: { $exists: false },
           },
@@ -141,6 +141,14 @@ module.exports = {
             sp: { $first: "$sp_price" },
             mrp: { $first: "$mrp_price" },
             // Count the number of items in the 'items' array within each group
+          },
+        },
+        {
+          $lookup: {
+            from: "products", // Replace with the name of the collection you want to lookup from
+            localField: "muic",
+            foreignField: "muic",
+            as: "muicDetails",
           },
         },
       ]);
@@ -171,7 +179,7 @@ module.exports = {
               tray_grade: x.grade,
               type_taxanomy: "ST",
               cpc: location,
-              sort_id: "Ready to Pricing",
+              sort_id:{$in:["Ready to Pricing","Inuse"]},
               sp_price: { $exists: true }, // Filter out documents with null or missing sp_price
               mrp_price: { $exists: true },
             },
@@ -195,7 +203,7 @@ module.exports = {
                 tray_grade: x.grade,
                 type_taxanomy: "ST",
                 cpc: location,
-                sort_id: "Ready to Pricing",
+                sort_id:{$in:["Ready to Pricing","Inuse"]},
               },
             
             ]},

@@ -27,9 +27,10 @@ const {
   mastersEditHistory,
 } = require("../../Model/masterHistoryModel/mastersHistory");
 const moment = require("moment");
-const elasticsearch = require("../../Elastic-search/elastic");
+const elasticsearch = require("../../Elastic-search/elastic");  
 
 const IISDOMAIN = "https://prexo-v8-5-dev-api.dealsdray.com/user/profile/";
+const IISDOMAINBUYERDOC = "https://prexo-v8-5-dev-api.dealsdray.com/user/document/";
 const IISDOMAINPRDT = "https://prexo-v8-5-dev-api.dealsdray.com/product/image/";
 
 /************************************************************************************************** */
@@ -110,8 +111,8 @@ module.exports = {
   getDashboardData: () => {
     return new Promise(async (resolve, reject) => {
       let count = {};
-      count.usersCount = await user.count({});
-      count.buyerCount = await user.count({user_type:"Buyer"});
+      count.usersCount = await user.count({ user_type: { $ne: 'Buyer' } });
+      count.buyerCount = await user.count({ user_type: "Buyer" });
       count.location = await infra.count({ type_taxanomy: "CPC" });
       count.warehouse = await infra.count({ type_taxanomy: "Warehouse" });
       count.brand = await brands.count({});
@@ -259,6 +260,41 @@ module.exports = {
     });
   },
 
+  /*--------------------------------CREATE BUYERS-----------------------------------*/
+
+  createBuyer: (buyerData, docuemnts) => {
+    if (docuemnts != null) {
+      if (docuemnts.profile && docuemnts.profile[0]) {
+        buyerData.profile = IISDOMAINBUYERDOC + docuemnts.profile[0].filename;
+      }
+      if (docuemnts.aadhar_proof && docuemnts.aadhar_proof[0]) {
+        buyerData.aadhar_proof = IISDOMAINBUYERDOC + docuemnts.aadhar_proof[0].filename;
+      }
+      if (docuemnts.pan_card_proof && docuemnts.pan_card_proof[0]) {
+        buyerData.pan_card_proof = IISDOMAINBUYERDOC + docuemnts.pan_card_proof[0].filename;
+      }
+      if (docuemnts.business_address_proof && docuemnts.business_address_proof[0]) {
+        buyerData.business_address_proof = IISDOMAINBUYERDOC + docuemnts.business_address_proof[0].filename;
+      }
+    }
+    
+    buyerData.creation_date = Date.now();
+    return new Promise(async (resolve, rejects) => {
+      let buyerExist = await user.findOne({ user_name: buyerData.user_name });
+      if (buyerExist) {
+        resolve({ status: true, buyer: buyerExist });
+      } else {
+        let data = await user.create(buyerData);
+        if (data) {
+          let history = await usersHistory.create(buyerData);
+          resolve({ status: false, user: data });
+        } else {
+          resolve();
+        }
+      }
+    });
+  },
+
   /*-------------------------------LOCATION TYPE -------------------------------*/
   getLocationType: (code) => {
     return new Promise(async (resolve, reject) => {
@@ -287,26 +323,26 @@ module.exports = {
     });
   },
 
-   /*--------------------------------Find Sales Location-----------------------------------*/
+  /*--------------------------------Find Sales Location-----------------------------------*/
 
-   getCpcSalesLocation: () => {
+  getCpcSalesLocation: () => {
     return new Promise(async (resolve, rejects) => {
       let data = await infra.find({ location_type: "Sales" });
       resolve(data);
     });
   },
- /*--------------------------------Find Sales Users-----------------------------------*/
- 
-    getsalesUsers: (warehouse, cpc ) => {
-      return new Promise(async (resolve, reject) => {
-        let data = await user.find({ user_type:"Sales Agent",warehouse: warehouse, cpc: cpc });
-        if (data) {
-          resolve(data);
-        } else {
-          resolve();
-        }
-      });
-    },
+  /*--------------------------------Find Sales Users-----------------------------------*/
+
+  getsalesUsers: (warehouse, cpc) => {
+    return new Promise(async (resolve, reject) => {
+      let data = await user.find({ user_type: "Sales Agent", warehouse: warehouse, cpc: cpc, status: { $ne: "Deactivated" } });
+      if (data) {
+        resolve(data);
+      } else {
+        resolve();
+      }
+    });
+  },
   /*--------------------------------FIND WAREHOUSE-----------------------------------*/
 
   getWarehouse: (code, type) => {
@@ -349,14 +385,14 @@ module.exports = {
 
   getUsers: () => {
     return new Promise(async (resolve, reject) => {
-      let usersData = await user.find({ user_type: { $ne: 'Buyer' }});
+      let usersData = await user.find({ user_type: { $ne: 'Buyer' } });
       resolve(usersData);
     });
   },
 
   getBuyers: () => {
     return new Promise(async (resolve, reject) => {
-      let BuyerData = await user.find({user_type:'Buyer'});
+      let BuyerData = await user.find({ user_type: 'Buyer' });
       resolve(BuyerData);
     });
   },
@@ -364,8 +400,7 @@ module.exports = {
 
   buyerConSalesAgent: (username) => {
     return new Promise(async (resolve, reject) => {
-      let BuyerData = await user.find({user_type:"Buyer",sales_users:username});
-      console.log(BuyerData);
+      let BuyerData = await user.find({ user_type: "Buyer", sales_users: username });
       resolve(BuyerData);
     });
   },
@@ -410,6 +445,56 @@ module.exports = {
     });
   },
 
+  /*--------------------------------DATA FETCH FOR EDIT Buyer-----------------------------------*/
+
+  getEditBuyerData: (buyername) => {
+    return new Promise(async (resolve, reject) => {
+      let buyerData = await user.findOne({ user_name: buyername });
+      resolve(buyerData);
+    });
+  },
+  /*--------------------------------EDIT BUYER DATA-----------------------------------*/
+ 
+  editBuyerDetails: (userData, profile) => {
+    if (profile != undefined) {
+      profile = IISDOMAIN + profile;
+    }
+    return new Promise(async (resolve, reject) => {
+      let userDetails = await user.findOneAndUpdate(
+        { user_name: userData.user_name },
+        {
+          $set: {
+            contact: userData.contact,
+            email: userData.email,  
+            password:userData.password,
+          },
+        },
+        { returnOriginal: false }
+      );
+
+      if (userDetails) {
+        let obj = {
+          name: userDetails.name,
+          email: userDetails.email,
+          contact: userDetails.contact,
+          user_name: userDetails.user_name,
+          password: userDetails.password,
+          cpc: userDetails.cpc,
+          profile: userDetails.profile,
+          user_type: userDetails.user_type,
+          status: userDetails.status,
+          creation_date: userDetails.creation_date,
+          last_update_date: userDetails.last_update_date,
+          last_otp: userDetails.last_otp,
+          profile: userDetails.profile,
+        };
+        let historyTab = await usersHistory.create(obj);
+        resolve(userDetails);
+      } else {
+        resolve();
+      }
+    });
+  },
   /*--------------------------------EDIT USER DATA-----------------------------------*/
 
   editUserdata: (userData, profile) => {
@@ -2637,17 +2722,52 @@ module.exports = {
   },
   getAllTrayRacks: () => {
     return new Promise(async (resolve, reject) => {
-      const data = await trayRack.find();
-      resolve(data);
+      try {
+        const aggregatePipeline = [
+          {
+            $lookup: {
+              from: "masters", // Replace with the actual collection name
+              localField: "rack_id",
+              foreignField: "rack_id",
+              as: "rack_counts",
+            },
+          },
+          {
+            $project: {
+              _id: 1,
+              rack_id: 1,
+              name: 1,
+              display: 1,
+              limit: 1,
+              warehouse: 1,
+              parent_id: 1,
+              // Other fields you want to include
+              rack_count: { $size: "$rack_counts" },
+            },
+          },
+          { $sort: { rack_id: 1 } },
+        ];
+
+        const rackCounts = await trayRack.aggregate(aggregatePipeline);
+        console.log(rackCounts);
+        resolve(rackCounts);
+      } catch (error) {
+        reject(error);
+      }
     });
   },
+
   /*--------------------GET RACK BASED ON THE LIMIT AND WAREHOUSE---------------------------*/
   getRackBasedOnTheWarehouse: (warehouse) => {
     return new Promise(async (resolve, reject) => {
       let arr = [];
       const rackIdData = await trayRack.find({ warehouse: warehouse });
       for (let x of rackIdData) {
-        if (x.limit > x?.bag_or_tray?.length) {
+        const findRack = await masters.find(
+          { rack_id: x.rack_id },
+          { rack_id: 1 }
+        );
+        if (x.limit > findRack.length) {
           arr.push(x);
         }
       }
@@ -3837,6 +3957,7 @@ module.exports = {
     });
   },
   getAssignedTray: (trayType, sort_id) => {
+    console.log(sort_id);
     return new Promise(async (resolve, reject) => {
       if (sort_id == "Ctx to Stx Send for Sorting") {
         const res = await masters
@@ -3844,6 +3965,15 @@ module.exports = {
             type_taxanomy: { $in: ["CT", "ST"] },
             to_merge: { $ne: null },
             sort_id: sort_id,
+          })
+          .catch((err) => reject(err));
+        resolve(res);
+      } else if (sort_id == "Pickup Request sent to Warehouse") {
+        const res = await masters
+          .find({
+            prefix: "tray-master",
+            sort_id: sort_id,
+            to_tray_for_pickup: { $ne: null },
           })
           .catch((err) => reject(err));
         resolve(res);
@@ -3946,12 +4076,8 @@ module.exports = {
         .find({
           unverified_imei_status: "Unverified",
         })
-        .skip(skip)
-        .limit(limit);
-      const count = await delivery.count({
-        unverified_imei_status: "Unverified",
-      });
-      resolve({ unverifiedImei: findUnverifiedImei, count: count });
+       
+      resolve({ unverifiedImei: findUnverifiedImei,  });
     });
   },
   unVerifiedReportItemFilter: (fromDate, toDate, limit, skip, type) => {
@@ -4052,11 +4178,11 @@ module.exports = {
       let status = "Unverified";
       if (
         imeiData?.delivery_imei?.match(/[0-9]/g)?.join("") ==
-          imeiData?.bqc_ro_ril_imei ||
+        imeiData?.bqc_ro_ril_imei ||
         imeiData?.delivery_imei?.match(/[0-9]/g)?.join("") ==
-          imeiData?.bqc_ro_mob_one_imei ||
+        imeiData?.bqc_ro_mob_one_imei ||
         imeiData?.delivery_imei?.match(/[0-9]/g)?.join("") ==
-          imeiData?.bqc_ro_mob_two_imei
+        imeiData?.bqc_ro_mob_two_imei
       ) {
         status = "Verified";
       }
@@ -4141,6 +4267,36 @@ module.exports = {
       }
     });
   },
+  openPacketDataFetch: () => {
+    return new Promise(async (resolve, reject) => {
+      const today = new Date();
+      const oneWeekAgo = new Date(today);
+      oneWeekAgo.setDate(today.getDate() - 7);
+      const dataFetch = await delivery.find(
+        {
+          created_at: { $gte: oneWeekAgo },
+          assign_to_agent: { $exists: true },
+        },
+        {
+          "uic_code.code": 1,
+          tracking_id: 1,
+          order_id: 1,
+          old_item_details: 1,
+          imei: 1,
+          item_id: 1,
+          bot_report: 1,
+          tray_type: 1,
+          partner_purchase_price: 1,
+          order_date: 1,
+          partner_shop: 1,
+          delivery_date: 1,
+          assign_to_agent: 1,
+        }
+      );
+      resolve(dataFetch);
+    });
+  },
+  /*-----------------------------------------EXTRA------------------------------------------------------------*/
   addCpcType: () => {
     return new Promise(async (resolve, reject) => {
       let findAllUsers = await user.find();
@@ -4250,32 +4406,23 @@ module.exports = {
   },
   extraBqcDoneBugFix: () => {
     return new Promise(async (resolve, reject) => {
-      let bqcDoneTray = await masters.find({ sort_id: "BQC Done" });
+      let bqcDoneTray = await masters.find({ code: "WHT10072" });
+      console.log(bqcDoneTray);
       for (let x of bqcDoneTray) {
         if (x.actual_items.length == 0) {
           let getDelivery = [];
-          //x.code == "WHT1564"
 
-          if (x.code == "WHT1141") {
-            getDelivery = await delivery.find({
-              wht_tray: "WHT1141",
-              sales_bin_status: { $exists: false },
-              stx_tray_id: { $exists: false },
-            });
-          } else if (x.code == "WHT1521") {
-            getDelivery = await delivery.find({
-              wht_tray: x.code,
-              sales_bin_status: { $exists: false },
-            });
-          } else {
-            getDelivery = await delivery.find({ wht_tray: x.code });
-          }
+          getDelivery = await delivery.find({
+            wht_tray: x.code,
+            ctx_tray_id: { $exists: false },
+          });
+
           let findMuic = await products.findOne({
             brand_name: x.brand,
             model_name: x.model,
           });
           // x.code == "WHT1501" || x.code == "WHT1521" ||  x.code == "WHT1564" || x.code == "WHT1593" || x.code == "WHT1190"
-          if (x.code == "WHT1300") {
+          if (x.code == "WHT10072") {
             for (let y of getDelivery) {
               let obj = {
                 tracking_id: y.tracking_id,
@@ -4553,7 +4700,7 @@ module.exports = {
         "91010003238",
         "91010003365",
         "91010004516",
-        "91010004785",          
+        "91010004785",
       ];
 
       let arr2 = [];
@@ -5081,11 +5228,11 @@ module.exports = {
           let status = "Unverified";
           if (
             x.imei?.match(/[0-9]/g)?.join("") ==
-              x.bqc_software_report.mobile_imei ||
+            x.bqc_software_report.mobile_imei ||
             x.imei?.match(/[0-9]/g)?.join("") ==
-              x.bqc_software_report.mobile_imei2 ||
+            x.bqc_software_report.mobile_imei2 ||
             x.imei?.match(/[0-9]/g)?.join("") ==
-              x.bqc_software_report._ro_ril_miui_imei0
+            x.bqc_software_report._ro_ril_miui_imei0
           ) {
             status = "Verified";
           }
@@ -5323,6 +5470,613 @@ module.exports = {
           }
         }
       }
+      resolve({ status: true });
+    });
+  },
+  exUpdateWithNewSpn: () => {
+    return new Promise(async (resolve, reject) => {
+      let arr = [
+        {
+         "old_spn": "SPN000286",
+         "new_spn": "SPN000286"
+        },
+        {
+         "old_spn": "SPN000313",
+         "new_spn": "SPN000286"
+        },
+        {
+         "old_spn": "SPN000328",
+         "new_spn": "SPN000286"
+        },
+        {
+         "old_spn": "SPN000287",
+         "new_spn": "SPN000287"
+        },
+        {
+         "old_spn": "SPN000314",
+         "new_spn": "SPN000287"
+        },
+        {
+         "old_spn": "SPN000329",
+         "new_spn": "SPN000287"
+        },
+        {
+         "old_spn": "SPN000288",
+         "new_spn": "SPN000288"
+        },
+        {
+         "old_spn": "SPN000979",
+         "new_spn": "SPN000288"
+        },
+        {
+         "old_spn": "SPN000289",
+         "new_spn": "SPN000289"
+        },
+        {
+         "old_spn": "SPN000315",
+         "new_spn": "SPN000289"
+        },
+        {
+         "old_spn": "SPN000330",
+         "new_spn": "SPN000289"
+        },
+        {
+         "old_spn": "SPN000290",
+         "new_spn": "SPN000290"
+        },
+        {
+         "old_spn": "SPN000745",
+         "new_spn": "SPN000290"
+        },
+        {
+         "old_spn": "SPN000769",
+         "new_spn": "SPN000290"
+        },
+        {
+         "old_spn": "SPN000291",
+         "new_spn": "SPN000291"
+        },
+        {
+         "old_spn": "SPN000316",
+         "new_spn": "SPN000291"
+        },
+        {
+         "old_spn": "SPN000331",
+         "new_spn": "SPN000291"
+        },
+        {
+         "old_spn": "SPN000572",
+         "new_spn": "SPN000572"
+        },
+        {
+         "old_spn": "SPN000292",
+         "new_spn": "SPN000292"
+        },
+        {
+         "old_spn": "SPN000498",
+         "new_spn": "SPN000292"
+        },
+        {
+         "old_spn": "SPN000332",
+         "new_spn": "SPN000292"
+        },
+        {
+         "old_spn": "SPN000293",
+         "new_spn": "SPN000292"
+        },
+        {
+         "old_spn": "SPN000477",
+         "new_spn": "SPN000292"
+        },
+        {
+         "old_spn": "SPN000294",
+         "new_spn": "SPN000294"
+        },
+        {
+         "old_spn": "SPN000295",
+         "new_spn": "SPN000295"
+        },
+        {
+         "old_spn": "SPN001482",
+         "new_spn": "SPN000295"
+        },
+        {
+         "old_spn": "SPN000296",
+         "new_spn": "SPN000296"
+        },
+        {
+         "old_spn": "SPN000317",
+         "new_spn": "SPN000296"
+        },
+        {
+         "old_spn": "SPN000333",
+         "new_spn": "SPN000296"
+        },
+        {
+         "old_spn": "SPN000667",
+         "new_spn": "SPN000667"
+        },
+        {
+         "old_spn": "SPN000779",
+         "new_spn": "SPN000667"
+        },
+        {
+         "old_spn": "SPN000415",
+         "new_spn": "SPN000667"
+        },
+        {
+         "old_spn": "SPN000749",
+         "new_spn": "SPN000749"
+        },
+        {
+         "old_spn": "SPN000772",
+         "new_spn": "SPN000749"
+        },
+        {
+         "old_spn": "SPN000750",
+         "new_spn": "SPN000750"
+        },
+        {
+         "old_spn": "SPN001612",
+         "new_spn": "SPN000750"
+        },
+        {
+         "old_spn": "SPN000748",
+         "new_spn": "SPN000748"
+        },
+        {
+         "old_spn": "SPN001483",
+         "new_spn": "SPN000748"
+        },
+        {
+         "old_spn": "SPN000757",
+         "new_spn": "SPN000757"
+        },
+        {
+         "old_spn": "SPN000765",
+         "new_spn": "SPN000765"
+        },
+        {
+         "old_spn": "SPN001608",
+         "new_spn": "SPN000765"
+        },
+        {
+         "old_spn": "SPN001610",
+         "new_spn": "SPN001610"
+        },
+        {
+         "old_spn": "SPN001609",
+         "new_spn": "SPN001609"
+        },
+        {
+         "old_spn": "SPN000297",
+         "new_spn": "SPN000297"
+        },
+        {
+         "old_spn": "SPN000318",
+         "new_spn": "SPN000297"
+        },
+        {
+         "old_spn": "SPN000778",
+         "new_spn": "SPN000297"
+        },
+        {
+         "old_spn": "SPN001628",
+         "new_spn": "SPN001628"
+        },
+        {
+         "old_spn": "SPN001767",
+         "new_spn": "SPN001628"
+        },
+        {
+         "old_spn": "SPN000545",
+         "new_spn": "SPN000545"
+        },
+        {
+         "old_spn": "SPN000298",
+         "new_spn": "SPN000298"
+        },
+        {
+         "old_spn": "SPN000752",
+         "new_spn": "SPN000298"
+        },
+        {
+         "old_spn": "SPN001116",
+         "new_spn": "SPN001116"
+        },
+        {
+         "old_spn": "SPN001553",
+         "new_spn": "SPN001116"
+        },
+        {
+         "old_spn": "SPN000770",
+         "new_spn": "SPN000770"
+        },
+        {
+         "old_spn": "SPN001117",
+         "new_spn": "SPN001117"
+        },
+        {
+         "old_spn": "SPN001200",
+         "new_spn": "SPN001200"
+        },
+        {
+         "old_spn": "SPN001481",
+         "new_spn": "SPN001481"
+        },
+        {
+         "old_spn": "SPN001554",
+         "new_spn": "SPN001481"
+        },
+        {
+         "old_spn": "SPN001555",
+         "new_spn": "SPN001555"
+        },
+        {
+         "old_spn": "SPN000319",
+         "new_spn": "SPN001116"
+        },
+        {
+         "old_spn": "SPN000320",
+         "new_spn": "SPN000770"
+        },
+        {
+         "old_spn": "SPN000961",
+         "new_spn": "SPN001481"
+        },
+        {
+         "old_spn": "SPN000299",
+         "new_spn": "SPN000749"
+        },
+        {
+         "old_spn": "SPN000321",
+         "new_spn": "SPN000749"
+        },
+        {
+         "old_spn": "SPN000334",
+         "new_spn": "SPN000749"
+        },
+        {
+         "old_spn": "SPN000300",
+         "new_spn": "SPN000750"
+        },
+        {
+         "old_spn": "SPN000322",
+         "new_spn": "SPN000750"
+        },
+        {
+         "old_spn": "SPN000323",
+         "new_spn": "SPN000748"
+        },
+        {
+         "old_spn": "SPN001480",
+         "new_spn": "SPN001480"
+        },
+        {
+         "old_spn": "SPN000758",
+         "new_spn": "SPN000758"
+        },
+        {
+         "old_spn": "SPN002091",
+         "new_spn": "SPN000758"
+        },
+        {
+         "old_spn": "SPN001199",
+         "new_spn": "SPN001199"
+        },
+        {
+         "old_spn": "SPN000861",
+         "new_spn": "SPN000861"
+        },
+        {
+         "old_spn": "SPN000303",
+         "new_spn": "SPN000303"
+        },
+        {
+         "old_spn": "SPN000324",
+         "new_spn": "SPN000304"
+        },
+        {
+         "old_spn": "SPN000304",
+         "new_spn": "SPN000304"
+        },
+        {
+         "old_spn": "SPN001763",
+         "new_spn": "SPN001763"
+        },
+        {
+         "old_spn": "SPN000325",
+         "new_spn": "SPN000699"
+        },
+        {
+         "old_spn": "SPN000335",
+         "new_spn": "SPN000699"
+        },
+        {
+         "old_spn": "SPN000699",
+         "new_spn": "SPN000699"
+        },
+        {
+         "old_spn": "SPN000608",
+         "new_spn": "SPN000608"
+        },
+        {
+         "old_spn": "SPN000636",
+         "new_spn": "SPN000608"
+        },
+        {
+         "old_spn": "SPN000766",
+         "new_spn": "SPN000608"
+        },
+        {
+         "old_spn": "SPN000700",
+         "new_spn": "SPN000700"
+        },
+        {
+         "old_spn": "SPN000755",
+         "new_spn": "SPN000700"
+        },
+        {
+         "old_spn": "SPN001625",
+         "new_spn": "SPN000700"
+        },
+        {
+         "old_spn": "SPN000751",
+         "new_spn": "SPN000751"
+        },
+        {
+         "old_spn": "SPN000762",
+         "new_spn": "SPN000762"
+        },
+        {
+         "old_spn": "SPN000767",
+         "new_spn": "SPN000762"
+        },
+        {
+         "old_spn": "SPN001475",
+         "new_spn": "SPN000762"
+        },
+        {
+         "old_spn": "SPN000756",
+         "new_spn": "SPN000756"
+        },
+        {
+         "old_spn": "SPN001476",
+         "new_spn": "SPN000756"
+        },
+        {
+         "old_spn": "SPN001613",
+         "new_spn": "SPN000756"
+        },
+        {
+         "old_spn": "SPN000775",
+         "new_spn": "SPN000306"
+        },
+        {
+         "old_spn": "SPN000305",
+         "new_spn": "SPN000305"
+        },
+        {
+         "old_spn": "SPN000326",
+         "new_spn": "SPN000305"
+        },
+        {
+         "old_spn": "SPN001769",
+         "new_spn": "SPN001769"
+        },
+        {
+         "old_spn": "SPN000306",
+         "new_spn": "SPN000306"
+        },
+        {
+         "old_spn": "SPN000746",
+         "new_spn": "SPN000746"
+        },
+        {
+         "old_spn": "SPN000774",
+         "new_spn": "SPN000746"
+        },
+        {
+         "old_spn": "SPN001477",
+         "new_spn": "SPN000746"
+        },
+        {
+         "old_spn": "SPN000307",
+         "new_spn": "SPN000307"
+        },
+        {
+         "old_spn": "SPN000675",
+         "new_spn": "SPN000307"
+        },
+        {
+         "old_spn": "SPN000759",
+         "new_spn": "SPN000307"
+        },
+        {
+         "old_spn": "SPN000308",
+         "new_spn": "SPN000308"
+        },
+        {
+         "old_spn": "SPN000538",
+         "new_spn": "SPN000308"
+        },
+        {
+         "old_spn": "SPN000547",
+         "new_spn": "SPN000308"
+        },
+        {
+         "old_spn": "SPN000309",
+         "new_spn": "SPN000309"
+        },
+        {
+         "old_spn": "SPN000310",
+         "new_spn": "SPN000310"
+        },
+        {
+         "old_spn": "SPN000787",
+         "new_spn": "SPN000310"
+        },
+        {
+         "old_spn": "SPN000472",
+         "new_spn": "SPN000472"
+        },
+        {
+         "old_spn": "SPN000527",
+         "new_spn": "SPN000472"
+        },
+        {
+         "old_spn": "SPN000311",
+         "new_spn": "SPN000311"
+        },
+        {
+         "old_spn": "SPN000336",
+         "new_spn": "SPN000311"
+        },
+        {
+         "old_spn": "SPN000508",
+         "new_spn": "SPN000311"
+        },
+        {
+         "old_spn": "SPN000596",
+         "new_spn": "SPN000306"
+        },
+        {
+         "old_spn": "SPN000742",
+         "new_spn": "SPN001479"
+        },
+        {
+         "old_spn": "SPN000771",
+         "new_spn": "SPN001479"
+        },
+        {
+         "old_spn": "SPN001479",
+         "new_spn": "SPN001479"
+        },
+        {
+         "old_spn": "SPN000658",
+         "new_spn": "SPN000658"
+        },
+        {
+         "old_spn": "SPN000743",
+         "new_spn": "SPN000658"
+        },
+        {
+         "old_spn": "SPN000776",
+         "new_spn": "SPN000658"
+        },
+        {
+         "old_spn": "SPN000312",
+         "new_spn": "SPN000312"
+        },
+        {
+         "old_spn": "SPN000744",
+         "new_spn": "SPN000312"
+        },
+        {
+         "old_spn": "SPN000781",
+         "new_spn": "SPN000312"
+        },
+        {
+         "old_spn": "SPN000473",
+         "new_spn": "SPN000747"
+        },
+        {
+         "old_spn": "SPN000747",
+         "new_spn": "SPN000747"
+        },
+        {
+         "old_spn": "SPN001484",
+         "new_spn": "SPN000747"
+        },
+        {
+         "old_spn": "SPN000753",
+         "new_spn": "SPN000753"
+        },
+        {
+         "old_spn": "SPN000777",
+         "new_spn": "SPN000753"
+        },
+        {
+         "old_spn": "SPN001611",
+         "new_spn": "SPN000753"
+        },
+        {
+         "old_spn": "SPN000754",
+         "new_spn": "SPN000754"
+        },
+        {
+         "old_spn": "SPN000768",
+         "new_spn": "SPN000754"
+        }
+       ]
+  
+      for (let x of arr) {
+        if(x.old_spn !== x.new_spn){
+          let findSpn = await partAndColor.findOne({ part_code: x.new_spn });
+          let obj = {
+            part_id: findSpn.part_code,
+            part_name: findSpn.name,
+            quantity: 1,
+          };
+    
+          let udpateDelivery = await delivery.updateMany(
+            { "rdl_fls_one_report.partRequired.part_id": x.old_spn },
+            {
+              $push: {
+                "rdl_fls_one_report.partRequired": obj,
+              },
+            }
+          );
+          console.log(udpateDelivery);
+    
+        let main=  await delivery.updateMany(
+            {
+              "rdl_fls_one_report.partRequired.part_id": x.old_spn,
+            },
+            {
+              $pull: {
+                "rdl_fls_one_report.partRequired": { part_id: x.old_spn },
+              },
+            }
+          );
+          let udpateDelivery2 = await masters.updateMany(
+            { "items.rdl_fls_report.partRequired.part_id": x.old_spn },
+            {
+              $push: {
+                "items.$.rdl_fls_report.partRequired": obj,
+              },
+            }
+          );
+          console.log(udpateDelivery2);
+    
+        let main2=  await masters.updateMany(
+            {
+              "items.rdl_fls_report.partRequired.part_id": x.old_spn,
+            },
+            {
+              $pull: {
+                "items.$.rdl_fls_report.partRequired": { part_id: x.old_spn },
+              },
+            }
+          );
+        }
+      
+      }
+
+      resolve({ status: true });
+    });
+  }
+  ,
+  manageRdlFlsToRdlOne: () => {
+    return new Promise(async (resolve, reject) => {
+      const updateRdl = await user.updateMany(
+        { user_type: "RDL-FLS" },
+        {
+          $set: {
+            user_type: "RDL-One",
+          },
+        }
+      );
       resolve({ status: true });
     });
   },

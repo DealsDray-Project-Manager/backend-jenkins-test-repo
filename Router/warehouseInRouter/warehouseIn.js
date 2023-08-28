@@ -9,10 +9,11 @@ const { masters } = require("../../Model/mastersModel");
 const elasticsearch = require("../../Elastic-search/elastic");
 /*******************************************************************************************************************/
 /**************************************************Dashboard**************************************************************************/
-router.post("/dashboard/:location", async (req, res, next) => {
+router.post("/dashboard/:location/:username", async (req, res, next) => {
   try {
-    const { location } = req.params;
-    let data = await warehouseInController.dashboard(location);
+    console.log(req.params);
+    const { location,username } = req.params;
+    let data = await warehouseInController.dashboard(location,username);
     if (data) {
       res.status(200).json({
         data: data,
@@ -753,6 +754,20 @@ router.post("/whtTray/:location/:type", async (req, res, next) => {
   try {
     const { location, type } = req.params;
     let data = await warehouseInController.getWhtTrayWareHouse(location, type);
+    if (data) {
+      res.status(200).json({
+        data: data,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+// GET BOT / PMT /MMT
+router.post("/botPmtMMtTray/:location/:taxanomy", async (req, res, next) => {
+  try {
+    const { location, taxanomy } = req.params;
+    let data = await warehouseInController.getBotPmtMmtTray(location, taxanomy);
     if (data) {
       res.status(200).json({
         data: data,
@@ -1506,7 +1521,7 @@ router.post(
 /*---------------------MMT TRAY SEND TO SORTING AGENT CONFIRM--------------------------------*/
 router.post("/mmtTraySendToSorting", async (req, res, next) => {
   try {
-    const { username, fromTray, toTray,actionUser } = req.body;
+    const { username, fromTray, toTray, actionUser } = req.body;
     let data = await warehouseInController.assignToSortingAgent(
       username,
       fromTray,
@@ -1549,7 +1564,16 @@ router.post("/returnFromMerging/:location", async (req, res, next) => {
 /*--------------------- AFTER MERGE IS DONE CLOSE MMT TRAY--------------------------------*/
 router.post("/mergeDoneMmttrayClose", async (req, res, next) => {
   try {
-    const { toTray, fromTray, type, length, limit, status, rackId,actioUser } = req.body;
+    const {
+      toTray,
+      fromTray,
+      type,
+      length,
+      limit,
+      status,
+      rackId,
+      actionUser,
+    } = req.body;
     let data = await warehouseInController.mergeDoneTrayClose(
       fromTray,
       toTray,
@@ -1558,7 +1582,7 @@ router.post("/mergeDoneMmttrayClose", async (req, res, next) => {
       limit,
       status,
       rackId,
-      actioUser
+      actionUser
     );
     if (data.status == 1) {
       res.status(200).json({
@@ -2091,11 +2115,12 @@ router.post("/pickup/approve/ex-vs-act/:trayId", async (req, res, next) => {
 // PICKUP REQUEST APPROVE ISSUE TO SORTING AGENET
 router.post("/pickup/issueToAgent", async (req, res, next) => {
   try {
-    const { username, fromTray, toTray } = req.body;
+    const { username, fromTray, toTray, actUser } = req.body;
     let data = await warehouseInController.assigntoSoringForPickUp(
       username,
       fromTray,
-      toTray
+      toTray,
+      actUser
     );
     if (data.status === 1) {
       res.status(200).json({
@@ -2487,18 +2512,36 @@ router.post(
     try {
       let data = await warehouseInController.sortingDoneCtxStxClose(req.body);
       if (data.status == 1) {
-        let logUpdate=await warehouseInController.sortingDonectxTostxCloseLogData(data.tray.items,data.tray.code,"Ready for Pricing",req.body.actUser)
+        let logUpdate =
+          await warehouseInController.sortingDonectxTostxCloseLogData(
+            data.tray.items,
+            data.tray.code,
+            "Ready for Pricing",
+            req.body.actUser
+          );
         res.status(200).json({
           message: "Successfully Closed and Ready for Pricing",
         });
       } else if (data.status == 2) {
-        let logUpdate=await warehouseInController.sortingDonectxTostxCloseLogData(data.tray.items,data.tray.code,"Ready to Transfer to Processing",req.body.actUser)
+        let logUpdate =
+          await warehouseInController.sortingDonectxTostxCloseLogData(
+            data.tray.items,
+            data.tray.code,
+            "Ready to Transfer to Processing",
+            req.body.actUser
+          );
 
         res.status(200).json({
           message: "Successfully Closed and Ready to Transfer to Processing",
         });
       } else if (data.status == 3) {
-        let logUpdate=await warehouseInController.sortingDonectxTostxCloseLogData(data.tray.items,data.tray.code,"Merging Done Closed by Wh",req.body.actUser)
+        let logUpdate =
+          await warehouseInController.sortingDonectxTostxCloseLogData(
+            data.tray.items,
+            data.tray.code,
+            "Merging Done Closed by Wh",
+            req.body.actUser
+          );
 
         res.status(200).json({
           message: "Successfully Closed",
@@ -2619,10 +2662,11 @@ router.post("/whtToRp/whtTray", async (req, res, next) => {
 // ISSUED TO SORTING
 router.post("/whtToRp/issueToAgent", async (req, res, next) => {
   try {
-    const { rpTray, whtTray } = req.body;
+    const { rpTray, whtTray, actUser } = req.body;
     const data = await warehouseInController.whtToRpIssueToAgent(
       rpTray,
-      whtTray
+      whtTray,
+      actUser
     );
     if (data.status == 1) {
       res.status(200).json({
@@ -2675,21 +2719,14 @@ router.post("/recieved-from-sortingWhtToRp", async (req, res, next) => {
   }
 });
 /*---------------------------------------UPGRADE UNITS REPORT ----------------------------------------------------*/
-router.post("/upgradeUnits/:location/:page/:size", async (req, res, next) => {
+router.post("/upgradeUnits/:location", async (req, res, next) => {
   try {
-    let { location, page, size } = req.params;
-    page++;
-    const limit = parseInt(size);
-    const skip = (page - 1) * size;
-    let data = await warehouseInController.getUpgradeUnistData(
-      location,
-      limit,
-      skip
-    );
+    let { location } = req.params;
+
+    let data = await warehouseInController.getUpgradeUnistData(location);
     if (data) {
       res.status(200).json({
         data: data.upgaradeReport,
-        count: data.count,
       });
     }
   } catch (error) {
@@ -2699,28 +2736,20 @@ router.post("/upgradeUnits/:location/:page/:size", async (req, res, next) => {
 // DATE RANGE FILTER
 router.post("/upgardeUnitsFilter/item/filter", async (req, res, next) => {
   try {
-    let { location, fromDate, toDate, page, size, type } = req.body;
-    page++;
-    const limit = parseInt(size);
-    const skip = (page - 1) * size;
+    let { location, fromDate, toDate } = req.body;
+
     const filterData = await warehouseInController.upgardeUnitsFilter(
       location,
       fromDate,
-      toDate,
-      limit,
-      skip,
-      type
+      toDate
     );
     if (filterData.monthWiseReport.length !== 0) {
       res.status(200).json({
         data: filterData.monthWiseReport,
-        count: filterData.getCount,
       });
     } else {
       res.status(202).json({
         data: filterData.monthWiseReport,
-
-        count: filterData.getCount,
       });
     }
   } catch (error) {
@@ -2749,6 +2778,100 @@ router.post("/search/upgradeReport", async (req, res, next) => {
       res.status(202).json({
         data: data.searchResult,
         count: data.count,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+/*----------------------------------------RACK ID UPDATE -----------------------------------------*/
+router.post(
+  "/rackIdUpdateGetTray/:trayId/:location/:username",
+  async (req, res, next) => {
+    try {
+      let { trayId, location,username } = req.params;
+      let data = await warehouseInController.rackIdUpdateGetTrayData(
+        trayId,
+        location
+      );
+      if (data.status == 1) {
+        res.status(200).json({
+          data: data.tray,
+        });
+      } else if (data.status == 2) {
+        res.status(202).json({
+          message: "You can't access this data",
+        });
+      } else {
+        res.status(202).json({
+          message: "Tray not found",
+        });
+      }
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+// CHANGE RACK ID
+router.post("/updateRackId", async (req, res, next) => {
+  try {
+    let { trayId, rackId, description,sortId,agentName,actionUser,prevStatus } = req.body;
+    let data = await warehouseInController.updateTheRackId(
+    trayId,
+    rackId,
+    description,
+    sortId,
+    agentName,
+    actionUser,
+    prevStatus
+    );
+    if (data.status == 1) {
+      res.status(200).json({
+        message: "Successfully updated",
+      });
+    } else {
+      res.status(202).json({
+        message: "Failed try again...",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+/* -------------------------------GET RACK CHANGE REQUEST ----------------*/
+router.post("/rackChangeRequest", async (req, res, next) => {
+  try {
+    const { username, screen,location} = req.body;
+    let data = await warehouseInController.getRackChangeRequest(
+      username,
+      screen,
+      location
+    );
+    if (data) {
+      res.status(200).json({
+        data: data,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+// RECEIVE FOR RACK CHANGE SCAN IN
+router.post("/rackChangeTrayReceive", async (req, res, next) => {
+  try {
+    let data = await warehouseInController.receiVeTheTrayForRackChange(req.body);
+    if (data.status == 1) {
+      res.status(200).json({
+        message: "Successfully Received",
+      });
+    }
+    if (data.status == 3) {
+      res.status(202).json({
+        message: "Please Enter Valid Count",
+      });
+    } else {
+      res.status(202).json({
+        message: "Failed",
       });
     }
   } catch (error) {

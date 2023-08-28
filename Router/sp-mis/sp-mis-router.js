@@ -7,7 +7,6 @@ const router = express.Router();
 const SpMisController = require("../../Controller/sp-mis/sp-mis-controller");
 /*-----------------------------------------------*/
 
-
 //DASHBOARD
 router.post("/dashboard/:location", async (req, res, next) => {
   try {
@@ -68,6 +67,5 @@ router.post("/procurment/request", async (req, res, next) => {
   }
 });
 // ---
-
 
 module.exports = router;

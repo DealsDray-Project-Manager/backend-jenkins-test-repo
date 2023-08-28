@@ -276,9 +276,9 @@ module.exports = {
                 tray_id: trayData.trayId,
                 user_name_of_action: data.issued_user_name,
                 report: x.bqc_report,
-                description:`BQC Done closed by agent :${data.issued_user_name}`,
+                description:`BQC Done closed by the agent :${data.issued_user_name}`,
                 track_tray:state,
-                user_type:"PRC Warehouse"
+                user_type:"PRC BQC"
               });
               state="Units"
               let deliveryUpdate = await delivery.findOneAndUpdate(

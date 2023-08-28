@@ -38,7 +38,25 @@ router.post("/procurment/view/:status", async (req, res, next) => {
     next(error);
   }
 });
-
+// ORDER SUMMARY
+router.post("/procurementOrderSummary", async (req, res, next) => {
+  try {
+    const {status}=req.params
+    let data = await purchaseController.getProcurementOrderSummary();
+    if (data) {
+      res.status(200).json({
+        data: data.data,
+        totalAmount:data.totalAmount
+      });
+    } else {
+      res.status(202).json({
+        message: "Failed please try again...",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
 // PLACE ORDER PAGE
 router.post("/placeOrderScreen/:spnNumber/:muic", async (req, res, next) => {
   try {
@@ -77,6 +95,22 @@ router.post("/placeOrder", async (req, res, next) => {
     next(error);
   }
 });
+router.post("/placeOrderDateFilter", async (req, res, next) => {
+  try {
+    console.log(req.body);
+    const {toDate,fromDate,type,vendors}=req.body
+    let data = await purchaseController.placeOrderDateFilter(fromDate,toDate,type,vendors);
+    if (data) {
+
+      res.status(200).json({
+        data: data.filterData,
+        totalPrice:data.totalAmount
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
 // GET WARRANTY TERMS AND PAYMENTS TERMS
 router.post("/getWarrantyAndTerms", async (req, res, next) => {
   try {
@@ -88,6 +122,20 @@ router.post("/getWarrantyAndTerms", async (req, res, next) => {
     } else {
       res.status(202).json({
         message: "Failed please try again..",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+// GET VENDOR FOR FILTER 
+router.post("/vendorMasterforDrp/view", async (req, res, next) => {
+  try {
+    const {toDate,fromDate}=req.body
+    const vendorData = await purchaseController.getVendorsForDrop(fromDate,toDate);
+    if (vendorData) {
+      res.status(200).json({
+        data: vendorData,
       });
     }
   } catch (error) {

@@ -1124,11 +1124,12 @@ router.post(
 router.post("/TrayMergeRequestSend", async (req, res, next) => {
   try {
     console.log(req.body);
-    const { sort_agent, fromTray, toTray } = req.body;
+    const { sort_agent, fromTray, toTray, actionUser } = req.body;
     let data = await misUserController.mmtMergeRequestSendToWh(
       sort_agent,
       fromTray,
-      toTray
+      toTray,
+      actionUser
     );
     if (data.status === 1) {
       res.status(200).json({
@@ -1314,6 +1315,23 @@ router.post("/pickup/requestSendToWh", async (req, res, next) => {
     if (data) {
       res.status(200).json({
         message: "Request sent to warehouse",
+      });
+    } else {
+      res.status(202).json({
+        message: "Failed tray again...",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+// PICKUP REASSIGN
+router.post("/pickup/reAssign", async (req, res, next) => {
+  try {
+    let data = await misUserController.pickUpReassign(req.body);
+    if (data.status == 1) {
+      res.status(200).json({
+        message: "Request Successfully Sent to Warehouse",
       });
     } else {
       res.status(202).json({
@@ -1548,7 +1566,7 @@ router.post(
   "/assignToAgent/rdl-fls/sentToWarehouse",
   async (req, res, next) => {
     try {
-      const { tray, user_name, sortId,actUser } = req.body;
+      const { tray, user_name, sortId, actUser } = req.body;
       let data = await misUserController.assignToAgentRequestToWhRdlFls(
         tray,
         user_name,
@@ -1671,7 +1689,7 @@ router.post("/sorting/ctxToStx/stxTray", async (req, res, next) => {
 //CTX AND STX TRAY SEND TO WAREHOUSE FOR SORTING APPOROVEL
 router.post("/sorting/ctxToStx/request/sendToWh", async (req, res, next) => {
   try {
-    const { sort_agent, fromTray, toTray,actionUser } = req.body;
+    const { sort_agent, fromTray, toTray, actionUser } = req.body;
     let data = await misUserController.sortingCtxtoStxRequestSendToWh(
       sort_agent,
       fromTray,
@@ -1844,8 +1862,15 @@ router.post("/assignForRepiar/getTheRequrements", async (req, res, next) => {
 // WHT TO RP SORTING ASSIGN
 router.post("/whtToRpSorting/assign", async (req, res, next) => {
   try {
-    const { spDetails, spTray, rpTray, spwhuser, sortingUser, selectedUic,actUser } =
-      req.body;
+    const {
+      spDetails,
+      spTray,
+      rpTray,
+      spwhuser,
+      sortingUser,
+      selectedUic,
+      actUser,
+    } = req.body;
     let data = await misUserController.whtToRpSortingAssign(
       spDetails,
       spTray,
@@ -1917,7 +1942,11 @@ router.post("/stxUtilityGetStx", async (req, res, next) => {
     // PARAMS
     const { uic, location, grade } = req.body;
     // FUNCTION FROM CONTROLLER
-    let data = await misUserController.stxUtilityGetStx(uic, location, grade);
+    let data = await misUserController.stxUtilityImportXlsxstxUtilityGetStx(
+      uic,
+      location,
+      grade
+    );
     if (data.status == 2) {
       res.status(200).json({
         data: data.trayData,
@@ -1973,6 +2002,86 @@ router.post("/getStxUtilityInProgress/:location", async (req, res, next) => {
     if (data) {
       res.status(200).json({
         data: data,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+/*-----------------------------------------RACK CHANGE MODULE--------------------------------------------*/
+router.post("/getRackTray/:location", async (req, res, next) => {
+  try {
+    // PARAMS
+    const { location } = req.params;
+    // FUNCTION FROM CONTROLLER
+    let data = await misUserController.getTheTrayInRack(location);
+    if (data) {
+      res.status(200).json({
+        data: data,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+// GET THE WAREHOUSE USERS
+router.post(
+  "/getWarehouseUsers/:location/:warehouse",
+  async (req, res, next) => {
+    try {
+      // PARAMS
+      const { location, warehouse } = req.params;
+      // FUNCTION FROM CONTROLLER
+      let data = await misUserController.getWarehouseUsers(location, warehouse);
+      if (data) {
+        res.status(200).json({
+          data: data,
+        });
+      }
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+// ASSIGN TRAY FOR RACK CHANGE
+
+router.post("/assignToAgent/rackChange", async (req, res, next) => {
+  try {
+    const { tray, scanOutWh, scanInWh, actUser } = req.body;
+    let data = await misUserController.assignForRackChange(
+      tray,
+      scanOutWh,
+      scanInWh,
+      actUser
+    );
+    if (data.status == 1) {
+      res.status(200).json({
+        message: "Successfully Assigned",
+      });
+    } else {
+      res.status(202).json({
+        message: "Request failed please try again...",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+// CHANGE THE RACK
+router.post("/rackChangeByMis", async (req, res, next) => {
+  try {
+    const { trayId,rackId } = req.body;
+    let data = await misUserController.changeRackByMis(
+      trayId,
+      rackId
+    );
+    if (data.status == 1) {
+      res.status(200).json({
+        message: "Successfully updated new rack and request sent to warhouse",
+      });
+    } else {
+      res.status(202).json({
+        message: "Request failed please try again...",
       });
     }
   } catch (error) {

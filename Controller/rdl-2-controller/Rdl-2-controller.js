@@ -343,15 +343,20 @@ module.exports = {
             }
           );
           if (updateRpTray) {
+            let state="Tray"
             for (let x of getRpTray.actual_items) {
               const addLogsofUnits = await unitsActionLog.create({
                 action_type: "Closed by RDL-two",
                 created_at: Date.now(),
                 uic: x.uic,
-                tray_id: trayData.trayId,
+                tray_id: trayData.rpTrayId,
                 user_name_of_action: getRpTray.issued_user_name,
                 report: x.rdl_repair_report,
+                track_tray:state,
+                user_type:"PRC RDL-Two",
+                description:`RDL Two done and sent to warehouse by agent:${updateRpTray.issued_user_name}`
               });
+              state="Units"
               let updateDelivery = await delivery.findOneAndUpdate(
                 { "uic_code.code": x.uic },
                 {

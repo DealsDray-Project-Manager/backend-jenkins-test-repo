@@ -31,7 +31,6 @@ router.post(
         req.body,
         req.file ? req.file.filename : undefined
       );
-      console.log(data);
       if (data) {
         if (data.status) {
           res.status(200).json({ status: 0, data: { message: "User Exist" } });
@@ -49,6 +48,44 @@ router.post(
     }
   }
 );
+
+/*--------------------------------CREATE BUYERS-----------------------------------*/
+
+router.post(
+  "/createBuyer",
+  upload.documents.fields([
+    { name: "profile" },
+    { name: "aadhar_proof" },
+    { name: "pan_card_proof" },
+    { name: "business_address_proof" },
+  ]),
+  async (req, res, next) => {
+    try {
+      console.log("api request");
+        let data = await superAdminController.createBuyer(
+          req.body,
+          req.files
+        );
+        if (data) {
+          console.log(data);
+          if (data.status) {
+            res.status(200).json({ status: 0, data: { message: "Buyer Exist" } });
+          } else {
+            res.status(200).json({
+              status: 1,
+              data: {
+                message: "Buyer is created",
+              },
+            });
+          }
+        }
+       
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
 
 /*-----------------------------FETCH LOCATION TYPE--------------------------------------*/
 router.post("/location/type/:code", async (req, res, next) => {
@@ -301,6 +338,37 @@ router.get("/getEditData/:username", async (req, res) => {
   } catch (error) {}
 });
 
+/*------------------------------EDITED BUYER DATA-------------------------------------*/
+router.get("/getEditBuyerData/:buyername", async (req, res) => {
+  try {
+    let buyer = await superAdminController.getEditBuyerData(req.params.buyername);
+    if (buyer) {
+      res.status(200).json({ data: buyer });
+    }
+  } catch (error) {}
+});
+
+
+
+/*-----------------------------EDIT BUYER--------------------------------------*/
+
+router.post(
+  "/editBuyerDetails",
+  upload.userProfile.single("profile"),
+  async (req, res, next) => {
+    try {
+      let data = await superAdminController.editBuyerDetails(
+        req.body,
+        req.file ? req.file.filename : undefined
+      );
+      if (data) {
+        res.status(200).json({ data: data });
+      }
+    } catch (error) {
+      next(error);
+    }
+  }
+);
 /*-----------------------------EDIT USER--------------------------------------*/
 router.post(
   "/edituserDetails",
@@ -1848,7 +1916,6 @@ router.get("/geteditSPcategory/:code", async (req, res) => {
     next(error);
   }
 });
-
 /*----------------------------------------------Tray Racks ----------------------------------------------------*/
 // GET ALL THE Tray Racks
 router.post("/trayracks/view", async (req, res, next) => {
@@ -3159,7 +3226,7 @@ router.post("/muicPage/partAdd", async (req, res, next) => {
       });
     } else {
       res.status(202).json({
-        message: "Failed please tray again...",
+        message: "Failed please try again...",
       });
     }
   } catch (error) {
@@ -3177,7 +3244,7 @@ router.post("/muicAssociation/add", async (req, res, next) => {
       });
     } else {
       res.status(202).json({
-        message: "Failed Please Tray Again...",
+        message: "Failed Please Try Again...",
       });
     }
   } catch (error) {
@@ -3195,7 +3262,7 @@ router.post("/muicAssociation/remove", async (req, res, next) => {
       });
     } else {
       res.status(202).json({
-        message: "Failed Please Tray Again...",
+        message: "Failed Please Try Again...",
       });
     }
   } catch (error) {
@@ -3433,7 +3500,7 @@ router.post("/unverifiedImeiReport/:page/:size", async (req, res, next) => {
     if (data) {
       res.status(200).json({
         data: data.unverifiedImei,
-        count: data.count,
+       
       });
     }
   } catch (error) {
@@ -3504,17 +3571,15 @@ router.post("/updateUnverifiedImei", async (req, res, next) => {
     const data = await superAdminController.updateUnverifiedImei(req.body);
     if (data.status == 1) {
       res.status(200).json({
-        message:"Successfully verified and updated"
+        message: "Successfully verified and updated",
       });
-    }
-    else if(data.status == 2){
+    } else if (data.status == 2) {
       res.status(202).json({
-        message:"Unverified IMEI"
+        message: "Unverified IMEI",
       });
-    }
-    else{
+    } else {
       res.status(202).json({
-        message:"Updation Failed please try again"
+        message: "Updation Failed please try again",
       });
     }
   } catch (error) {
@@ -3924,6 +3989,39 @@ router.post("/extra/addCategory", async (req, res, next) => {
 router.post("/extra/manageOldSpn", async (req, res, next) => {
   try {
     let data = await superAdminController.manageOldSpnData();
+    if (data.status == true) {
+      res.status(200).json({
+        message: "done",
+      });
+    } else {
+      res.status(202).json({
+        message: "Failed",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+router.post("/extra/updateWithNewSpn", async (req, res, next) => {
+  try {
+    let data = await superAdminController.exUpdateWithNewSpn();
+    if (data.status == true) {
+      res.status(200).json({
+        message: "done",
+      });
+    } else {
+      res.status(202).json({
+        message: "Failed",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+// RDL FLS TO RDL ONE
+router.post("/extra/rdlFlsToRdlOne", async (req, res, next) => {
+  try {
+    let data = await superAdminController.manageRdlFlsToRdlOne();
     if (data.status == true) {
       res.status(200).json({
         message: "done",

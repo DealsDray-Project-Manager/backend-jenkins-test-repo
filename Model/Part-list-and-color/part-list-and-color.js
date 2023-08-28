@@ -3,7 +3,7 @@ const mongoose = require("mongoose");
 const partAndcolorSchema = mongoose.Schema({
   name: {
     type: String,
-  },
+  }, 
   muic: {
     type: String,
   },

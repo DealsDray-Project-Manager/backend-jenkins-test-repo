@@ -7,6 +7,9 @@ const userSchema = mongoose.Schema({
   email: {
     type: String,
   },
+  businessName:{
+    type: String,
+  },
   contact: {
     type: String,
   },
@@ -72,7 +75,47 @@ const userSchema = mongoose.Schema({
   },
   jwt_token:{
     type:String
+  },
+  buyer_name:{
+    type: String,
+  },
+  billing_address:{
+    type: String,
+  },
+  city: {
+    type: String,
+  },
+  state: {
+    type: String,
+  },
+  country: {
+    type: String,
+  },
+  pincode: {
+    type: String,
+  },
+  gstin:{
+    type: String,
+  },
+  pan_card_number: {
+    type: String,
+  },
+  mobile_verification_status: {
+    type: String,
+  },
+  email_verification_status: {
+    type: String,
+  },
+  pan_card_proof: {
+    type: String,
+  },
+  aadhar_proof:{
+    type: String,
+  },
+  business_address_proof:{
+    type: String,
   }
+  
 });
 const user = mongoose.model("users", userSchema);
 module.exports = {

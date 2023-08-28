@@ -212,7 +212,7 @@ module.exports = {
             uic: trayData.uic,
             user_type: "BOT",
             track_tray:"Units",
-            description: `Item transferred to bot tray by ${res.issued_user_name}`,
+            description: `Item transferred to bot tray done by an agent:${res.issued_user_name}`,
           });
           let updateDelivery = await delivery.findOneAndUpdate(
             { tracking_id: trayData.awbn_number },
