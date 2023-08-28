@@ -9,21 +9,23 @@ const { badOrders } = require("../../Model/ordersModel/bad-orders-model");
 const { badDelivery } = require("../../Model/deliveryModel/bad-delivery");
 
 module.exports = {
-  dashboardCount: (location,username) => {
+  dashboardCount: (location, username) => {
     return new Promise(async (resolve, reject) => {
       let count = {
         viewPriceCount: 0,
         buyerCount: 0,
         readyForSalesCount: 0,
-      }; 
-       count.buyerCount = await user.count({
-      user_type: 'Buyer',sales_users:username});
+      };
+      count.buyerCount = await user.count({
+        user_type: "Buyer",
+        sales_users: username,
+      });
       count.viewPriceCount = await masters.aggregate([
         {
           $match: {
             type_taxanomy: "ST",
             cpc: location,
-            sort_id:{$in:["Ready to Pricing","Inuse"]},
+            sort_id: { $in: ["Ready to Pricing", "Inuse"] },
             sp_price: { $exists: true, $ne: null }, // Filter out documents with null or missing sp_price
             mrp_price: { $exists: true, $ne: null }, // Filter out documents with null or missing mrp_price
           },
@@ -48,7 +50,7 @@ module.exports = {
           $match: {
             type_taxanomy: "ST",
             cpc: location,
-            sort_id:{$in:["Ready to Pricing","Inuse"]},
+            sort_id: { $in: ["Ready to Pricing", "Inuse"] },
             sp_price: { $exists: true, $ne: null },
             mrp_price: { $exists: true, $ne: null },
           },
@@ -63,7 +65,10 @@ module.exports = {
           },
         },
       ]);
-      count.readyForSalesCount = count.readyForSalesCount.length > 0 ? count.readyForSalesCount[0].itemCount : 0;
+      count.readyForSalesCount =
+        count.readyForSalesCount.length > 0
+          ? count.readyForSalesCount[0].itemCount
+          : 0;
       if (count) {
         resolve(count);
       }
@@ -107,9 +112,16 @@ module.exports = {
             as: "muicDetails",
           },
         },
+        {
+          $sort: {
+            "_id.brand": 1, // 1 for ascending, -1 for descending
+            "_id.model": 1, // 1 for ascending, -1 for descending
+          },
+        },
       ]);
-     
+
       for (let x of getBasedOnMuic) {
+        console.log(x);
         x["muic_one"] = x.muic[0];
       }
       resolve(getBasedOnMuic);
@@ -123,13 +135,11 @@ module.exports = {
           $match: {
             type_taxanomy: "ST",
             cpc: location,
-            sort_id:{$in:["Ready to Pricing","Inuse"]},
-            brand:brand,
-            model:model,
-            tray_grade:grade,
-            price_creation_date:new Date(
-              new Date(date)
-            ),
+            sort_id: { $in: ["Ready to Pricing", "Inuse"] },
+            brand: brand,
+            model: model,
+            tray_grade: grade,
+            price_creation_date: new Date(new Date(date)),
           },
         },
         {
@@ -138,26 +148,26 @@ module.exports = {
         {
           $project: {
             items: "$items",
-            mrp_price:"$mrp_price",
-            sp_price:"$sp_price",
-            tray_grade:"$tray_grade",
+            mrp_price: "$mrp_price",
+            sp_price: "$sp_price",
+            tray_grade: "$tray_grade",
             code: "$code",
           },
         },
       ]);
-      let arr=[]
-      for(let x of getBasedOnMuic){
-         let obj={
-          uic:x.items.uic,
-          muic:x.items.muic,
-          brand_name:x.items.brand_name,
-          model_name:x.items.model_name,
-          code:x.code,
-          tray_grade:x.tray_grade,
-          mrp_price:x.mrp_price,
-          sp_price:x.sp_price
-         }
-         arr.push(obj)
+      let arr = [];
+      for (let x of getBasedOnMuic) {
+        let obj = {
+          uic: x.items.uic,
+          muic: x.items.muic,
+          brand_name: x.items.brand_name,
+          model_name: x.items.model_name,
+          code: x.code,
+          tray_grade: x.tray_grade,
+          mrp_price: x.mrp_price,
+          sp_price: x.sp_price,
+        };
+        arr.push(obj);
       }
       resolve(arr);
     });
@@ -171,8 +181,8 @@ module.exports = {
           $match: {
             type_taxanomy: "ST",
             cpc: location,
-            sort_id:{$in:["Ready to Pricing","Inuse"]},
-            sp_price: { $exists: true, $ne: null }, 
+            sort_id: { $in: ["Ready to Pricing", "Inuse"] },
+            sp_price: { $exists: true, $ne: null },
             mrp_price: { $exists: true, $ne: null },
           },
         },
@@ -182,30 +192,28 @@ module.exports = {
         {
           $project: {
             items: "$items",
-            mrp_price:"$mrp_price",
-            sp_price:"$sp_price",
-            tray_grade:"$tray_grade",
+            mrp_price: "$mrp_price",
+            sp_price: "$sp_price",
+            tray_grade: "$tray_grade",
             code: "$code",
           },
         },
       ]);
-      let arr=[]
-      for(let x of getBasedOnMuic){
-         let obj={
-          uic:x.items.uic,
-          muic:x.items.muic,
-          brand_name:x.items.brand_name,
-          model_name:x.items.model_name,
-          code:x.code,
-          tray_grade:x.tray_grade,
-          mrp_price:x.mrp_price,
-          sp_price:x.sp_price
-         }
-         arr.push(obj)
+      let arr = [];
+      for (let x of getBasedOnMuic) {
+        let obj = {
+          uic: x.items.uic,
+          muic: x.items.muic,
+          brand_name: x.items.brand_name,
+          model_name: x.items.model_name,
+          code: x.code,
+          tray_grade: x.tray_grade,
+          mrp_price: x.mrp_price,
+          sp_price: x.sp_price,
+        };
+        arr.push(obj);
       }
       resolve(arr);
     });
   },
-
-
 };

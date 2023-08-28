@@ -163,6 +163,7 @@ module.exports = {
         prefix: "tray-master",
         sort_id: "Assigned to warehouae for rack change",
         cpc: location,
+        temp_rack: { $eq: null, $exists: false },
       });
       count.orders = await orders.count({
         partner_shop: location,
@@ -5345,10 +5346,17 @@ module.exports = {
   /*--------------------------------------------STX UTILITY ---------------------------------------*/
   stxUtilityImportXlsx: () => {
     return new Promise(async (resolve, reject) => {
-      let arr = [];
+      let arr = []
       let arr1 = [];
       for (let x of arr) {
-        let createTo = await stxUtility.create(x);
+        let obj={
+          uic:x.uic,
+          ctx_tray_id:x.ctx_tray_id,
+          current_status:x.current_status,
+          model_name:x.model_name,
+          grade:x.grade
+        }
+        let createTo = await stxUtility.create(obj);
       }
       resolve({ status: 1, data: arr1 });
     });

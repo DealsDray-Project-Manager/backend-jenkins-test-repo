@@ -46,6 +46,53 @@ module.exports = {
       resolve(data);
     });
   },
+  getProcurementOrderSummary:()=>{
+    return new Promise(async(resolve,reject)=>{
+      const data = await purchaseOrderPlaced.aggregate([
+        {
+          $match: {
+            // You can add any specific match conditions here if needed
+          },
+        },
+        {
+          $addFields: {
+            total_price_numeric: { $toDouble: "$total_price" },  // Convert total_price to a numeric field
+            total_qty: { $toDouble: "$quantity" }  // Convert total_price to a numeric field
+
+          }
+        },
+        {
+          $group: {
+            _id: "$vendor_id",        // Grouping by vendor_id
+            total_price: { $sum: "$total_price_numeric" },  // Calculating total price
+            quantity: { $sum: "$total_qty" },       // Calculating total quantity
+            last_placed_date: { $max: "$placed_date" }  // Finding the latest placed date
+
+          },
+        },
+        {
+          $sort:{
+            last_placed_date:-1
+          }
+        },
+        {
+          $project: {
+            _id: 0,                // Exclude the default _id field from the output
+            vendor_id: "$_id",     // Rename _id to vendor_id if needed
+            total_price: 1,
+            quantity: 1,
+            last_placed_date:1
+          },
+        },
+
+      ]);
+      let totalAmount = 0;
+      for(let x of data){
+        totalAmount = totalAmount + Number(x.total_price);
+      }
+      resolve({data:data,totalAmount:totalAmount})
+    })
+  },
   placeOrderScreenDataFetch: (spnNumber, muic) => {
     return new Promise(async (resolve, reject) => {
       let obj = {
@@ -101,30 +148,63 @@ module.exports = {
   placeOrderDateFilter: (fromDate, toDate, type, vendors) => {
     return new Promise(async (resolve, reject) => {
       let dataofOrderRm;
-      const fromDateTimestamp = new Date(fromDate);
-      fromDateTimestamp.setHours(0, 0, 0, 0); // Set time to the beginning of the day
-      const toDateTimestamp = new Date(toDate);
-      toDateTimestamp.setHours(23, 59, 59, 999);
-    
-      dataofOrderRm = await purchaseOrderPlaced.aggregate([
-        {
-          $match: {
-            placed_date: {
-              $gte: new Date(fromDateTimestamp),
-              $lte: new Date(toDateTimestamp),
+      if (vendors == "" || vendors == undefined) {
+        const fromDateTimestamp = new Date(fromDate);
+        fromDateTimestamp.setHours(0, 0, 0, 0); // Set time to the beginning of the day
+        const toDateTimestamp = new Date(toDate);
+        toDateTimestamp.setHours(23, 59, 59, 999);
+        dataofOrderRm = await purchaseOrderPlaced.aggregate([
+          {
+            $match: 
+              {
+                placed_date: {
+                  $gte: new Date(fromDateTimestamp),
+                  $lte: new Date(toDateTimestamp),
+                },
+              }
+            
+          },
+          {
+            $lookup: {
+              from: "partandcolors",
+              localField: "spn_number",
+              foreignField: "part_code",
+              as: "partDetails",
             },
-            vendor_id: vendors,
           },
-        },
-        {
-          $lookup: {
-            from: "partandcolors",
-            localField: "spn_number",
-            foreignField: "part_code",
-            as: "partDetails",
+        ]);
+      } else {
+       
+        const fromDateTimestamp = new Date(fromDate);
+        fromDateTimestamp.setHours(0, 0, 0, 0); // Set time to the beginning of the day
+        const toDateTimestamp = new Date(toDate);
+        toDateTimestamp.setHours(23, 59, 59, 999);
+        dataofOrderRm = await purchaseOrderPlaced.aggregate([
+          {
+            $match: {
+              $or:[
+                {
+                  placed_date: {
+                    $gte: new Date(fromDateTimestamp),
+                    $lte: new Date(toDateTimestamp),
+                  },
+                  vendor_id: vendors,
+                },
+                
+              ]
+              
+            },
           },
-        },
-      ]);
+          {
+            $lookup: {
+              from: "partandcolors",
+              localField: "spn_number",
+              foreignField: "part_code",
+              as: "partDetails",
+            },
+          },
+        ]);
+      }
       let totalAmount = 0;
       if (dataofOrderRm.length == 0) {
         resolve({ filterData: dataofOrderRm, totalAmount: totalAmount });
@@ -149,9 +229,13 @@ module.exports = {
       resolve(obj);
     });
   },
-  getVendorsForDrop: () => {
+  getVendorsForDrop: (fromDate, toDate) => {
     return new Promise(async (resolve, reject) => {
       let arr = [];
+      const fromDateTimestamp = new Date(fromDate);
+      fromDateTimestamp.setHours(0, 0, 0, 0); // Set time to the beginning of the day
+      const toDateTimestamp = new Date(toDate);
+      toDateTimestamp.setHours(23, 59, 59, 999);
       const data = await vendorMaster
         .find()
         .sort({ name: 1 })
@@ -159,6 +243,10 @@ module.exports = {
       for (let x of data) {
         const findOrder = await purchaseOrderPlaced.findOne({
           vendor_id: x.name,
+          placed_date: {
+            $gte: new Date(fromDateTimestamp),
+            $lte: new Date(toDateTimestamp),
+          },
         });
         if (findOrder) {
           arr.push(x);

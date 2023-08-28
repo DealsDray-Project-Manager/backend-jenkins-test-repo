@@ -15,6 +15,9 @@ const StxUtilitySchema=mongoose.Schema({
     },
     date:{
         type:Date
+    },
+    current_status:{
+        type:String
     }
 })
 const stxUtility=mongoose.model("stxUtility",StxUtilitySchema)

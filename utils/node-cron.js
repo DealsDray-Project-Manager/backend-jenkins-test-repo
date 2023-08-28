@@ -55,7 +55,7 @@ exports = module.exports = () => {
   }
   // NIGHT 11 BLANCOO AUTOMATION
   try {
-    corn.schedule("21 14 * * *", () => {
+    corn.schedule("00 23 * * *", () => {
       /*----------------------------------------------CSV READ-----------------------------*/
       let result = [];
       fs.createReadStream("blancco_qc_data/blancco_qc_data.csv")
@@ -86,7 +86,7 @@ exports = module.exports = () => {
   }
   // MORNING 9 BLANCOO AUTOMATION
   try {
-    corn.schedule("21 14 * * *", () => {
+    corn.schedule("00 09 * * *", () => {
       /*----------------------------------------------CSV READ-----------------------------*/
       let result = [];
       fs.createReadStream("blancco_qc_data/blancco_qc_data.csv")
@@ -140,7 +140,7 @@ exports = module.exports = () => {
   }
   try {
     //"0 9 * * 1"
-    corn.schedule("04 11 * * 2", async () => {
+    corn.schedule("00 09 * * 1", async () => {
       /*----------------------------------------------WEEKLY DELEVERED REPORT-----------------------------*/
       const deleiveryReportOfLastWeek =
         await superAdminController.openPacketDataFetch();
@@ -165,13 +165,12 @@ async function blancooAutmation(result) {
       x["imei_verification_status_from_prexo"] = "Unverified";
       let imeiCheck = await delivery.findOne({ "uic_code.code": x.uic });
       if (
-        imeiCheck?.imei !== undefined &&
-        imeiCheck?.bqc_report?.blancoo_qc_status == "BQC Finished"
+        imeiCheck?.imei !== undefined 
       ) {
         if (
-          imeiCheck?.imei?.match(/[0-9]/g)?.join("") == x.mobile_imei ||
-          imeiCheck?.imei?.match(/[0-9]/g)?.join("") == x.mobile_imei2 ||
-          imeiCheck?.imei?.match(/[0-9]/g)?.join("") == x._ro_ril_miui_imei0
+          imeiCheck?.imei?.match(/[0-9]/g)?.join("") == x?.mobile_imei ||
+          imeiCheck?.imei?.match(/[0-9]/g)?.join("") == x?.mobile_imei2 ||
+          imeiCheck?.imei?.match(/[0-9]/g)?.join("") == x?._ro_ril_miui_imei0
         ) {
           x["imei_verification_status_from_prexo"] = "Verified";
         }
@@ -206,7 +205,6 @@ async function blancooAutmation(result) {
         if (arrofTray.includes(x.tray_id) == false) {
           arrofTray.push(x.tray_id);
         }
-
         let findBrandAndModel = await products.findOne({
           vendor_sku_id: updateBqcData.item_id,
         });
