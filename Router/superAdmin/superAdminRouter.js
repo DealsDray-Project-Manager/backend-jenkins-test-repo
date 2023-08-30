@@ -4019,7 +4019,7 @@ router.post("/extra/updateWithNewSpn", async (req, res, next) => {
   }
 });
 // RDL FLS TO RDL ONE
-router.post("/extra/rdlFlsToRdlOne", async (req, res, next) => {
+router.post("/extra/removeIssuedUser", async (req, res, next) => {
   try {
     let data = await superAdminController.manageRdlFlsToRdlOne();
     if (data.status == true) {

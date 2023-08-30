@@ -252,7 +252,7 @@ module.exports = {
       });
       count.pickupRequest = await masters.count({
         prefix: "tray-master",
-        type_taxanomy: "WHT",
+        type_taxanomy: { $in: ["WHT", "RPT"] },
         sort_id: "Pickup Request sent to Warehouse",
         cpc: location,
         to_tray_for_pickup: { $ne: null },
@@ -261,12 +261,12 @@ module.exports = {
         $or: [
           {
             cpc: location,
-            type_taxanomy: "WHT",
+            type_taxanomy: { $in: ["WHT", "RPT"] },
             sort_id: "Pickup Done Closed by Sorting Agent",
           },
           {
             cpc: location,
-            type_taxanomy: "WHT",
+            type_taxanomy: { $in: ["WHT", "RPT"] },
             sort_id: "Pickup Done Received",
           },
         ],
@@ -566,6 +566,16 @@ module.exports = {
             cpc: location,
             refix: "tray-master",
             sort_id: "Ready to BQC Received From Merging",
+          },
+          {
+            cpc: location,
+            refix: "tray-master",
+            sort_id: "Ready to Audit Merging Done",
+          },
+          {
+            cpc: location,
+            refix: "tray-master",
+            sort_id: "Ready to Audit Received From Merging",
           },
         ],
       });
@@ -1768,6 +1778,7 @@ module.exports = {
               sort_id: "Closed By Warehouse",
               rack_id: trayData.rackId,
               closed_time_wharehouse: Date.now(),
+              issued_user_name:null,
               "track_tray.bot_done_tray_close_wh": Date.now(),
             },
           }
@@ -1839,6 +1850,7 @@ module.exports = {
                 new Date().toISOString().split("T")[0]
               ),
               actual_items: [],
+              issued_user_name:null,
               "track_tray.bot_done_tray_close_wh": Date.now(),
             },
           }
@@ -3086,7 +3098,7 @@ module.exports = {
           let state = "Tray";
           for (let x of data.items) {
             const addLogsofUnits = await unitsActionLog.create({
-              action_type: "Issued to RDL-FLS",
+              action_type: "Issued to RDL-One",
               created_at: Date.now(),
               uic: x.uic,
               agent_name: data.issued_user_name,
@@ -3094,17 +3106,17 @@ module.exports = {
               tray_id: trayData.trayId,
               user_type: "PRC Warehouse",
               track_tray: state,
-              description: `Issued to RDL-FLS to agent :${data.issued_user_name} by WH :${trayData.actionUser}`,
+              description: `Issued to RDL-One to agent :${data.issued_user_name} by WH :${trayData.actionUser}`,
             });
             state = "Units";
             let deliveryUpdate = await delivery.findOneAndUpdate(
               { tracking_id: x.tracking_id },
               {
                 $set: {
-                  tray_status: "Issued to RDL-FLS",
+                  tray_status: "Issued to RDL-One",
                   rdl_fls_one_user_name: data?.issued_user_name,
                   rdl_fls_issued_date: Date.now(),
-                  tray_location: "RDL-FLS",
+                  tray_location: "RDL-One",
                   updated_at: Date.now(),
                 },
               },
@@ -5093,6 +5105,7 @@ module.exports = {
                     sort_id: "Closed By Warehouse",
                     from_merge: null,
                     to_merge: null,
+                    issued_user_name: null,
                     closed_time_wharehouse: Date.now(),
                   },
                 }
@@ -6392,7 +6405,6 @@ module.exports = {
             },
           }
         );
-
         if (data) {
           resolve(data);
         } else {
@@ -6536,6 +6548,7 @@ module.exports = {
             closed_time_wharehouse: Date.now(),
             rack_id: trayData.rackId,
             assigned_date: Date.now(),
+            issued_user_name:null,
             "track_tray.rdl_1_done_close_by_wh": Date.now(),
           },
         }
@@ -6607,6 +6620,7 @@ module.exports = {
             description: trayData.description,
             temp_array: [],
             rack_id: trayData.rackId,
+            issued_user_name:null,
             sort_id: "RDL two done closed by warehouse",
           },
         }
@@ -7343,13 +7357,14 @@ module.exports = {
   upgardeUnitsFilter: (location, fromDate, toDate, type) => {
     return new Promise(async (resolve, reject) => {
       let monthWiseReport, getCount;
-
-      const fromDateISO = new Date(fromDate).toISOString();
-      const toDateISO = new Date(toDate).toISOString();
+      const fromDateTimestamp = new Date(fromDate);
+      fromDateTimestamp.setHours(0, 0, 0, 0); // Set time to the beginning of the day
+      const toDateTimestamp = new Date(toDate);
+      toDateTimestamp.setHours(23, 59, 59, 999);
       monthWiseReport = await delivery.find({
         partner_shop: location,
         "audit_report.stage": "Upgrade",
-        audit_done_date: { $gte: fromDateISO, $lte: toDateISO },
+        audit_done_date: { $gte: fromDateTimestamp, $lte: toDateTimestamp },
       });
 
       resolve({

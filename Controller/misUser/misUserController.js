@@ -4197,6 +4197,9 @@ module.exports = {
         }
         if (sendtoRdlMis.items?.length !== 0) {
           let state = "Tray";
+          if(sortId == "Send for RDL-FLS"){
+            sortId="Send for RDL-One"
+          }
           for (let y of sendtoRdlMis.items) {
             let unitsLogCreation = await unitsActionLog.create({
               action_type: sortId,
@@ -4733,6 +4736,7 @@ module.exports = {
         const updateItem = await masters.findOneAndUpdate(
           {
             "items.uic": uic,
+            type_taxanomy:"WHT"
           },
           {
             $set: {
@@ -5505,6 +5509,7 @@ module.exports = {
             prefix: "tray-master",
             cpc: location,
             rack_id: { $exists: true, $ne: null },
+            issued_user_name:null,
             sort_id: { $ne: "Assigned to warehouae for rack change" },
           },
         },
