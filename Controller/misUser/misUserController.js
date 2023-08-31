@@ -5508,7 +5508,6 @@ module.exports = {
           $match: {
             prefix: "tray-master",
             cpc: location,
-            rack_id: { $exists: true, $ne: null },
             issued_user_name:null,
             sort_id: { $ne: "Assigned to warehouae for rack change" },
           },

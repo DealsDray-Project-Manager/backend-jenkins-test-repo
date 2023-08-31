@@ -29,10 +29,10 @@ const {
 const moment = require("moment");
 const elasticsearch = require("../../Elastic-search/elastic");
 
-const IISDOMAIN = "https://prexo-v9-dev-api.dealsdray.com/user/profile/";
+const IISDOMAIN = "https://prexo-v8-5-dev-api.dealsdray.com/user/profile/";
 const IISDOMAINBUYERDOC =
-  "https://prexo-v9-dev-api.dealsdray.com/user/document/";
-const IISDOMAINPRDT = "https://prexo-v9-dev-api.dealsdray.com/product/image/";
+  "https://prexo-v8-5-dev-api.dealsdray.com/user/document/";
+const IISDOMAINPRDT = "https://prexo-v8-5-dev-api.dealsdray.com/product/image/";
 
 /************************************************************************************************** */
 
