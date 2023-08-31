@@ -107,7 +107,7 @@
             <columnPath>blancco_data.blancco_hardware_report.hardware_tests.speaker</columnPath>
             <columnPath>user_data.fields._ro.ril.miui.imei0</columnPath>
             <columnPath>blancco_data.blancco_hardware_report.hardware_tests.camera</columnPath>
-            <columnPath>blancco_data.blancco_hardware_report.system.find_my_iphone</columnPath>
+            <columnPath>blancco_data.blancco_hardware_report.system.find_my_iphone</columnPath>
         </reportColumns>
         <csv-options csvLanguage="en_US" delimiter="," subDelimiter=","/>
     </export-report>
