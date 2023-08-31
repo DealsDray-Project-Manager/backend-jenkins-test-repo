@@ -2473,8 +2473,9 @@ module.exports = {
           ],
         });
       } else if (status == "wht-merge") {
-        data = await masters.find(
+        data = await masters.aggregate([
           {
+            $match:{
             $or: [
               {
                 cpc: location,
@@ -2529,74 +2530,37 @@ module.exports = {
                 sort_id: "Ready to Audit",
               },
             ],
+          }},
+          {
+            $project: {
+              code: 1,
+              rack_id: 1,
+              brand: 1,
+              model: 1,
+              sort_id: 1,
+              created_at: 1,
+              limit: 1,
+              tray_grade:1,
+              type_taxanomy:1,
+              items_length: {
+                $cond: {
+                  if: { $isArray: "$items" },
+                  then: { $size: "$items" },
+                  else: 0,
+                },
+              },
+              actual_items: {
+                $cond: {
+                  if: { $isArray: "$actual_items" },
+                  then: { $size: "$actual_items" },
+                  else: 0,
+                },
+              },
+            },
           },
-          {
-            temp_array: 0,
-            wht_tray: 0,
-          }
-        );
-        data = await masters.find(
-          {
-            $or: [
-              {
-                cpc: location,
-                prefix: "tray-master",
-                type_taxanomy: "WHT",
-                sort_id: "Inuse",
-                items: {
-                  $ne: [],
-                  $exists: true,
-                },
-              },
-              {
-                cpc: location,
-                prefix: "tray-master",
-                type_taxanomy: "WHT",
-                sort_id: "Audit Done Closed By Warehouse",
-              },
-              {
-                cpc: location,
-                prefix: "tray-master",
-                type_taxanomy: "WHT",
-                $expr: {
-                  $and: [
-                    { $ne: [{ $ifNull: ["$items", null] }, null] },
-                    { $ne: [{ $size: "$items" }, { $toInt: "$limit" }] },
-                  ],
-                },
-                sort_id: "Ready to RDL-Repair",
-              },
-              {
-                cpc: location,
-                prefix: "tray-master",
-                type_taxanomy: "WHT",
-                $expr: {
-                  $and: [
-                    { $ne: [{ $ifNull: ["$items", null] }, null] },
-                    { $ne: [{ $size: "$items" }, { $toInt: "$limit" }] },
-                  ],
-                },
-                sort_id: "Ready to BQC",
-              },
-              {
-                cpc: location,
-                prefix: "tray-master",
-                type_taxanomy: "WHT",
-                $expr: {
-                  $and: [
-                    { $ne: [{ $ifNull: ["$items", null] }, null] },
-                    { $ne: [{ $size: "$items" }, { $toInt: "$limit" }] },
-                  ],
-                },
-                sort_id: "Ready to Audit",
-              },
-            ],
-          },
-          {
-            temp_array: 0,
-            wht_tray: 0,
-          }
-        );
+         
+        ]);
+      
       } else {
         data = await masters.find({
           $or: [

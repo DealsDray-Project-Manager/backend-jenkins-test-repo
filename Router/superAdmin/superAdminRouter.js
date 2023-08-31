@@ -120,14 +120,13 @@ router.post("/login", async (req, res, next) => {
   try {
     let loginData = await superAdminController.doLogin(req.body);
     if (loginData.status == 1) {
-      const jwtToken = jwt.jwtSign(loginData.data,process.env.NODE_ENV);
+      const jwtToken = jwt.jwtSign(loginData.data);
       if (jwtToken) {
         const updateJwtToken = await superAdminController.updateJwtTokeInDb(
           loginData.data._id,
           jwtToken,
-          loginData.data.user_type,
+          loginData.data.user_type
         );
-        console.log(process.env.NODE_ENV);
         if (updateJwtToken.status == 1) {
           res.status(200).json({
             status: 1,
@@ -136,7 +135,6 @@ router.post("/login", async (req, res, next) => {
               jwt: jwtToken,
               user_type: loginData?.data?.user_type,
               data: loginData.data,
-              serverType:process.env.NODE_ENV
             },
           });
         } else {
