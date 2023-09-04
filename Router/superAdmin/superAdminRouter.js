@@ -4035,4 +4035,38 @@ router.post("/extra/removeIssuedUser", async (req, res, next) => {
     next(error);
   }
 });
+// FIND DUP MUIC 
+router.post("/extra/findMuic", async (req, res, next) => {
+  try {
+    let data = await superAdminController.findDupMuic();
+    if (data) {
+      res.status(200).json({
+        message: "Success",
+      });
+    } else {
+      res.status(202).json({
+        message: "Failed",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+// LET ADD INTO RACK
+router.post("/extra/updateRack", async (req, res, next) => {
+  try {
+    let data = await superAdminController.extraUpdateRack();
+    if (data.status == true) {
+      res.status(200).json({
+        message: "Successfully Update",
+      });
+    } else {
+      res.status(202).json({
+        message: "Failed",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
 module.exports = router;
