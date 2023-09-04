@@ -46,8 +46,8 @@ module.exports = {
       resolve(data);
     });
   },
-  getProcurementOrderSummary:()=>{
-    return new Promise(async(resolve,reject)=>{
+  getProcurementOrderSummary: () => {
+    return new Promise(async (resolve, reject) => {
       const data = await purchaseOrderPlaced.aggregate([
         {
           $match: {
@@ -56,42 +56,39 @@ module.exports = {
         },
         {
           $addFields: {
-            total_price_numeric: { $toDouble: "$total_price" },  // Convert total_price to a numeric field
-            total_qty: { $toDouble: "$quantity" }  // Convert total_price to a numeric field
-
-          }
+            total_price_numeric: { $toDouble: "$total_price" }, // Convert total_price to a numeric field
+            total_qty: { $toDouble: "$quantity" }, // Convert total_price to a numeric field
+          },
         },
         {
           $group: {
-            _id: "$vendor_id",        // Grouping by vendor_id
-            total_price: { $sum: "$total_price_numeric" },  // Calculating total price
-            quantity: { $sum: "$total_qty" },       // Calculating total quantity
-            last_placed_date: { $max: "$placed_date" }  // Finding the latest placed date
-
+            _id: "$vendor_id", // Grouping by vendor_id
+            total_price: { $sum: "$total_price_numeric" }, // Calculating total price
+            quantity: { $sum: "$total_qty" }, // Calculating total quantity
+            last_placed_date: { $max: "$placed_date" }, // Finding the latest placed date
           },
         },
         {
-          $sort:{
-            last_placed_date:-1
-          }
+          $sort: {
+            last_placed_date: -1,
+          },
         },
         {
           $project: {
-            _id: 0,                // Exclude the default _id field from the output
-            vendor_id: "$_id",     // Rename _id to vendor_id if needed
+            _id: 0, // Exclude the default _id field from the output
+            vendor_id: "$_id", // Rename _id to vendor_id if needed
             total_price: 1,
             quantity: 1,
-            last_placed_date:1
+            last_placed_date: 1,
           },
         },
-
       ]);
       let totalAmount = 0;
-      for(let x of data){
+      for (let x of data) {
         totalAmount = totalAmount + Number(x.total_price);
       }
-      resolve({data:data,totalAmount:totalAmount})
-    })
+      resolve({ data: data, totalAmount: totalAmount });
+    });
   },
   placeOrderScreenDataFetch: (spnNumber, muic) => {
     return new Promise(async (resolve, reject) => {
@@ -108,12 +105,11 @@ module.exports = {
         obj.purchaseRequest = await purchaseOrder.findOne({
           spare_part_number: spnNumber,
           muic: muic,
-          status: { $ne: "Order Placed" }
+          status: { $ne: "Order Placed" },
         });
         obj.vendor = await vendorMaster.find({
           deals: { $in: obj.findTheSpnDetails.sp_category },
           status: "Active",
-           
         });
         obj.purchaseHistory = await purchaseOrderPlaced.find({
           spn_number: spnNumber,
@@ -134,7 +130,11 @@ module.exports = {
       const data = await purchaseOrderPlaced.create(dataOfOrder.dataOfOrder);
       if (data) {
         const updateRequest = await purchaseOrder.findOneAndUpdate(
-          { muic: dataOfOrder.muic, spare_part_number: dataOfOrder.spnNumber },
+          {
+            muic: dataOfOrder.muic,
+            spare_part_number: dataOfOrder.spnNumber,
+            status: { $ne: "Order Placed" },
+          },
           {
             $set: {
               status: "Order Placed",
@@ -157,14 +157,12 @@ module.exports = {
         toDateTimestamp.setHours(23, 59, 59, 999);
         dataofOrderRm = await purchaseOrderPlaced.aggregate([
           {
-            $match: 
-              {
-                placed_date: {
-                  $gte: new Date(fromDateTimestamp),
-                  $lte: new Date(toDateTimestamp),
-                },
-              }
-            
+            $match: {
+              placed_date: {
+                $gte: new Date(fromDateTimestamp),
+                $lte: new Date(toDateTimestamp),
+              },
+            },
           },
           {
             $lookup: {
@@ -176,7 +174,6 @@ module.exports = {
           },
         ]);
       } else {
-       
         const fromDateTimestamp = new Date(fromDate);
         fromDateTimestamp.setHours(0, 0, 0, 0); // Set time to the beginning of the day
         const toDateTimestamp = new Date(toDate);
@@ -184,7 +181,7 @@ module.exports = {
         dataofOrderRm = await purchaseOrderPlaced.aggregate([
           {
             $match: {
-              $or:[
+              $or: [
                 {
                   placed_date: {
                     $gte: new Date(fromDateTimestamp),
@@ -192,9 +189,7 @@ module.exports = {
                   },
                   vendor_id: vendors,
                 },
-                
-              ]
-              
+              ],
             },
           },
           {

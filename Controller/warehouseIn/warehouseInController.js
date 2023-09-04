@@ -7417,7 +7417,7 @@ module.exports = {
         data = await masters.find({
           cpc: location,
           sort_id: "Assigned to warehouae for rack change",
-          temp_rack: { $eq: null, $exists: false },
+          temp_rack: null,
         });
       } else if (sortId == "Issued to scan in for rack change") {
         data = await masters.find({
