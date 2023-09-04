@@ -237,7 +237,6 @@ module.exports = {
               {
                 spare_part_number: x.part_id,
                 muic: x.muic,
-                muic: x.muic,
                 status: { $ne: "Order Placed" },
               },
               {
