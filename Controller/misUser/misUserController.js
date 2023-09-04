@@ -4155,6 +4155,7 @@ module.exports = {
   assignToAgentRequestToWhRdlFls: (tray, user_name, sortId, actUser) => {
     return new Promise(async (resolve, reject) => {
       let sendtoRdlMis;
+      let newStatus=sortId
       for (let x of tray) {
         if (sortId == "Send for RDL-two") {
           sendtoRdlMis = await masters.findOneAndUpdate(
@@ -4197,12 +4198,12 @@ module.exports = {
         }
         if (sendtoRdlMis.items?.length !== 0) {
           let state = "Tray";
-          if(sortId == "Send for RDL-FLS"){
-            sortId="Send for RDL-One"
+          if (newStatus == "Send for RDL-FLS") {
+            newStatus = "Send for RDL-One";
           }
           for (let y of sendtoRdlMis.items) {
             let unitsLogCreation = await unitsActionLog.create({
-              action_type: sortId,
+              action_type: newStatus,
               created_at: Date.now(),
               user_name_of_action: actUser,
               agent_name: user_name,
@@ -4210,7 +4211,7 @@ module.exports = {
               uic: y.uic,
               tray_id: x,
               track_tray: state,
-              description: `${sortId} to agent :${user_name} by mis :${actUser}`,
+              description: `${newStatus} to agent :${user_name} by mis :${actUser}`,
             });
             state = "Units";
           }
