@@ -29,10 +29,10 @@ const {
 const moment = require("moment");
 const elasticsearch = require("../../Elastic-search/elastic");
 
-const IISDOMAIN = "https://prexo-v8-5-dev-api.dealsdray.com/user/profile/";
+const IISDOMAIN = "https://prexo-v9-dev-api.dealsdray.com/user/profile/";
 const IISDOMAINBUYERDOC =
-  "https://prexo-v8-5-dev-api.dealsdray.com/user/document/";
-const IISDOMAINPRDT = "https://prexo-v8-5-dev-api.dealsdray.com/product/image/";
+  "https://prexo-v9-dev-api.dealsdray.com/user/document/";
+const IISDOMAINPRDT = "https://prexo-v9-dev-api.dealsdray.com/product/image/";
 
 /************************************************************************************************** */
 
@@ -910,6 +910,7 @@ module.exports = {
         .catch((err) => reject(err));
       if (data) {
         let ordersCheck = await orders.findOne({ item_id: data.vendor_sku_id });
+        console.log(ordersCheck);
         if (ordersCheck) {
           resolve({ status: 3, data: data });
         } else {
@@ -5968,13 +5969,90 @@ module.exports = {
   manageRdlFlsToRdlOne: () => {
     return new Promise(async (resolve, reject) => {
       const updateRdl = await masters.updateMany(
-        { $or:[{sort_id:"Ready to RDL-Repair"},{sort_id:"Closed By Warehouse"},{sort_id:"RDL two done closed by warehouse"}]},
+        {
+          $or: [
+            { sort_id: "Ready to RDL-Repair" },
+            { sort_id: "Closed By Warehouse" },
+            { sort_id: "RDL two done closed by warehouse" },
+          ],
+        },
         {
           $set: {
             issued_user_name: null,
           },
         }
       );
+      resolve({ status: true });
+    });
+  },
+  findDupMuic: () => {
+    return new Promise(async (resolve, reject) => {
+      // const findMuic = await products.find();
+      // let arr1 = [];
+      // let arr2 = [];
+      // for (let x of findMuic) {
+      //   if (arr1.includes(x.muic)) {
+      //     arr2.push(x.muic);
+      //   }
+      //   arr1.push(x.muic);
+      // }
+      // resolve(arr2);
+      const findTemp = await masters.updateMany(
+        {
+          prefix: "tray-master",
+          sort_id: {
+            $nin: [
+              "Assigned to warehouae for rack change",
+              "Received for rack change",
+              "Issued to scan in for rack change",
+            ],
+          },
+          temp_rack: { $exists: true },
+        },
+        {
+          $set: {
+            temp_rack: null,
+          },
+        }
+      );
+      resolve({ status: true });
+    });
+  },
+  extraUpdateRack: () => {
+    return new Promise(async (resolve, reject) => {
+      let findTray = await masters.find({
+        prefix: "tray-master",
+        sort_id: {
+          $nin: ["Assigned to warehouae for rack change", "No Status"],
+        },
+        rack_id: { $exists: false },
+        code: { $nin: ["T051", "T071"] },
+      });
+      for (let x of findTray) {
+        if (x.cpc == "Gurgaon_122016") {
+          let updateRack = await masters.updateOne(
+            {
+              code: x.code,
+            },
+            {
+              $set: {
+                rack_id: "RAC999999",
+              },
+            }
+          );
+        } else if (x.cpc == "Sales_Gurgaon_122016") {
+          let updateRack = await masters.updateOne(
+            {
+              code: x.code,
+            },
+            {
+              $set: {
+                rack_id: "RAC999998",
+              },
+            }
+          );
+        }
+      }
       resolve({ status: true });
     });
   },

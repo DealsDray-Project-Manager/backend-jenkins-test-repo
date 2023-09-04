@@ -108,10 +108,12 @@ module.exports = {
         obj.purchaseRequest = await purchaseOrder.findOne({
           spare_part_number: spnNumber,
           muic: muic,
+          status: { $ne: "Order Placed" }
         });
         obj.vendor = await vendorMaster.find({
           deals: { $in: obj.findTheSpnDetails.sp_category },
           status: "Active",
+           
         });
         obj.purchaseHistory = await purchaseOrderPlaced.find({
           spn_number: spnNumber,

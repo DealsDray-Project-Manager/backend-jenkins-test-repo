@@ -12,8 +12,8 @@ const elasticsearch = require("../../Elastic-search/elastic");
 router.post("/dashboard/:location/:username", async (req, res, next) => {
   try {
     console.log(req.params);
-    const { location,username } = req.params;
-    let data = await warehouseInController.dashboard(location,username);
+    const { location, username } = req.params;
+    let data = await warehouseInController.dashboard(location, username);
     if (data) {
       res.status(200).json({
         data: data,
@@ -795,9 +795,7 @@ router.post("/rptTray", async (req, res, next) => {
     next(error);
   }
 });
-
 /*--------------------------IN USE WHT TRAY--------------------------*/
-
 router.post("/wht-tray/:status/:location", async (req, res, next) => {
   try {
     let data = await warehouseInController.getInUseWhtTray(
@@ -813,7 +811,6 @@ router.post("/wht-tray/:status/:location", async (req, res, next) => {
     next(error);
   }
 });
-
 /*---------------------------FOR PLANNER -------------------------------*/
 router.post("/plannerPage/:status/:location", async (req, res, next) => {
   try {
@@ -831,7 +828,6 @@ router.post("/plannerPage/:status/:location", async (req, res, next) => {
     next(error);
   }
 });
-
 /*--------------------------FIND WHT TRAY ITEM--------------------------*/
 router.post(
   "/getWhtTrayItem/:trayId/:sortId/:location",
@@ -971,9 +967,7 @@ router.post("/issue-to-agent-wht", async (req, res, next) => {
     next(error);
   }
 });
-
 /*--------------------------TRAY RETURN FROM CHARGING--------------------------*/
-
 router.post("/wht-return-from-charging/:location", async (req, res, next) => {
   try {
     let data = await warehouseInController.returnFromChargingWht(
@@ -988,7 +982,6 @@ router.post("/wht-return-from-charging/:location", async (req, res, next) => {
     next(error);
   }
 });
-
 /*----------------------------TRAY RETURN FROM RL-TWO-----------------------------------------*/
 router.post("/rptReturnFromRdlTwo/:location", async (req, res, next) => {
   try {
@@ -1003,9 +996,7 @@ router.post("/rptReturnFromRdlTwo/:location", async (req, res, next) => {
     next(error);
   }
 });
-
 /*--------------------------GET TRAY AFTER RECIEVED BY WAREHOUSE CHARGING DONE--------------------------*/
-
 router.post(
   "/charging-done-recieved/:trayId/:sortId",
   async (req, res, next) => {
@@ -2789,7 +2780,7 @@ router.post(
   "/rackIdUpdateGetTray/:trayId/:location/:username",
   async (req, res, next) => {
     try {
-      let { trayId, location,username } = req.params;
+      let { trayId, location, username } = req.params;
       let data = await warehouseInController.rackIdUpdateGetTrayData(
         trayId,
         location
@@ -2815,15 +2806,23 @@ router.post(
 // CHANGE RACK ID
 router.post("/updateRackId", async (req, res, next) => {
   try {
-    let { trayId, rackId, description,sortId,agentName,actionUser,prevStatus } = req.body;
+    let {
+      trayId,
+      rackId,
+      description,
+      sortId,
+      agentName,
+      actionUser,
+      prevStatus,
+    } = req.body;
     let data = await warehouseInController.updateTheRackId(
-    trayId,
-    rackId,
-    description,
-    sortId,
-    agentName,
-    actionUser,
-    prevStatus
+      trayId,
+      rackId,
+      description,
+      sortId,
+      agentName,
+      actionUser,
+      prevStatus
     );
     if (data.status == 1) {
       res.status(200).json({
@@ -2841,7 +2840,7 @@ router.post("/updateRackId", async (req, res, next) => {
 /* -------------------------------GET RACK CHANGE REQUEST ----------------*/
 router.post("/rackChangeRequest", async (req, res, next) => {
   try {
-    const { username, screen,location} = req.body;
+    const { username, screen, location } = req.body;
     let data = await warehouseInController.getRackChangeRequest(
       username,
       screen,
@@ -2859,7 +2858,9 @@ router.post("/rackChangeRequest", async (req, res, next) => {
 // RECEIVE FOR RACK CHANGE SCAN IN
 router.post("/rackChangeTrayReceive", async (req, res, next) => {
   try {
-    let data = await warehouseInController.receiVeTheTrayForRackChange(req.body);
+    let data = await warehouseInController.receiVeTheTrayForRackChange(
+      req.body
+    );
     if (data.status == 1) {
       res.status(200).json({
         message: "Successfully Received",

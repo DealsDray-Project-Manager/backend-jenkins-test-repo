@@ -235,7 +235,7 @@ module.exports = {
           });
           if (checkSpExists) {
             updateData = await purchaseOrder.findOneAndUpdate(
-              { spare_part_number: x.part_id },
+              { spare_part_number: x.part_id,muic:x.muic },
               {
                 $inc: {
                   requred_qty: parseInt(x.required_qty),

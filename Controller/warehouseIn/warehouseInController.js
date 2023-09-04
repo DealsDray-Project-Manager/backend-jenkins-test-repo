@@ -7385,6 +7385,7 @@ module.exports = {
               issued_user_name: null,
               rdl_2_user_temp: null,
               sort_id: prevStatus,
+              temp_rack:null
             },
           }
         );

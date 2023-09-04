@@ -17,6 +17,7 @@ const {
 const elasticsearch = require("../../Elastic-search/elastic");
 const { stxUtility } = require("../../Model/Stx-utility/stx-utility");
 const { unitsActionLog } = require("../../Model/units-log/units-action-log");
+const { bagTransfer } = require("../../Model/bag-transfer/bag-transfer");
 /******************************************************************* */
 
 module.exports = {
@@ -157,7 +158,7 @@ module.exports = {
         receiveCtx: 0,
         ctxToStxSorting: 0,
         stxMerge: 0,
-        rackChangeRequest:0
+        rackChangeRequest: 0,
       };
       count.rackChangeRequest = await masters.count({
         prefix: "tray-master",
@@ -4155,6 +4156,7 @@ module.exports = {
   assignToAgentRequestToWhRdlFls: (tray, user_name, sortId, actUser) => {
     return new Promise(async (resolve, reject) => {
       let sendtoRdlMis;
+      let newStatus = sortId;
       for (let x of tray) {
         if (sortId == "Send for RDL-two") {
           sendtoRdlMis = await masters.findOneAndUpdate(
@@ -4197,12 +4199,12 @@ module.exports = {
         }
         if (sendtoRdlMis.items?.length !== 0) {
           let state = "Tray";
-          if(sortId == "Send for RDL-FLS"){
-            sortId="Send for RDL-One"
+          if (newStatus == "Send for RDL-FLS") {
+            newStatus = "Send for RDL-One";
           }
           for (let y of sendtoRdlMis.items) {
             let unitsLogCreation = await unitsActionLog.create({
-              action_type: sortId,
+              action_type: newStatus,
               created_at: Date.now(),
               user_name_of_action: actUser,
               agent_name: user_name,
@@ -4210,7 +4212,7 @@ module.exports = {
               uic: y.uic,
               tray_id: x,
               track_tray: state,
-              description: `${sortId} to agent :${user_name} by mis :${actUser}`,
+              description: `${newStatus} to agent :${user_name} by mis :${actUser}`,
             });
             state = "Units";
           }
@@ -4736,7 +4738,7 @@ module.exports = {
         const updateItem = await masters.findOneAndUpdate(
           {
             "items.uic": uic,
-            type_taxanomy:"WHT"
+            type_taxanomy: "WHT",
           },
           {
             $set: {
@@ -5350,16 +5352,16 @@ module.exports = {
   /*--------------------------------------------STX UTILITY ---------------------------------------*/
   stxUtilityImportXlsx: () => {
     return new Promise(async (resolve, reject) => {
-      let arr = []
+      let arr = [];
       let arr1 = [];
       for (let x of arr) {
-        let obj={
-          uic:x.uic,
-          ctx_tray_id:x.ctx_tray_id,
-          current_status:x.current_status,
-          model_name:x.model_name,
-          grade:x.grade
-        }
+        let obj = {
+          uic: x.uic,
+          ctx_tray_id: x.ctx_tray_id,
+          current_status: x.current_status,
+          model_name: x.model_name,
+          grade: x.grade,
+        };
         let createTo = await stxUtility.create(obj);
       }
       resolve({ status: 1, data: arr1 });
@@ -5508,9 +5510,11 @@ module.exports = {
           $match: {
             prefix: "tray-master",
             cpc: location,
-            issued_user_name:null,
-            sort_id: { $nin: ["Assigned to warehouae for rack change","No Status"] },
-            code:{$nin:["T051","T071"]}
+            issued_user_name: null,
+            sort_id: {
+              $nin: ["Assigned to warehouae for rack change", "No Status"],
+            },
+            code: { $nin: ["T051", "T071"] },
           },
         },
         {
@@ -5554,22 +5558,25 @@ module.exports = {
       resolve(getWarehouseUsers);
     });
   },
-  assignForRackChange:(tray, scanOutWh,scanInWh, actUser)=>{
-    return new Promise(async(resolve,reject)=>{
-      let updateTheTray
-      for(let x of tray){
-        const findTray=await masters.findOne({code:x},{sort_id:1})
-         updateTheTray=await masters.findOneAndUpdate({code:x},{
-          $set:{
-            issued_user_name:scanOutWh,
-            rdl_2_user_temp:scanInWh,
-            requested_date:Date.now(),
-            temp_status:findTray.sort_id,
-            actual_items:[],
-            sort_id:"Assigned to warehouae for rack change",
-          },
-        })
-        if(updateTheTray){
+  assignForRackChange: (tray, scanOutWh, scanInWh, actUser) => {
+    return new Promise(async (resolve, reject) => {
+      let updateTheTray;
+      for (let x of tray) {
+        const findTray = await masters.findOne({ code: x }, { sort_id: 1 });
+        updateTheTray = await masters.findOneAndUpdate(
+          { code: x },
+          {
+            $set: {
+              issued_user_name: scanOutWh,
+              rdl_2_user_temp: scanInWh,
+              requested_date: Date.now(),
+              temp_status: findTray.sort_id,
+              actual_items: [],
+              sort_id: "Assigned to warehouae for rack change",
+            },
+          }
+        );
+        if (updateTheTray) {
           let state = "Tray";
           for (let y of updateTheTray.items) {
             let unitsLogCreation = await unitsActionLog.create({
@@ -5587,27 +5594,84 @@ module.exports = {
           }
         }
       }
-      if(updateTheTray){
-        resolve({status:1})
+      if (updateTheTray) {
+        resolve({ status: 1 });
+      } else {
+        resolve({ status: 2 });
       }
-      else{
-        resolve({status:2})
-      }
-    })
+    });
   },
-  changeRackByMis:(trayId,rackId)=>{
-    return new Promise(async(resolve,reject)=>{
-      const updateRack=await masters.updateOne({code:trayId},{
-        $set:{
-          temp_rack:rackId
+  changeRackByMis: (trayId, rackId) => {
+    return new Promise(async (resolve, reject) => {
+      const updateRack = await masters.updateOne(
+        { code: trayId },
+        {
+          $set: {
+            temp_rack: rackId,
+          },
         }
-      })
-      if(updateRack.modifiedCount !==0){
-        resolve({status:1})
+      );
+      if (updateRack.modifiedCount !== 0) {
+        resolve({ status: 1 });
+      } else {
+        resolve({ status: 2 });
       }
-      else{
-        resolve({status:2})
+    });
+  },
+  /*--------------------------------BAG TRANSFER-------------------------------------------*/
+  getBagTransferAndReceive: (location, status) => {
+    return new Promise(async (resolve, reject) => {
+      let data;
+      if (status == "Closed") {
+        data = await masters
+          .find({
+            $or: [
+              {
+                cpc: location,
+                prefix: "bag-master",
+                sort_id: "Closed",
+              },
+              {
+                cpc: location,
+                prefix: "bag-master",
+                sort_id: "Pre-closure",
+              },
+            ],
+          })
+          .catch((err) => {
+            reject(err);
+          });
+      } else {
+        data = await masters.find({});
       }
-    })
-  }
+      resolve(data);
+    });
+  },
+  sendTheBagViaCourierOrHand: (deliveryData) => {
+    return new Promise(async (resolve, reject) => {
+      let updateBag;
+      for (let x of delivery.bag) {
+        updateBag = await bagTransfer.updateOne(
+          {
+            code: x,
+          },
+          {
+            $set: {
+              sort_id: "Bag Transferred",
+            },
+          }
+        );
+      }
+      if (updateBag.modifiedCount !== 0) {
+        const createDelivery = await bagTransfer.create(deliveryData);
+        if (createDelivery) {
+          resolve({ status: 1 });
+        } else {
+          resolve({ status: 0 });
+        }
+      } else {
+        resolve({ status: 0 });
+      }
+    });
+  },
 };
