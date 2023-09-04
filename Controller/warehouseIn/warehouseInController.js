@@ -1778,7 +1778,7 @@ module.exports = {
               sort_id: "Closed By Warehouse",
               rack_id: trayData.rackId,
               closed_time_wharehouse: Date.now(),
-              issued_user_name:null,
+              issued_user_name: null,
               "track_tray.bot_done_tray_close_wh": Date.now(),
             },
           }
@@ -1850,7 +1850,7 @@ module.exports = {
                 new Date().toISOString().split("T")[0]
               ),
               actual_items: [],
-              issued_user_name:null,
+              issued_user_name: null,
               "track_tray.bot_done_tray_close_wh": Date.now(),
             },
           }
@@ -2475,62 +2475,63 @@ module.exports = {
       } else if (status == "wht-merge") {
         data = await masters.aggregate([
           {
-            $match:{
-            $or: [
-              {
-                cpc: location,
-                prefix: "tray-master",
-                type_taxanomy: "WHT",
-                sort_id: "Inuse",
-                items: {
-                  $ne: [],
-                  $exists: true,
+            $match: {
+              $or: [
+                {
+                  cpc: location,
+                  prefix: "tray-master",
+                  type_taxanomy: "WHT",
+                  sort_id: "Inuse",
+                  items: {
+                    $ne: [],
+                    $exists: true,
+                  },
                 },
-              },
-              {
-                cpc: location,
-                prefix: "tray-master",
-                type_taxanomy: "WHT",
-                sort_id: "Audit Done Closed By Warehouse",
-              },
-              {
-                cpc: location,
-                prefix: "tray-master",
-                type_taxanomy: "WHT",
-                $expr: {
-                  $and: [
-                    { $ne: [{ $ifNull: ["$items", null] }, null] },
-                    { $ne: [{ $size: "$items" }, { $toInt: "$limit" }] },
-                  ],
+                {
+                  cpc: location,
+                  prefix: "tray-master",
+                  type_taxanomy: "WHT",
+                  sort_id: "Audit Done Closed By Warehouse",
                 },
-                sort_id: "Ready to RDL-Repair",
-              },
-              {
-                cpc: location,
-                prefix: "tray-master",
-                type_taxanomy: "WHT",
-                $expr: {
-                  $and: [
-                    { $ne: [{ $ifNull: ["$items", null] }, null] },
-                    { $ne: [{ $size: "$items" }, { $toInt: "$limit" }] },
-                  ],
+                {
+                  cpc: location,
+                  prefix: "tray-master",
+                  type_taxanomy: "WHT",
+                  $expr: {
+                    $and: [
+                      { $ne: [{ $ifNull: ["$items", null] }, null] },
+                      { $ne: [{ $size: "$items" }, { $toInt: "$limit" }] },
+                    ],
+                  },
+                  sort_id: "Ready to RDL-Repair",
                 },
-                sort_id: "Ready to BQC",
-              },
-              {
-                cpc: location,
-                prefix: "tray-master",
-                type_taxanomy: "WHT",
-                $expr: {
-                  $and: [
-                    { $ne: [{ $ifNull: ["$items", null] }, null] },
-                    { $ne: [{ $size: "$items" }, { $toInt: "$limit" }] },
-                  ],
+                {
+                  cpc: location,
+                  prefix: "tray-master",
+                  type_taxanomy: "WHT",
+                  $expr: {
+                    $and: [
+                      { $ne: [{ $ifNull: ["$items", null] }, null] },
+                      { $ne: [{ $size: "$items" }, { $toInt: "$limit" }] },
+                    ],
+                  },
+                  sort_id: "Ready to BQC",
                 },
-                sort_id: "Ready to Audit",
-              },
-            ],
-          }},
+                {
+                  cpc: location,
+                  prefix: "tray-master",
+                  type_taxanomy: "WHT",
+                  $expr: {
+                    $and: [
+                      { $ne: [{ $ifNull: ["$items", null] }, null] },
+                      { $ne: [{ $size: "$items" }, { $toInt: "$limit" }] },
+                    ],
+                  },
+                  sort_id: "Ready to Audit",
+                },
+              ],
+            },
+          },
           {
             $project: {
               code: 1,
@@ -2540,8 +2541,8 @@ module.exports = {
               sort_id: 1,
               created_at: 1,
               limit: 1,
-              tray_grade:1,
-              type_taxanomy:1,
+              tray_grade: 1,
+              type_taxanomy: 1,
               items_length: {
                 $cond: {
                   if: { $isArray: "$items" },
@@ -2558,9 +2559,7 @@ module.exports = {
               },
             },
           },
-         
         ]);
-      
       } else {
         data = await masters.find({
           $or: [
@@ -6512,7 +6511,7 @@ module.exports = {
             closed_time_wharehouse: Date.now(),
             rack_id: trayData.rackId,
             assigned_date: Date.now(),
-            issued_user_name:null,
+            issued_user_name: null,
             "track_tray.rdl_1_done_close_by_wh": Date.now(),
           },
         }
@@ -6584,7 +6583,7 @@ module.exports = {
             description: trayData.description,
             temp_array: [],
             rack_id: trayData.rackId,
-            issued_user_name:null,
+            issued_user_name: null,
             sort_id: "RDL two done closed by warehouse",
           },
         }
@@ -7385,7 +7384,7 @@ module.exports = {
               issued_user_name: null,
               rdl_2_user_temp: null,
               sort_id: prevStatus,
-              temp_rack:null
+              temp_rack: null,
             },
           }
         );
@@ -7417,7 +7416,7 @@ module.exports = {
         data = await masters.find({
           cpc: location,
           sort_id: "Assigned to warehouae for rack change",
-          temp_rack: { $eq: null, $exists: false },
+          temp_rack: null,
         });
       } else if (sortId == "Issued to scan in for rack change") {
         data = await masters.find({
