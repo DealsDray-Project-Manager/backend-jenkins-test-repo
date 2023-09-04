@@ -8,7 +8,6 @@ const { purchaseOrder } = require("../../Model/Purchase-order/purchase-order");
 module.exports = {
   dashboardData: (location, username) => {
     return new Promise(async (resolve, reject) => {
-     
       // Step 1: Create the pipeline for aggregation
       const pipeline = [
         {
@@ -99,7 +98,7 @@ module.exports = {
       // Step 6: Calculate the count and resolve the final result
       const count = { precourmentCount: resolvedArr.length };
       console.log(count);
-      resolve(count );
+      resolve(count);
     });
   },
   procureMentCreation: (location, brand, model) => {
@@ -143,9 +142,9 @@ module.exports = {
         },
         {
           $sort: {
-            _id: 1 // Sort by part_id in ascending order
-          }
-        }
+            _id: 1, // Sort by part_id in ascending order
+          },
+        },
       ]);
 
       if (findItem) {
@@ -231,11 +230,16 @@ module.exports = {
           let checkSpExists = await purchaseOrder.findOne({
             spare_part_number: x.part_id,
             muic: x.muic,
-            status:{$ne:"Order Placed"}
+            status: { $ne: "Order Placed" },
           });
           if (checkSpExists) {
             updateData = await purchaseOrder.findOneAndUpdate(
-              { spare_part_number: x.part_id,muic:x.muic },
+              {
+                spare_part_number: x.part_id,
+                muic: x.muic,
+                muic: x.muic,
+                status: { $ne: "Order Placed" },
+              },
               {
                 $inc: {
                   requred_qty: parseInt(x.required_qty),
