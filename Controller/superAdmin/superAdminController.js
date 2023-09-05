@@ -5579,24 +5579,34 @@ module.exports = {
       //   arr1.push(x.muic);
       // }
       // resolve(arr2);
-      const findTemp = await masters.updateMany(
-        {
-          prefix: "tray-master",
-          sort_id: {
-            $nin: [
-              "Assigned to warehouae for rack change",
-              "Received for rack change",
-              "Issued to scan in for rack change",
-            ],
-          },
-          temp_rack: { $exists: true },
-        },
-        {
-          $set: {
-            temp_rack: null,
-          },
+      // const findTemp = await masters.updateMany(
+      //   {
+      //     prefix: "tray-master",
+      //     sort_id: {
+      //       $nin: [
+      //         "Assigned to warehouae for rack change",
+      //         "Received for rack change",
+      //         "Issued to scan in for rack change",
+      //       ],
+      //     },
+      //     temp_rack: { $exists: true },
+      //   },
+      //   {
+      //     $set: {
+      //       temp_rack: null,
+      //     },
+      //   }
+      // );
+      let findRpt=await masters.find({type_taxanomy:"RPT"})
+      for(let x of findRpt){
+        for(let y of x.items){
+          let update=await delivery.findOneAndUpdate({"uic_code.code":y.uic},{
+            $set:{
+              rp_tray:x.code
+            }
+          })
         }
-      );
+      }
       resolve({ status: true });
     });
   },
