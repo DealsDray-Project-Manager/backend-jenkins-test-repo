@@ -1165,7 +1165,7 @@ module.exports = {
             { "uic_code.code": itemData.item.uic },
             {
               $set: {
-                rp_tray: itemData.toTray,
+                rp_tray: itemData.rpTray,
                 updated_at: Date.now(),
               },
             },
