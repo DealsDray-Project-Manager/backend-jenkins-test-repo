@@ -29,10 +29,10 @@ const {
 const moment = require("moment");
 const elasticsearch = require("../../Elastic-search/elastic");
 
-const IISDOMAIN = "https://prexo-v8-5-dev-api.dealsdray.com/user/profile/";
+const IISDOMAIN = "https://prexo-v8-5-adminapi.dealsdray.com/user/profile/";
 const IISDOMAINBUYERDOC =
-  "https://prexo-v8-5-dev-api.dealsdray.com/user/document/";
-const IISDOMAINPRDT = "https://prexo-v8-5-dev-api.dealsdray.com/product/image/";
+  "https://prexo-v8-5-adminapi.dealsdray.com/user/document/";
+const IISDOMAINPRDT = "https://prexo-v8-5-adminapi.dealsdray.com/product/image/";
 
 /************************************************************************************************** */
 
@@ -5597,15 +5597,26 @@ module.exports = {
       //     },
       //   }
       // );
-      let findRpt=await masters.find({type_taxanomy:"RPT"})
-      for(let x of findRpt){
-        for(let y of x.items){
-          let update=await delivery.findOneAndUpdate({"uic_code.code":y.uic},{
-            $set:{
-              rp_tray:x.code
-            }
-          })
-        }
+      // let findRpt=await masters.find({type_taxanomy:"RPT"})
+      // for(let x of findRpt){
+      //   for(let y of x.items){
+      //     let update=await delivery.findOneAndUpdate({"uic_code.code":y.uic},{
+      //       $set:{
+      //         rp_tray:x.code
+      //       }
+      //     })
+      //   }
+      // }
+      let findTray=await masters.findOne({code:"RPT18008"})
+      for(let x of findTray.actual_items){
+        let update=await masters.updateOne({code:"RPT18008"},{
+          $set:{
+            actual_items:[]
+          },
+          $push:{
+            items:x
+          }
+        })
       }
       resolve({ status: true });
     });

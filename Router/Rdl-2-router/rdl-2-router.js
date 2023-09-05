@@ -113,6 +113,10 @@ router.post("/repairDone/action", async (req, res, next) => {
       res.status(202).json({
         message: "Already added",
       });
+    } else if (data.status === 5) {
+      res.status(202).json({
+        message: "You can't access this data",
+      });
     } else {
       res.status(202).json({
         message: "Submission failed",
