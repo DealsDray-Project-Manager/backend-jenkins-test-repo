@@ -2,7 +2,7 @@
 const jwt = require("jsonwebtoken");
 
 module.exports = {
-  jwtSign: (admin) => {
+  jwtSign: (admin,serverType) => {
     const token = jwt.sign(
       {
         adminId: admin._id,
@@ -14,6 +14,7 @@ module.exports = {
         name: admin.name,
         warehouse: admin.warehouse,
         cpc_type: admin.cpc_type,
+        serverType:serverType,
       },
       "prexoprojectv1jwttokenaccessf9933one"
     );

@@ -2070,11 +2070,8 @@ router.post("/assignToAgent/rackChange", async (req, res, next) => {
 // CHANGE THE RACK
 router.post("/rackChangeByMis", async (req, res, next) => {
   try {
-    const { trayId,rackId } = req.body;
-    let data = await misUserController.changeRackByMis(
-      trayId,
-      rackId
-    );
+    const { trayId, rackId } = req.body;
+    let data = await misUserController.changeRackByMis(trayId, rackId);
     if (data.status == 1) {
       res.status(200).json({
         message: "Successfully updated new rack and request sent to warhouse",
@@ -2082,6 +2079,41 @@ router.post("/rackChangeByMis", async (req, res, next) => {
     } else {
       res.status(202).json({
         message: "Request failed please try again...",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+/*------------------------------------------BAG TRANSFER -----------------------------------------------*/
+// BAG TRANSFER PAGE / BAG RECEIVE PAGE
+router.post("/bagTransferAndReceive", async (req, res, next) => {
+  try {
+    const { location, status } = req.body;
+    let data = await misUserController.getBagTransferAndReceive(
+      location,
+      status
+    );
+    if (data) {
+      res.status(200).json({
+        data: data,
+        message: "Success",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+// SEND THE BAG VIA COURIER OR HAND DELIVERY
+router.post("/bagTransferSend", async (req, res, next) => {
+  try {
+    let data = await misUserController.sendTheBagViaCourierOrHand(
+      req.body
+    );
+    if (data) {
+      res.status(200).json({
+        data: data,
+        message: "Success",
       });
     }
   } catch (error) {
