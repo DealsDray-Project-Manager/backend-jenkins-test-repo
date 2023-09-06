@@ -5971,14 +5971,13 @@ module.exports = {
       const updateRdl = await masters.updateMany(
         {
           $or: [
-            { sort_id: "Ready to RDL-Repair" },
-            { sort_id: "Closed By Warehouse" },
-            { sort_id: "RDL two done closed by warehouse" },
+            { sort_id: "Send for RDL-One" },
+          
           ],
         },
         {
           $set: {
-            issued_user_name: null,
+            sort_id: "Send for RDL-FLS",
           },
         }
       );
