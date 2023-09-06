@@ -10,6 +10,7 @@ const bagTransferSchema = mongoose.Schema({
   received_by: String,
   bag_details: Array,
   created_at: Date,
+  awbn:String
 });
 const bagTransfer = mongoose.model("bagTransfer", bagTransferSchema);
 module.exports = {
