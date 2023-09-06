@@ -29,10 +29,10 @@ const {
 const moment = require("moment");
 const elasticsearch = require("../../Elastic-search/elastic");
 
-const IISDOMAIN = "https://prexo-v9-dev-api.dealsdray.com/user/profile/";
+const IISDOMAIN = "https://prexo-v8-5-dev-api.dealsdray.com/user/profile/";
 const IISDOMAINBUYERDOC =
-  "https://prexo-v9-dev-api.dealsdray.com/user/document/";
-const IISDOMAINPRDT = "https://prexo-v9-dev-api.dealsdray.com/product/image/";
+  "https://prexo-v8-5-dev-api.dealsdray.com/user/document/";
+const IISDOMAINPRDT = "https://prexo-v8-5-dev-api.dealsdray.com/product/image/";
 
 /************************************************************************************************** */
 
@@ -5376,540 +5376,7 @@ module.exports = {
   },
   exUpdateWithNewSpn: () => {
     return new Promise(async (resolve, reject) => {
-      let arr = [
-        {
-          old_spn: "SPN000286",
-          new_spn: "SPN000286",
-        },
-        {
-          old_spn: "SPN000313",
-          new_spn: "SPN000286",
-        },
-        {
-          old_spn: "SPN000328",
-          new_spn: "SPN000286",
-        },
-        {
-          old_spn: "SPN000287",
-          new_spn: "SPN000287",
-        },
-        {
-          old_spn: "SPN000314",
-          new_spn: "SPN000287",
-        },
-        {
-          old_spn: "SPN000329",
-          new_spn: "SPN000287",
-        },
-        {
-          old_spn: "SPN000288",
-          new_spn: "SPN000288",
-        },
-        {
-          old_spn: "SPN000979",
-          new_spn: "SPN000288",
-        },
-        {
-          old_spn: "SPN000289",
-          new_spn: "SPN000289",
-        },
-        {
-          old_spn: "SPN000315",
-          new_spn: "SPN000289",
-        },
-        {
-          old_spn: "SPN000330",
-          new_spn: "SPN000289",
-        },
-        {
-          old_spn: "SPN000290",
-          new_spn: "SPN000290",
-        },
-        {
-          old_spn: "SPN000745",
-          new_spn: "SPN000290",
-        },
-        {
-          old_spn: "SPN000769",
-          new_spn: "SPN000290",
-        },
-        {
-          old_spn: "SPN000291",
-          new_spn: "SPN000291",
-        },
-        {
-          old_spn: "SPN000316",
-          new_spn: "SPN000291",
-        },
-        {
-          old_spn: "SPN000331",
-          new_spn: "SPN000291",
-        },
-        {
-          old_spn: "SPN000572",
-          new_spn: "SPN000572",
-        },
-        {
-          old_spn: "SPN000292",
-          new_spn: "SPN000292",
-        },
-        {
-          old_spn: "SPN000498",
-          new_spn: "SPN000292",
-        },
-        {
-          old_spn: "SPN000332",
-          new_spn: "SPN000292",
-        },
-        {
-          old_spn: "SPN000293",
-          new_spn: "SPN000292",
-        },
-        {
-          old_spn: "SPN000477",
-          new_spn: "SPN000292",
-        },
-        {
-          old_spn: "SPN000294",
-          new_spn: "SPN000294",
-        },
-        {
-          old_spn: "SPN000295",
-          new_spn: "SPN000295",
-        },
-        {
-          old_spn: "SPN001482",
-          new_spn: "SPN000295",
-        },
-        {
-          old_spn: "SPN000296",
-          new_spn: "SPN000296",
-        },
-        {
-          old_spn: "SPN000317",
-          new_spn: "SPN000296",
-        },
-        {
-          old_spn: "SPN000333",
-          new_spn: "SPN000296",
-        },
-        {
-          old_spn: "SPN000667",
-          new_spn: "SPN000667",
-        },
-        {
-          old_spn: "SPN000779",
-          new_spn: "SPN000667",
-        },
-        {
-          old_spn: "SPN000415",
-          new_spn: "SPN000667",
-        },
-        {
-          old_spn: "SPN000749",
-          new_spn: "SPN000749",
-        },
-        {
-          old_spn: "SPN000772",
-          new_spn: "SPN000749",
-        },
-        {
-          old_spn: "SPN000750",
-          new_spn: "SPN000750",
-        },
-        {
-          old_spn: "SPN001612",
-          new_spn: "SPN000750",
-        },
-        {
-          old_spn: "SPN000748",
-          new_spn: "SPN000748",
-        },
-        {
-          old_spn: "SPN001483",
-          new_spn: "SPN000748",
-        },
-        {
-          old_spn: "SPN000757",
-          new_spn: "SPN000757",
-        },
-        {
-          old_spn: "SPN000765",
-          new_spn: "SPN000765",
-        },
-        {
-          old_spn: "SPN001608",
-          new_spn: "SPN000765",
-        },
-        {
-          old_spn: "SPN001610",
-          new_spn: "SPN001610",
-        },
-        {
-          old_spn: "SPN001609",
-          new_spn: "SPN001609",
-        },
-        {
-          old_spn: "SPN000297",
-          new_spn: "SPN000297",
-        },
-        {
-          old_spn: "SPN000318",
-          new_spn: "SPN000297",
-        },
-        {
-          old_spn: "SPN000778",
-          new_spn: "SPN000297",
-        },
-        {
-          old_spn: "SPN001628",
-          new_spn: "SPN001628",
-        },
-        {
-          old_spn: "SPN001767",
-          new_spn: "SPN001628",
-        },
-        {
-          old_spn: "SPN000545",
-          new_spn: "SPN000545",
-        },
-        {
-          old_spn: "SPN000298",
-          new_spn: "SPN000298",
-        },
-        {
-          old_spn: "SPN000752",
-          new_spn: "SPN000298",
-        },
-        {
-          old_spn: "SPN001116",
-          new_spn: "SPN001116",
-        },
-        {
-          old_spn: "SPN001553",
-          new_spn: "SPN001116",
-        },
-        {
-          old_spn: "SPN000770",
-          new_spn: "SPN000770",
-        },
-        {
-          old_spn: "SPN001117",
-          new_spn: "SPN001117",
-        },
-        {
-          old_spn: "SPN001200",
-          new_spn: "SPN001200",
-        },
-        {
-          old_spn: "SPN001481",
-          new_spn: "SPN001481",
-        },
-        {
-          old_spn: "SPN001554",
-          new_spn: "SPN001481",
-        },
-        {
-          old_spn: "SPN001555",
-          new_spn: "SPN001555",
-        },
-        {
-          old_spn: "SPN000319",
-          new_spn: "SPN001116",
-        },
-        {
-          old_spn: "SPN000320",
-          new_spn: "SPN000770",
-        },
-        {
-          old_spn: "SPN000961",
-          new_spn: "SPN001481",
-        },
-        {
-          old_spn: "SPN000299",
-          new_spn: "SPN000749",
-        },
-        {
-          old_spn: "SPN000321",
-          new_spn: "SPN000749",
-        },
-        {
-          old_spn: "SPN000334",
-          new_spn: "SPN000749",
-        },
-        {
-          old_spn: "SPN000300",
-          new_spn: "SPN000750",
-        },
-        {
-          old_spn: "SPN000322",
-          new_spn: "SPN000750",
-        },
-        {
-          old_spn: "SPN000323",
-          new_spn: "SPN000748",
-        },
-        {
-          old_spn: "SPN001480",
-          new_spn: "SPN001480",
-        },
-        {
-          old_spn: "SPN000758",
-          new_spn: "SPN000758",
-        },
-        {
-          old_spn: "SPN002091",
-          new_spn: "SPN000758",
-        },
-        {
-          old_spn: "SPN001199",
-          new_spn: "SPN001199",
-        },
-        {
-          old_spn: "SPN000861",
-          new_spn: "SPN000861",
-        },
-        {
-          old_spn: "SPN000303",
-          new_spn: "SPN000303",
-        },
-        {
-          old_spn: "SPN000324",
-          new_spn: "SPN000304",
-        },
-        {
-          old_spn: "SPN000304",
-          new_spn: "SPN000304",
-        },
-        {
-          old_spn: "SPN001763",
-          new_spn: "SPN001763",
-        },
-        {
-          old_spn: "SPN000325",
-          new_spn: "SPN000699",
-        },
-        {
-          old_spn: "SPN000335",
-          new_spn: "SPN000699",
-        },
-        {
-          old_spn: "SPN000699",
-          new_spn: "SPN000699",
-        },
-        {
-          old_spn: "SPN000608",
-          new_spn: "SPN000608",
-        },
-        {
-          old_spn: "SPN000636",
-          new_spn: "SPN000608",
-        },
-        {
-          old_spn: "SPN000766",
-          new_spn: "SPN000608",
-        },
-        {
-          old_spn: "SPN000700",
-          new_spn: "SPN000700",
-        },
-        {
-          old_spn: "SPN000755",
-          new_spn: "SPN000700",
-        },
-        {
-          old_spn: "SPN001625",
-          new_spn: "SPN000700",
-        },
-        {
-          old_spn: "SPN000751",
-          new_spn: "SPN000751",
-        },
-        {
-          old_spn: "SPN000762",
-          new_spn: "SPN000762",
-        },
-        {
-          old_spn: "SPN000767",
-          new_spn: "SPN000762",
-        },
-        {
-          old_spn: "SPN001475",
-          new_spn: "SPN000762",
-        },
-        {
-          old_spn: "SPN000756",
-          new_spn: "SPN000756",
-        },
-        {
-          old_spn: "SPN001476",
-          new_spn: "SPN000756",
-        },
-        {
-          old_spn: "SPN001613",
-          new_spn: "SPN000756",
-        },
-        {
-          old_spn: "SPN000775",
-          new_spn: "SPN000306",
-        },
-        {
-          old_spn: "SPN000305",
-          new_spn: "SPN000305",
-        },
-        {
-          old_spn: "SPN000326",
-          new_spn: "SPN000305",
-        },
-        {
-          old_spn: "SPN001769",
-          new_spn: "SPN001769",
-        },
-        {
-          old_spn: "SPN000306",
-          new_spn: "SPN000306",
-        },
-        {
-          old_spn: "SPN000746",
-          new_spn: "SPN000746",
-        },
-        {
-          old_spn: "SPN000774",
-          new_spn: "SPN000746",
-        },
-        {
-          old_spn: "SPN001477",
-          new_spn: "SPN000746",
-        },
-        {
-          old_spn: "SPN000307",
-          new_spn: "SPN000307",
-        },
-        {
-          old_spn: "SPN000675",
-          new_spn: "SPN000307",
-        },
-        {
-          old_spn: "SPN000759",
-          new_spn: "SPN000307",
-        },
-        {
-          old_spn: "SPN000308",
-          new_spn: "SPN000308",
-        },
-        {
-          old_spn: "SPN000538",
-          new_spn: "SPN000308",
-        },
-        {
-          old_spn: "SPN000547",
-          new_spn: "SPN000308",
-        },
-        {
-          old_spn: "SPN000309",
-          new_spn: "SPN000309",
-        },
-        {
-          old_spn: "SPN000310",
-          new_spn: "SPN000310",
-        },
-        {
-          old_spn: "SPN000787",
-          new_spn: "SPN000310",
-        },
-        {
-          old_spn: "SPN000472",
-          new_spn: "SPN000472",
-        },
-        {
-          old_spn: "SPN000527",
-          new_spn: "SPN000472",
-        },
-        {
-          old_spn: "SPN000311",
-          new_spn: "SPN000311",
-        },
-        {
-          old_spn: "SPN000336",
-          new_spn: "SPN000311",
-        },
-        {
-          old_spn: "SPN000508",
-          new_spn: "SPN000311",
-        },
-        {
-          old_spn: "SPN000596",
-          new_spn: "SPN000306",
-        },
-        {
-          old_spn: "SPN000742",
-          new_spn: "SPN001479",
-        },
-        {
-          old_spn: "SPN000771",
-          new_spn: "SPN001479",
-        },
-        {
-          old_spn: "SPN001479",
-          new_spn: "SPN001479",
-        },
-        {
-          old_spn: "SPN000658",
-          new_spn: "SPN000658",
-        },
-        {
-          old_spn: "SPN000743",
-          new_spn: "SPN000658",
-        },
-        {
-          old_spn: "SPN000776",
-          new_spn: "SPN000658",
-        },
-        {
-          old_spn: "SPN000312",
-          new_spn: "SPN000312",
-        },
-        {
-          old_spn: "SPN000744",
-          new_spn: "SPN000312",
-        },
-        {
-          old_spn: "SPN000781",
-          new_spn: "SPN000312",
-        },
-        {
-          old_spn: "SPN000473",
-          new_spn: "SPN000747",
-        },
-        {
-          old_spn: "SPN000747",
-          new_spn: "SPN000747",
-        },
-        {
-          old_spn: "SPN001484",
-          new_spn: "SPN000747",
-        },
-        {
-          old_spn: "SPN000753",
-          new_spn: "SPN000753",
-        },
-        {
-          old_spn: "SPN000777",
-          new_spn: "SPN000753",
-        },
-        {
-          old_spn: "SPN001611",
-          new_spn: "SPN000753",
-        },
-        {
-          old_spn: "SPN000754",
-          new_spn: "SPN000754",
-        },
-        {
-          old_spn: "SPN000768",
-          new_spn: "SPN000754",
-        },
-      ];
+      let arr = [];
 
       for (let x of arr) {
         if (x.old_spn !== x.new_spn) {
@@ -5996,24 +5463,45 @@ module.exports = {
       //   arr1.push(x.muic);
       // }
       // resolve(arr2);
-      const findTemp = await masters.updateMany(
-        {
-          prefix: "tray-master",
-          sort_id: {
-            $nin: [
-              "Assigned to warehouae for rack change",
-              "Received for rack change",
-              "Issued to scan in for rack change",
-            ],
+      // const findTemp = await masters.updateMany(
+      //   {
+      //     prefix: "tray-master",
+      //     sort_id: {
+      //       $nin: [
+      //         "Assigned to warehouae for rack change",
+      //         "Received for rack change",
+      //         "Issued to scan in for rack change",
+      //       ],
+      //     },
+      //     temp_rack: { $exists: true },
+      //   },
+      //   {
+      //     $set: {
+      //       temp_rack: null,
+      //     },
+      //   }
+      // );
+      // let findRpt=await masters.find({type_taxanomy:"RPT"})
+      // for(let x of findRpt){
+      //   for(let y of x.items){
+      //     let update=await delivery.findOneAndUpdate({"uic_code.code":y.uic},{
+      //       $set:{
+      //         rp_tray:x.code
+      //       }
+      //     })
+      //   }
+      // }
+      let findTray=await masters.findOne({code:"RPT18008"})
+      for(let x of findTray.actual_items){
+        let update=await masters.updateOne({code:"RPT18008"},{
+          $set:{
+            actual_items:[]
           },
-          temp_rack: { $exists: true },
-        },
-        {
-          $set: {
-            temp_rack: null,
-          },
-        }
-      );
+          $push:{
+            items:x
+          }
+        })
+      }
       resolve({ status: true });
     });
   },

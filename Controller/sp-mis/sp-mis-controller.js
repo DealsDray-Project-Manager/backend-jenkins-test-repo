@@ -236,8 +236,8 @@ module.exports = {
             updateData = await purchaseOrder.findOneAndUpdate(
               {
                 spare_part_number: x.part_id,
-                muic: x.muic,
                 status: { $ne: "Order Placed" },
+                muic: x.muic,
               },
               {
                 $inc: {

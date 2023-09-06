@@ -4156,7 +4156,7 @@ module.exports = {
   assignToAgentRequestToWhRdlFls: (tray, user_name, sortId, actUser) => {
     return new Promise(async (resolve, reject) => {
       let sendtoRdlMis;
-      let newStatus = sortId;
+      let newStatus=sortId
       for (let x of tray) {
         if (sortId == "Send for RDL-two") {
           sendtoRdlMis = await masters.findOneAndUpdate(
@@ -5510,12 +5510,9 @@ module.exports = {
           $match: {
             prefix: "tray-master",
             cpc: location,
-            issued_user_name: null,
-            sort_id: {
-              $nin: ["Assigned to warehouae for rack change", "No Status"],
-            },
-            code: { $nin: ["T051", "T071"] },
-          },
+            issued_user_name:null,
+            sort_id: { $nin: ["Assigned to warehouae for rack change","No Status"] },
+            code:{$nin:["T051","T071"]}          },
         },
         {
           $project: {
