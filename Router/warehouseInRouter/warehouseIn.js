@@ -12,8 +12,8 @@ const elasticsearch = require("../../Elastic-search/elastic");
 router.post("/dashboard/:location/:username", async (req, res, next) => {
   try {
     console.log(req.params);
-    const { location,username } = req.params;
-    let data = await warehouseInController.dashboard(location,username);
+    const { location, username } = req.params;
+    let data = await warehouseInController.dashboard(location, username);
     if (data) {
       res.status(200).json({
         data: data,
@@ -1868,38 +1868,39 @@ router.post("/auditUserStatusChecking", async (req, res, next) => {
 
 router.post("/trayIdCheckAuditApprovePage", async (req, res, next) => {
   try {
-    const { trayId, trayType, location, brand, model } = req.body;
+    const { trayId, location, brand, model } = req.body;
 
     let data = await warehouseInController.checkTrayStatusAuditApprovePage(
       trayId,
-      trayType,
       location,
       brand,
       model
     );
+    console.log(data);
     if (data.status == 1) {
       res.status(200).json({
-        message: "Valid Tray",
-        trayId: trayId,
+        message: "Successfully Validated",
       });
     } else if (data.status == 2) {
       res.status(202).json({
-        message: `Not a ${trayType} tray`,
+        message: `Please check this tray ${data.trayId} Not a ${data.grade} Grade`,
       });
     } else if (data.status == 4) {
       res.status(202).json({
-        message: "Tray id does not exists",
+        message: `${data.trayId} Tray id does not exists`,
       });
     } else if (data.status == 5) {
       res.status(202).json({
-        message: "Mismatch Brand and Model",
+        message: `${data.trayId} Mismatch Brand and Model`,
       });
     } else {
       res.status(202).json({
-        message: "Tray already in process",
+        message: `${data.trayId} Tray already in process`,
       });
     }
-  } catch (error) {}
+  } catch (error) {
+    next(error)
+  }
 });
 
 /*----------------------------------------AUDIT TRAY ISSUE TO AGENT----------------------------------------------- */
@@ -1934,8 +1935,22 @@ router.post("/fetchAssignedTrayForAudit", async (req, res, next) => {
 
     if (data) {
       res.status(200).json({
-        data: data,
+        grade: data.grade,
+        tray: data.tray,
       });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+// GET TRAY GRADE
+router.post("/getCtxCategorysForIssue", async (req, res, next) => {
+  try {
+    let data = await warehouseInController.getCtxCategorysForIssue(req.body);
+    if (data) {
+      res.status(200).json(data);
+    } else {
+      res.status(202).json({ error: "CTX ctaegory not Exist" });
     }
   } catch (error) {
     next(error);
@@ -2789,7 +2804,7 @@ router.post(
   "/rackIdUpdateGetTray/:trayId/:location/:username",
   async (req, res, next) => {
     try {
-      let { trayId, location,username } = req.params;
+      let { trayId, location, username } = req.params;
       let data = await warehouseInController.rackIdUpdateGetTrayData(
         trayId,
         location
@@ -2815,15 +2830,23 @@ router.post(
 // CHANGE RACK ID
 router.post("/updateRackId", async (req, res, next) => {
   try {
-    let { trayId, rackId, description,sortId,agentName,actionUser,prevStatus } = req.body;
+    let {
+      trayId,
+      rackId,
+      description,
+      sortId,
+      agentName,
+      actionUser,
+      prevStatus,
+    } = req.body;
     let data = await warehouseInController.updateTheRackId(
-    trayId,
-    rackId,
-    description,
-    sortId,
-    agentName,
-    actionUser,
-    prevStatus
+      trayId,
+      rackId,
+      description,
+      sortId,
+      agentName,
+      actionUser,
+      prevStatus
     );
     if (data.status == 1) {
       res.status(200).json({
@@ -2841,7 +2864,7 @@ router.post("/updateRackId", async (req, res, next) => {
 /* -------------------------------GET RACK CHANGE REQUEST ----------------*/
 router.post("/rackChangeRequest", async (req, res, next) => {
   try {
-    const { username, screen,location} = req.body;
+    const { username, screen, location } = req.body;
     let data = await warehouseInController.getRackChangeRequest(
       username,
       screen,
@@ -2859,7 +2882,9 @@ router.post("/rackChangeRequest", async (req, res, next) => {
 // RECEIVE FOR RACK CHANGE SCAN IN
 router.post("/rackChangeTrayReceive", async (req, res, next) => {
   try {
-    let data = await warehouseInController.receiVeTheTrayForRackChange(req.body);
+    let data = await warehouseInController.receiVeTheTrayForRackChange(
+      req.body
+    );
     if (data.status == 1) {
       res.status(200).json({
         message: "Successfully Received",
@@ -2878,4 +2903,5 @@ router.post("/rackChangeTrayReceive", async (req, res, next) => {
     next(error);
   }
 });
+
 module.exports = router;

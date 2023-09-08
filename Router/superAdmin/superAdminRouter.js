@@ -1672,18 +1672,7 @@ router.get("/getCtxTrayCategory", async (req, res) => {
     next(error);
   }
 });
-router.post("/getCtxCategorys", async (req, res, next) => {
-  try {
-    let data = await superAdminController.getCtxCategorys();
-    if (data) {
-      res.status(200).json(data);
-    } else {
-      res.status(202).json({ error: "CTX ctaegory not Exist" });
-    }
-  } catch (error) {
-    next(error);
-  }
-});
+
 router.post("/categoryCheck", async (req, res, next) => {
   try {
     let user = await superAdminController.categoryCheck(req.body);
@@ -4056,6 +4045,40 @@ router.post("/extra/findMuic", async (req, res, next) => {
 router.post("/extra/updateRack", async (req, res, next) => {
   try {
     let data = await superAdminController.extraUpdateRack();
+    if (data.status == true) {
+      res.status(200).json({
+        message: "Successfully Update",
+      });
+    } else {
+      res.status(202).json({
+        message: "Failed",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+// REMOVE PROCURMENT 
+router.post("/extra/removeProcurmentRequest", async (req, res, next) => {
+  try {
+    let data = await superAdminController.removeProcurmentRequest();
+    if (data.status == true) {
+      res.status(200).json({
+        message: "Successfully Update",
+      });
+    } else {
+      res.status(202).json({
+        message: "Failed",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+// REMOVE ITEM
+router.post("/extra/removeAddtoMmt", async (req, res, next) => {
+  try {
+    let data = await superAdminController.removeAddToMmt();
     if (data.status == true) {
       res.status(200).json({
         message: "Successfully Update",

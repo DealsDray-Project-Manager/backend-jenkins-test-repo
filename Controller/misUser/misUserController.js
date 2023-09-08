@@ -5355,7 +5355,7 @@ module.exports = {
       let arr1 = [];
       for (let x of arr) {
         let obj={
-          uic:x.uic,
+          uic:x.uic?.toString(),
           ctx_tray_id:x.ctx_tray_id,
           current_status:x.current_status,
           model_name:x.model_name,

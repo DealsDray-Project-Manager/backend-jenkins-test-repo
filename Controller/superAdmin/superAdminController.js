@@ -28,6 +28,7 @@ const {
 } = require("../../Model/masterHistoryModel/mastersHistory");
 const moment = require("moment");
 const elasticsearch = require("../../Elastic-search/elastic");
+const purchaseOrder = require("../../Model/Purchase-order/purchase-order");
 
 const IISDOMAIN = "https://prexo-v8-5-dev-api.dealsdray.com/user/profile/";
 const IISDOMAINBUYERDOC =
@@ -5607,16 +5608,19 @@ module.exports = {
       //     })
       //   }
       // }
-      let findTray=await masters.findOne({code:"RPT18008"})
-      for(let x of findTray.actual_items){
-        let update=await masters.updateOne({code:"RPT18008"},{
-          $set:{
-            actual_items:[]
-          },
-          $push:{
-            items:x
+      let findTray = await masters.findOne({ code: "RPT18008" });
+      for (let x of findTray.actual_items) {
+        let update = await masters.updateOne(
+          { code: "RPT18008" },
+          {
+            $set: {
+              actual_items: [],
+            },
+            $push: {
+              items: x,
+            },
           }
-        })
+        );
       }
       resolve({ status: true });
     });
@@ -5657,6 +5661,115 @@ module.exports = {
         }
       }
       resolve({ status: true });
+    });
+  },
+  removeProcurmentRequest: () => {
+    return new Promise(async (resolve, reject) => {
+      let arr = [
+        "P8089293996",
+        "P8090051754",
+        "P2442567362",
+        "P2443255354",
+        "P2444099005",
+        "P2444477545",
+        "P2446886832",
+        "P2447457414",
+        "P2447852751",
+        "P2450048037",
+        "P2450474960",
+        "P8159099817",
+        "P8159630845",
+        "P8161257748",
+        "P7469810294",
+        "P7473459794",
+        "P7475652026",
+        "P7477323095",
+        "P7478691108",
+        "P7479036250",
+        "P7479322198",
+        "P7479814476",
+        "P4741633673",
+        "P0713640213",
+        "P3848974878",
+        "P8611210823",
+        "P3849382276",
+        "P8612583296",
+        "P6720163040",
+        "P0706990039",
+        "P0707990825",
+        "P8621520317",
+        "P0967230413",
+        "P0967924061",
+        "P0968387003",
+        "P8607596694",
+        "P8610010671",
+        "P8610767241",
+        "P8613070947",
+        "P8613537743",
+        "P8614174579",
+        "P8614656665",
+        "P8615049922",
+        "P8615779334",
+        "P8616174328",
+        "P8616676009",
+        "P8617023372",
+        "P8617440894",
+        "P8617816260",
+        "P8618223652",
+        "P8618788509",
+        "P8619190171",
+        "P8619414087",
+        "P8619889396",
+        "P8620714677",
+        "P8621184778",
+        "P8622274207",
+        "P8622882699",
+        "P8623345487",
+        "P8623778340",
+        "P8624247235",
+        "P8624622965",
+        "P8625128227",
+        "P8625569604",
+        "P8625970933",
+        "P8626493192",
+        "P8626870649",
+        "P8627271612",
+        "P8627599499",
+        "P8628289130",
+        "P8628687306",
+      ];
+      for (let x of arr) {
+        const data = await purchaseOrder.find({ request_id: x });
+        console.log(data);
+      }
+    });
+  },
+  removeAddToMmt: () => {
+    return new Promise(async (resolve, reject) => {
+      const takeData = await masters.findOne({ code: "BOT2027" });
+      for (let x of takeData.items) {
+        if (x.awbn_number == "'513790477834") {
+          let update = await masters.findOneAndUpdate(
+            { code: "MMT8023" },
+            {
+              $push: {
+                items: x,
+              },
+            }
+          );
+          let pullAndUpdate = await masters.findOneAndUpdate(
+            { code: "BOT2027" },
+            {
+              $pull: {
+                items: {
+                  awbn_number: x.awbn_number,
+                },
+              },
+            }
+          );
+        }
+      }
+      resolve({ status: 1 });
     });
   },
 };
