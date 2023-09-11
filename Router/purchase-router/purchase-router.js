@@ -97,7 +97,7 @@ router.post("/placeOrder", async (req, res, next) => {
 });
 router.post("/placeOrderDateFilter", async (req, res, next) => {
   try {
-    console.log(req.body);
+   
     const {toDate,fromDate,type,vendors}=req.body
     let data = await purchaseController.placeOrderDateFilter(fromDate,toDate,type,vendors);
     if (data) {

@@ -157,7 +157,7 @@ module.exports = {
         receiveCtx: 0,
         ctxToStxSorting: 0,
         stxMerge: 0,
-        rackChangeRequest:0
+        rackChangeRequest: 0,
       };
       count.rackChangeRequest = await masters.count({
         prefix: "tray-master",
@@ -4155,7 +4155,7 @@ module.exports = {
   assignToAgentRequestToWhRdlFls: (tray, user_name, sortId, actUser) => {
     return new Promise(async (resolve, reject) => {
       let sendtoRdlMis;
-      let newStatus=sortId
+      let newStatus = sortId;
       for (let x of tray) {
         if (sortId == "Send for RDL-two") {
           sendtoRdlMis = await masters.findOneAndUpdate(
@@ -4737,7 +4737,7 @@ module.exports = {
         const updateItem = await masters.findOneAndUpdate(
           {
             "items.uic": uic,
-            type_taxanomy:"WHT"
+            type_taxanomy: "WHT",
           },
           {
             $set: {
@@ -5351,16 +5351,17 @@ module.exports = {
   /*--------------------------------------------STX UTILITY ---------------------------------------*/
   stxUtilityImportXlsx: () => {
     return new Promise(async (resolve, reject) => {
-      let arr = []
+      let arr = [];
       let arr1 = [];
       for (let x of arr) {
-        let obj={
-          uic:x.uic?.toString(),
-          ctx_tray_id:x.ctx_tray_id,
-          current_status:x.current_status,
-          model_name:x.model_name,
-          grade:x.grade
-        }
+        let obj = {
+          uic: x.uic?.toString(),
+          ctx_tray_id: x.ctx_tray_id,
+          current_status: x.current_status,
+          model_name: x.model_name,
+          grade: x.grade,
+          type: "Stx-to-stx",
+        };
         let createTo = await stxUtility.create(obj);
       }
       resolve({ status: 1, data: arr1 });
@@ -5371,7 +5372,10 @@ module.exports = {
     // PROMISE FOR GET DATA
     return new Promise(async (resolve, reject) => {
       // FETCH DATA / CHECK UIC VALID OR NOT
-      const fetchData = await stxUtility.find({ uic: uic });
+      const fetchData = await stxUtility.find({
+        uic: uic,
+        type: { $ne: "Stx-to-stx" },
+      });
       // CHECK UIC AVAILABLE OR NOT
       if (fetchData.length !== 0) {
         // CHECK ALREADY ADDED INTO TRAY
@@ -5379,7 +5383,6 @@ module.exports = {
         if (checkIntrayOrnot) {
           resolve({ status: 2, trayId: checkIntrayOrnot.code });
         }
-
         // RESOLVE WITH STATUS 1
         resolve({ status: 1, uicData: fetchData });
       } else {
@@ -5448,8 +5451,33 @@ module.exports = {
     });
   },
   // UNIT ADD TO STX
-  stxUtilityAddItems: (uic, stXTrayId, ctxTrayId, brand, model, muic) => {
+  stxUtilityAddItems: (
+    uic,
+    stXTrayId,
+    ctxTrayId,
+    brand,
+    model,
+    muic,
+    screen,
+    actUser
+  ) => {
     return new Promise(async (resolve, reject) => {
+      let obj = {};
+      if (screen == "Stx to Stx") {
+        let removeFromCurrentTray = await masters.updateOne(
+          { "itmes.uic": uic },
+          {
+            $pull: {
+              items: {
+                uic: ui,
+              },
+            },
+          }
+        );
+        if (removeFromCurrentTray.modifiedCount == 0) {
+          resolve({ status: 2 });
+        }
+      }
       const getDelivery = await delivery.findOneAndUpdate(
         { "uic_code.code": uic },
         {
@@ -5460,7 +5488,7 @@ module.exports = {
           },
         }
       );
-      let obj = {
+      obj = {
         tracking_id: getDelivery?.tracking_id,
         bot_agent: getDelivery?.agent_name,
         tray_id: getDelivery?.tray_id,
@@ -5472,7 +5500,11 @@ module.exports = {
         order_id: getDelivery?.order_id,
         charging: getDelivery?.charging,
         bqc_report: getDelivery?.bqc_report,
+        audit_report: getDelivery?.audit_report,
+        rdl_fls_report: getDelivery?.rdl_fls_one_report,
+        rdl_repair_report: getDelivery?.rdl_two_report,
       };
+
       let updateStx = await masters.findOneAndUpdate(
         { code: stXTrayId },
         {
@@ -5485,6 +5517,16 @@ module.exports = {
         }
       );
       if (updateStx) {
+        const addLogsofUnits = await unitsActionLog.create({
+          action_type: "Stx Utility",
+          created_at: Date.now(),
+          uic: uic,
+          tray_id: stXTrayId,
+          user_name_of_action: actUser,
+          track_tray: "Units",
+          user_type: "Sales Warehouse",
+          description: `Units adde through Stx Utility  by the :${actUser}`,
+        });
         resolve({ status: 1 });
       } else {
         resolve({ status: 0 });
@@ -5509,9 +5551,12 @@ module.exports = {
           $match: {
             prefix: "tray-master",
             cpc: location,
-            issued_user_name:null,
-            sort_id: { $nin: ["Assigned to warehouae for rack change","No Status"] },
-            code:{$nin:["T051","T071"]}          },
+            issued_user_name: null,
+            sort_id: {
+              $nin: ["Assigned to warehouae for rack change", "No Status"],
+            },
+            code: { $nin: ["T051", "T071"] },
+          },
         },
         {
           $project: {
@@ -5554,22 +5599,25 @@ module.exports = {
       resolve(getWarehouseUsers);
     });
   },
-  assignForRackChange:(tray, scanOutWh,scanInWh, actUser)=>{
-    return new Promise(async(resolve,reject)=>{
-      let updateTheTray
-      for(let x of tray){
-        const findTray=await masters.findOne({code:x},{sort_id:1})
-         updateTheTray=await masters.findOneAndUpdate({code:x},{
-          $set:{
-            issued_user_name:scanOutWh,
-            rdl_2_user_temp:scanInWh,
-            requested_date:Date.now(),
-            temp_status:findTray.sort_id,
-            actual_items:[],
-            sort_id:"Assigned to warehouae for rack change",
-          },
-        })
-        if(updateTheTray){
+  assignForRackChange: (tray, scanOutWh, scanInWh, actUser) => {
+    return new Promise(async (resolve, reject) => {
+      let updateTheTray;
+      for (let x of tray) {
+        const findTray = await masters.findOne({ code: x }, { sort_id: 1 });
+        updateTheTray = await masters.findOneAndUpdate(
+          { code: x },
+          {
+            $set: {
+              issued_user_name: scanOutWh,
+              rdl_2_user_temp: scanInWh,
+              requested_date: Date.now(),
+              temp_status: findTray.sort_id,
+              actual_items: [],
+              sort_id: "Assigned to warehouae for rack change",
+            },
+          }
+        );
+        if (updateTheTray) {
           let state = "Tray";
           for (let y of updateTheTray.items) {
             let unitsLogCreation = await unitsActionLog.create({
@@ -5587,27 +5635,28 @@ module.exports = {
           }
         }
       }
-      if(updateTheTray){
-        resolve({status:1})
+      if (updateTheTray) {
+        resolve({ status: 1 });
+      } else {
+        resolve({ status: 2 });
       }
-      else{
-        resolve({status:2})
-      }
-    })
+    });
   },
-  changeRackByMis:(trayId,rackId)=>{
-    return new Promise(async(resolve,reject)=>{
-      const updateRack=await masters.updateOne({code:trayId},{
-        $set:{
-          temp_rack:rackId
+  changeRackByMis: (trayId, rackId) => {
+    return new Promise(async (resolve, reject) => {
+      const updateRack = await masters.updateOne(
+        { code: trayId },
+        {
+          $set: {
+            temp_rack: rackId,
+          },
         }
-      })
-      if(updateRack.modifiedCount !==0){
-        resolve({status:1})
+      );
+      if (updateRack.modifiedCount !== 0) {
+        resolve({ status: 1 });
+      } else {
+        resolve({ status: 2 });
       }
-      else{
-        resolve({status:2})
-      }
-    })
-  }
+    });
+  },
 };

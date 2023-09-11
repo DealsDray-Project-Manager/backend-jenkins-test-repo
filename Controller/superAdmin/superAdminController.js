@@ -28,7 +28,7 @@ const {
 } = require("../../Model/masterHistoryModel/mastersHistory");
 const moment = require("moment");
 const elasticsearch = require("../../Elastic-search/elastic");
-const purchaseOrder = require("../../Model/Purchase-order/purchase-order");
+const {purchaseOrder} = require("../../Model/Purchase-order/purchase-order");
 
 const IISDOMAIN = "https://prexo-v8-5-dev-api.dealsdray.com/user/profile/";
 const IISDOMAINBUYERDOC =
@@ -2718,11 +2718,17 @@ module.exports = {
 
   deleteTrayRacks: (rack_id) => {
     return new Promise(async (resolve, reject) => {
-      let data = await trayRack.deleteOne({ rack_id: rack_id });
-      if (data) {
-        resolve({ status: true });
-      } else {
-        resolve({ status: false });
+      let checkRack=await masters.findOne({$or:[{rack_id:rack_id},{temp_rack:rack_id}]})
+      if(checkRack){
+         resolve({status:2})
+      }
+      else{
+        let data = await trayRack.deleteOne({ rack_id: rack_id });
+        if (data.deletedCount == 1) {
+          resolve({ status: 1 });
+        } else {
+          resolve({ status: 0 });
+        }
       }
     });
   },
@@ -2765,7 +2771,7 @@ module.exports = {
         ];
 
         const rackCounts = await trayRack.aggregate(aggregatePipeline);
-        console.log(rackCounts);
+   
         resolve(rackCounts);
       } catch (error) {
         reject(error);
@@ -2780,7 +2786,12 @@ module.exports = {
       const rackIdData = await trayRack.find({ warehouse: warehouse });
       for (let x of rackIdData) {
         const findRack = await masters.find(
-          { rack_id: x.rack_id },
+          {
+            $or:[
+                {rack_id: x.rack_id },
+                {temp_rack:x.rack_id}
+            ]
+          },
           { rack_id: 1 }
         );
         if (x.limit > findRack.length) {
@@ -2832,12 +2843,18 @@ module.exports = {
   },
   getOneTrayRack: (rack_id) => {
     return new Promise(async (resolve, reject) => {
-      const getOneTrayRack = await trayRack.findOne({ rack_id: rack_id });
+      const checkPosForedit=await masters.findOne({$or:[{rack_id:rack_id},{temp_rack:rack_id}]})
+      if(checkPosForedit){
+        resolve({status:3})
+      }
+      else{
 
-      if (getOneTrayRack) {
-        resolve({ status: 1, data: getOneTrayRack });
-      } else {
-        resolve({ status: 2 });
+        const getOneTrayRack = await trayRack.findOne({ rack_id: rack_id });
+        if (getOneTrayRack) {
+          resolve({ status: 1, data: getOneTrayRack });
+        } else {
+          resolve({ status: 2 });
+        }
       }
     });
   },
@@ -3973,7 +3990,7 @@ module.exports = {
     });
   },
   getAssignedTray: (trayType, sort_id) => {
-    console.log(sort_id);
+   
     return new Promise(async (resolve, reject) => {
       if (sort_id == "Ctx to Stx Send for Sorting") {
         const res = await masters
@@ -4428,9 +4445,8 @@ module.exports = {
       let getDelivery = [];
 
       getDelivery = await delivery.find({
-        // wht_tray: x.code,
-        // ctx_tray_id: { $exists: false },
-        "uic_code.code": "93060012806",
+         wht_tray:"WHT1034",
+         tray_status:"Issued to BQC"
       });
 
       let findMuic = await products.findOne({
@@ -4457,18 +4473,16 @@ module.exports = {
           charging: y.charging,
         };
         let addToTray = await masters.findOneAndUpdate(
-          { code: "WHT1774" },
+          { code: "WHT1034" },
           {
             $push: {
               actual_items: obj,
             },
           }
         );
-        // }
-        // }
-        // }
+      
       }
-      resolve(bqcDoneTray);
+      resolve(getDelivery);
     });
   },
   bqcDoneReportIssueBugFix: () => {
@@ -5511,7 +5525,7 @@ module.exports = {
               },
             }
           );
-          console.log(udpateDelivery);
+          
 
           let main = await delivery.updateMany(
             {
@@ -5531,7 +5545,7 @@ module.exports = {
               },
             }
           );
-          console.log(udpateDelivery2);
+       
 
           let main2 = await masters.updateMany(
             {
@@ -5739,9 +5753,12 @@ module.exports = {
         "P8628687306",
       ];
       for (let x of arr) {
-        const data = await purchaseOrder.find({ request_id: x });
-        console.log(data);
+        const data = await purchaseOrder.findOne({ request_id: x });
+        if(data.status == "Pending"){
+          const deleteRequest=await purchaseOrder.deleteOne({request_id:x})
+        }
       }
+      resolve({status:true})
     });
   },
   removeAddToMmt: () => {

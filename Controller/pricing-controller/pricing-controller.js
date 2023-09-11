@@ -109,7 +109,7 @@ module.exports = {
       ]);
       count.viewPriceCount = count.viewPriceCount.length;
       count.radyForPricing = count.radyForPricing.length;
-      console.log(count);
+     
       if (count) {
         resolve(count);
       }
@@ -155,14 +155,14 @@ module.exports = {
       for (let x of getBasedOnMuic) {
         x["muic_one"] = x.muic[0];
       }
-      console.log(getBasedOnMuic);
+     
       resolve(getBasedOnMuic);
     });
   },
   /*--------------------------------------ADD PRICE----------------------------------*/
   addPrice: (muicDetails, location,screen) => {
     //PROMISE
-    console.log(muicDetails);
+   
     return new Promise(async (resolve, reject) => {
       // LOOP THE MUIC DETAILS
       // SET FLAG

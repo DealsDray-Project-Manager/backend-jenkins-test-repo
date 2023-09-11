@@ -38,7 +38,7 @@ router.post("/viewPrice/:location", async (req, res, next) => {
 
 router.post("/viewItemsForReadyForSales", async (req, res, next) => {
   try {
-    console.log(req.body);
+   
     const { location, brand, model, grade, date } = req.body;
     let data = await salesController.getItemsForReadyForSales(
       location,
@@ -65,7 +65,7 @@ router.post("/ReadyForSalesUnits", async (req, res, next) => {
   const { location } = req.body;
   try {
     let data = await salesController.ReadyForSalesUnits(location);
-    console.log("data:", data);
+   
     if (data) {
       res.status(200).json({
         data: data,

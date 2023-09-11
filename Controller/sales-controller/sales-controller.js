@@ -121,7 +121,7 @@ module.exports = {
       ]);
 
       for (let x of getBasedOnMuic) {
-        console.log(x);
+      
         x["muic_one"] = x.muic[0];
       }
       resolve(getBasedOnMuic);

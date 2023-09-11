@@ -61,31 +61,26 @@ router.post(
   ]),
   async (req, res, next) => {
     try {
-      console.log("api request");
-        let data = await superAdminController.createBuyer(
-          req.body,
-          req.files
-        );
-        if (data) {
-          console.log(data);
-          if (data.status) {
-            res.status(200).json({ status: 0, data: { message: "Buyer Exist" } });
-          } else {
-            res.status(200).json({
-              status: 1,
-              data: {
-                message: "Buyer is created",
-              },
-            });
-          }
+    
+      let data = await superAdminController.createBuyer(req.body, req.files);
+      if (data) {
+    
+        if (data.status) {
+          res.status(200).json({ status: 0, data: { message: "Buyer Exist" } });
+        } else {
+          res.status(200).json({
+            status: 1,
+            data: {
+              message: "Buyer is created",
+            },
+          });
         }
-       
+      }
     } catch (error) {
       next(error);
     }
   }
 );
-
 
 /*-----------------------------FETCH LOCATION TYPE--------------------------------------*/
 router.post("/location/type/:code", async (req, res, next) => {
@@ -341,14 +336,14 @@ router.get("/getEditData/:username", async (req, res) => {
 /*------------------------------EDITED BUYER DATA-------------------------------------*/
 router.get("/getEditBuyerData/:buyername", async (req, res) => {
   try {
-    let buyer = await superAdminController.getEditBuyerData(req.params.buyername);
+    let buyer = await superAdminController.getEditBuyerData(
+      req.params.buyername
+    );
     if (buyer) {
       res.status(200).json({ data: buyer });
     }
   } catch (error) {}
 });
-
-
 
 /*-----------------------------EDIT BUYER--------------------------------------*/
 
@@ -1612,6 +1607,7 @@ router.post("/addcategory", async (req, res, next) => {
 router.post("/getCtxCategorys", async (req, res, next) => {
   try {
     let data = await superAdminController.getCtxCategorys();
+   
     if (data) {
       res.status(200).json(data);
     } else {
@@ -2098,8 +2094,12 @@ router.post("/trayracks/one/:trayRackId", async (req, res, next) => {
       res.status(200).json({
         data: trayracksData.data,
       });
+    } else if (trayracksData.status == 3) {
+      res.status(202).json({
+        message: "You can't Edit this rack",
+      });
     } else {
-      res.status(200).json({
+      res.status(202).json({
         message: "No data found",
       });
     }
@@ -2125,6 +2125,10 @@ router.post("/deleteTrayRacks/:rack_id", async (req, res, next) => {
     if (data.status == true) {
       res.status(200).json({
         message: "Successfully Deleted",
+      });
+    } else if (data?.status == 2) {
+      res.status(202).json({
+        message: "This rack You Can't Delete",
       });
     } else {
       res.status(202).json({
@@ -3489,7 +3493,6 @@ router.post("/unverifiedImeiReport/:page/:size", async (req, res, next) => {
     if (data) {
       res.status(200).json({
         data: data.unverifiedImei,
-       
       });
     }
   } catch (error) {
@@ -3556,7 +3559,7 @@ router.post("/search/unverifiedImei", async (req, res, next) => {
 router.post("/updateUnverifiedImei", async (req, res, next) => {
   try {
     // const { trayType, sort_id } = req.body;
-    console.log(req.body);
+    
     const data = await superAdminController.updateUnverifiedImei(req.body);
     if (data.status == 1) {
       res.status(200).json({
@@ -4024,7 +4027,7 @@ router.post("/extra/removeIssuedUser", async (req, res, next) => {
     next(error);
   }
 });
-// FIND DUP MUIC 
+// FIND DUP MUIC
 router.post("/extra/findMuic", async (req, res, next) => {
   try {
     let data = await superAdminController.findDupMuic();
@@ -4058,7 +4061,7 @@ router.post("/extra/updateRack", async (req, res, next) => {
     next(error);
   }
 });
-// REMOVE PROCURMENT 
+// REMOVE PROCURMENT
 router.post("/extra/removeProcurmentRequest", async (req, res, next) => {
   try {
     let data = await superAdminController.removeProcurmentRequest();

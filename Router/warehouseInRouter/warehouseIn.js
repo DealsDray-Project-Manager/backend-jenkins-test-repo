@@ -11,7 +11,7 @@ const elasticsearch = require("../../Elastic-search/elastic");
 /**************************************************Dashboard**************************************************************************/
 router.post("/dashboard/:location/:username", async (req, res, next) => {
   try {
-    console.log(req.params);
+   
     const { location, username } = req.params;
     let data = await warehouseInController.dashboard(location, username);
     if (data) {
@@ -1876,7 +1876,7 @@ router.post("/trayIdCheckAuditApprovePage", async (req, res, next) => {
       brand,
       model
     );
-    console.log(data);
+   
     if (data.status == 1) {
       res.status(200).json({
         message: "Successfully Validated",
@@ -1899,7 +1899,7 @@ router.post("/trayIdCheckAuditApprovePage", async (req, res, next) => {
       });
     }
   } catch (error) {
-    next(error)
+    next(error);
   }
 });
 
@@ -2897,6 +2897,42 @@ router.post("/rackChangeTrayReceive", async (req, res, next) => {
     } else {
       res.status(202).json({
         message: "Failed",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+/*-----------------------------------------------STX TO STX UTILITY ----------------------------------------------------*/
+router.post("/stxToStxUtilityScan/:uic", async (req, res, next) => {
+  try {
+    // PARAMS
+    const { uic } = req.params;
+    // FUNCTION FROM CONTROLLER
+    let data = await warehouseInController.stxToStxUtilityScanUic(uic);
+    if (data.status == 1) {
+      res.status(200).json({
+        data: data.uicData,
+      });
+    } else if (data.status == 2) {
+      res.status(202).json({
+        message: `Item present in this tray ${data.trayId}, You can't take any action on this`,
+      });
+    } else if (data.status == 3) {
+      res.status(202).json({
+        message: `Item not present in any tray`,
+      });
+    } else if (data.status == 5) {
+      res.status(202).json({
+        message: `Item present in sales bin`,
+      });
+    } else if (data.status == 6) {
+      res.status(202).json({
+        message: `Item present in billed bin`,
+      });
+    } else {
+      res.status(202).json({
+        message: "Invalid UIC please check",
       });
     }
   } catch (error) {

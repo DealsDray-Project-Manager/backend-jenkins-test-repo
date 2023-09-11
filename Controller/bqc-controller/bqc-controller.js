@@ -245,7 +245,7 @@ module.exports = {
         if (getTray.sort_id !== "BQC Done") {
           Array.prototype.push.apply(getTray.items, getTray.temp_array);
           let data = await masters.findOneAndUpdate(
-            { code: trayData.trayId ,sort_id:{$ne:"BQC Done"}},
+            { code: trayData.trayId, sort_id: { $ne: "BQC Done" } },
             {
               $set: {
                 sort_id: "BQC Done",
@@ -259,7 +259,7 @@ module.exports = {
             { new: true }
           );
           if (data) {
-            let state="Tray"
+            let state = "Tray";
             for (let x of data.actual_items) {
               if (x.bqc_report == undefined) {
                 let obj = {
@@ -276,11 +276,11 @@ module.exports = {
                 tray_id: trayData.trayId,
                 user_name_of_action: data.issued_user_name,
                 report: x.bqc_report,
-                description:`BQC Done closed by the agent :${data.issued_user_name}`,
-                track_tray:state,
-                user_type:"PRC BQC"
+                description: `BQC Done closed by the agent :${data.issued_user_name}`,
+                track_tray: state,
+                user_type: "PRC BQC",
               });
-              state="Units"
+              state = "Units";
               let deliveryUpdate = await delivery.findOneAndUpdate(
                 {
                   tracking_id: x.tracking_id,
@@ -310,5 +310,4 @@ module.exports = {
       }
     });
   },
-  
 };

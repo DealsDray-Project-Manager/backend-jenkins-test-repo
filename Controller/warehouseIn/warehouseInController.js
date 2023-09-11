@@ -10,6 +10,7 @@ const elasticsearch = require("../../Elastic-search/elastic");
 const { trayRack } = require("../../Model/tray-rack/tray-rack");
 const { unitsActionLog } = require("../../Model/units-log/units-action-log");
 const { trayCategory } = require("../../Model/tray-category/tray-category");
+const { stxUtility } = require("../../Model/Stx-utility/stx-utility");
 
 /********************************************************************/
 /* 
@@ -23,7 +24,7 @@ const { trayCategory } = require("../../Model/tray-category/tray-category");
 module.exports = {
   /*------------------------DASHBOARD FOR WAREHOUSE----------------------------*/
   dashboard: (location, username) => {
-    console.log(username);
+ 
     return new Promise(async (resolve, reject) => {
       let count = {
         bagIssueRequest: 0,
@@ -2372,7 +2373,7 @@ module.exports = {
             },
           },
         ]);
-        console.log(data);
+     
         resolve(data);
       } else {
         let data = await masters.find({
@@ -2421,7 +2422,7 @@ module.exports = {
           },
         },
       ]);
-      console.log(data);
+   
       resolve(data);
     });
   },
@@ -4829,7 +4830,11 @@ module.exports = {
     let stage;
     return new Promise(async (resolve, reject) => {
       if (type !== "MMT" && type !== "WHT") {
-        if (length == limit) {
+        if (
+          Number(length) == Number(limit) &&
+          length !== undefined &&
+          limit !== undefined
+        ) {
           if (type == "ST") {
             stage = "Ready to Pricing";
             data = await masters.findOneAndUpdate(
@@ -6907,7 +6912,11 @@ module.exports = {
     return new Promise(async (resolve, reject) => {
       let dataUpdate;
       if (trayData.type == "ST") {
-        if (trayData.limit == trayData.itemCount) {
+        if (
+          Number(trayData.limit) == Number(trayData.itemCount) &&
+          trayData.limit !== undefined &&
+          trayData.itemCount !== undefined
+        ) {
           dataUpdate = await masters.findOneAndUpdate(
             { code: trayData.trayId },
             {
@@ -7171,7 +7180,7 @@ module.exports = {
         cpc: location,
         sort_id: "Assigned to sorting (Wht to rp)",
       });
-      console.log(getTray);
+     
       resolve(getTray);
     });
   },
@@ -7483,6 +7492,37 @@ module.exports = {
         }
       } else {
         resolve({ status: 3 });
+      }
+    });
+  },
+  stxToStxUtilityScanUic: (uic) => {
+    return new Promise(async (resolve, reject) => {
+      const data = await stxUtility.find({ uic: uic, type: "Stx-to-stx" });
+      if (data.length !== 0) {
+        const checkIntrayOrnot = await masters.findOne({ "items.uic": uic });
+        if (checkIntrayOrnot) {
+          if (checkIntrayOrnot.type_taxanomy == "ST") {
+            resolve({ status: 1, uicData: data });
+          } else {
+            resolve({ status: 2, trayId: checkIntrayOrnot.code });
+          }
+        } else {
+          let checkDelivery = await delivery.findOne(
+            { "uic_code.code": uic },
+            { sales_bin_status: 1, item_moved_to_billed_bin: 1 }
+          );
+          if (checkDelivery) {
+            if (checkDelivery.sales_bin_status !== undefined) {
+              resolve({ status: 5 });
+            } else if (checkDelivery.item_moved_to_billed_bin !== undefined) {
+              resolve({ status: 6 });
+            }
+          } else {
+            resolve({ status: 4 });
+          }
+        }
+      } else {
+        resolve({ status: 0 });
       }
     });
   },

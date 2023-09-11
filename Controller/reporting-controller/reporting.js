@@ -2361,12 +2361,12 @@ module.exports = {
         }
 
         if (findAllHistory) {
-          console.log(findAllHistory);
+      
           data[0]["uic_history"] = findAllHistory;
         } else {
           data[0]["uic_history"] = [];
         }
-        console.log(data);
+        
         resolve({ status: 1, data: data });
       }
     });

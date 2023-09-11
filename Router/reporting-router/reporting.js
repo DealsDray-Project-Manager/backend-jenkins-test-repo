@@ -572,7 +572,7 @@ router.post("/track-tray", async (req, res, next) => {
   try {
     const { location, trayId } = req.body;
     const trayData = await reportingAgentRouter.trackTray(location, trayId);
-    console.log(trayData.tray);
+   
     if (trayData.status == 1) {
       res.status(200).json({
         data: trayData.tray,
