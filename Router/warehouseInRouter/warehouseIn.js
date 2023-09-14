@@ -7,11 +7,12 @@ const router = express.Router();
 const warehouseInController = require("../../Controller/warehouseIn/warehouseInController");
 const { masters } = require("../../Model/mastersModel");
 const elasticsearch = require("../../Elastic-search/elastic");
+const duplicateEntryCheck = require("../../Controller/Duplicate-entry-check/duplicate-entry-check");
 /*******************************************************************************************************************/
 /**************************************************Dashboard**************************************************************************/
 router.post("/dashboard/:location/:username", async (req, res, next) => {
   try {
-    console.log(req.params);
+   
     const { location, username } = req.params;
     let data = await warehouseInController.dashboard(location, username);
     if (data) {
@@ -1485,18 +1486,22 @@ router.post("/mmtMergeRequest/:location", async (req, res, next) => {
 });
 /* VIEW FROM AND TO TRAY FOR MERGE */
 router.post(
-  "/viewTrayFromAndTo/:location/:fromTray",
+  "/viewTrayFromAndTo",
   async (req, res, next) => {
     try {
-      const { location, fromTray } = req.params;
+      const { location, fromTray,type } = req.body;
       let data = await warehouseInController.getFromAndToTrayMerge(
         location,
-        fromTray
+        fromTray,
+        type
       );
-
       if (data) {
+        let checkDup=data
+        if(type == "ctx-to-stx-sorting-page"){
+          checkDup=await duplicateEntryCheck.onlyItemsArrayForSortingLevel(data)
+        }
         res.status(200).json({
-          data: data,
+          data: checkDup,
         });
       } else {
         res.status(202).json({
@@ -1859,38 +1864,39 @@ router.post("/auditUserStatusChecking", async (req, res, next) => {
 
 router.post("/trayIdCheckAuditApprovePage", async (req, res, next) => {
   try {
-    const { trayId, trayType, location, brand, model } = req.body;
+    const { trayId, location, brand, model } = req.body;
 
     let data = await warehouseInController.checkTrayStatusAuditApprovePage(
       trayId,
-      trayType,
       location,
       brand,
       model
     );
+   
     if (data.status == 1) {
       res.status(200).json({
-        message: "Valid Tray",
-        trayId: trayId,
+        message: "Successfully Validated",
       });
     } else if (data.status == 2) {
       res.status(202).json({
-        message: `Not a ${trayType} tray`,
+        message: `Please check this tray ${data.trayId} Not a ${data.grade} Grade`,
       });
     } else if (data.status == 4) {
       res.status(202).json({
-        message: "Tray id does not exists",
+        message: `${data.trayId} Tray id does not exists`,
       });
     } else if (data.status == 5) {
       res.status(202).json({
-        message: "Mismatch Brand and Model",
+        message: `${data.trayId} Mismatch Brand and Model`,
       });
     } else {
       res.status(202).json({
-        message: "Tray already in process",
+        message: `${data.trayId} Tray already in process`,
       });
     }
-  } catch (error) {}
+  } catch (error) {
+    next(error);
+  }
 });
 
 /*----------------------------------------AUDIT TRAY ISSUE TO AGENT----------------------------------------------- */
@@ -1925,8 +1931,22 @@ router.post("/fetchAssignedTrayForAudit", async (req, res, next) => {
 
     if (data) {
       res.status(200).json({
-        data: data,
+        grade: data.grade,
+        tray: data.tray,
       });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+// GET TRAY GRADE
+router.post("/getCtxCategorysForIssue", async (req, res, next) => {
+  try {
+    let data = await warehouseInController.getCtxCategorysForIssue(req.body);
+    if (data) {
+      res.status(200).json(data);
+    } else {
+      res.status(202).json({ error: "CTX ctaegory not Exist" });
     }
   } catch (error) {
     next(error);
@@ -2879,4 +2899,41 @@ router.post("/rackChangeTrayReceive", async (req, res, next) => {
     next(error);
   }
 });
+/*-----------------------------------------------STX TO STX UTILITY ----------------------------------------------------*/
+router.post("/stxToStxUtilityScan/:uic", async (req, res, next) => {
+  try {
+    // PARAMS
+    const { uic } = req.params;
+    // FUNCTION FROM CONTROLLER
+    let data = await warehouseInController.stxToStxUtilityScanUic(uic);
+    if (data.status == 1) {
+      res.status(200).json({
+        data: data.uicData,
+      });
+    } else if (data.status == 2) {
+      res.status(202).json({
+        message: `Item present in this tray ${data.trayId}, You can't take any action on this`,
+      });
+    } else if (data.status == 3) {
+      res.status(202).json({
+        message: `Item not present in any tray`,
+      });
+    } else if (data.status == 5) {
+      res.status(202).json({
+        message: `Item present in sales bin`,
+      });
+    } else if (data.status == 6) {
+      res.status(202).json({
+        message: `Item present in billed bin`,
+      });
+    } else {
+      res.status(202).json({
+        message: "Invalid UIC or Already added please check.",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
 module.exports = router;

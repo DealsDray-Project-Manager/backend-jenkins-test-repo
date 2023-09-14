@@ -39,7 +39,7 @@ module.exports = {
             },
           },
         ]);
-        console.log(data);
+      
       } else {
         data = await purchaseOrder.find({ status: { $ne: "Order Placed" } });
       }
@@ -207,10 +207,10 @@ module.exports = {
         resolve({ filterData: dataofOrderRm, totalAmount: totalAmount });
       } else {
         for (let x of dataofOrderRm) {
-          console.log(x.total_price);
+      
           totalAmount = totalAmount + Number(x.total_price);
         }
-        console.log(totalAmount);
+       
         resolve({ filterData: dataofOrderRm, totalAmount: totalAmount });
       }
     });

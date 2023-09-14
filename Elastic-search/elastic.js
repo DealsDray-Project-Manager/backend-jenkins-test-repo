@@ -13,7 +13,7 @@ const client = new Client({
 module.exports = {
   creatIndex: async () => {
     const result = await client.indices.create({ index: "prexo-delivery" });
-    console.log(result);
+    
   },
   mappings: async () => {
     let data = await client.indices.putMapping({
@@ -240,7 +240,7 @@ module.exports = {
         },
       },
     });
-    console.log(data);
+    
   },
   bulkImportToElastic: async () => {
     let findDeliveryData = await delivery.find({}, { _id: 0, __v: 0 });

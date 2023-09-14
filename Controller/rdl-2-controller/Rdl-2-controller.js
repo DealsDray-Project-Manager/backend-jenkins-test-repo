@@ -168,14 +168,26 @@ module.exports = {
           }
         }
       } else {
-        resolve({ status: 4 });
+        let alAddCheck = await masters.findOne({
+          type_taxanomy: "RPT",
+          prefix: "tray-master",
+          "actual_items.uic": uic,
+        });
+        if (alAddCheck) {
+          resolve({ status: 5 });
+        } else {
+          resolve({ status: 4 });
+        }
       }
     });
   },
   repairDoneAction: async (trayItemData) => {
     try {
-      let checkTray=await masters.findOne({code:trayItemData.trayId},{sort_id:1})
-      if(checkTray.sort_id == "Rdl-two inprogress"){
+      let checkTray = await masters.findOne(
+        { code: trayItemData.trayId },
+        { sort_id: 1 }
+      );
+      if (checkTray.sort_id == "Rdl-two inprogress") {
         let dupEntry = await masters.findOne({
           code: trayItemData.trayId,
           "actual_items.uic": trayItemData.uic,
@@ -196,7 +208,7 @@ module.exports = {
               }
             );
           }
-  
+
           if (
             x.rdl_two_status == "Used" ||
             x.rdl_two_status == "Not used" ||
@@ -215,7 +227,7 @@ module.exports = {
             );
           }
         }
-  
+
         if (trayItemData.rdl_repair_report.more_part_required?.length !== 0) {
           await masters.updateOne(
             {
@@ -231,7 +243,7 @@ module.exports = {
             }
           );
         }
-  
+
         await masters.updateOne(
           {
             code: trayItemData.spTray,
@@ -256,10 +268,10 @@ module.exports = {
             },
           }
         );
-  
+
         checkAlreadyAdded.items[0].rdl_repair_report =
           trayItemData.rdl_repair_report;
-  
+
         let data = await masters.updateOne(
           { code: trayItemData.trayId },
           {
@@ -273,15 +285,14 @@ module.exports = {
             },
           }
         );
-  
+
         if (data.matchedCount !== 0) {
           return { status: 1 };
         } else {
           return { status: 2 };
         }
-      }
-      else{
-        return {status:5}
+      } else {
+        return { status: 5 };
       }
     } catch (error) {
       console.error("Error in repairDoneAction:", error);
@@ -347,7 +358,7 @@ module.exports = {
             }
           );
           if (updateRpTray) {
-            let state = "Tray"
+            let state = "Tray";
             for (let x of getRpTray.actual_items) {
               const addLogsofUnits = await unitsActionLog.create({
                 action_type: "Closed by RDL-two",
@@ -358,9 +369,9 @@ module.exports = {
                 report: x.rdl_repair_report,
                 track_tray: state,
                 user_type: "PRC RDL-Two",
-                description: `RDL Two done and sent to warehouse by agent:${updateRpTray.issued_user_name}`
+                description: `RDL Two done and sent to warehouse by agent:${updateRpTray.issued_user_name}`,
               });
-              state = "Units"
+              state = "Units";
               let updateDelivery = await delivery.findOneAndUpdate(
                 { "uic_code.code": x.uic },
                 {

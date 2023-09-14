@@ -1,6 +1,7 @@
 const brand = require("../../Model/brandModel/brand");
 const { delivery } = require("../../Model/deliveryModel/delivery");
 const { masters } = require("../../Model/mastersModel");
+var mongoose = require("mongoose");
 const Elasticsearch = require("../../Elastic-search/elastic");
 const { unitsActionLog } = require("../../Model/units-log/units-action-log");
 module.exports = {
@@ -390,6 +391,7 @@ module.exports = {
         if (checkTrayFull.limit == checkTrayFull.items.length) {
           resolve({ status: 3 });
         } else {
+          mmtTrayData.item._id = mongoose.Types.ObjectId();
           let data = await masters.findOneAndUpdate(
             { code: mmtTrayData.toTray },
             {

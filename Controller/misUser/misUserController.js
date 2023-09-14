@@ -265,10 +265,20 @@ module.exports = {
         },
       });
       count.stxMerge = await masters.count({
-        prefix: "tray-master",
-        cpc: location,
-        sort_id: "Inuse",
-        type_taxanomy: "ST",
+        $or: [
+          {
+            prefix: "tray-master",
+            cpc: location,
+            sort_id: "Inuse",
+            type_taxanomy: "ST",
+          },
+          {
+            prefix: "tray-master",
+            cpc: location,
+            sort_id: "Ready to Pricing",
+            type_taxanomy: "ST",
+          },
+        ],
       });
       count.readyToTransfer = await masters.count({
         $or: [
@@ -2926,6 +2936,33 @@ module.exports = {
             code: { $ne: fromTray },
           })
           .catch((err) => reject(err));
+      } else if (type == "ST") {
+        whtTray = await masters
+          .find({
+            $or: [
+              {
+                prefix: "tray-master",
+                type_taxanomy: type,
+                tray_grade: grade,
+                brand: brand,
+                model: model,
+                cpc: location,
+                sort_id: sortId,
+                code: { $ne: fromTray },
+              },
+              {
+                prefix: "tray-master",
+                type_taxanomy: type,
+                tray_grade: grade,
+                brand: brand,
+                model: model,
+                cpc: location,
+                sort_id: "Ready to Pricing",
+                code: { $ne: fromTray },
+              },
+            ],
+          })
+          .catch((err) => reject(err));
       } else {
         whtTray = await masters
           .find({
@@ -2943,7 +2980,7 @@ module.exports = {
 
       if (whtTray.length !== 0) {
         for (let x of whtTray) {
-          if (parseInt(x.limit) >= parseInt(x.items.length)) {
+          if (parseInt(x.limit) > parseInt(x.items.length)) {
             arr.push(x);
           }
         }
@@ -4156,7 +4193,7 @@ module.exports = {
   assignToAgentRequestToWhRdlFls: (tray, user_name, sortId, actUser) => {
     return new Promise(async (resolve, reject) => {
       let sendtoRdlMis;
-      let newStatus=sortId
+      let newStatus = sortId;
       for (let x of tray) {
         if (sortId == "Send for RDL-two") {
           sendtoRdlMis = await masters.findOneAndUpdate(
@@ -5353,14 +5390,16 @@ module.exports = {
   stxUtilityImportXlsx: () => {
     return new Promise(async (resolve, reject) => {
       let arr = [];
+
       let arr1 = [];
       for (let x of arr) {
         let obj = {
-          uic: x.uic,
+          uic: x.uic?.toString(),
           ctx_tray_id: x.ctx_tray_id,
           current_status: x.current_status,
           model_name: x.model_name,
           grade: x.grade,
+          type: "Stx-to-stx",
         };
         let createTo = await stxUtility.create(obj);
       }
@@ -5372,7 +5411,10 @@ module.exports = {
     // PROMISE FOR GET DATA
     return new Promise(async (resolve, reject) => {
       // FETCH DATA / CHECK UIC VALID OR NOT
-      const fetchData = await stxUtility.find({ uic: uic });
+      const fetchData = await stxUtility.find({
+        uic: uic,
+        type: { $ne: "Stx-to-stx" },
+      });
       // CHECK UIC AVAILABLE OR NOT
       if (fetchData.length !== 0) {
         // CHECK ALREADY ADDED INTO TRAY
@@ -5380,7 +5422,6 @@ module.exports = {
         if (checkIntrayOrnot) {
           resolve({ status: 2, trayId: checkIntrayOrnot.code });
         }
-
         // RESOLVE WITH STATUS 1
         resolve({ status: 1, uicData: fetchData });
       } else {
@@ -5449,8 +5490,35 @@ module.exports = {
     });
   },
   // UNIT ADD TO STX
-  stxUtilityAddItems: (uic, stXTrayId, ctxTrayId, brand, model, muic) => {
+  stxUtilityAddItems: (
+    uic,
+    stXTrayId,
+    ctxTrayId,
+    brand,
+    model,
+    muic,
+    screen,
+    actUser
+  ) => {
+    console.log(screen);
     return new Promise(async (resolve, reject) => {
+      let obj = {};
+      if (screen == "Stx to Stx") {
+        let removeFromCurrentTray = await masters.updateOne(
+          { "items.uic": uic },
+          {
+            $pull: {
+              items: {
+                uic: uic,
+              },
+            },
+          }
+        );
+        console.log(removeFromCurrentTray);
+        if (removeFromCurrentTray.modifiedCount == 0) {
+          resolve({ status: 2 });
+        }
+      }
       const getDelivery = await delivery.findOneAndUpdate(
         { "uic_code.code": uic },
         {
@@ -5461,7 +5529,7 @@ module.exports = {
           },
         }
       );
-      let obj = {
+      obj = {
         tracking_id: getDelivery?.tracking_id,
         bot_agent: getDelivery?.agent_name,
         tray_id: getDelivery?.tray_id,
@@ -5473,7 +5541,11 @@ module.exports = {
         order_id: getDelivery?.order_id,
         charging: getDelivery?.charging,
         bqc_report: getDelivery?.bqc_report,
+        audit_report: getDelivery?.audit_report,
+        rdl_fls_report: getDelivery?.rdl_fls_one_report,
+        rdl_repair_report: getDelivery?.rdl_two_report,
       };
+
       let updateStx = await masters.findOneAndUpdate(
         { code: stXTrayId },
         {
@@ -5486,6 +5558,24 @@ module.exports = {
         }
       );
       if (updateStx) {
+        let updateStxUtility = await stxUtility.updateMany(
+          { uic: uic, type: "Stx-to-stx" },
+          {
+            $set: {
+              added_status: "Added",
+            },
+          }
+        );
+        const addLogsofUnits = await unitsActionLog.create({
+          action_type: "Stx Utility",
+          created_at: Date.now(),
+          uic: uic,
+          tray_id: stXTrayId,
+          user_name_of_action: actUser,
+          track_tray: "Units",
+          user_type: "Sales Warehouse",
+          description: `Units adde through Stx Utility  by the :${actUser}`,
+        });
         resolve({ status: 1 });
       } else {
         resolve({ status: 0 });
@@ -5510,9 +5600,12 @@ module.exports = {
           $match: {
             prefix: "tray-master",
             cpc: location,
-            issued_user_name:null,
-            sort_id: { $nin: ["Assigned to warehouae for rack change","No Status"] },
-            code:{$nin:["T051","T071"]}          },
+            issued_user_name: null,
+            sort_id: {
+              $nin: ["Assigned to warehouae for rack change", "No Status"],
+            },
+            code: { $nin: ["T051", "T071"] },
+          },
         },
         {
           $project: {
@@ -5647,19 +5740,34 @@ module.exports = {
   sendTheBagViaCourierOrHand: (deliveryData) => {
     return new Promise(async (resolve, reject) => {
       let updateBag;
-      for (let x of delivery.bag) {
-        updateBag = await bagTransfer.updateOne(
+      for (let x of delivery.bag_details) {
+        updateBag = await masters.findOneAndUpdate(
           {
             code: x,
           },
           {
             $set: {
-              sort_id: "Bag Transferred",
+              sort_id: "Bag Transferred to new location",
             },
           }
         );
+        if (updateBag) {
+          for (let x of updateBag.items) {
+            await unitsActionLog
+              .create({
+                created_at: Date.now(),
+                awbn_number: x.awbn_number,
+                user_name_of_action: deliveryData.username,
+                action_type: "Bag Transfer",
+                user_type: `${deliveryData.warehouseType} Mis`,
+                description: `Bag Transferd to this location ${deliveryData.cpc} ,warehoue name:${deliveryData?.warehoue} done by:${deliveryData.username}`,
+                bag_id: x,
+              })
+              .catch((err) => reject(err));
+          }
+        }
       }
-      if (updateBag.modifiedCount !== 0) {
+      if (updateBag) {
         const createDelivery = await bagTransfer.create(deliveryData);
         if (createDelivery) {
           resolve({ status: 1 });

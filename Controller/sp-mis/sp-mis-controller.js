@@ -97,7 +97,7 @@ module.exports = {
 
       // Step 6: Calculate the count and resolve the final result
       const count = { precourmentCount: resolvedArr.length };
-      console.log(count);
+     
       resolve(count);
     });
   },

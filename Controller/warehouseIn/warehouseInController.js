@@ -9,6 +9,8 @@ const moment = require("moment");
 const elasticsearch = require("../../Elastic-search/elastic");
 const { trayRack } = require("../../Model/tray-rack/tray-rack");
 const { unitsActionLog } = require("../../Model/units-log/units-action-log");
+const { trayCategory } = require("../../Model/tray-category/tray-category");
+const { stxUtility } = require("../../Model/Stx-utility/stx-utility");
 
 /********************************************************************/
 /* 
@@ -22,7 +24,6 @@ const { unitsActionLog } = require("../../Model/units-log/units-action-log");
 module.exports = {
   /*------------------------DASHBOARD FOR WAREHOUSE----------------------------*/
   dashboard: (location, username) => {
-    console.log(username);
     return new Promise(async (resolve, reject) => {
       let count = {
         bagIssueRequest: 0,
@@ -2371,7 +2372,7 @@ module.exports = {
             },
           },
         ]);
-        console.log(data);
+
         resolve(data);
       } else {
         let data = await masters.find({
@@ -2420,7 +2421,7 @@ module.exports = {
           },
         },
       ]);
-      console.log(data);
+
       resolve(data);
     });
   },
@@ -2880,6 +2881,7 @@ module.exports = {
         if (checkAlreadyAdded) {
           resolve({ status: 3 });
         } else {
+          trayItemData.item._id = mongoose.Types.ObjectId();
           let data = await masters.updateOne(
             { code: trayItemData.trayId },
             {
@@ -4828,7 +4830,11 @@ module.exports = {
     let stage;
     return new Promise(async (resolve, reject) => {
       if (type !== "MMT" && type !== "WHT") {
-        if (length == limit) {
+        if (
+          Number(length) == Number(limit) &&
+          length !== undefined &&
+          limit !== undefined
+        ) {
           if (type == "ST") {
             stage = "Ready to Pricing";
             data = await masters.findOneAndUpdate(
@@ -4877,6 +4883,8 @@ module.exports = {
                 issued_user_name: null,
                 from_merge: null,
                 to_merge: null,
+                mrp_price: null,
+                sp_price: null,
               },
             }
           );
@@ -5271,88 +5279,89 @@ module.exports = {
     });
   },
 
-  checkTrayStatusAuditApprovePage: (
-    trayId,
-    trayType,
-    location,
-    brand,
-    model
-  ) => {
+  checkTrayStatusAuditApprovePage: (trayId, location, brand, model) => {
     return new Promise(async (resolve, reject) => {
-      let checkId = await masters.findOne({
-        code: trayId,
-        prefix: "tray-master",
-        cpc: location,
-      });
-      if (checkId == null) {
-        resolve({ status: 4 });
-      } else if (checkId?.brand !== brand || checkId?.model !== model) {
-        resolve({ status: 5 });
-      } else if (
-        checkId.tray_grade == trayType &&
-        checkId.type_taxanomy == "CT"
-      ) {
-        if (checkId.sort_id == "Open") {
-          resolve({ status: 1 });
-        } else {
-          resolve({ status: 3 });
+      for (let x of trayId) {
+        for (let y in x) {
+          let checkId = await masters.findOne({
+            code: x[y],
+            prefix: "tray-master",
+            cpc: location,
+          });
+
+          if (checkId == null) {
+            resolve({ status: 4, trayId: x[y] });
+          } else if (checkId?.brand !== brand || checkId?.model !== model) {
+            resolve({ status: 5, trayId: x[y] });
+          } else if (checkId.tray_grade == y && checkId.type_taxanomy == "CT") {
+            if (checkId.sort_id !== "Open") {
+              resolve({ status: 3, trayId: x[y] });
+            }
+          } else {
+            resolve({ status: 2, trayId: x[y], grade: y });
+          }
         }
-      } else {
-        resolve({ status: 2 });
       }
+      resolve({ status: 1 });
     });
   },
   auditTrayAssign: (trayData) => {
     return new Promise(async (resolve, reject) => {
       let issue;
+      let obj = {
+        WHT: trayData.whtTray,
+      };
+      trayData.trayId.push(obj);
       for (let x of trayData.trayId) {
-        issue = await masters.findOneAndUpdate(
-          { code: x },
-          {
-            $set: {
-              sort_id: "Issued to Audit",
-              assigned_date: Date.now(),
-              rack_id: null,
-              description: trayData.description,
-              issued_user_name: trayData.username,
-              "track_tray.issue_to_audit_wh": Date.now(),
-              actual_items: [],
-              temp_array: [],
-            },
-          }
-        );
-
-        if (issue.type_taxanomy == "WHT") {
-          let state = "Tray";
-          for (let y of issue.items) {
-            let unitsLogCreation = await unitsActionLog.create({
-              action_type: "Issued to Audit",
-              created_at: Date.now(),
-              user_name_of_action: trayData.actioUser,
-              user_type: "PRC Warehouse",
-              uic: y.uic,
-              tray_id: x,
-              description: `Issued for Audit to agent :${issue.issued_user_name} by Wh:${trayData.actioUser}`,
-              track_tray: state,
-            });
-            state = "Units";
-            let updateTrack = await delivery.findOneAndUpdate(
-              { tracking_id: y.tracking_id },
-              {
-                $set: {
-                  tray_location: "Audit",
-                  issued_to_audit: Date.now(),
-                  audit_user_name: issue.issued_user_name,
-                  tray_status: "Issued to Audit",
-                  "bqc_report.bqc_status": y?.bqc_status,
-                  updated_at: Date.now(),
-                },
+        for (let code in x) {
+          issue = await masters.findOneAndUpdate(
+            { code: x[code] },
+            {
+              $set: {
+                sort_id: "Issued to Audit",
+                assigned_date: Date.now(),
+                rack_id: null,
+                description: trayData.description,
+                issued_user_name: trayData.username,
+                "track_tray.issue_to_audit_wh": Date.now(),
+                actual_items: [],
+                temp_array: [],
               },
-              {
-                new: true,
-                projection: { _id: 0 },
-              }
-            );
+            }
+          );
+
+          if (issue.type_taxanomy == "WHT") {
+            let state = "Tray";
+            for (let y of issue.items) {
+              let unitsLogCreation = await unitsActionLog.create({
+                action_type: "Issued to Audit",
+                created_at: Date.now(),
+                user_name_of_action: trayData.actioUser,
+                user_type: "PRC Warehouse",
+                uic: y.uic,
+                tray_id: x[code],
+                description: `Issued for Audit to agent :${issue.issued_user_name} by Wh:${trayData.actioUser}`,
+                track_tray: state,
+              });
+              state = "Units";
+              let updateTrack = await delivery.findOneAndUpdate(
+                { tracking_id: y.tracking_id },
+                {
+                  $set: {
+                    tray_location: "Audit",
+                    issued_to_audit: Date.now(),
+                    audit_user_name: issue.issued_user_name,
+                    tray_status: "Issued to Audit",
+                    "bqc_report.bqc_status": y?.bqc_status,
+                    updated_at: Date.now(),
+                  },
+                },
+                {
+                  new: true,
+                  projection: { _id: 0 },
+                }
+              );
+            }
           }
         }
       }
@@ -5365,12 +5374,8 @@ module.exports = {
   },
   getAssignedTrayForAudit: (username, brand, model) => {
     return new Promise(async (resolve, reject) => {
-      let obj = {
-        A: "",
-        B: "",
-        C: "",
-        D: "",
-      };
+      let arr = [];
+      let grade = [];
       let data = await masters.find({
         type_taxanomy: { $ne: "WHT" },
         issued_user_name: username,
@@ -5380,13 +5385,20 @@ module.exports = {
       if (data.length != 0) {
         for (let x of data) {
           if (x.brand == brand && x.model == model) {
-            obj[x.tray_grade] = x.code;
+            arr.push(x.code);
+            grade.push(x.tray_grade);
           }
         }
-        resolve(obj);
+        resolve({ grade: grade, tray: arr });
       } else {
-        resolve(obj);
+        resolve({ grade: grade, tray: arr });
       }
+    });
+  },
+  getCtxCategorysForIssue: (grades) => {
+    return new Promise(async (resolve, reject) => {
+      const fetchData = await trayCategory.find({ code: { $nin: grades } });
+      resolve(fetchData);
     });
   },
   whtTrayRelease: (trayId) => {
@@ -6902,24 +6914,61 @@ module.exports = {
     return new Promise(async (resolve, reject) => {
       let dataUpdate;
       if (trayData.type == "ST") {
-        if (trayData.limit == trayData.itemCount) {
-          dataUpdate = await masters.findOneAndUpdate(
-            { code: trayData.trayId },
-            {
-              $set: {
-                rack_id: trayData.rackId,
-                issued_user_name: null,
-                actual_items: [],
-                temp_array: [],
-                from_merge: null,
-                to_merge: null,
-                rack_id: trayData.rackId,
-                sort_id: "Ready to Pricing",
-                "track_tray.ctx_sorting_done": Date.now(),
-                description: trayData.description,
-              },
-            }
-          );
+        console.log(trayData);
+        let findMrpSp = await masters.findOne(
+          {
+            brand: trayData?.brand,
+            model: trayData?.model,
+            tray_grade: trayData?.grade,
+            sp_price: { $exists: true, $ne: null },
+            mrp_price: { $exists: true, $ne: null },
+          },
+          { sp_price: 1, mrp_price: 1 }
+        );
+        if (
+          Number(trayData.limit) == Number(trayData.itemCount) &&
+          trayData.limit !== undefined &&
+          trayData.itemCount !== undefined
+        ) {
+          if (findMrpSp) {
+            dataUpdate = await masters.findOneAndUpdate(
+              { code: trayData.trayId },
+              {
+                $set: {
+                  rack_id: trayData.rackId,
+                  issued_user_name: null,
+                  actual_items: [],
+                  temp_array: [],
+                  from_merge: null,
+                  sp_price: findMrpSp?.sp_price,
+                  mrp_price: findMrpSp?.mrp_price,
+                  to_merge: null,
+                  rack_id: trayData.rackId,
+                  sort_id: "Ready to Pricing",
+                  "track_tray.ctx_sorting_done": Date.now(),
+                  description: trayData.description,
+                },
+              }
+            );
+          } else {
+            dataUpdate = await masters.findOneAndUpdate(
+              { code: trayData.trayId },
+              {
+                $set: {
+                  rack_id: trayData.rackId,
+                  issued_user_name: null,
+                  actual_items: [],
+                  temp_array: [],
+                  from_merge: null,
+                  to_merge: null,
+                  rack_id: trayData.rackId,
+                  sort_id: "Ready to Pricing",
+                  "track_tray.ctx_sorting_done": Date.now(),
+                  description: trayData.description,
+                },
+              }
+            );
+          }
           if (dataUpdate) {
             resolve({ status: 1, tray: dataUpdate });
           } else {
@@ -6949,24 +6998,47 @@ module.exports = {
             resolve({ status: 0 });
           }
         } else {
-          dataUpdate = await masters.findOneAndUpdate(
-            { code: trayData.trayId },
-            {
-              $set: {
-                rack_id: trayData.rackId,
-                issued_user_name: null,
-                actual_items: [],
-                temp_array: [],
-                from_merge: null,
-                to_merge: null,
-                sort_id: "Inuse",
-                rack_id: trayData.rackId,
-                "track_tray.ctx_sorting_done": Date.now(),
-                closed_time_wharehouse: Date.now(),
-                description: trayData.description,
-              },
-            }
-          );
+          if (findMrpSp) {
+            dataUpdate = await masters.findOneAndUpdate(
+              { code: trayData.trayId },
+              {
+                $set: {
+                  rack_id: trayData.rackId,
+                  issued_user_name: null,
+                  actual_items: [],
+                  temp_array: [],
+                  from_merge: null,
+                  to_merge: null,
+                  sort_id: "Inuse",
+                  sp_price: findMrpSp?.sp_price,
+                  mrp_price: findMrpSp?.mrp_price,
+                  rack_id: trayData.rackId,
+                  "track_tray.ctx_sorting_done": Date.now(),
+                  closed_time_wharehouse: Date.now(),
+                  description: trayData.description,
+                },
+              }
+            );
+          } else {
+            dataUpdate = await masters.findOneAndUpdate(
+              { code: trayData.trayId },
+              {
+                $set: {
+                  rack_id: trayData.rackId,
+                  issued_user_name: null,
+                  actual_items: [],
+                  temp_array: [],
+                  from_merge: null,
+                  to_merge: null,
+                  sort_id: "Inuse",
+                  rack_id: trayData.rackId,
+                  "track_tray.ctx_sorting_done": Date.now(),
+                  closed_time_wharehouse: Date.now(),
+                  description: trayData.description,
+                },
+              }
+            );
+          }
         }
         if (dataUpdate) {
           resolve({ status: 3, tray: dataUpdate });
@@ -7055,6 +7127,12 @@ module.exports = {
               prefix: "tray-master",
               cpc: location,
               sort_id: type,
+              type_taxanomy: "ST",
+            },
+            {
+              prefix: "tray-master",
+              cpc: location,
+              sort_id: "Ready to Pricing",
               type_taxanomy: "ST",
             },
           ],
@@ -7166,7 +7244,7 @@ module.exports = {
         cpc: location,
         sort_id: "Assigned to sorting (Wht to rp)",
       });
-      console.log(getTray);
+
       resolve(getTray);
     });
   },
@@ -7478,6 +7556,41 @@ module.exports = {
         }
       } else {
         resolve({ status: 3 });
+      }
+    });
+  },
+  stxToStxUtilityScanUic: (uic) => {
+    return new Promise(async (resolve, reject) => {
+      const data = await stxUtility.find({
+        uic: uic,
+        type: "Stx-to-stx",
+        added_status: { $ne: "Added" },
+      });
+      if (data.length !== 0) {
+        const checkIntrayOrnot = await masters.findOne({ "items.uic": uic });
+        if (checkIntrayOrnot) {
+          if (checkIntrayOrnot.type_taxanomy == "ST") {
+            resolve({ status: 1, uicData: data });
+          } else {
+            resolve({ status: 2, trayId: checkIntrayOrnot.code });
+          }
+        } else {
+          let checkDelivery = await delivery.findOne(
+            { "uic_code.code": uic },
+            { sales_bin_status: 1, item_moved_to_billed_bin: 1 }
+          );
+          if (checkDelivery) {
+            if (checkDelivery.sales_bin_status !== undefined) {
+              resolve({ status: 5 });
+            } else if (checkDelivery.item_moved_to_billed_bin !== undefined) {
+              resolve({ status: 6 });
+            }
+          } else {
+            resolve({ status: 4 });
+          }
+        }
+      } else {
+        resolve({ status: 0 });
       }
     });
   },

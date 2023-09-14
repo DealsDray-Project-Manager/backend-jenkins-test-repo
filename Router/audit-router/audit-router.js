@@ -205,10 +205,16 @@ router.post("/trayClose/:trayId", async (req, res, next) => {
 // GET COLOR AND STORAGE AND RAM
 router.post("/getColorStorageRam", async (req, res, next) => {
   try {
-    let data = await auditController.getAllStorageAndRamAndColor();
+    const {grade}=req.body
+    console.log(grade);
+    let data = await auditController.getAllStorageAndRamAndColor(grade);
+    console.log(data.flagToHigh);
     if (data) {
       res.status(200).json({
-        data: data,
+        data: data.allOtherData,
+        upArray:data.upArray,
+        downArray:data.downArray,
+        flagToHigh:data.flagToHigh
       });
     }
   } catch (error) {
