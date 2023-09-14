@@ -13,18 +13,26 @@ module.exports = {
     return new Promise(async (resolve, reject) => {
       let count = {
         radyForPricing: 0,
-        viewPriceCount:0,
-        unitsCount:0,
-        unitsCountSales:0
+        viewPriceCount: 0,
+        unitsCount: 0,
+        unitsCountSales: 0,
       };
       count.unitsCount = await masters.aggregate([
         {
           $match: {
             type_taxanomy: "ST",
             cpc: location,
-            sort_id:{$in:["Ready to Pricing","Inuse"]},
+            sort_id: {
+              $nin: [
+                "Open",
+                "Issued to Sorting for Ctx to Stx",
+                "Ctx to Stx Sorting Done",
+                "Received From Sorting Agent After Ctx to Stx",
+                "STX-Utility In-progress",
+              ],
+            },
             sp_price: { $exists: false },
-            mrp_price: { $exists: false},
+            mrp_price: { $exists: false },
           },
         },
         {
@@ -33,7 +41,7 @@ module.exports = {
             itemCountSum: { $sum: { $size: "$items" } }, // Sum the itemCount for all documents
           },
         },
-      ]) // Convert aggregation result to an array
+      ]); // Convert aggregation result to an array
       if (count.unitsCount.length > 0) {
         count.unitsCount = count.unitsCount[0].itemCountSum; // Extract the sum from the result
       } else {
@@ -44,9 +52,9 @@ module.exports = {
           $match: {
             type_taxanomy: "ST",
             cpc: location,
-            sort_id:{$in:["Ready to Pricing","Inuse"]},
+            sort_id: { $ne: "Open" },
             sp_price: { $exists: true },
-            mrp_price: { $exists: true},
+            mrp_price: { $exists: true },
           },
         },
         {
@@ -55,19 +63,26 @@ module.exports = {
             itemCountSum: { $sum: { $size: "$items" } }, // Sum the itemCount for all documents
           },
         },
-      ]) // Convert aggregation result to an array
+      ]); // Convert aggregation result to an array
       if (count.unitsCountSales.length > 0) {
         count.unitsCountSales = count.unitsCountSales[0].itemCountSum; // Extract the sum from the result
       } else {
         count.unitsCountSales = 0; // If there are no results, set unitsCount to 0
       }
-      
       count.radyForPricing = await masters.aggregate([
         {
           $match: {
             type_taxanomy: "ST",
             cpc: location,
-            sort_id:{$in:["Ready to Pricing","Inuse"]},
+            sort_id: {
+              $nin: [
+                "Open",
+                "Issued to Sorting for Ctx to Stx",
+                "Ctx to Stx Sorting Done",
+                "Received From Sorting Agent After Ctx to Stx",
+                "STX-Utility In-progress",
+              ],
+            },
             sp_price: { $exists: false }, // Filter out documents with null or missing sp_price
             mrp_price: { $exists: false },
           },
@@ -88,7 +103,7 @@ module.exports = {
           $match: {
             type_taxanomy: "ST",
             cpc: location,
-            sort_id:{$in:["Ready to Pricing","Inuse"]},
+            sort_id: { $ne: "Open" },
             sp_price: { $exists: true, $ne: null }, // Filter out documents with null or missing sp_price
             mrp_price: { $exists: true, $ne: null }, // Filter out documents with null or missing mrp_price
           },
@@ -109,7 +124,7 @@ module.exports = {
       ]);
       count.viewPriceCount = count.viewPriceCount.length;
       count.radyForPricing = count.radyForPricing.length;
-     
+
       if (count) {
         resolve(count);
       }
@@ -124,7 +139,15 @@ module.exports = {
           $match: {
             type_taxanomy: "ST",
             cpc: location,
-            sort_id:{$in:["Ready to Pricing","Inuse"]},
+            sort_id: {
+              $nin: [
+                "Open",
+                "Issued to Sorting for Ctx to Stx",
+                "Ctx to Stx Sorting Done",
+                "Received From Sorting Agent After Ctx to Stx",
+                "STX-Utility In-progress",
+              ],
+            },
             sp_price: { $exists: false }, // Filter out documents with null or missing sp_price
             mrp_price: { $exists: false },
           },
@@ -155,23 +178,22 @@ module.exports = {
       for (let x of getBasedOnMuic) {
         x["muic_one"] = x.muic[0];
       }
-     
+
       resolve(getBasedOnMuic);
     });
   },
   /*--------------------------------------ADD PRICE----------------------------------*/
-  addPrice: (muicDetails, location,screen) => {
+  addPrice: (muicDetails, location, screen) => {
     //PROMISE
-   
+
     return new Promise(async (resolve, reject) => {
       // LOOP THE MUIC DETAILS
       // SET FLAG
       let flag = true;
       for (let x of muicDetails) {
-     
         let updatePriceTrayWise;
         const findSkuId = await products.findOne({ muic: x.muic });
-         if(screen =="Price updation"){
+        if (screen == "Price updation") {
           updatePriceTrayWise = await masters.updateMany(
             {
               brand: findSkuId.brand_name,
@@ -179,7 +201,7 @@ module.exports = {
               tray_grade: x.grade,
               type_taxanomy: "ST",
               cpc: location,
-              sort_id:{$in:["Ready to Pricing","Inuse"]},
+              sort_id: { $ne: "Open" },
               sp_price: { $exists: true }, // Filter out documents with null or missing sp_price
               mrp_price: { $exists: true },
             },
@@ -191,22 +213,22 @@ module.exports = {
               },
             }
           );
-        }
-         else {
+        } else {
           // FIND OUT SKUID OF THE PRODUCT USING MUIC
           // UPDATE THE PRICE IN TRAY WAISE
           updatePriceTrayWise = await masters.updateMany(
-           { $or:[
-              {
-                brand: findSkuId.brand_name,
-                model: findSkuId.model_name,
-                tray_grade: x.grade,
-                type_taxanomy: "ST",
-                cpc: location,
-                sort_id:{$in:["Ready to Pricing","Inuse"]},
-              },
-            
-            ]},
+            {
+              $or: [
+                {
+                  brand: findSkuId.brand_name,
+                  model: findSkuId.model_name,
+                  tray_grade: x.grade,
+                  type_taxanomy: "ST",
+                  cpc: location,
+                  sort_id: { $ne: "Open" },
+                },
+              ],
+            },
             {
               $set: {
                 price_creation_date: new Date(
@@ -215,7 +237,6 @@ module.exports = {
                 sp_price: parseInt(x.sp),
                 mrp_price: parseInt(x.mrp),
                 price_updation_date: Date.now(),
-
               },
             }
           );

@@ -264,10 +264,20 @@ module.exports = {
         },
       });
       count.stxMerge = await masters.count({
-        prefix: "tray-master",
-        cpc: location,
-        sort_id: "Inuse",
-        type_taxanomy: "ST",
+        $or: [
+          {
+            prefix: "tray-master",
+            cpc: location,
+            sort_id: "Inuse",
+            type_taxanomy: "ST",
+          },
+          {
+            prefix: "tray-master",
+            cpc: location,
+            sort_id: "Ready to Pricing",
+            type_taxanomy: "ST",
+          },
+        ],
       });
       count.readyToTransfer = await masters.count({
         $or: [
@@ -2925,6 +2935,33 @@ module.exports = {
             code: { $ne: fromTray },
           })
           .catch((err) => reject(err));
+      } else if (type == "ST") {
+        whtTray = await masters
+          .find({
+            $or: [
+              {
+                prefix: "tray-master",
+                type_taxanomy: type,
+                tray_grade: grade,
+                brand: brand,
+                model: model,
+                cpc: location,
+                sort_id: sortId,
+                code: { $ne: fromTray },
+              },
+              {
+                prefix: "tray-master",
+                type_taxanomy: type,
+                tray_grade: grade,
+                brand: brand,
+                model: model,
+                cpc: location,
+                sort_id: "Ready to Pricing",
+                code: { $ne: fromTray },
+              },
+            ],
+          })
+          .catch((err) => reject(err));
       } else {
         whtTray = await masters
           .find({
@@ -2942,7 +2979,7 @@ module.exports = {
 
       if (whtTray.length !== 0) {
         for (let x of whtTray) {
-          if (parseInt(x.limit) >= parseInt(x.items.length)) {
+          if (parseInt(x.limit) > parseInt(x.items.length)) {
             arr.push(x);
           }
         }
@@ -5351,7 +5388,8 @@ module.exports = {
   /*--------------------------------------------STX UTILITY ---------------------------------------*/
   stxUtilityImportXlsx: () => {
     return new Promise(async (resolve, reject) => {
-      let arr = [];
+      let arr = []
+
       let arr1 = [];
       for (let x of arr) {
         let obj = {
@@ -5461,19 +5499,21 @@ module.exports = {
     screen,
     actUser
   ) => {
+    console.log(screen);
     return new Promise(async (resolve, reject) => {
       let obj = {};
       if (screen == "Stx to Stx") {
         let removeFromCurrentTray = await masters.updateOne(
-          { "itmes.uic": uic },
+          { "items.uic": uic },
           {
             $pull: {
               items: {
-                uic: ui,
+                uic: uic,
               },
             },
           }
         );
+        console.log(removeFromCurrentTray);
         if (removeFromCurrentTray.modifiedCount == 0) {
           resolve({ status: 2 });
         }
@@ -5517,6 +5557,12 @@ module.exports = {
         }
       );
       if (updateStx) {
+        let updateStxUtility=await stxUtility.updateMany({uic:uic,type: "Stx-to-stx"},{
+          $set:{
+            added_status:"Added",
+
+          }
+        })
         const addLogsofUnits = await unitsActionLog.create({
           action_type: "Stx Utility",
           created_at: Date.now(),

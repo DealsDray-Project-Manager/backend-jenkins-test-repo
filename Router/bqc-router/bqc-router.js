@@ -2,6 +2,7 @@
 const express = require("express");
 const router = express.Router();
 // user controller
+const duplicateController = require("../../Controller/Duplicate-entry-check/duplicate-entry-check");
 const bqcController = require("../../Controller/bqc-controller/bqc-controller");
 /****************************************************************************************** */
 /* GET ALL ASSIGNED TRAY */
@@ -120,10 +121,15 @@ router.post(
         status,
         page
       );
-
       if (data.status === 1) {
+        let checkDup;
+        if (page == "Page-1") {
+          checkDup = await duplicateController.tempArrayAndActArray(data.data);
+        } else {
+          checkDup = await duplicateController.mainItemsArrayOnly(data.data);
+        }
         res.status(200).json({
-          data: data.data,
+          data: checkDup,
         });
       } else if (data.status === 2) {
         res.status(202).json({

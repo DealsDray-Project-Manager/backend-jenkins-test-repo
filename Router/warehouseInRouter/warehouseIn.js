@@ -7,6 +7,7 @@ const router = express.Router();
 const warehouseInController = require("../../Controller/warehouseIn/warehouseInController");
 const { masters } = require("../../Model/mastersModel");
 const elasticsearch = require("../../Elastic-search/elastic");
+const duplicateEntryCheck = require("../../Controller/Duplicate-entry-check/duplicate-entry-check");
 /*******************************************************************************************************************/
 /**************************************************Dashboard**************************************************************************/
 router.post("/dashboard/:location/:username", async (req, res, next) => {
@@ -1494,18 +1495,22 @@ router.post("/mmtMergeRequest/:location", async (req, res, next) => {
 });
 /* VIEW FROM AND TO TRAY FOR MERGE */
 router.post(
-  "/viewTrayFromAndTo/:location/:fromTray",
+  "/viewTrayFromAndTo",
   async (req, res, next) => {
     try {
-      const { location, fromTray } = req.params;
+      const { location, fromTray,type } = req.body;
       let data = await warehouseInController.getFromAndToTrayMerge(
         location,
-        fromTray
+        fromTray,
+        type
       );
-
       if (data) {
+        let checkDup=data
+        if(type == "ctx-to-stx-sorting-page"){
+          checkDup=await duplicateEntryCheck.onlyItemsArrayForSortingLevel(data)
+        }
         res.status(200).json({
-          data: data,
+          data: checkDup,
         });
       } else {
         res.status(202).json({
@@ -2932,7 +2937,7 @@ router.post("/stxToStxUtilityScan/:uic", async (req, res, next) => {
       });
     } else {
       res.status(202).json({
-        message: "Invalid UIC please check",
+        message: "Invalid UIC or Already added please check.",
       });
     }
   } catch (error) {

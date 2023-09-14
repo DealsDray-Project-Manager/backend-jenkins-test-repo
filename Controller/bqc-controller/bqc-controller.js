@@ -1,6 +1,7 @@
 const { delivery } = require("../../Model/deliveryModel/delivery");
 const { masters } = require("../../Model/mastersModel");
 const Elasticsearch = require("../../Elastic-search/elastic");
+var mongoose = require("mongoose");
 const { unitsActionLog } = require("../../Model/units-log/units-action-log");
 /****************************************************************** */
 module.exports = {
@@ -78,6 +79,7 @@ module.exports = {
         if (checkItem) {
           resolve({ status: 3 });
         } else {
+          itemData.item['_id'] = mongoose.Types.ObjectId();
           let data = await masters.updateOne(
             { code: itemData.trayId },
             {
@@ -105,6 +107,7 @@ module.exports = {
         if (checkItem) {
           resolve({ status: 3 });
         } else {
+          itemData.item['_id'] = mongoose.Types.ObjectId();
           let data = await masters.updateOne(
             { code: itemData.trayId },
             {
@@ -166,15 +169,16 @@ module.exports = {
         if (
           data.sort_id === status ||
           (data.sort_id == "BQC work inprogress" &&
-            data.issued_user_name == username &&
-            page == "Page-1")
+            data.issued_user_name == username 
+           )
         ) {
+
           resolve({ status: 1, data: data });
         } else if (
           data.sort_id === status ||
           (data.sort_id == "BQC work inprogress" &&
             data.issued_user_name == username &&
-            page == "Page-2" &&
+            
             data.items.length == 0)
         ) {
           resolve({ status: 4, data: data });
@@ -182,7 +186,7 @@ module.exports = {
           data.sort_id === status ||
           (data.sort_id == "BQC work inprogress" &&
             data.issued_user_name == username &&
-            page == "Page-2" &&
+            
             data.items.length !== 0)
         ) {
           resolve({ status: 5, data: data });
@@ -253,7 +257,7 @@ module.exports = {
                 description: trayData.description,
                 actual_items: getTray.items,
                 temp_array: [],
-                items: [],
+                items: [],  
               },
             },
             { new: true }

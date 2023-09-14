@@ -12,6 +12,7 @@ const { trayCategory } = require("../../Model/tray-category/tray-category");
 const {
   spareCategories,
 } = require("../../Model/spareCategories/spareCategories");
+var mongoose = require("mongoose");
 const { trayRack } = require("../../Model/tray-rack/tray-rack");
 const { box } = require("../../Model/boxModel/box");
 const { payment } = require("../../Model/paymentModel/payment");
@@ -28,12 +29,13 @@ const {
 } = require("../../Model/masterHistoryModel/mastersHistory");
 const moment = require("moment");
 const elasticsearch = require("../../Elastic-search/elastic");
-const {purchaseOrder} = require("../../Model/Purchase-order/purchase-order");
+const { purchaseOrder } = require("../../Model/Purchase-order/purchase-order");
+const { tempOrdersReq } = require("../../Model/temp-req/temp-req");
 
-const IISDOMAIN = "https://prexo-v8-5-dev-api.dealsdray.com/user/profile/";
+const IISDOMAIN = "https://prexo-v9-dev-api.dealsdray.com/user/profile/";
 const IISDOMAINBUYERDOC =
-  "https://prexo-v8-5-dev-api.dealsdray.com/user/document/";
-const IISDOMAINPRDT = "https://prexo-v8-5-dev-api.dealsdray.com/product/image/";
+  "https://prexo-v9-dev-api.dealsdray.com/user/document/";
+const IISDOMAINPRDT = "https://prexo-v9-dev-api.dealsdray.com/product/image/";
 
 /************************************************************************************************** */
 
@@ -2718,11 +2720,12 @@ module.exports = {
 
   deleteTrayRacks: (rack_id) => {
     return new Promise(async (resolve, reject) => {
-      let checkRack=await masters.findOne({$or:[{rack_id:rack_id},{temp_rack:rack_id}]})
-      if(checkRack){
-         resolve({status:2})
-      }
-      else{
+      let checkRack = await masters.findOne({
+        $or: [{ rack_id: rack_id }, { temp_rack: rack_id }],
+      });
+      if (checkRack) {
+        resolve({ status: 2 });
+      } else {
         let data = await trayRack.deleteOne({ rack_id: rack_id });
         if (data.deletedCount == 1) {
           resolve({ status: 1 });
@@ -2771,7 +2774,7 @@ module.exports = {
         ];
 
         const rackCounts = await trayRack.aggregate(aggregatePipeline);
-   
+
         resolve(rackCounts);
       } catch (error) {
         reject(error);
@@ -2787,10 +2790,7 @@ module.exports = {
       for (let x of rackIdData) {
         const findRack = await masters.find(
           {
-            $or:[
-                {rack_id: x.rack_id },
-                {temp_rack:x.rack_id}
-            ]
+            $or: [{ rack_id: x.rack_id }, { temp_rack: x.rack_id }],
           },
           { rack_id: 1 }
         );
@@ -2821,41 +2821,62 @@ module.exports = {
   },
   editTrayRacks: (trayracksData) => {
     return new Promise(async (resolve, reject) => {
-      const updatetrayracks = await trayRack.findOneAndUpdate(
+      let checkRack = await masters.aggregate([
+        { $match: { rack_id: trayracksData.rack_id } },
         {
-          rack_id: trayracksData.rack_id,
+          $lookup: {
+            from: "masters", // Replace with the actual collection name
+            localField: "rack_id",
+            foreignField: "rack_id",
+            as: "rack_counts",
+          },
         },
         {
-          $set: {
-            name: trayracksData.name,
-            display: trayracksData.display,
-            parent_id: trayracksData.parent_id,
-            warehouse: trayracksData.warehouse,
+          $project: {
+            rack_count: { $size: "$rack_counts" },
           },
-        }
-      );
-      if (updatetrayracks) {
-        resolve({ status: 1 });
+        },
+      ]);
+      if (Number(checkRack?.[0]?.rack_count) > Number(trayracksData.limit)) {
+        resolve({ status: 3 });
       } else {
-        resolve({ status: 2 });
+        const updatetrayracks = await trayRack.findOneAndUpdate(
+          {
+            rack_id: trayracksData.rack_id,
+          },
+          {
+            $set: {
+              name: trayracksData.name,
+              display: trayracksData.display,
+              parent_id: trayracksData.parent_id,
+              warehouse: trayracksData.warehouse,
+              limit: trayracksData.limit,
+            },
+          }
+        );
+        if (updatetrayracks) {
+          resolve({ status: 1 });
+        } else {
+          resolve({ status: 2 });
+        }
       }
     });
   },
   getOneTrayRack: (rack_id) => {
     return new Promise(async (resolve, reject) => {
-      const checkPosForedit=await masters.findOne({$or:[{rack_id:rack_id},{temp_rack:rack_id}]})
-      if(checkPosForedit){
-        resolve({status:3})
+      // const checkPosForedit = await masters.findOne({
+      //   $or: [{ rack_id: rack_id }, { temp_rack: rack_id }],
+      // });
+      // if (checkPosForedit) {
+      //   resolve({ status: 3 });
+      // } else {
+      const getOneTrayRack = await trayRack.findOne({ rack_id: rack_id });
+      if (getOneTrayRack) {
+        resolve({ status: 1, data: getOneTrayRack });
+      } else {
+        resolve({ status: 2 });
       }
-      else{
-
-        const getOneTrayRack = await trayRack.findOne({ rack_id: rack_id });
-        if (getOneTrayRack) {
-          resolve({ status: 1, data: getOneTrayRack });
-        } else {
-          resolve({ status: 2 });
-        }
-      }
+      // }
     });
   },
 
@@ -3990,7 +4011,6 @@ module.exports = {
     });
   },
   getAssignedTray: (trayType, sort_id) => {
-   
     return new Promise(async (resolve, reject) => {
       if (sort_id == "Ctx to Stx Send for Sorting") {
         const res = await masters
@@ -4240,6 +4260,51 @@ module.exports = {
       }
     });
   },
+  globeRemoveDuplicate: async (trayId, id, arrayType) => {
+    try {
+      let remove;
+      id = mongoose.Types.ObjectId(id);
+      if (arrayType == "Main") {
+        console.log("working");
+        remove = await masters.updateOne(
+          { code: trayId },
+          {
+            $pull: {
+              items: { _id: id },
+            },
+          }
+        );
+        console.log(remove);
+      } else if (arrayType == "Second-main") {
+        remove = await masters.updateOne(
+          { code: trayId },
+          {
+            $pull: {
+              actual_items: { _id: id },
+            },
+          },
+          { multi: false } // This ensures only one match is removed
+        );
+      } else {
+        remove = await masters.updateOne(
+          { code: trayId },
+          {
+            $pull: {
+              temp_array: { _id: id },
+            },
+          }
+        );
+      }
+      if (remove.modifiedCount !== 0) {
+        return { status: 1 };
+      } else {
+        return { status: 0 };
+      }
+    } catch (error) {
+      console.error(error);
+      return error;
+    }
+  },
   getAssignedTrayForMerging: () => {
     return new Promise(async (resolve, reject) => {
       const tray = await masters
@@ -4445,8 +4510,8 @@ module.exports = {
       let getDelivery = [];
 
       getDelivery = await delivery.find({
-         wht_tray:"WHT1034",
-         tray_status:"Issued to BQC"
+        wht_tray: "WHT1034",
+        tray_status: "Issued to BQC",
       });
 
       let findMuic = await products.findOne({
@@ -4480,7 +4545,6 @@ module.exports = {
             },
           }
         );
-      
       }
       resolve(getDelivery);
     });
@@ -5525,7 +5589,6 @@ module.exports = {
               },
             }
           );
-          
 
           let main = await delivery.updateMany(
             {
@@ -5545,7 +5608,6 @@ module.exports = {
               },
             }
           );
-       
 
           let main2 = await masters.updateMany(
             {
@@ -5641,37 +5703,107 @@ module.exports = {
   },
   extraUpdateRack: () => {
     return new Promise(async (resolve, reject) => {
-      let findTray = await masters.find({
-        prefix: "tray-master",
-        sort_id: {
-          $nin: ["Assigned to warehouae for rack change", "No Status"],
-        },
-        rack_id: { $exists: false },
-        code: { $nin: ["T051", "T071"] },
-      });
-      for (let x of findTray) {
-        if (x.cpc == "Gurgaon_122016") {
-          let updateRack = await masters.updateOne(
-            {
-              code: x.code,
-            },
-            {
-              $set: {
-                rack_id: "RAC999999",
-              },
-            }
-          );
-        } else if (x.cpc == "Sales_Gurgaon_122016") {
-          let updateRack = await masters.updateOne(
-            {
-              code: x.code,
-            },
-            {
-              $set: {
-                rack_id: "RAC999998",
-              },
-            }
-          );
+      let arr = [
+        "WHT10163",
+        "WHT10153",
+        "WHT10151",
+        "WHT10150",
+        "WHT10145",
+        "WHT10143",
+        "WHT10142",
+        "WHT10131",
+        "WHT10129",
+        "WHT10031",
+        "WHT10016",
+        "WHT10015",
+        "WHT10013",
+        "WHT10012",
+        "WHT10010",
+        "WHT1976",
+        "WHT1975",
+        "WHT1966",
+        "WHT1912",
+        "WHT1848",
+        "WHT1838",
+        "WHT1837",
+        "WHT1827",
+        "WHT1765",
+        "WHT1728",
+        "WHT1714",
+        "WHT1708",
+        "WHT1701",
+        "WHT1697",
+        "WHT1683",
+        "WHT1658",
+        "WHT1645",
+        "WHT1595",
+        "WHT1589",
+        "WHT1544",
+        "WHT1531",
+        "WHT1493",
+        "WHT1459",
+        "WHT1417",
+        "WHT1411",
+        "WHT1391",
+        "WHT1387",
+        "WHT1356",
+        "WHT1328",
+        "WHT1082",
+        "WHT1080",
+        "WHT1079",
+        "WHT1071",
+        "WHT1069",
+        "WHT1060",
+        "WHT1144",
+        "WHT1178",
+        "WHT1188",
+        "WHT1200",
+        "WHT1318",
+        "WHT1327",
+        "WHT1404",
+        "WHT1419",
+        "WHT1428",
+        "WHT1460",
+        "WHT1461",
+        "WHT1487",
+        "WHT1519",
+        "WHT1520",
+        "WHT1534",
+        "WHT1554",
+        "WHT1570",
+        "WHT1577",
+        "WHT1685",
+        "WHT1688",
+        "WHT1712",
+        "WHT10053",
+        "WHT10065",
+        "WHT10078",
+        "WHT10105",
+        "WHT10111",
+        "WHT10127",
+        "WHT10078",
+        "WHT10105",
+        "WHT10111",
+        "WHT10127",
+      ];
+      for (let x of arr) {
+        console.log(x);
+        let findRack = await masters.findOne(
+          { code: x, sort_id: "Open" },
+          { code: 1, rack_id: 1 }
+        );
+        console.log(findRack);
+        if (findRack) {
+          if (findRack.rack_id == "RAC000025") {
+            let updateNewRack = await masters.findOneAndUpdate(
+              { code: findRack.code },
+              {
+                $set: {
+                  rack_id: "RAC000099",
+                },
+              }
+            );
+          }
         }
       }
       resolve({ status: true });
@@ -5754,39 +5886,152 @@ module.exports = {
       ];
       for (let x of arr) {
         const data = await purchaseOrder.findOne({ request_id: x });
-        if(data.status == "Pending"){
-          const deleteRequest=await purchaseOrder.deleteOne({request_id:x})
+        if (data.status == "Pending") {
+          const deleteRequest = await purchaseOrder.deleteOne({
+            request_id: x,
+          });
         }
       }
-      resolve({status:true})
+      resolve({ status: true });
     });
   },
   removeAddToMmt: () => {
     return new Promise(async (resolve, reject) => {
-      const takeData = await masters.findOne({ code: "BOT2027" });
-      for (let x of takeData.items) {
-        if (x.awbn_number == "'513790477834") {
-          let update = await masters.findOneAndUpdate(
-            { code: "MMT8023" },
-            {
-              $push: {
-                items: x,
-              },
-            }
-          );
-          let pullAndUpdate = await masters.findOneAndUpdate(
-            { code: "BOT2027" },
-            {
-              $pull: {
-                items: {
-                  awbn_number: x.awbn_number,
-                },
-              },
-            }
-          );
-        }
+      let findTray = await masters.aggregate([
+        {
+          $match: {
+            type_taxanomy: "ST",
+            sort_id: { $ne: "Open" },
+            sp_price: { $exists: true, $ne: null },
+            mrp_price: { $exists: true, $ne: null },
+          },
+        },
+        {
+          $group: {
+            _id: {
+              model: "$model",
+              brand: "$brand",
+              grade: "$tray_grade",
+            },
+            sp: { $first: "$sp_price" },
+            mrp: { $first: "$mrp_price" },
+          },
+        },
+      ]);
+      for (let x of findTray) {
+        let update = await masters.updateMany(
+          {
+            brand: x._id.brand,
+            model: x._id.model,
+            tray_grade: x._id.grade,
+            type_taxanomy: "ST",
+            sp_price: { $exists: false },
+            mrp_price: { $exists: false },
+            sort_id: {
+              $nin: [
+                "Open",
+                "Issued to Sorting for Ctx to Stx",
+                "Ctx to Stx Sorting Done",
+                "Received From Sorting Agent After Ctx to Stx",
+                "STX-Utility In-progress",
+              ],
+            },
+          },
+          {
+            $set: {
+              sp_price: x.sp,
+              mrp_price: x.mrp,
+            },
+          }
+        );
+        console.log(update);
       }
-      resolve({ status: 1 });
+      resolve({ status: true });
+    });
+  },
+  tempDataAddRequerment: () => {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const threeMonthsAgo = new Date();
+        threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
+
+        const orderData = await delivery.find(
+          {
+            issued_to_rdl_two_date: { $gte: threeMonthsAgo },
+          },
+          { _id: 0, __v: 0 }
+        );
+
+        for (let x of orderData) {
+          let obj = {
+            tracking_id: x.tracking_id,
+            order_id: x.order_id,
+            order_date: x.order_date,
+            item_id: x.item_id,
+            gep_order: x.gep_order,
+            old_item_details: x.old_item_details,
+            imei: x.imei,
+            partner_purchase_price: x.partner_purchase_price,
+            partner_shop: x.partner_shop,
+            base_discount: x.base_discount,
+            diagnostics_discount: x.diagnostics_discount,
+            storage_discount: x.storage_discount,
+            buyback_category: x.buyback_category,
+            doorstep_diagnostics: x.doorstep_diagnostics,
+            delivery_date: x.delivery_date,
+            uic_status: x.uic_status,
+            uic_code: x.uic_code,
+            created_at: x.created_at,
+            Uic_download_time: x.download_time,
+            bagging_date: x.stockin_date,
+            bag_id: x.bag_id,
+            tray_id: x.tray_id,
+            assign_to_bot_agent: x.assign_to_agent,
+            bot_agent_name: x.agent_name,
+            bag_close_date: x.bag_close_date,
+            tray_closed_by_bot: x.tray_closed_by_bot,
+            wht_tray: x.wht_tray,
+            sorting_agent_name: x.sorting_agent_name,
+            assign_to_agent_charging: x.assign_to_agent_charging,
+            bot_report: x.bot_report,
+            charging_report: x.charging,
+            assign_to_agent_charging: x.assign_to_agent_charging,
+            charging_done_date: x.charging_done_date,
+            charging_in_date: x.charging_in_date,
+            agent_name_charging: x.agent_name_charging,
+            bqc_in_date: x.bqc_in_date,
+            bqc_out_date: x.bqc_out_date,
+            bqc_done_received: x.bqc_done_received,
+            bqc_done_close: x.bqc_done_close,
+            bqc_report: x.bqc_report,
+            assign_to_agent_bqc: x.assign_to_agent_bqc,
+            agent_name_bqc: x.agent_name_bqc,
+            issued_to_audit: x.issued_to_audit,
+            audit_user_name: x.audit_user_name,
+            audit_report: x.audit_report,
+            audit_done_date: x.audit_done_date,
+            audit_done_recieved: x.audit_done_recieved,
+            audit_done_close: x.audit_done_close,
+            rdl_fls_issued_date: x.rdl_fls_issued_date,
+            rdl_fls_one_user_name: x.rdl_fls_one_user_name,
+            rdl_fls_closed_date: x.rdl_fls_closed_date,
+            rdl_fls_done_recieved_date: x.rdl_fls_done_recieved_date,
+            rdl_fls_one_report: x.rdl_fls_one_report,
+            rp_tray: x.rp_tray,
+            rdl_two_user_name: x.rdl_two_user_name,
+            issued_to_rdl_two_date:x.issued_to_rdl_two_date,
+            rdl_two_closed_date:x.rdl_two_closed_date,
+            rdl_two_report:x.rdl_two_report
+          };
+          let dataUpdate = await tempOrdersReq.create(obj);
+       
+        }
+
+        resolve(orderData); // You can resolve with the orderData if needed.
+      } catch (error) {
+        console.error("An error occurred:", error);
+        reject(error); // Reject the promise with the error.
+      }
     });
   },
 };

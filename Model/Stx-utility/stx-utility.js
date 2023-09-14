@@ -19,6 +19,9 @@ const StxUtilitySchema=mongoose.Schema({
     current_status:{
         type:String
     },
+    added_status:{
+        type:String
+    },
     type:{
         type:String
     }

@@ -24,7 +24,6 @@ const { stxUtility } = require("../../Model/Stx-utility/stx-utility");
 module.exports = {
   /*------------------------DASHBOARD FOR WAREHOUSE----------------------------*/
   dashboard: (location, username) => {
- 
     return new Promise(async (resolve, reject) => {
       let count = {
         bagIssueRequest: 0,
@@ -2373,7 +2372,7 @@ module.exports = {
             },
           },
         ]);
-     
+
         resolve(data);
       } else {
         let data = await masters.find({
@@ -2422,7 +2421,7 @@ module.exports = {
           },
         },
       ]);
-   
+
       resolve(data);
     });
   },
@@ -2882,6 +2881,7 @@ module.exports = {
         if (checkAlreadyAdded) {
           resolve({ status: 3 });
         } else {
+          trayItemData.item._id = mongoose.Types.ObjectId();
           let data = await masters.updateOne(
             { code: trayItemData.trayId },
             {
@@ -4883,6 +4883,8 @@ module.exports = {
                 issued_user_name: null,
                 from_merge: null,
                 to_merge: null,
+                mrp_price: null,
+                sp_price: null,
               },
             }
           );
@@ -6912,28 +6914,61 @@ module.exports = {
     return new Promise(async (resolve, reject) => {
       let dataUpdate;
       if (trayData.type == "ST") {
+        console.log(trayData);
+        let findMrpSp = await masters.findOne(
+          {
+            brand: trayData?.brand,
+            model: trayData?.model,
+            tray_grade: trayData?.grade,
+            sp_price: { $exists: true, $ne: null },
+            mrp_price: { $exists: true, $ne: null },
+          },
+          { sp_price: 1, mrp_price: 1 }
+        );
         if (
           Number(trayData.limit) == Number(trayData.itemCount) &&
           trayData.limit !== undefined &&
           trayData.itemCount !== undefined
         ) {
-          dataUpdate = await masters.findOneAndUpdate(
-            { code: trayData.trayId },
-            {
-              $set: {
-                rack_id: trayData.rackId,
-                issued_user_name: null,
-                actual_items: [],
-                temp_array: [],
-                from_merge: null,
-                to_merge: null,
-                rack_id: trayData.rackId,
-                sort_id: "Ready to Pricing",
-                "track_tray.ctx_sorting_done": Date.now(),
-                description: trayData.description,
-              },
-            }
-          );
+          if (findMrpSp) {
+            dataUpdate = await masters.findOneAndUpdate(
+              { code: trayData.trayId },
+              {
+                $set: {
+                  rack_id: trayData.rackId,
+                  issued_user_name: null,
+                  actual_items: [],
+                  temp_array: [],
+                  from_merge: null,
+                  sp_price: findMrpSp?.sp_price,
+                  mrp_price: findMrpSp?.mrp_price,
+                  to_merge: null,
+                  rack_id: trayData.rackId,
+                  sort_id: "Ready to Pricing",
+                  "track_tray.ctx_sorting_done": Date.now(),
+                  description: trayData.description,
+                },
+              }
+            );
+          } else {
+            dataUpdate = await masters.findOneAndUpdate(
+              { code: trayData.trayId },
+              {
+                $set: {
+                  rack_id: trayData.rackId,
+                  issued_user_name: null,
+                  actual_items: [],
+                  temp_array: [],
+                  from_merge: null,
+                  to_merge: null,
+                  rack_id: trayData.rackId,
+                  sort_id: "Ready to Pricing",
+                  "track_tray.ctx_sorting_done": Date.now(),
+                  description: trayData.description,
+                },
+              }
+            );
+          }
           if (dataUpdate) {
             resolve({ status: 1, tray: dataUpdate });
           } else {
@@ -6963,24 +6998,47 @@ module.exports = {
             resolve({ status: 0 });
           }
         } else {
-          dataUpdate = await masters.findOneAndUpdate(
-            { code: trayData.trayId },
-            {
-              $set: {
-                rack_id: trayData.rackId,
-                issued_user_name: null,
-                actual_items: [],
-                temp_array: [],
-                from_merge: null,
-                to_merge: null,
-                sort_id: "Inuse",
-                rack_id: trayData.rackId,
-                "track_tray.ctx_sorting_done": Date.now(),
-                closed_time_wharehouse: Date.now(),
-                description: trayData.description,
-              },
-            }
-          );
+          if (findMrpSp) {
+            dataUpdate = await masters.findOneAndUpdate(
+              { code: trayData.trayId },
+              {
+                $set: {
+                  rack_id: trayData.rackId,
+                  issued_user_name: null,
+                  actual_items: [],
+                  temp_array: [],
+                  from_merge: null,
+                  to_merge: null,
+                  sort_id: "Inuse",
+                  sp_price: findMrpSp?.sp_price,
+                  mrp_price: findMrpSp?.mrp_price,
+                  rack_id: trayData.rackId,
+                  "track_tray.ctx_sorting_done": Date.now(),
+                  closed_time_wharehouse: Date.now(),
+                  description: trayData.description,
+                },
+              }
+            );
+          } else {
+            dataUpdate = await masters.findOneAndUpdate(
+              { code: trayData.trayId },
+              {
+                $set: {
+                  rack_id: trayData.rackId,
+                  issued_user_name: null,
+                  actual_items: [],
+                  temp_array: [],
+                  from_merge: null,
+                  to_merge: null,
+                  sort_id: "Inuse",
+                  rack_id: trayData.rackId,
+                  "track_tray.ctx_sorting_done": Date.now(),
+                  closed_time_wharehouse: Date.now(),
+                  description: trayData.description,
+                },
+              }
+            );
+          }
         }
         if (dataUpdate) {
           resolve({ status: 3, tray: dataUpdate });
@@ -7069,6 +7127,12 @@ module.exports = {
               prefix: "tray-master",
               cpc: location,
               sort_id: type,
+              type_taxanomy: "ST",
+            },
+            {
+              prefix: "tray-master",
+              cpc: location,
+              sort_id: "Ready to Pricing",
               type_taxanomy: "ST",
             },
           ],
@@ -7180,7 +7244,7 @@ module.exports = {
         cpc: location,
         sort_id: "Assigned to sorting (Wht to rp)",
       });
-     
+
       resolve(getTray);
     });
   },
@@ -7497,7 +7561,11 @@ module.exports = {
   },
   stxToStxUtilityScanUic: (uic) => {
     return new Promise(async (resolve, reject) => {
-      const data = await stxUtility.find({ uic: uic, type: "Stx-to-stx" });
+      const data = await stxUtility.find({
+        uic: uic,
+        type: "Stx-to-stx",
+        added_status: { $ne: "Added" },
+      });
       if (data.length !== 0) {
         const checkIntrayOrnot = await masters.findOne({ "items.uic": uic });
         if (checkIntrayOrnot) {

@@ -61,10 +61,8 @@ router.post(
   ]),
   async (req, res, next) => {
     try {
-    
       let data = await superAdminController.createBuyer(req.body, req.files);
       if (data) {
-    
         if (data.status) {
           res.status(200).json({ status: 0, data: { message: "Buyer Exist" } });
         } else {
@@ -1607,7 +1605,7 @@ router.post("/addcategory", async (req, res, next) => {
 router.post("/getCtxCategorys", async (req, res, next) => {
   try {
     let data = await superAdminController.getCtxCategorys();
-   
+
     if (data) {
       res.status(200).json(data);
     } else {
@@ -2063,6 +2061,10 @@ router.post("/trayracks/edit", async (req, res, next) => {
     if (trayracksData.status == 1) {
       res.status(200).json({
         message: "Successfully Updated",
+      });
+    } else if (trayracksData.status == 3) {
+      res.status(202).json({
+        message: "You can't set limit less than tray count",
       });
     } else {
       res.status(202).json({
@@ -3559,7 +3561,7 @@ router.post("/search/unverifiedImei", async (req, res, next) => {
 router.post("/updateUnverifiedImei", async (req, res, next) => {
   try {
     // const { trayType, sort_id } = req.body;
-    
+
     const data = await superAdminController.updateUnverifiedImei(req.body);
     if (data.status == 1) {
       res.status(200).json({
@@ -3568,6 +3570,29 @@ router.post("/updateUnverifiedImei", async (req, res, next) => {
     } else if (data.status == 2) {
       res.status(202).json({
         message: "Unverified IMEI",
+      });
+    } else {
+      res.status(202).json({
+        message: "Updation Failed please try again",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+/* REMOVE DUPLICATE ENTRY THIS API FOR GLOBELY */
+router.post("/globeDuplicateRemove", async (req, res, next) => {
+  try {
+    const { trayId, id, arrayType } = req.body;
+    console.log(req.body);
+    const data = await superAdminController.globeRemoveDuplicate(
+      trayId,
+      id,
+      arrayType
+    );
+    if (data.status == 1) {
+      res.status(200).json({
+        message: "Successfully Removed",
       });
     } else {
       res.status(202).json({
@@ -4079,7 +4104,7 @@ router.post("/extra/removeProcurmentRequest", async (req, res, next) => {
   }
 });
 // REMOVE ITEM
-router.post("/extra/removeAddtoMmt", async (req, res, next) => {
+router.post("/extra/updatePrice", async (req, res, next) => {
   try {
     let data = await superAdminController.removeAddToMmt();
     if (data.status == true) {
@@ -4095,4 +4120,22 @@ router.post("/extra/removeAddtoMmt", async (req, res, next) => {
     next(error);
   }
 });
+/*-------------------------------------TEMP REQUERMENT---------------------------------------*/
+router.post("/extra/tempRequerment", async (req, res, next) => {
+  try {
+    let data = await superAdminController.tempDataAddRequerment();
+    if (data.status == true) {
+      res.status(200).json({
+        message: "Successfully Update",
+      });
+    } else {
+      res.status(202).json({
+        message: "Failed",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
 module.exports = router;

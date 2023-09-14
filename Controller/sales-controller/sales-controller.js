@@ -84,7 +84,7 @@ module.exports = {
           $match: {
             type_taxanomy: "ST",
             cpc: location,
-            sort_id: { $in: ["Ready to Pricing", "Inuse"] },
+            sort_id: { $ne: "Open" },
             sp_price: { $exists: true, $ne: null },
             mrp_price: { $exists: true, $ne: null },
           },
@@ -135,7 +135,7 @@ module.exports = {
           $match: {
             type_taxanomy: "ST",
             cpc: location,
-            sort_id: { $in: ["Ready to Pricing", "Inuse"] },
+            sort_id: { $ne: "Open" },
             brand: brand,
             model: model,
             tray_grade: grade,
@@ -181,7 +181,7 @@ module.exports = {
           $match: {
             type_taxanomy: "ST",
             cpc: location,
-            sort_id: { $in: ["Ready to Pricing", "Inuse"] },
+            sort_id: { $ne: "Open" },
             sp_price: { $exists: true, $ne: null },
             mrp_price: { $exists: true, $ne: null },
           },
