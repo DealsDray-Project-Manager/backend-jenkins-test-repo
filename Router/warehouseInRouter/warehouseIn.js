@@ -12,7 +12,6 @@ const duplicateEntryCheck = require("../../Controller/Duplicate-entry-check/dupl
 /**************************************************Dashboard**************************************************************************/
 router.post("/dashboard/:location/:username", async (req, res, next) => {
   try {
-   
     const { location, username } = req.params;
     let data = await warehouseInController.dashboard(location, username);
     if (data) {
@@ -1485,34 +1484,33 @@ router.post("/mmtMergeRequest/:location", async (req, res, next) => {
   }
 });
 /* VIEW FROM AND TO TRAY FOR MERGE */
-router.post(
-  "/viewTrayFromAndTo",
-  async (req, res, next) => {
-    try {
-      const { location, fromTray,type } = req.body;
-      let data = await warehouseInController.getFromAndToTrayMerge(
-        location,
-        fromTray,
-        type
-      );
-      if (data) {
-        let checkDup=data
-        if(type == "ctx-to-stx-sorting-page"){
-          checkDup=await duplicateEntryCheck.onlyItemsArrayForSortingLevel(data)
-        }
-        res.status(200).json({
-          data: checkDup,
-        });
-      } else {
-        res.status(202).json({
-          message: "You can't access this tray",
-        });
+router.post("/viewTrayFromAndTo", async (req, res, next) => {
+  try {
+    const { location, fromTray, type } = req.body;
+    let data = await warehouseInController.getFromAndToTrayMerge(
+      location,
+      fromTray,
+      type
+    );
+    if (data) {
+      let checkDup = data;
+      if (type == "ctx-to-stx-sorting-page") {
+        checkDup = await duplicateEntryCheck.onlyItemsArrayForSortingLevel(
+          data
+        );
       }
-    } catch (error) {
-      next(error);
+      res.status(200).json({
+        data: checkDup,
+      });
+    } else {
+      res.status(202).json({
+        message: "You can't access this tray",
+      });
     }
+  } catch (error) {
+    next(error);
   }
-);
+});
 
 /*---------------------MMT TRAY SEND TO SORTING AGENT CONFIRM--------------------------------*/
 router.post("/mmtTraySendToSorting", async (req, res, next) => {
@@ -1872,7 +1870,7 @@ router.post("/trayIdCheckAuditApprovePage", async (req, res, next) => {
       brand,
       model
     );
-   
+
     if (data.status == 1) {
       res.status(200).json({
         message: "Successfully Validated",
@@ -2244,25 +2242,24 @@ router.post("/checkRdl-two/status/:username", async (req, res, next) => {
     next(error);
   }
 });
-router.post(
-  "/request-for-RDL-fls/:status/:location",
-  async (req, res, next) => {
-    try {
-      let data = await warehouseInController.getRDLoneRequest(
-        req.params.status,
-        req.params.location
-      );
+router.post("/requestForApprove", async (req, res, next) => {
+  try {
+    const { status, location, type } = req.body;
+    let data = await warehouseInController.getRequestForApproval(
+      status,
+      location,
+      type
+    );
 
-      if (data) {
-        res.status(200).json({
-          data: data,
-        });
-      }
-    } catch (error) {
-      next(error);
+    if (data) {
+      res.status(200).json({
+        data: data,
+      });
     }
+  } catch (error) {
+    next(error);
   }
-);
+});
 
 router.post("/wht-add-actual-item-rdl-return", async (req, res, next) => {
   try {
@@ -2551,6 +2548,18 @@ router.post(
             data.tray.items,
             data.tray.code,
             "Merging Done Closed by Wh",
+            req.body.actUser
+          );
+
+        res.status(200).json({
+          message: "Successfully Closed",
+        });
+      } else if (data.status == 6) {
+        let logUpdate =
+          await warehouseInController.sortingDonectxTostxCloseLogData(
+            data.tray.items,
+            data.tray.code,
+            "Inuse State",
             req.body.actUser
           );
 
@@ -2929,6 +2938,29 @@ router.post("/stxToStxUtilityScan/:uic", async (req, res, next) => {
     } else {
       res.status(202).json({
         message: "Invalid UIC or Already added please check.",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+/*----------------------------------------------------COPY GRADING ---------------------------------------------------------*/
+router.post("/receivedTrayAfterCopyGrade", async (req, res, next) => {
+  try {
+    let data = await warehouseInController.receivedFromSortingAfterCopyGrade(
+      req.body
+    );
+    if (data.status == 1) {
+      res.status(200).json({
+        message: "Successfully Received",
+      });
+    } else if (data.status == 3) {
+      res.status(202).json({
+        message: "Please Enter Valid Count",
+      });
+    } else {
+      res.status(202).json({
+        message: "Failed",
       });
     }
   } catch (error) {

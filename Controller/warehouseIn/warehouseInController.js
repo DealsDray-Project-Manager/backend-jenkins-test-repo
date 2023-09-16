@@ -63,6 +63,9 @@ module.exports = {
         allRpTray: 0,
         rackChangeStockin: 0,
         rackChangeStockOut: 0,
+        copyGradingRequest:0,
+        returnFromCopyGrading:0
+
       };
       count.rackChangeStockin = await masters.count({
         $or: [
@@ -80,6 +83,27 @@ module.exports = {
         issued_user_name: username,
         sort_id: "Assigned to warehouae for rack change",
         temp_rack: { $exists: true },
+      });
+      count.copyGradingRequest = await masters.count({
+        sort_id: "Assigned for copy grading",
+        cpc: location,
+        type_taxanomy: "ST",
+      });
+      count.returnFromCopyGrading = await masters.count({
+        $or: [
+          {
+            prefix: "tray-master",
+            type_taxanomy: "ST",
+            sort_id: "Copy Grading Done Closed By Sorting",
+            cpc: location,
+          },
+          {
+            prefix: "tray-master",
+            type_taxanomy: "ST",
+            sort_id: "Received From Sorting After Copy Grading",
+            cpc: location,
+          }
+        ],
       });
       count.allRpTray = await masters.count({
         prefix: "tray-master",
@@ -3153,6 +3177,59 @@ module.exports = {
             }
           }
         }
+      } else if (trayData.sortId == "Assigned for copy grading") {
+        data = await masters.findOneAndUpdate(
+          { code: trayData.trayId },
+          {
+            $set: {
+              actual_items: [],
+              description: trayData.description,
+              sort_id: "Issued to Sorting Agent For Copy Grading",
+              rack_id: null,
+              assigned_date: Date.now(),
+              temp_array: [],
+            },
+          }
+        );
+        if (data) {
+          let state = "Tray";
+          for (let x of data.items) {
+            const addLogsofUnits = await unitsActionLog.create({
+              action_type: "Issued to Sorting Agent For Copy Grading",
+              created_at: Date.now(),
+              uic: x.uic,
+              agent_name: data.issued_user_name,
+              user_name_of_action: trayData.actionUser,
+              tray_id: trayData.trayId,
+              user_type: "Sales Warehouse",
+              track_tray: state,
+              description: `Issued to Sorting Agent For Copy Grading to agent:${data.issued_user_name} by WH :${trayData.actionUser}`,
+            });
+            state = "Units";
+            let deliveryUpdate = await delivery.findOneAndUpdate(
+              { tracking_id: x.tracking_id },
+              {
+                $set: {
+                  tray_status: "Issued to Sorting Agent For Copy Grading",
+                  tray_location: "Sorting",
+                  updated_at: Date.now(),
+                  copy_grading_issued_to_agent: Date.now(),
+                  for_copy_grade_username: data.issued_user_name,
+                },
+              },
+              {
+                new: true,
+                projection: { _id: 0 },
+              }
+            );
+
+            if (deliveryUpdate) {
+              resolve(data);
+            } else {
+              resolve();
+            }
+          }
+        }
       } else {
         data = await masters.findOneAndUpdate(
           { code: trayData.trayId },
@@ -3786,9 +3863,6 @@ module.exports = {
                 projection: { _id: 0 },
               }
             );
-            // let updateElasticSearch = await elasticsearch.uicCodeGen(
-            //   deliveryTrack
-            // );
           }
           resolve({ status: 1 });
         } else {
@@ -4870,7 +4944,7 @@ module.exports = {
           }
         } else if (length == 0) {
           stage = "Open";
-          let updateFromTray = await masters.updateOne(
+          let updateFromTray = await masters.findOneAndUpdate(
             { code: toTray },
             {
               $set: {
@@ -5168,6 +5242,10 @@ module.exports = {
             { issued_user_name: username, sort_id: "Closed By Sorting Agent" },
             { issued_user_name: username, sort_id: "Issued to Merging" },
             { issued_user_name: username, sort_id: "Merging Done" },
+            {
+              issued_user_name: username,
+              sort_id: "Issued to Sorting Agent For Copy Grading",
+            },
             {
               issued_user_name: username,
               sort_id: "Issued to sorting (Wht to rp)",
@@ -6282,36 +6360,41 @@ module.exports = {
       }
     });
   },
-  getRDLoneRequest: (status, location) => {
+  getRequestForApproval: (status, location, type) => {
     return new Promise(async (resolve, reject) => {
-      if (status == "Send for RDL-two") {
-        let data = await masters.find({
+      let data
+      if(status == "Copy Grading Done Closed By Sorting"){
+         data = await masters.find({
           $or: [
             {
               prefix: "tray-master",
-              type_taxanomy: "RPT",
+              type_taxanomy: type,
+              sort_id: status,
+              cpc: location,
+            },
+            {
+              prefix: "tray-master",
+              type_taxanomy: type,
+              sort_id: "Received From Sorting After Copy Grading",
+              cpc: location,
+            }
+          ],
+        });
+      }
+      else{
+         data = await masters.find({
+          $or: [
+            {
+              prefix: "tray-master",
+              type_taxanomy: type,
               sort_id: status,
               cpc: location,
             },
           ],
         });
-        if (data) {
-          resolve(data);
-        }
-      } else {
-        let data = await masters.find({
-          $or: [
-            {
-              prefix: "tray-master",
-              type_taxanomy: "WHT",
-              sort_id: status,
-              cpc: location,
-            },
-          ],
-        });
-        if (data) {
-          resolve(data);
-        }
+      }
+      if (data) {
+        resolve(data);
       }
     });
   },
@@ -6903,7 +6986,7 @@ module.exports = {
           user_name_of_action: username,
           description: `${stage} closed by agent :${username}`,
           track_tray: state,
-          user_type: "PRC Warehouse",
+          user_type: "Sales Warehouse",
         });
         state = "Units";
       }
@@ -6914,7 +6997,7 @@ module.exports = {
     return new Promise(async (resolve, reject) => {
       let dataUpdate;
       if (trayData.type == "ST") {
-        console.log(trayData);
+
         let findMrpSp = await masters.findOne(
           {
             brand: trayData?.brand,
@@ -7041,7 +7124,7 @@ module.exports = {
           }
         }
         if (dataUpdate) {
-          resolve({ status: 3, tray: dataUpdate });
+          resolve({ status: 6, tray: dataUpdate });
         } else {
           resolve({ status: 0 });
         }
@@ -7593,5 +7676,59 @@ module.exports = {
         resolve({ status: 0 });
       }
     });
+  },
+  receivedFromSortingAfterCopyGrade: async (trayData) => {
+    try {
+      let tray = await masters.findOne({ code: trayData.trayId });
+      if (tray?.items?.length == trayData.counts) {
+        let data = await masters.findOneAndUpdate(
+          { code: trayData.trayId },
+          {
+            $set: {
+              sort_id: "Received From Sorting After Copy Grading",
+            },
+          }
+        );
+        if (data) {
+          let state = "Tray";
+          for (let x of data.items) {
+            let unitsLogCreation = await unitsActionLog.create({
+              action_type: "Received From Sorting After Copy Grading",
+              created_at: Date.now(),
+              user_name_of_action: trayData.actioUser,
+              user_type: "Sales Warehouse",
+              uic: x.uic,
+              agent_name: data.issued_user_name,
+              tray_id: trayData.trayId,
+              track_tray: state,
+              description: `Received From Sorting After Copy Grading agent:${data.issued_user_name} by Wh:${trayData.actioUser}`,
+            });
+            state = "Units";
+            let deliveryTrack = await delivery.findOneAndUpdate(
+              { tracking_id: x.tracking_id },
+              {
+                $set: {
+                  tray_status: "Received From Sorting After Copy Grading",
+                  tray_location: "Sales Warehouse",
+                  copy_grading_done_received: Date.now(),
+                  updated_at: Date.now(),
+                },
+              },
+              {
+                new: true,
+                projection: { _id: 0 },
+              }
+            );
+          }
+          return { status: 1 };
+        } else {
+          return { status: 2 };
+        }
+      } else {
+        return { status: 3 };
+      }
+    } catch (error) {
+      return { status: 0 };
+    }
   },
 };

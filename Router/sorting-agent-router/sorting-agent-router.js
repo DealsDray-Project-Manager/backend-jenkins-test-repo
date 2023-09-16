@@ -469,4 +469,83 @@ router.post("/whtToRp/closeTray", async (req, res, next) => {
     next(error);
   }
 });
+/*----------------------------------------------COPY GRADING -------------------------------------------------------*/
+router.post("/copyGradingRequests/:username", async (req, res, next) => {
+  try {
+    const { username } = req.params;
+    let data = await sortingAgentController.getCopyGradingRequests(username);
+
+    if (data) {
+      res.status(200).json({
+        data: data,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+// FOR START COPY GRADING PAGE
+router.post(
+  "/copyGradingStartWork/:trayId/:username",
+  async (req, res, next) => {
+    try {
+      const { username, trayId } = req.params;
+      let data = await sortingAgentController.getCopyGradingStartWork(
+        trayId,
+        username
+      );
+
+      if (data.status == 1) {
+        res.status(200).json({
+          data: data.trayData,
+        });
+      } else if (data.status == 2) {
+        res.status(202).json({
+          message: "Sorry You can't access this data",
+        });
+      } else {
+        res.status(202).json({
+          message: "Tray Not found",
+        });
+      }
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+// ADD GRADE
+router.post("/copyGradingAddItems", async (req, res, next) => {
+  try {
+    let data = await sortingAgentController.addItemsForCopyGrading(req.body);
+    if (data.status == 1) {
+      res.status(200).json({
+        message: "Successfully Added",
+      });
+    } else {
+      res.status(202).json({
+        message: "Updation Failed",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+// CLOSE THE TRAY AFTER COPY GRADING
+router.post("/copyGradingCloseTray/:trayId", async (req, res, next) => {
+  try {
+    const { trayId } = req.params;
+    let data = await sortingAgentController.copyGradeCloseTray(trayId);
+    if (data.status == 1) {
+      res.status(200).json({
+        message: "Successfully Closed",
+      });
+    } else {
+      res.status(202).json({
+        message: "Updation Failed",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
 module.exports = router;

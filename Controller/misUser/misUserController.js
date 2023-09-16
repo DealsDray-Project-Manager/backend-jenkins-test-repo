@@ -3033,13 +3033,18 @@ module.exports = {
           );
         }
         let state = "Tray";
+        let typeOfpanel = "PRC MIS";
+        console.log(whtTrayData.sort_id);
+        if (whtTrayData.sort_id == "Assigned for copy grading") {
+          typeOfpanel = "Sales MIS";
+        }
         for (let y of data.items) {
           let unitsLogCreation = await unitsActionLog.create({
             action_type: whtTrayData.sort_id,
             created_at: Date.now(),
             user_name_of_action: whtTrayData.actionUser,
             agent_name: whtTrayData.user_name,
-            user_type: "PRC MIS",
+            user_type: typeOfpanel,
             uic: y.uic,
             tray_id: x,
             track_tray: state,
