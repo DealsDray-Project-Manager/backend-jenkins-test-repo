@@ -3032,13 +3032,18 @@ module.exports = {
           );
         }
         let state = "Tray";
+        let typeOfpanel = "PRC MIS";
+        console.log(whtTrayData.sort_id);
+        if (whtTrayData.sort_id == "Assigned for copy grading") {
+          typeOfpanel = "Sales MIS";
+        }
         for (let y of data.items) {
           let unitsLogCreation = await unitsActionLog.create({
             action_type: whtTrayData.sort_id,
             created_at: Date.now(),
             user_name_of_action: whtTrayData.actionUser,
             agent_name: whtTrayData.user_name,
-            user_type: "PRC MIS",
+            user_type: typeOfpanel,
             uic: y.uic,
             tray_id: x,
             track_tray: state,
@@ -5388,7 +5393,7 @@ module.exports = {
   /*--------------------------------------------STX UTILITY ---------------------------------------*/
   stxUtilityImportXlsx: () => {
     return new Promise(async (resolve, reject) => {
-      let arr = []
+      let arr = [];
 
       let arr1 = [];
       for (let x of arr) {
@@ -5557,12 +5562,14 @@ module.exports = {
         }
       );
       if (updateStx) {
-        let updateStxUtility=await stxUtility.updateMany({uic:uic,type: "Stx-to-stx"},{
-          $set:{
-            added_status:"Added",
-
+        let updateStxUtility = await stxUtility.updateMany(
+          { uic: uic, type: "Stx-to-stx" },
+          {
+            $set: {
+              added_status: "Added",
+            },
           }
-        })
+        );
         const addLogsofUnits = await unitsActionLog.create({
           action_type: "Stx Utility",
           created_at: Date.now(),

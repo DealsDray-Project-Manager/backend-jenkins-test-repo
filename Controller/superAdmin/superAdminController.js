@@ -32,10 +32,10 @@ const elasticsearch = require("../../Elastic-search/elastic");
 const { purchaseOrder } = require("../../Model/Purchase-order/purchase-order");
 const { tempOrdersReq } = require("../../Model/temp-req/temp-req");
 
-const IISDOMAIN = "https://prexo-v9-dev-api.dealsdray.com/user/profile/";
+const IISDOMAIN = "https://prexo-v8-5-2-uat-api.dealsdray.com/user/profile/";
 const IISDOMAINBUYERDOC =
-  "https://prexo-v9-dev-api.dealsdray.com/user/document/";
-const IISDOMAINPRDT = "https://prexo-v9-dev-api.dealsdray.com/product/image/";
+  "https://prexo-v8-5-2-uat-api.dealsdray.com/user/document/";
+const IISDOMAINPRDT = "https://prexo-v8-5-2-uat-api.dealsdray.com/product/image/";
 
 /************************************************************************************************** */
 
@@ -2758,6 +2758,14 @@ module.exports = {
             },
           },
           {
+            $lookup: {
+              from: "masters", // Replace with the actual collection name
+              localField: "rack_id",
+              foreignField: "temp_rack",
+              as: "upcoming_tray_count",
+            },
+          },
+          {
             $project: {
               _id: 1,
               rack_id: 1,
@@ -2768,12 +2776,13 @@ module.exports = {
               parent_id: 1,
               // Other fields you want to include
               rack_count: { $size: "$rack_counts" },
+              upcoming_tray_count: { $size: "$upcoming_tray_count" },
             },
           },
           { $sort: { rack_id: 1 } },
         ];
-
         const rackCounts = await trayRack.aggregate(aggregatePipeline);
+        console.log(rackCounts);
 
         resolve(rackCounts);
       } catch (error) {
@@ -6019,12 +6028,11 @@ module.exports = {
             rdl_fls_one_report: x.rdl_fls_one_report,
             rp_tray: x.rp_tray,
             rdl_two_user_name: x.rdl_two_user_name,
-            issued_to_rdl_two_date:x.issued_to_rdl_two_date,
-            rdl_two_closed_date:x.rdl_two_closed_date,
-            rdl_two_report:x.rdl_two_report
+            issued_to_rdl_two_date: x.issued_to_rdl_two_date,
+            rdl_two_closed_date: x.rdl_two_closed_date,
+            rdl_two_report: x.rdl_two_report,
           };
           let dataUpdate = await tempOrdersReq.create(obj);
-       
         }
 
         resolve(orderData); // You can resolve with the orderData if needed.
