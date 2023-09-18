@@ -1056,11 +1056,11 @@ module.exports = {
           if (getTray.sort_id == "Issued to sorting (Wht to rp)") {
             const rpTray = await masters.findOne({ code: getTray.rp_tray });
             if (rpTray) {
-              if (rpTray.sort_id == "Issued to sorting (Wht to rp)") {
-                resolve({ status: 1, tray: getTray, rpTray: rpTray });
-              } else {
-                resolve({ status: 3 });
-              }
+              resolve({ status: 1, tray: getTray, rpTray: rpTray });
+              // if (rpTray.sort_id == "Issued to sorting (Wht to rp)") {
+              // } else {
+              //   resolve({ status: 3 });
+              // }
             } else {
               resolve({ status: 3 });
             }
