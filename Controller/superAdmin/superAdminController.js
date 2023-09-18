@@ -32,10 +32,10 @@ const elasticsearch = require("../../Elastic-search/elastic");
 const { purchaseOrder } = require("../../Model/Purchase-order/purchase-order");
 const { tempOrdersReq } = require("../../Model/temp-req/temp-req");
 
-const IISDOMAIN = "https://prexo-v8-5-2-adminapi.dealsdray.com/user/profile/";
+const IISDOMAIN = "https://prexo-v8-5-2-uat-api.dealsdray.com/user/profile/";
 const IISDOMAINBUYERDOC =
-  "https://prexo-v8-5-2-adminapi.dealsdray.com/user/document/";
-const IISDOMAINPRDT = "https://prexo-v8-5-2-adminapi.dealsdray.com/product/image/";
+  "https://prexo-v8-5-2-uat-api.dealsdray.com/user/document/";
+const IISDOMAINPRDT = "https://prexo-v8-5-2-uat-api.dealsdray.com/product/image/";
 
 /************************************************************************************************** */
 
@@ -5665,24 +5665,26 @@ module.exports = {
       //   arr1.push(x.muic);
       // }
       // resolve(arr2);
-      // const findTemp = await masters.updateMany(
-      //   {
-      //     prefix: "tray-master",
-      //     sort_id: {
-      //       $nin: [
-      //         "Assigned to warehouae for rack change",
-      //         "Received for rack change",
-      //         "Issued to scan in for rack change",
-      //       ],
-      //     },
-      //     temp_rack: { $exists: true },
-      //   },
-      //   {
-      //     $set: {
-      //       temp_rack: null,
-      //     },
-      //   }
-      // );
+      const findTemp = await masters.find(
+        {
+          prefix: "tray-master",
+          sort_id: {
+            $in: [
+              "Received for rack change",
+              "Issued to scan in for rack change",
+            ],
+          },
+          temp_rack:null,
+        },
+       
+      );
+      for(let x of findTemp){
+        let obj={
+          tray_id:x.code
+        }
+        let add =await tempOrdersReq.create(obj)
+      }
+      resolve({status:1})
       // let findRpt=await masters.find({type_taxanomy:"RPT"})
       // for(let x of findRpt){
       //   for(let y of x.items){
@@ -5693,21 +5695,21 @@ module.exports = {
       //     })
       //   }
       // }
-      let findTray = await masters.findOne({ code: "RPT18008" });
-      for (let x of findTray.actual_items) {
-        let update = await masters.updateOne(
-          { code: "RPT18008" },
-          {
-            $set: {
-              actual_items: [],
-            },
-            $push: {
-              items: x,
-            },
-          }
-        );
-      }
-      resolve({ status: true });
+      // let findTray = await masters.findOne({ code: "RPT18008" });
+      // for (let x of findTray.actual_items) {
+      //   let update = await masters.updateOne(
+      //     { code: "RPT18008" },
+      //     {
+      //       $set: {
+      //         actual_items: [],
+      //       },
+      //       $push: {
+      //         items: x,
+      //       },
+      //     }
+      //   );
+      // }
+      // resolve({ status: true });
     });
   },
   extraUpdateRack: () => {

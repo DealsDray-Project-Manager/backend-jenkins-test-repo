@@ -82,7 +82,7 @@ module.exports = {
       count.rackChangeStockOut = await masters.count({
         issued_user_name: username,
         sort_id: "Assigned to warehouae for rack change",
-        temp_rack: { $exists: true },
+        temp_rack: { $ne:null},
       });
       count.displayGradingRequest = await masters.count({
         sort_id: "Assigned for Display Grading",
@@ -7560,7 +7560,7 @@ module.exports = {
         let state = "Tray";
         for (let x of updateRackId.items) {
           const addLogsofUnits = await unitsActionLog.create({
-            action_type: "Rack Changed",
+            action_type: "Rack Change",
             created_at: Date.now(),
             uic: x.uic,
             tray_id: updateRackId.code,
