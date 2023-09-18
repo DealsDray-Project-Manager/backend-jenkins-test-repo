@@ -100,6 +100,8 @@ module.exports = {
             muic: { $first: "$items.muic" },
             sp: { $first: "$sp_price" },
             mrp: { $first: "$mrp_price" },
+            count_of_g_display: { $sum:  "$count_of_g_display" },
+            count_of_c_display: { $sum:  "$count_of_c_display" },
             price_updation_date: { $first: "$price_updation_date" },
             price_creation_date: { $first: "$price_creation_date" },
           },

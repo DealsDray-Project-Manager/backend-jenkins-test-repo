@@ -3035,7 +3035,7 @@ module.exports = {
         let state = "Tray";
         let typeOfpanel = "PRC MIS";
         console.log(whtTrayData.sort_id);
-        if (whtTrayData.sort_id == "Assigned for copy grading") {
+        if (whtTrayData.sort_id == "Assigned for Display Grading") {
           typeOfpanel = "Sales MIS";
         }
         for (let y of data.items) {

@@ -63,8 +63,8 @@ module.exports = {
         allRpTray: 0,
         rackChangeStockin: 0,
         rackChangeStockOut: 0,
-        copyGradingRequest:0,
-        returnFromCopyGrading:0
+        displayGradingRequest:0,
+        returnFromDisplayGrading:0
 
       };
       count.rackChangeStockin = await masters.count({
@@ -84,23 +84,23 @@ module.exports = {
         sort_id: "Assigned to warehouae for rack change",
         temp_rack: { $exists: true },
       });
-      count.copyGradingRequest = await masters.count({
-        sort_id: "Assigned for copy grading",
+      count.displayGradingRequest = await masters.count({
+        sort_id: "Assigned for Display Grading",
         cpc: location,
         type_taxanomy: "ST",
       });
-      count.returnFromCopyGrading = await masters.count({
+      count.returnFromDisplayGrading = await masters.count({
         $or: [
           {
             prefix: "tray-master",
             type_taxanomy: "ST",
-            sort_id: "Copy Grading Done Closed By Sorting",
+            sort_id: "Display Grading Done Closed By Sorting",
             cpc: location,
           },
           {
             prefix: "tray-master",
             type_taxanomy: "ST",
-            sort_id: "Received From Sorting After Copy Grading",
+            sort_id: "Received From Sorting After Display Grading",
             cpc: location,
           }
         ],
@@ -3177,14 +3177,14 @@ module.exports = {
             }
           }
         }
-      } else if (trayData.sortId == "Assigned for copy grading") {
+      } else if (trayData.sortId == "Assigned for Display Grading") {
         data = await masters.findOneAndUpdate(
           { code: trayData.trayId },
           {
             $set: {
               actual_items: [],
               description: trayData.description,
-              sort_id: "Issued to Sorting Agent For Copy Grading",
+              sort_id: "Issued to Sorting Agent For Display Grading",
               rack_id: null,
               assigned_date: Date.now(),
               temp_array: [],
@@ -3195,7 +3195,7 @@ module.exports = {
           let state = "Tray";
           for (let x of data.items) {
             const addLogsofUnits = await unitsActionLog.create({
-              action_type: "Issued to Sorting Agent For Copy Grading",
+              action_type: "Issued to Sorting Agent For Display Grading",
               created_at: Date.now(),
               uic: x.uic,
               agent_name: data.issued_user_name,
@@ -3203,14 +3203,14 @@ module.exports = {
               tray_id: trayData.trayId,
               user_type: "Sales Warehouse",
               track_tray: state,
-              description: `Issued to Sorting Agent For Copy Grading to agent:${data.issued_user_name} by WH :${trayData.actionUser}`,
+              description: `Issued to Sorting Agent For Display Grading to agent:${data.issued_user_name} by WH :${trayData.actionUser}`,
             });
             state = "Units";
             let deliveryUpdate = await delivery.findOneAndUpdate(
               { tracking_id: x.tracking_id },
               {
                 $set: {
-                  tray_status: "Issued to Sorting Agent For Copy Grading",
+                  tray_status: "Issued to Sorting Agent For Display Grading",
                   tray_location: "Sorting",
                   updated_at: Date.now(),
                   copy_grading_issued_to_agent: Date.now(),
@@ -4954,6 +4954,8 @@ module.exports = {
                 track_tray: {},
                 temp_array: [],
                 items: [],
+                count_of_c_display:0,
+                count_of_g_display:0,
                 issued_user_name: null,
                 from_merge: null,
                 to_merge: null,
@@ -5244,7 +5246,11 @@ module.exports = {
             { issued_user_name: username, sort_id: "Merging Done" },
             {
               issued_user_name: username,
-              sort_id: "Issued to Sorting Agent For Copy Grading",
+              sort_id: "Issued to Sorting Agent For Display Grading",
+            },
+            {
+              issued_user_name: username,
+              sort_id: "Display Grading Done Closed By Sorting",
             },
             {
               issued_user_name: username,
@@ -6363,7 +6369,7 @@ module.exports = {
   getRequestForApproval: (status, location, type) => {
     return new Promise(async (resolve, reject) => {
       let data
-      if(status == "Copy Grading Done Closed By Sorting"){
+      if(status == "Display Grading Done Closed By Sorting"){
          data = await masters.find({
           $or: [
             {
@@ -6375,7 +6381,7 @@ module.exports = {
             {
               prefix: "tray-master",
               type_taxanomy: type,
-              sort_id: "Received From Sorting After Copy Grading",
+              sort_id: "Received From Sorting After Display Grading",
               cpc: location,
             }
           ],
@@ -7677,7 +7683,7 @@ module.exports = {
       }
     });
   },
-  receivedFromSortingAfterCopyGrade: async (trayData) => {
+  receivedFromSortingAfterDisplayGrade: async (trayData) => {
     try {
       let tray = await masters.findOne({ code: trayData.trayId });
       if (tray?.items?.length == trayData.counts) {
@@ -7685,7 +7691,7 @@ module.exports = {
           { code: trayData.trayId },
           {
             $set: {
-              sort_id: "Received From Sorting After Copy Grading",
+              sort_id: "Received From Sorting After Display Grading",
             },
           }
         );
@@ -7693,7 +7699,7 @@ module.exports = {
           let state = "Tray";
           for (let x of data.items) {
             let unitsLogCreation = await unitsActionLog.create({
-              action_type: "Received From Sorting After Copy Grading",
+              action_type: "Received From Sorting After Display Grading",
               created_at: Date.now(),
               user_name_of_action: trayData.actioUser,
               user_type: "Sales Warehouse",
@@ -7701,14 +7707,14 @@ module.exports = {
               agent_name: data.issued_user_name,
               tray_id: trayData.trayId,
               track_tray: state,
-              description: `Received From Sorting After Copy Grading agent:${data.issued_user_name} by Wh:${trayData.actioUser}`,
+              description: `Received From Sorting After Display Grading agent:${data.issued_user_name} by Wh:${trayData.actioUser}`,
             });
             state = "Units";
             let deliveryTrack = await delivery.findOneAndUpdate(
               { tracking_id: x.tracking_id },
               {
                 $set: {
-                  tray_status: "Received From Sorting After Copy Grading",
+                  tray_status: "Received From Sorting After Display Grading",
                   tray_location: "Sales Warehouse",
                   copy_grading_done_received: Date.now(),
                   updated_at: Date.now(),
