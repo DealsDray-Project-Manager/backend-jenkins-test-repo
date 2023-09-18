@@ -7602,7 +7602,7 @@ module.exports = {
         data = await masters.find({
           issued_user_name: username,
           sort_id: sortId,
-          temp_rack: { $exists: true },
+          temp_rack: {$ne:null},
         });
       }
       if (data) {
