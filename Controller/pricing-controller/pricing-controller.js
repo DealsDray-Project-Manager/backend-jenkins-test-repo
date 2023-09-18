@@ -163,6 +163,8 @@ module.exports = {
             muic: { $first: "$items.muic" },
             sp: { $first: "$sp_price" },
             mrp: { $first: "$mrp_price" },
+            count_of_g_display: { $sum:  "$count_of_g_display" },
+            count_of_c_display: { $sum:  "$count_of_c_display" },
             // Count the number of items in the 'items' array within each group
           },
         },
@@ -175,6 +177,7 @@ module.exports = {
           },
         },
       ]);
+      console.log(getBasedOnMuic);
       for (let x of getBasedOnMuic) {
         x["muic_one"] = x.muic[0];
       }

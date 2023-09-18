@@ -27,12 +27,12 @@ module.exports = {
         ctxtoStxSorting: 0,
         whtToRpTraySorting: 0,
         rpTrayCount: 0,
-        copyGradingRequest: 0,
+        displayGradingRequest: 0,
       };
-      count.copyGradingRequest = await masters.count({
+      count.displayGradingRequest = await masters.count({
         issued_user_name: username,
         type_taxanomy: "ST",
-        sort_id: "Issued to Sorting Agent For Copy Grading",
+        sort_id: "Issued to Sorting Agent For Display Grading",
       });
       count.rpTrayCount = await masters.count({
         issued_user_name: username,
@@ -1297,11 +1297,11 @@ module.exports = {
       }
     });
   },
-  getCopyGradingRequests: async (username) => {
+  getDisplayGradingRequests: async (username) => {
     try {
       const findTray = await masters.find({
         type_taxanomy: "ST",
-        sort_id: "Issued to Sorting Agent For Copy Grading",
+        sort_id: "Issued to Sorting Agent For Display Grading",
         issued_user_name: username,
       });
       return findTray;
@@ -1309,12 +1309,13 @@ module.exports = {
       return error;
     }
   },
-  getCopyGradingStartWork: async (trayId, username) => {
+  getDisplayGradingStartWork: async (trayId, username) => {
     try {
       const fetchTrayData = await masters.findOne({ code: trayId });
       if (fetchTrayData) {
         if (
-          fetchTrayData.sort_id == "Issued to Sorting Agent For Copy Grading" &&
+          fetchTrayData.sort_id ==
+            "Issued to Sorting Agent For Display Grading" &&
           fetchTrayData.issued_user_name == username
         ) {
           return { status: 1, trayData: fetchTrayData };
@@ -1328,23 +1329,47 @@ module.exports = {
       return error;
     }
   },
-  addItemsForCopyGrading: async (uicData) => {
+  addItemsForDisplayGrading: async (uicData) => {
     try {
+      
       uicData.item["screen_type_utility"] = uicData.screenType;
-      const fetchData = await masters.updateOne(
-        {
-          code: uicData.trayId,
-          sort_id: "Issued to Sorting Agent For Copy Grading",
-        },
-        {
-          $push: {
-            actual_items: uicData.item,
+      let fetchData;
+      if (uicData.screenType == "C") {
+        fetchData = await masters.updateOne(
+          {
+            code: uicData.trayId,
+            sort_id: "Issued to Sorting Agent For Display Grading",
+            "actual_items.uic": { $nin: [uicData.item.uic] } 
           },
-        }
-      );
+          {
+            $push: {
+              actual_items: uicData.item,
+            },
+            $inc: {
+              count_of_c_display: 1,
+            },
+          }
+        );
+      } else {
+        fetchData = await masters.updateOne(
+          {
+            code: uicData.trayId,
+            sort_id: "Issued to Sorting Agent For Display Grading",
+            "actual_items.uic": { $nin: [uicData.item.uic] } 
+          },
+          {
+            $push: {
+              actual_items: uicData.item,
+            },
+            $inc: {
+              count_of_g_display: 1,
+            },
+          }
+        );
+      }
       if (fetchData.modifiedCount !== 0) {
         await unitsActionLog.create({
-          action_type: "Copy Grading",
+          action_type: "Display Grading",
           created_at: Date.now(),
           uic: uicData.item.uic,
           tray_id: uicData.trayId,
@@ -1361,16 +1386,19 @@ module.exports = {
       return error;
     }
   },
-  copyGradeCloseTray: async (trayId) => {
+  DisplayGradeCloseTray: async (trayId) => {
     try {
       console.log(trayId);
       const findTray = await masters.findOne({ code: trayId });
       if (findTray) {
         const getTrayData = await masters.findOneAndUpdate(
-          { code: trayId, sort_id: "Issued to Sorting Agent For Copy Grading" },
+          {
+            code: trayId,
+            sort_id: "Issued to Sorting Agent For Display Grading",
+          },
           {
             $set: {
-              sort_id: "Copy Grading Done Closed By Sorting",
+              sort_id: "Display Grading Done Closed By Sorting",
               items: findTray.actual_items,
               actual_items: [],
               requested_date: Date.now(),
@@ -1388,7 +1416,7 @@ module.exports = {
               sorting_agent_name: getTrayData.issued_user_name,
             };
             await unitsActionLog.create({
-              action_type: "Copy Grade done",
+              action_type: "Display Grade done",
               created_at: Date.now(),
               uic: x.uic,
               tray_id: trayId,
@@ -1396,7 +1424,7 @@ module.exports = {
               report: obj,
               track_tray: state,
               user_type: "Sales Sorting",
-              description: `Copy Grading done closed by the agent :${getTrayData.issued_user_name}`,
+              description: `Display Grading done closed by the agent :${getTrayData.issued_user_name}`,
             });
             state = "Units";
             let updateDelivery = await delivery.updateOne(
@@ -1405,7 +1433,7 @@ module.exports = {
                 $set: {
                   copy_grading_report: obj,
                   copy_grading_done_date: Date.now(),
-                  tray_status: "Copy Grading Done Closed By Sorting",
+                  tray_status: "Display Grading Done Closed By Sorting",
                   tray_location: "Sales Warehouse",
                 },
               },

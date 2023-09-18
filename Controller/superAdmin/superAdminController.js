@@ -32,10 +32,10 @@ const elasticsearch = require("../../Elastic-search/elastic");
 const { purchaseOrder } = require("../../Model/Purchase-order/purchase-order");
 const { tempOrdersReq } = require("../../Model/temp-req/temp-req");
 
-const IISDOMAIN = "https://prexo-v8-5-2-uat-api.dealsdray.com/user/profile/";
+const IISDOMAIN = "https://prexo-v8-5-2-adminapi.dealsdray.com/user/profile/";
 const IISDOMAINBUYERDOC =
-  "https://prexo-v8-5-2-uat-api.dealsdray.com/user/document/";
-const IISDOMAINPRDT = "https://prexo-v8-5-2-uat-api.dealsdray.com/product/image/";
+  "https://prexo-v8-5-2-adminapi.dealsdray.com/user/document/";
+const IISDOMAINPRDT = "https://prexo-v8-5-2-adminapi.dealsdray.com/product/image/";
 
 /************************************************************************************************** */
 

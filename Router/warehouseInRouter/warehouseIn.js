@@ -2953,10 +2953,10 @@ router.post("/stxToStxUtilityScan/:uic", async (req, res, next) => {
     next(error);
   }
 });
-/*----------------------------------------------------COPY GRADING ---------------------------------------------------------*/
+/*----------------------------------------------------Display GRADING ---------------------------------------------------------*/
 router.post("/receivedTrayAfterCopyGrade", async (req, res, next) => {
   try {
-    let data = await warehouseInController.receivedFromSortingAfterCopyGrade(
+    let data = await warehouseInController.receivedFromSortingAfterDisplayGrade(
       req.body
     );
     if (data.status == 1) {

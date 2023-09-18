@@ -473,7 +473,7 @@ router.post("/whtToRp/closeTray", async (req, res, next) => {
 router.post("/copyGradingRequests/:username", async (req, res, next) => {
   try {
     const { username } = req.params;
-    let data = await sortingAgentController.getCopyGradingRequests(username);
+    let data = await sortingAgentController.getDisplayGradingRequests(username);
 
     if (data) {
       res.status(200).json({
@@ -484,13 +484,13 @@ router.post("/copyGradingRequests/:username", async (req, res, next) => {
     next(error);
   }
 });
-// FOR START COPY GRADING PAGE
+// FOR START Display GRADING PAGE
 router.post(
   "/copyGradingStartWork/:trayId/:username",
   async (req, res, next) => {
     try {
       const { username, trayId } = req.params;
-      let data = await sortingAgentController.getCopyGradingStartWork(
+      let data = await sortingAgentController.getDisplayGradingStartWork(
         trayId,
         username
       );
@@ -516,7 +516,7 @@ router.post(
 // ADD GRADE
 router.post("/copyGradingAddItems", async (req, res, next) => {
   try {
-    let data = await sortingAgentController.addItemsForCopyGrading(req.body);
+    let data = await sortingAgentController.addItemsForDisplayGrading(req.body);
     if (data.status == 1) {
       res.status(200).json({
         message: "Successfully Added",
@@ -530,11 +530,11 @@ router.post("/copyGradingAddItems", async (req, res, next) => {
     next(error);
   }
 });
-// CLOSE THE TRAY AFTER COPY GRADING
+// CLOSE THE TRAY AFTER Display GRADING
 router.post("/copyGradingCloseTray/:trayId", async (req, res, next) => {
   try {
     const { trayId } = req.params;
-    let data = await sortingAgentController.copyGradeCloseTray(trayId);
+    let data = await sortingAgentController.DisplayGradeCloseTray(trayId);
     if (data.status == 1) {
       res.status(200).json({
         message: "Successfully Closed",
