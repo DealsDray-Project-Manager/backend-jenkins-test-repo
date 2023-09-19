@@ -32,10 +32,10 @@ const elasticsearch = require("../../Elastic-search/elastic");
 const { purchaseOrder } = require("../../Model/Purchase-order/purchase-order");
 const { tempOrdersReq } = require("../../Model/temp-req/temp-req");
 
-const IISDOMAIN = "https://prexo-v8-5-2-uat-api.dealsdray.com/user/profile/";
+const IISDOMAIN = "https://prexo-v8-5-dev-api.dealsdray.com/user/profile/";
 const IISDOMAINBUYERDOC =
-  "https://prexo-v8-5-2-uat-api.dealsdray.com/user/document/";
-const IISDOMAINPRDT = "https://prexo-v8-5-2-uat-api.dealsdray.com/product/image/";
+  "https://prexo-v8-5-dev-api.dealsdray.com/user/document/";
+const IISDOMAINPRDT = "https://prexo-v8-5-dev-api.dealsdray.com/product/image/";
 
 /************************************************************************************************** */
 
@@ -5665,7 +5665,7 @@ module.exports = {
       //   arr1.push(x.muic);
       // }
       // resolve(arr2);
-      const findTemp = await masters.find(
+      const findTemp = await masters.updateMany(
         {
           prefix: "tray-master",
           sort_id: {
@@ -5676,14 +5676,14 @@ module.exports = {
           },
           temp_rack:null,
         },
+        {
+          $set:{
+            temp_rack:"RAC999999"
+          }
+        }
        
       );
-      for(let x of findTemp){
-        let obj={
-          tray_id:x.code
-        }
-        let add =await tempOrdersReq.create(obj)
-      }
+     
       resolve({status:1})
       // let findRpt=await masters.find({type_taxanomy:"RPT"})
       // for(let x of findRpt){
