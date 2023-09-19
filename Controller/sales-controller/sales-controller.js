@@ -84,7 +84,7 @@ module.exports = {
           $match: {
             type_taxanomy: "ST",
             cpc: location,
-            sort_id: { $in: ["Ready to Pricing", "Inuse"] },
+            sort_id: { $ne: "Open" },
             sp_price: { $exists: true, $ne: null },
             mrp_price: { $exists: true, $ne: null },
           },
@@ -100,6 +100,8 @@ module.exports = {
             muic: { $first: "$items.muic" },
             sp: { $first: "$sp_price" },
             mrp: { $first: "$mrp_price" },
+            count_of_g_display: { $sum:  "$count_of_g_display" },
+            count_of_c_display: { $sum:  "$count_of_c_display" },
             price_updation_date: { $first: "$price_updation_date" },
             price_creation_date: { $first: "$price_creation_date" },
           },
@@ -121,7 +123,7 @@ module.exports = {
       ]);
 
       for (let x of getBasedOnMuic) {
-        console.log(x);
+      
         x["muic_one"] = x.muic[0];
       }
       resolve(getBasedOnMuic);
@@ -135,7 +137,7 @@ module.exports = {
           $match: {
             type_taxanomy: "ST",
             cpc: location,
-            sort_id: { $in: ["Ready to Pricing", "Inuse"] },
+            sort_id: { $ne: "Open" },
             brand: brand,
             model: model,
             tray_grade: grade,
@@ -181,7 +183,7 @@ module.exports = {
           $match: {
             type_taxanomy: "ST",
             cpc: location,
-            sort_id: { $in: ["Ready to Pricing", "Inuse"] },
+            sort_id: { $ne: "Open" },
             sp_price: { $exists: true, $ne: null },
             mrp_price: { $exists: true, $ne: null },
           },

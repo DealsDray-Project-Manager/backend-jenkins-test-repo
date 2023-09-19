@@ -10,6 +10,7 @@ const {
 const { rammodel } = require("../../Model/ramModel/ram");
 const { storagemodel } = require("../../Model/storageModel/storage");
 const { unitsActionLog } = require("../../Model/units-log/units-action-log");
+const { trayCategory } = require("../../Model/tray-category/tray-category");
 
 module.exports = {
   getAssigendOtherTray: (username) => {
@@ -450,7 +451,7 @@ module.exports = {
       resolve(data);
     });
   },
-  getAllStorageAndRamAndColor: () => {
+  getAllStorageAndRamAndColor: (grade) => {
     return new Promise(async (resolve, reject) => {
       let obj = {
         color: [],
@@ -469,8 +470,38 @@ module.exports = {
         .find({})
         .sort({ name: 1 })
         .collation({ locale: "en_US", numericOrdering: true });
-
-      resolve(obj);
+      const findAllCategory = await trayCategory.find({});
+      const findGradeFlot = await trayCategory.findOne({ code: grade });
+      let upArray = [];
+      let downArray = [];
+      let flagToHigh = 0;
+      if (findGradeFlot) {
+        for (let x of findAllCategory) {
+          if (Number(findGradeFlot?.float) > Number(x.float)) {
+            upArray.push(x);
+          } else if (Number(findGradeFlot?.float) < Number(x.float)) {
+            downArray.push(x);
+          }
+        }
+        if (downArray.length == 0) {
+          flagToHigh = 2;
+        } else if (upArray.length == 0) {
+          flagToHigh = 1;
+        }
+        resolve({
+          allOtherData: obj,
+          upArray: upArray,
+          downArray: downArray,
+          flagToHigh: flagToHigh,
+        });
+      } else {
+        resolve({
+          allOtherData: obj,
+          upArray: upArray,
+          downArray: downArray,
+          flagToHigh: flagToHigh,
+        });
+      }
     });
   },
 };

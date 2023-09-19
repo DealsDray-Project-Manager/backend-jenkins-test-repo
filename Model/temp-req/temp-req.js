@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
 
-const deliverySchema = mongoose.Schema({
+const tempOrdersSchema = mongoose.Schema({
   tracking_id: {
     type: String,
   },
@@ -307,14 +307,9 @@ const deliverySchema = mongoose.Schema({
   price_from_pricing_agent: {
     type: String,
   },
-  copy_grading_issued_to_agent:Date,
-  copy_grading_report:Object,
-  copy_grading_done_date:Date,
-  for_copy_grade_username:String,
-  copy_grading_done_received:Date
 });
 
-const delivery = mongoose.model("delivery", deliverySchema);
+const tempOrdersReq = mongoose.model("tempOrdersReq", tempOrdersSchema);
 module.exports = {
-  delivery: delivery,
+  tempOrdersReq: tempOrdersReq,
 };

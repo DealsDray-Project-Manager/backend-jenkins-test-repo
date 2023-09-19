@@ -61,31 +61,24 @@ router.post(
   ]),
   async (req, res, next) => {
     try {
-      console.log("api request");
-        let data = await superAdminController.createBuyer(
-          req.body,
-          req.files
-        );
-        if (data) {
-          console.log(data);
-          if (data.status) {
-            res.status(200).json({ status: 0, data: { message: "Buyer Exist" } });
-          } else {
-            res.status(200).json({
-              status: 1,
-              data: {
-                message: "Buyer is created",
-              },
-            });
-          }
+      let data = await superAdminController.createBuyer(req.body, req.files);
+      if (data) {
+        if (data.status) {
+          res.status(200).json({ status: 0, data: { message: "Buyer Exist" } });
+        } else {
+          res.status(200).json({
+            status: 1,
+            data: {
+              message: "Buyer is created",
+            },
+          });
         }
-       
+      }
     } catch (error) {
       next(error);
     }
   }
 );
-
 
 /*-----------------------------FETCH LOCATION TYPE--------------------------------------*/
 router.post("/location/type/:code", async (req, res, next) => {
@@ -227,7 +220,7 @@ router.get("/getCpcSalesLocation/", async (req, res) => {
 });
 
 /*----------------------------CPC---------------------------------------*/
-router.get("/getCpc/", async (req, res) => {
+router.get("/getCpc", async (req, res) => {
   let data = await superAdminController.getCpc();
 
   if (data) {
@@ -242,6 +235,7 @@ router.post("/getWarehouseByLocation", async (req, res) => {
   try {
     const { name, type } = req.body;
     let warehouse = await superAdminController.getWarehouse(name, type);
+    console.log(warehouse);
     if (warehouse) {
       res.status(200).json({ data: { warehouse } });
     }
@@ -343,14 +337,14 @@ router.get("/getEditData/:username", async (req, res) => {
 /*------------------------------EDITED BUYER DATA-------------------------------------*/
 router.get("/getEditBuyerData/:buyername", async (req, res) => {
   try {
-    let buyer = await superAdminController.getEditBuyerData(req.params.buyername);
+    let buyer = await superAdminController.getEditBuyerData(
+      req.params.buyername
+    );
     if (buyer) {
       res.status(200).json({ data: buyer });
     }
   } catch (error) {}
 });
-
-
 
 /*-----------------------------EDIT BUYER--------------------------------------*/
 
@@ -1614,6 +1608,7 @@ router.post("/addcategory", async (req, res, next) => {
 router.post("/getCtxCategorys", async (req, res, next) => {
   try {
     let data = await superAdminController.getCtxCategorys();
+
     if (data) {
       res.status(200).json(data);
     } else {
@@ -1674,18 +1669,7 @@ router.get("/getCtxTrayCategory", async (req, res) => {
     next(error);
   }
 });
-router.post("/getCtxCategorys", async (req, res, next) => {
-  try {
-    let data = await superAdminController.getCtxCategorys();
-    if (data) {
-      res.status(200).json(data);
-    } else {
-      res.status(202).json({ error: "CTX ctaegory not Exist" });
-    }
-  } catch (error) {
-    next(error);
-  }
-});
+
 router.post("/categoryCheck", async (req, res, next) => {
   try {
     let user = await superAdminController.categoryCheck(req.body);
@@ -2081,6 +2065,10 @@ router.post("/trayracks/edit", async (req, res, next) => {
       res.status(200).json({
         message: "Successfully Updated",
       });
+    } else if (trayracksData.status == 3) {
+      res.status(202).json({
+        message: "You can't set limit less than tray count",
+      });
     } else {
       res.status(202).json({
         message: "Updation Failed...",
@@ -2111,8 +2099,12 @@ router.post("/trayracks/one/:trayRackId", async (req, res, next) => {
       res.status(200).json({
         data: trayracksData.data,
       });
+    } else if (trayracksData.status == 3) {
+      res.status(202).json({
+        message: "You can't Edit this rack",
+      });
     } else {
-      res.status(200).json({
+      res.status(202).json({
         message: "No data found",
       });
     }
@@ -2138,6 +2130,10 @@ router.post("/deleteTrayRacks/:rack_id", async (req, res, next) => {
     if (data.status == true) {
       res.status(200).json({
         message: "Successfully Deleted",
+      });
+    } else if (data?.status == 2) {
+      res.status(202).json({
+        message: "This rack You Can't Delete",
       });
     } else {
       res.status(202).json({
@@ -3502,7 +3498,6 @@ router.post("/unverifiedImeiReport/:page/:size", async (req, res, next) => {
     if (data) {
       res.status(200).json({
         data: data.unverifiedImei,
-       
       });
     }
   } catch (error) {
@@ -3569,7 +3564,7 @@ router.post("/search/unverifiedImei", async (req, res, next) => {
 router.post("/updateUnverifiedImei", async (req, res, next) => {
   try {
     // const { trayType, sort_id } = req.body;
-    console.log(req.body);
+
     const data = await superAdminController.updateUnverifiedImei(req.body);
     if (data.status == 1) {
       res.status(200).json({
@@ -3578,6 +3573,29 @@ router.post("/updateUnverifiedImei", async (req, res, next) => {
     } else if (data.status == 2) {
       res.status(202).json({
         message: "Unverified IMEI",
+      });
+    } else {
+      res.status(202).json({
+        message: "Updation Failed please try again",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+/* REMOVE DUPLICATE ENTRY THIS API FOR GLOBELY */
+router.post("/globeDuplicateRemove", async (req, res, next) => {
+  try {
+    const { trayId, id, arrayType } = req.body;
+    console.log(req.body);
+    const data = await superAdminController.globeRemoveDuplicate(
+      trayId,
+      id,
+      arrayType
+    );
+    if (data.status == 1) {
+      res.status(200).json({
+        message: "Successfully Removed",
       });
     } else {
       res.status(202).json({
@@ -4038,7 +4056,7 @@ router.post("/extra/removeIssuedUser", async (req, res, next) => {
     next(error);
   }
 });
-// FIND DUP MUIC 
+// FIND DUP MUIC
 router.post("/extra/findMuic", async (req, res, next) => {
   try {
     let data = await superAdminController.findDupMuic();
@@ -4072,4 +4090,56 @@ router.post("/extra/updateRack", async (req, res, next) => {
     next(error);
   }
 });
+// REMOVE PROCURMENT
+router.post("/extra/removeProcurmentRequest", async (req, res, next) => {
+  try {
+    let data = await superAdminController.removeProcurmentRequest();
+    if (data.status == true) {
+      res.status(200).json({
+        message: "Successfully Update",
+      });
+    } else {
+      res.status(202).json({
+        message: "Failed",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+// REMOVE ITEM
+router.post("/extra/updatePrice", async (req, res, next) => {
+  try {
+    let data = await superAdminController.removeAddToMmt();
+    if (data.status == true) {
+      res.status(200).json({
+        message: "Successfully Update",
+      });
+    } else {
+      res.status(202).json({
+        message: "Failed",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+/*-------------------------------------TEMP REQUERMENT---------------------------------------*/
+router.post("/extra/tempRequerment", async (req, res, next) => {
+  try {
+    let data = await superAdminController.tempDataAddRequerment();
+    if (data.status == true) {
+      res.status(200).json({
+        message: "Successfully Update",
+      });
+    } else {
+      res.status(202).json({
+        message: "Failed",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
 module.exports = router;

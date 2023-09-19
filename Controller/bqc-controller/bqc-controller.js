@@ -1,6 +1,7 @@
 const { delivery } = require("../../Model/deliveryModel/delivery");
 const { masters } = require("../../Model/mastersModel");
 const Elasticsearch = require("../../Elastic-search/elastic");
+var mongoose = require("mongoose");
 const { unitsActionLog } = require("../../Model/units-log/units-action-log");
 /****************************************************************** */
 module.exports = {
@@ -78,6 +79,7 @@ module.exports = {
         if (checkItem) {
           resolve({ status: 3 });
         } else {
+          itemData.item['_id'] = mongoose.Types.ObjectId();
           let data = await masters.updateOne(
             { code: itemData.trayId },
             {
@@ -105,6 +107,7 @@ module.exports = {
         if (checkItem) {
           resolve({ status: 3 });
         } else {
+          itemData.item['_id'] = mongoose.Types.ObjectId();
           let data = await masters.updateOne(
             { code: itemData.trayId },
             {
@@ -166,15 +169,16 @@ module.exports = {
         if (
           data.sort_id === status ||
           (data.sort_id == "BQC work inprogress" &&
-            data.issued_user_name == username &&
-            page == "Page-1")
+            data.issued_user_name == username 
+           )
         ) {
+
           resolve({ status: 1, data: data });
         } else if (
           data.sort_id === status ||
           (data.sort_id == "BQC work inprogress" &&
             data.issued_user_name == username &&
-            page == "Page-2" &&
+            
             data.items.length == 0)
         ) {
           resolve({ status: 4, data: data });
@@ -182,7 +186,7 @@ module.exports = {
           data.sort_id === status ||
           (data.sort_id == "BQC work inprogress" &&
             data.issued_user_name == username &&
-            page == "Page-2" &&
+            
             data.items.length !== 0)
         ) {
           resolve({ status: 5, data: data });
@@ -245,7 +249,7 @@ module.exports = {
         if (getTray.sort_id !== "BQC Done") {
           Array.prototype.push.apply(getTray.items, getTray.temp_array);
           let data = await masters.findOneAndUpdate(
-            { code: trayData.trayId ,sort_id:{$ne:"BQC Done"}},
+            { code: trayData.trayId, sort_id: { $ne: "BQC Done" } },
             {
               $set: {
                 sort_id: "BQC Done",
@@ -253,13 +257,13 @@ module.exports = {
                 description: trayData.description,
                 actual_items: getTray.items,
                 temp_array: [],
-                items: [],
+                items: [],  
               },
             },
             { new: true }
           );
           if (data) {
-            let state="Tray"
+            let state = "Tray";
             for (let x of data.actual_items) {
               if (x.bqc_report == undefined) {
                 let obj = {
@@ -276,11 +280,11 @@ module.exports = {
                 tray_id: trayData.trayId,
                 user_name_of_action: data.issued_user_name,
                 report: x.bqc_report,
-                description:`BQC Done closed by the agent :${data.issued_user_name}`,
-                track_tray:state,
-                user_type:"PRC BQC"
+                description: `BQC Done closed by the agent :${data.issued_user_name}`,
+                track_tray: state,
+                user_type: "PRC BQC",
               });
-              state="Units"
+              state = "Units";
               let deliveryUpdate = await delivery.findOneAndUpdate(
                 {
                   tracking_id: x.tracking_id,
@@ -310,5 +314,4 @@ module.exports = {
       }
     });
   },
-  
 };

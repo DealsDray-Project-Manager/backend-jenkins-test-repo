@@ -1,6 +1,7 @@
 const brand = require("../../Model/brandModel/brand");
 const { delivery } = require("../../Model/deliveryModel/delivery");
 const { masters } = require("../../Model/mastersModel");
+var mongoose = require("mongoose");
 const Elasticsearch = require("../../Elastic-search/elastic");
 const { unitsActionLog } = require("../../Model/units-log/units-action-log");
 module.exports = {
@@ -26,7 +27,13 @@ module.exports = {
         ctxtoStxSorting: 0,
         whtToRpTraySorting: 0,
         rpTrayCount: 0,
+        displayGradingRequest: 0,
       };
+      count.displayGradingRequest = await masters.count({
+        issued_user_name: username,
+        type_taxanomy: "ST",
+        sort_id: "Issued to Sorting Agent For Display Grading",
+      });
       count.rpTrayCount = await masters.count({
         issued_user_name: username,
         type_taxanomy: "RPT",
@@ -390,6 +397,7 @@ module.exports = {
         if (checkTrayFull.limit == checkTrayFull.items.length) {
           resolve({ status: 3 });
         } else {
+          mmtTrayData.item._id = mongoose.Types.ObjectId();
           let data = await masters.findOneAndUpdate(
             { code: mmtTrayData.toTray },
             {
@@ -1288,5 +1296,163 @@ module.exports = {
         resolve({ status: 0 });
       }
     });
+  },
+  getDisplayGradingRequests: async (username) => {
+    try {
+      const findTray = await masters.find({
+        type_taxanomy: "ST",
+        sort_id: "Issued to Sorting Agent For Display Grading",
+        issued_user_name: username,
+      });
+      return findTray;
+    } catch (error) {
+      return error;
+    }
+  },
+  getDisplayGradingStartWork: async (trayId, username) => {
+    try {
+      const fetchTrayData = await masters.findOne({ code: trayId });
+      if (fetchTrayData) {
+        if (
+          fetchTrayData.sort_id ==
+            "Issued to Sorting Agent For Display Grading" &&
+          fetchTrayData.issued_user_name == username
+        ) {
+          return { status: 1, trayData: fetchTrayData };
+        } else {
+          return { status: 2 };
+        }
+      } else {
+        return { status: 0 };
+      }
+    } catch (error) {
+      return error;
+    }
+  },
+  addItemsForDisplayGrading: async (uicData) => {
+    try {
+      
+      uicData.item["screen_type_utility"] = uicData.screenType;
+      let fetchData;
+      if (uicData.screenType == "C") {
+        fetchData = await masters.updateOne(
+          {
+            code: uicData.trayId,
+            sort_id: "Issued to Sorting Agent For Display Grading",
+            "actual_items.uic": { $nin: [uicData.item.uic] } 
+          },
+          {
+            $push: {
+              actual_items: uicData.item,
+            },
+            $inc: {
+              count_of_c_display: 1,
+            },
+          }
+        );
+      } else {
+        fetchData = await masters.updateOne(
+          {
+            code: uicData.trayId,
+            sort_id: "Issued to Sorting Agent For Display Grading",
+            "actual_items.uic": { $nin: [uicData.item.uic] } 
+          },
+          {
+            $push: {
+              actual_items: uicData.item,
+            },
+            $inc: {
+              count_of_g_display: 1,
+            },
+          }
+        );
+      }
+      if (fetchData.modifiedCount !== 0) {
+        await unitsActionLog.create({
+          action_type: "Display Grading",
+          created_at: Date.now(),
+          uic: uicData.item.uic,
+          tray_id: uicData.trayId,
+          user_name_of_action: uicData.username,
+          track_tray: "Units",
+          user_type: "Sales Sorting",
+          description: `Added the Screen type the agent :${uicData.username},screen Type:${uicData.screenType}`,
+        });
+        return { status: 1 };
+      } else {
+        return { status: 0 };
+      }
+    } catch (error) {
+      return error;
+    }
+  },
+  DisplayGradeCloseTray: async (trayId) => {
+    try {
+      console.log(trayId);
+      const findTray = await masters.findOne({ code: trayId });
+      if (findTray) {
+        const getTrayData = await masters.findOneAndUpdate(
+          {
+            code: trayId,
+            sort_id: "Issued to Sorting Agent For Display Grading",
+          },
+          {
+            $set: {
+              sort_id: "Display Grading Done Closed By Sorting",
+              items: findTray.actual_items,
+              actual_items: [],
+              requested_date: Date.now(),
+            },
+          },
+          {
+            new: true,
+          }
+        );
+        if (getTrayData) {
+          let state = "Tray";
+          for (let x of getTrayData?.items) {
+            let obj = {
+              scree_type: x.screen_type_utility,
+              sorting_agent_name: getTrayData.issued_user_name,
+            };
+            await unitsActionLog.create({
+              action_type: "Display Grade done",
+              created_at: Date.now(),
+              uic: x.uic,
+              tray_id: trayId,
+              user_name_of_action: getTrayData.issued_user_name,
+              report: obj,
+              track_tray: state,
+              user_type: "Sales Sorting",
+              description: `Display Grading done closed by the agent :${getTrayData.issued_user_name}`,
+            });
+            state = "Units";
+            let updateDelivery = await delivery.updateOne(
+              { "uic_code.code": x.uic },
+              {
+                $set: {
+                  copy_grading_report: obj,
+                  copy_grading_done_date: Date.now(),
+                  tray_status: "Display Grading Done Closed By Sorting",
+                  tray_location: "Sales Warehouse",
+                },
+              },
+              {
+                new: true,
+                projection: { _id: 0 },
+              }
+            );
+            console.log(updateDelivery);
+          }
+          return { status: 1 };
+        } else {
+          return { status: 0 };
+        }
+      } else {
+        return { status: 0 };
+      }
+    } catch (error) {
+      return error;
+    }
   },
 };

@@ -18,6 +18,12 @@ const StxUtilitySchema=mongoose.Schema({
     },
     current_status:{
         type:String
+    },
+    added_status:{
+        type:String
+    },
+    type:{
+        type:String
     }
 })
 const stxUtility=mongoose.model("stxUtility",StxUtilitySchema)

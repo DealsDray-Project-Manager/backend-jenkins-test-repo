@@ -167,11 +167,11 @@ const mastersSchema = mongoose.Schema({
   rack_id: {
     type: String,
   },
-  temp_status:{
-    type:String
+  temp_status: {
+    type: String,
   },
-  temp_rack:{
-    type:String
+  temp_rack: {
+    type: String,
   },
   price_creation_date: {
     type: Date,
@@ -179,6 +179,8 @@ const mastersSchema = mongoose.Schema({
   price_updation_date: {
     type: Date,
   },
+  count_of_c_display:Number,
+  count_of_g_display:Number
 });
 const masters = mongoose.model("masters", mastersSchema);
 module.exports = {

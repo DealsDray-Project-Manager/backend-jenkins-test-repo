@@ -906,7 +906,7 @@ router.post("/toWhtTrayForMerge", async (req, res, next) => {
       sortId,
       grade,
     } = req.body;
-    console.log(req.body);
+
     let data = await misUserController.toWhtTrayForMerging(
       location,
       brand,
@@ -1099,7 +1099,6 @@ router.post(
   "/toMmtTrayForMerge/:fromTray/:location/:itemsCount",
   async (req, res, next) => {
     try {
-      console.log(req.params);
       const { fromTray, location, itemsCount } = req.params;
       let mmtTray = await misUserController.getToTrayMmtMerge(
         fromTray,
@@ -1123,7 +1122,6 @@ router.post(
 /* MMT TRAY MERGE REQUEST SEND TO WAREHOUSE */
 router.post("/TrayMergeRequestSend", async (req, res, next) => {
   try {
-    console.log(req.body);
     const { sort_agent, fromTray, toTray, actionUser } = req.body;
     let data = await misUserController.mmtMergeRequestSendToWh(
       sort_agent,
@@ -1969,7 +1967,8 @@ router.post("/stxUtilityGetStx", async (req, res, next) => {
 router.post("/stxUtilityAddToStx", async (req, res, next) => {
   try {
     // PARAMS
-    const { uic, stXTrayId, ctxTrayId, brand, model, muic } = req.body;
+    const { uic, stXTrayId, ctxTrayId, brand, model, muic, screen, actUser } =
+      req.body;
     // FUNCTION FROM CONTROLLER
     let data = await misUserController.stxUtilityAddItems(
       uic,
@@ -1977,7 +1976,9 @@ router.post("/stxUtilityAddToStx", async (req, res, next) => {
       ctxTrayId,
       brand,
       model,
-      muic
+      muic,
+      screen,
+      actUser
     );
     if (data.status == 1) {
       res.status(200).json({
@@ -2107,9 +2108,7 @@ router.post("/bagTransferAndReceive", async (req, res, next) => {
 // SEND THE BAG VIA COURIER OR HAND DELIVERY
 router.post("/bagTransferSend", async (req, res, next) => {
   try {
-    let data = await misUserController.sendTheBagViaCourierOrHand(
-      req.body
-    );
+    let data = await misUserController.sendTheBagViaCourierOrHand(req.body);
     if (data) {
       res.status(200).json({
         data: data,
@@ -2120,4 +2119,5 @@ router.post("/bagTransferSend", async (req, res, next) => {
     next(error);
   }
 });
+
 module.exports = router;
