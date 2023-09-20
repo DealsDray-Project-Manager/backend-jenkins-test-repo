@@ -337,8 +337,9 @@ router.get("/getEditData/:username", async (req, res) => {
 /*------------------------------EDITED BUYER DATA-------------------------------------*/
 router.get("/getEditBuyerData/:buyername", async (req, res) => {
   try {
+    const {buyername}=req.params
     let buyer = await superAdminController.getEditBuyerData(
-      req.params.buyername
+      buyername
     );
     if (buyer) {
       res.status(200).json({ data: buyer });
@@ -350,12 +351,17 @@ router.get("/getEditBuyerData/:buyername", async (req, res) => {
 
 router.post(
   "/editBuyerDetails",
-  upload.userProfile.single("profile"),
+  upload.documents.fields([
+    { name: "profile" },
+    { name: "aadhar_proof" },
+    { name: "pan_card_proof" },
+    { name: "business_address_proof" },
+  ]),
   async (req, res, next) => {
     try {
       let data = await superAdminController.editBuyerDetails(
         req.body,
-        req.file ? req.file.filename : undefined
+        req.files
       );
       if (data) {
         res.status(200).json({ data: data });

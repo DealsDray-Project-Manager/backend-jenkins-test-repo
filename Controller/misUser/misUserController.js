@@ -164,7 +164,7 @@ module.exports = {
         prefix: "tray-master",
         sort_id: "Assigned to warehouae for rack change",
         cpc: location,
-        temp_rack: { $eq: null, $exists: false },
+        temp_rack: { $eq: null },
       });
       count.orders = await orders.count({
         partner_shop: location,

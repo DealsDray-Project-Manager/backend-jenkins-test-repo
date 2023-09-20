@@ -473,18 +473,45 @@ module.exports = {
   },
   /*--------------------------------EDIT BUYER DATA-----------------------------------*/
 
-  editBuyerDetails: (userData, profile) => {
-    if (profile != undefined) {
-      profile = IISDOMAIN + profile;
+  editBuyerDetails: (buyerData, docuemnts) => {
+    if (docuemnts != null) {
+      buyerData.profile = "";
+      buyerData.aadhar_proof = "";
+      buyerData.pan_card_proof = "";
+      buyerData.business_address_proof = "";
+      if (docuemnts.profile && docuemnts.profile[0]) {
+        buyerData.profile = IISDOMAINBUYERDOC + docuemnts.profile[0].filename;
+      }
+      if (docuemnts.aadhar_proof && docuemnts.aadhar_proof[0]) {
+        buyerData.aadhar_proof =
+          IISDOMAINBUYERDOC + docuemnts.aadhar_proof[0].filename;
+      }
+      if (docuemnts.pan_card_proof && docuemnts.pan_card_proof[0]) {
+        buyerData.pan_card_proof =
+          IISDOMAINBUYERDOC + docuemnts.pan_card_proof[0].filename;
+      }
+      if (
+        docuemnts.business_address_proof &&
+        docuemnts.business_address_proof[0]
+      ) {
+        buyerData.business_address_proof =
+          IISDOMAINBUYERDOC + docuemnts.business_address_proof[0].filename;
+      }
     }
     return new Promise(async (resolve, reject) => {
       let userDetails = await user.findOneAndUpdate(
-        { user_name: userData.user_name },
+        { user_name: buyerData.user_name },
         {
           $set: {
-            contact: userData.contact,
-            email: userData.email,
-            password: userData.password,
+            contact: buyerData.contact,
+            email: buyerData.email,
+            name: buyerData.name,
+            business_address_proof: buyerData.business_address_proof,
+            aadhar_proof: buyerData.aadhar_proof,
+            pan_card_proof: buyerData.pan_card_proof,
+            profile: buyerData.profile,
+            mobile_verification_status: buyerData.mobile_verification_status,
+            email_verification_status: buyerData.email_verification_status,
           },
         },
         { returnOriginal: false }
@@ -2364,21 +2391,7 @@ module.exports = {
 
   extraReAudit: () => {
     return new Promise(async (resolve, reject) => {
-      let arr = [
-        "WHT10028",
-        "WHT10020",
-        "WHT1918",
-        "WHT10021",
-        "WHT10022",
-        "WHT10040",
-        "WHT10038",
-        "WHT10037",
-        "WHT10036",
-        "WHT10035",
-        "WHT10048",
-        "WHT10000",
-        "WHT10041",
-      ];
+      let arr = ["WHT1128", "WHT1108", "WHT10116", "WHT1145", "WHT1133"];
       for (let x of arr) {
         let data = await masters.updateOne(
           {
@@ -2386,7 +2399,7 @@ module.exports = {
           },
           {
             $set: {
-              sort_id: "Ready to RDL-Repair",
+              sort_id: "Closed",
               issued_user_name: null,
               actual_items: [],
               temp_array: [],
@@ -5523,10 +5536,7 @@ module.exports = {
     return new Promise(async (resolve, reject) => {
       const updateRdl = await masters.updateMany(
         {
-          $or: [
-            { sort_id: "Send for RDL-One" },
-          
-          ],
+          $or: [{ sort_id: "Send for RDL-One" }],
         },
         {
           $set: {
@@ -5549,24 +5559,25 @@ module.exports = {
       //   arr1.push(x.muic);
       // }
       // resolve(arr2);
-      // const findTemp = await masters.updateMany(
-      //   {
-      //     prefix: "tray-master",
-      //     sort_id: {
-      //       $nin: [
-      //         "Assigned to warehouae for rack change",
-      //         "Received for rack change",
-      //         "Issued to scan in for rack change",
-      //       ],
-      //     },
-      //     temp_rack: { $exists: true },
-      //   },
-      //   {
-      //     $set: {
-      //       temp_rack: null,
-      //     },
-      //   }
-      // );
+      const findTemp = await masters.updateMany(
+        {
+          prefix: "tray-master",
+          sort_id: {
+            $in: [
+              "Received for rack change",
+              "Issued to scan in for rack change",
+            ],
+          },
+          temp_rack: null,
+        },
+        {
+          $set: {
+            temp_rack: "RAC999999",
+          },
+        }
+      );
+
+      resolve({ status: 1 });
       // let findRpt=await masters.find({type_taxanomy:"RPT"})
       // for(let x of findRpt){
       //   for(let y of x.items){
@@ -5577,21 +5588,21 @@ module.exports = {
       //     })
       //   }
       // }
-      let findTray = await masters.findOne({ code: "RPT18008" });
-      for (let x of findTray.actual_items) {
-        let update = await masters.updateOne(
-          { code: "RPT18008" },
-          {
-            $set: {
-              actual_items: [],
-            },
-            $push: {
-              items: x,
-            },
-          }
-        );
-      }
-      resolve({ status: true });
+      // let findTray = await masters.findOne({ code: "RPT18008" });
+      // for (let x of findTray.actual_items) {
+      //   let update = await masters.updateOne(
+      //     { code: "RPT18008" },
+      //     {
+      //       $set: {
+      //         actual_items: [],
+      //       },
+      //       $push: {
+      //         items: x,
+      //       },
+      //     }
+      //   );
+      // }
+      // resolve({ status: true });
     });
   },
   extraUpdateRack: () => {
