@@ -1561,7 +1561,7 @@ router.post("/auditDoneWht/:location", async (req, res, next) => {
 });
 
 router.post(
-  "/assignToAgent/rdl-fls/sentToWarehouse",
+  "/assignToAgent/rdl-1/sentToWarehouse",
   async (req, res, next) => {
     try {
       const { tray, user_name, sortId, actUser } = req.body;
@@ -1587,7 +1587,7 @@ router.post(
 );
 
 router.post(
-  "/assignToAgent/rdl-fls/users/:user_type/:location",
+  "/assignToAgent/rdl-1/users/:user_type/:location",
   async (req, res, next) => {
     try {
       let data = await misUserController.getRdlFlsUser(

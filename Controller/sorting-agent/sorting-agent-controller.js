@@ -80,7 +80,7 @@ module.exports = {
           {
             issued_user_name: username,
             to_merge: { $ne: null },
-            sort_id: "Ready to RDL-Repair Issued to Merging",
+            sort_id: "Ready to RDL-2 Issued to Merging",
           },
           {
             issued_user_name: username,
@@ -370,7 +370,7 @@ module.exports = {
           {
             issued_user_name: username,
             to_merge: { $ne: null },
-            sort_id: "Ready to RDL-Repair Issued to Merging",
+            sort_id: "Ready to RDL-2 Issued to Merging",
           },
           {
             issued_user_name: username,
@@ -594,13 +594,13 @@ module.exports = {
         } else {
           resolve({ status: 0 });
         }
-      } else if (finedTray.sort_id == "Ready to RDL-Repair Issued to Merging") {
-        stage = "Ready to RDL-Repair Merging Done";
+      } else if (finedTray.sort_id == "Ready to RDL-2 Issued to Merging") {
+        stage = "Ready to RDL-2 Merging Done";
         fromtray = await masters.findOneAndUpdate(
           { code: trayData.fromTray },
           {
             $set: {
-              sort_id: "Ready to RDL-Repair Merging Done",
+              sort_id: "Ready to RDL-2 Merging Done",
               closed_time_sorting_agent: Date.now(),
               "track_tray.merging_done_close_sorting": Date.now(),
               actual_items: [],
@@ -612,7 +612,7 @@ module.exports = {
             { code: trayData.toTray },
             {
               $set: {
-                sort_id: "Ready to RDL-Repair Merging Done",
+                sort_id: "Ready to RDL-2 Merging Done",
                 closed_time_sorting_agent: Date.now(),
                 "track_tray.merging_done_close_sorting": Date.now(),
                 actual_items: [],

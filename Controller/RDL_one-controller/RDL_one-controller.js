@@ -9,7 +9,7 @@ module.exports = {
   getAssignedTray: (username) => {
     return new Promise(async (resolve, reject) => {
       let data = await masters.find({
-        $or: [{ issued_user_name: username, sort_id: "Issued to RDL-FLS" }],
+        $or: [{ issued_user_name: username, sort_id: "Issued to RDL-1" }],
       });
       if (data) {
         resolve(data);
@@ -22,7 +22,7 @@ module.exports = {
         charging: 0,
       };
       count.charging = await masters.count({
-        $or: [{ issued_user_name: username, sort_id: "Issued to RDL-FLS" }],
+        $or: [{ issued_user_name: username, sort_id: "Issued to RDL-1" }],
       });
       if (count) {
         resolve(count);
@@ -96,7 +96,7 @@ module.exports = {
             actual_items: [],
             description: trayData?.description,
             temp_array: [],
-            sort_id: "Closed by RDL-FLS",
+            sort_id: "Closed by RDL-1",
             closed_date_agent: Date.now(),
 
           },
@@ -109,14 +109,14 @@ module.exports = {
         let state="Tray"
         for (let x of dataSwitch.items) {
           const addLogsofUnits = await unitsActionLog.create({
-            action_type: "Closed by RDL-One",
+            action_type: "Closed by RDL-1",
             created_at: Date.now(),
             uic: x.uic,
             tray_id: trayData.trayId,
             user_name_of_action: dataSwitch.issued_user_name,
             report: x.rdl_fls_report,
-            user_type:"PRC RDL-One",
-            description:`Closed by RDL-One agent:${dataSwitch.issued_user_name}`,
+            user_type:"PRC RDL-1",
+            description:`Closed by RDL-1 agent:${dataSwitch.issued_user_name}`,
             track_tray:state
           });
           state="Units"

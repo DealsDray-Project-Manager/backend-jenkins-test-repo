@@ -115,19 +115,19 @@ module.exports = {
           {
             type_taxanomy: "RPT",
             location: location,
-            sort_id: "Closed by RDL-two",
+            sort_id: "Closed by RDL-2",
           },
           {
             type_taxanomy: "RPT",
             location: location,
-            sort_id: "Received from RDL-two",
+            sort_id: "Received from RDL-2",
           },
         ],
       });
       count.rdlTwoRequests = await masters.count({
         prefix: "tray-master",
         type_taxanomy: "RPT",
-        sort_id: "Send for RDL-two",
+        sort_id: "Send for RDL-2",
         cpc: location,
       });
       count.returnFromWhtToRpSorting = await masters.count({
@@ -430,13 +430,13 @@ module.exports = {
       count.rdlFlsRequest = await masters.count({
         prefix: "tray-master",
         type_taxanomy: "WHT",
-        sort_id: "Send for RDL-FLS",
+        sort_id: "Send for RDL-1",
         cpc: location,
       });
       count.rdl2Request = await masters.count({
         prefix: "tray-master",
         type_taxanomy: "WHT",
-        sort_id: "Send for RDL-two",
+        sort_id: "Send for RDL-2",
         cpc: location,
       });
       count.returnFromRdlFls = await masters.count({
@@ -444,13 +444,13 @@ module.exports = {
           {
             prefix: "tray-master",
             type_taxanomy: "WHT",
-            sort_id: "Closed by RDL-FLS",
+            sort_id: "Closed by RDL-1",
             cpc: location,
           },
           {
             prefix: "tray-master",
             type_taxanomy: "WHT",
-            sort_id: "Received From RDL-FLS",
+            sort_id: "Received From RDL-1",
             cpc: location,
           },
         ],
@@ -484,7 +484,7 @@ module.exports = {
             to_merge: { $ne: null },
           },
           {
-            sort_id: "Ready to RDL-Repair Merge Request Sent To Wharehouse",
+            sort_id: "Ready to RDL-2 Merge Request Sent To Wharehouse",
             cpc: location,
             to_merge: { $ne: null },
           },
@@ -575,12 +575,12 @@ module.exports = {
           {
             cpc: location,
             refix: "tray-master",
-            sort_id: "Ready to RDL-Repair Merging Done",
+            sort_id: "Ready to RDL-2 Merging Done",
           },
           {
             cpc: location,
             refix: "tray-master",
-            sort_id: "Ready to RDL-Repair Received From Merging",
+            sort_id: "Ready to RDL-2 Received From Merging",
           },
           {
             cpc: location,
@@ -662,7 +662,7 @@ module.exports = {
         if (
           data[0].sort_id == status ||
           data[0].sort_id == "Audit Done Received From Merging" ||
-          data[0].sort_id == "Ready to RDL-Repair Received From Merging" ||
+          data[0].sort_id == "Ready to RDL-2 Received From Merging" ||
           data[0].sort_id == "Ready to BQC Received From Merging" ||
           data[0].sort_id == "Ready to Audit Received From Merging"
         ) {
@@ -1318,16 +1318,16 @@ module.exports = {
 
   trayReceived: (trayData) => {
     return new Promise(async (resolve, reject) => {
-      if (trayData.type == "Closed by RDL-two-sp") {
+      if (trayData.type == "Closed by RDL-2-sp") {
         let data;
         let tray = await masters.findOne({ code: trayData.trayId });
         if (tray.temp_array?.length == trayData.counts) {
-          if (tray.sort_id == "Closed by RDL-two") {
+          if (tray.sort_id == "Closed by RDL-2") {
             data = await masters.findOneAndUpdate(
               { code: trayData.trayId },
               {
                 $set: {
-                  sort_id: "Received from RDL-two",
+                  sort_id: "Received from RDL-2",
                 },
               }
             );
@@ -1531,12 +1531,12 @@ module.exports = {
             } else {
               resolve({ status: 2 });
             }
-          } else if (checktray.sort_id == "Ready to RDL-Repair Merging Done") {
+          } else if (checktray.sort_id == "Ready to RDL-2 Merging Done") {
             let data = await masters.findOneAndUpdate(
               { code: trayData.trayId },
               {
                 $set: {
-                  sort_id: "Ready to RDL-Repair Received From Merging",
+                  sort_id: "Ready to RDL-2 Received From Merging",
                 },
               }
             );
@@ -1544,7 +1544,7 @@ module.exports = {
               let state = "Tray";
               for (let x of data.items) {
                 let unitsLogCreation = await unitsActionLog.create({
-                  action_type: "Ready to RDL-Repair Received From Merging",
+                  action_type: "Ready to RDL-2 Received From Merging",
                   created_at: Date.now(),
                   user_name_of_action: trayData.actioUser,
                   user_type: "PRC Warehouse",
@@ -1552,14 +1552,14 @@ module.exports = {
                   uic: x.uic,
                   tray_id: trayData.trayId,
                   track_tray: state,
-                  description: `Ready to RDL-Repair Received From Merging to agent:${data.issued_user_name} by WH :${trayData.actioUser}`,
+                  description: `Ready to RDL-2 Received From Merging to agent:${data.issued_user_name} by WH :${trayData.actioUser}`,
                 });
                 state = "Units";
                 let deliveryTrack = await delivery.findOneAndUpdate(
                   { tracking_id: x.awbn_number },
                   {
                     $set: {
-                      tray_status: "Ready to RDL-Repair Received From Merging",
+                      tray_status: "Ready to RDL-2 Received From Merging",
                       tray_location: "Warehouse",
                       updated_at: Date.now(),
                     },
@@ -1621,14 +1621,14 @@ module.exports = {
         } else {
           resolve({ status: 3 });
         }
-      } else if (trayData.type == "Closed by RDL-two") {
+      } else if (trayData.type == "Closed by RDL-2") {
         let checkCount = await masters.findOne({ code: trayData.trayId });
         if (checkCount.items.length == trayData.counts) {
           let data = await masters.findOneAndUpdate(
             { code: trayData.trayId },
             {
               $set: {
-                sort_id: "Received from RDL-two",
+                sort_id: "Received from RDL-2",
                 "track_tray.tray_received_from_bot": Date.now(),
               },
             }
@@ -1637,7 +1637,7 @@ module.exports = {
             let state = "Tray";
             for (let x of data.items) {
               const addLogsofUnits = await unitsActionLog.create({
-                action_type: "Received from RDL-two",
+                action_type: "Received from RDL-2",
                 created_at: Date.now(),
                 uic: x.uic,
                 tray_id: trayData.trayId,
@@ -1645,14 +1645,14 @@ module.exports = {
                 user_name_of_action: trayData.username,
                 track_tray: state,
                 user_type: "PRC WAREHOUSE",
-                description: `Received from RDL-two to agent:${data.issued_user_name} by WH :${trayData.actioUser}`,
+                description: `Received from RDL-2 to agent:${data.issued_user_name} by WH :${trayData.actioUser}`,
               });
               state = "Units";
               let deliveryTrack = await delivery.findOneAndUpdate(
                 { "uic_code.code": x.uic },
                 {
                   $set: {
-                    tray_status: "Received from RDL-two",
+                    tray_status: "Received from RDL-2",
                     tray_location: "Warehouse",
                     received_from_rdl_two: Date.now(),
                     updated_at: Date.now(),
@@ -2472,7 +2472,7 @@ module.exports = {
         status == "Inuse" ||
         status == "Issued to sorting agent" ||
         status == "Inuse" ||
-        status == "Ready to RDL"
+        status == "Ready to RDL-1"
       ) {
         data = await masters.find({
           prefix: "tray-master",
@@ -2528,7 +2528,7 @@ module.exports = {
                       { $ne: [{ $size: "$items" }, { $toInt: "$limit" }] },
                     ],
                   },
-                  sort_id: "Ready to RDL-Repair",
+                  sort_id: "Ready to RDL-2",
                 },
                 {
                   cpc: location,
@@ -2714,19 +2714,19 @@ module.exports = {
         } else {
           resolve({ data: data, status: 2 });
         }
-      } else if (sortId === "Send for RDL-FLS") {
+      } else if (sortId === "Send for RDL-1") {
         let data = await masters.findOne({ code: trayId, cpc: location });
         if (data) {
-          if (data?.sort_id == "Send for RDL-FLS") {
+          if (data?.sort_id == "Send for RDL-1") {
             resolve({ data: data, status: 1 });
           } else {
             resolve({ data: data, status: 3 });
           }
         }
-      } else if (sortId === "Closed by RDL-FLS") {
+      } else if (sortId === "Closed by RDL-1") {
         let data = await masters.findOne({ code: trayId, cpc: location });
         if (data) {
-          if (data?.sort_id == "Closed by RDL-FLS") {
+          if (data?.sort_id == "Closed by RDL-1") {
             resolve({ data: data, status: 1 });
           } else {
             resolve({ data: data, status: 3 });
@@ -2734,10 +2734,10 @@ module.exports = {
         } else {
           resolve({ data: data, status: 2 });
         }
-      } else if (sortId === "Received from RDL-FLS") {
+      } else if (sortId === "Received from RDL-1") {
         let data = await masters.findOne({ code: trayId, cpc: location });
         if (data) {
-          if (data?.sort_id == "Received From RDL-FLS") {
+          if (data?.sort_id == "Received From RDL-1") {
             resolve({ data: data, status: 1 });
           } else {
             resolve({ data: data, status: 3 });
@@ -2954,7 +2954,7 @@ module.exports = {
   issueToagentWht: (trayData) => {
     return new Promise(async (resolve, reject) => {
       let data;
-      if (trayData.sortId == "Ready to RDL-Repair") {
+      if (trayData.sortId == "Ready to RDL-2") {
         data = await masters.findOneAndUpdate(
           { code: trayData.trayId },
           {
@@ -2963,7 +2963,7 @@ module.exports = {
               issued_user_name: trayData.username,
               temp_array: [],
               rack_id: null,
-              sort_id: "Issued to RDL-two",
+              sort_id: "Issued to RDL-2",
               assigned_date: Date.now(),
               "track_tray.issued_to_rdl_two": Date.now(),
             },
@@ -3067,14 +3067,14 @@ module.exports = {
             );
           }
         }
-      } else if (trayData.sortId == "Send for RDL-FLS") {
+      } else if (trayData.sortId == "Send for RDL-1") {
         data = await masters.findOneAndUpdate(
           { code: trayData.trayId },
           {
             $set: {
               actual_items: [],
               description: trayData.description,
-              sort_id: "Issued to RDL-FLS",
+              sort_id: "Issued to RDL-1",
               requested_date: Date.now(),
               "track_tray.issued_rdl_1_wh": Date.now(),
               assigned_date: Date.now(),
@@ -3087,7 +3087,7 @@ module.exports = {
           let state = "Tray";
           for (let x of data.items) {
             const addLogsofUnits = await unitsActionLog.create({
-              action_type: "Issued to RDL-One",
+              action_type: "Issued to RDL-1",
               created_at: Date.now(),
               uic: x.uic,
               agent_name: data.issued_user_name,
@@ -3095,17 +3095,17 @@ module.exports = {
               tray_id: trayData.trayId,
               user_type: "PRC Warehouse",
               track_tray: state,
-              description: `Issued to RDL-One to agent :${data.issued_user_name} by WH :${trayData.actionUser}`,
+              description: `Issued to RDL-1 to agent :${data.issued_user_name} by WH :${trayData.actionUser}`,
             });
             state = "Units";
             let deliveryUpdate = await delivery.findOneAndUpdate(
               { tracking_id: x.tracking_id },
               {
                 $set: {
-                  tray_status: "Issued to RDL-One",
+                  tray_status: "Issued to RDL-1",
                   rdl_fls_one_user_name: data?.issued_user_name,
                   rdl_fls_issued_date: Date.now(),
-                  tray_location: "RDL-One",
+                  tray_location: "RDL-1",
                   updated_at: Date.now(),
                 },
               },
@@ -3122,14 +3122,14 @@ module.exports = {
             }
           }
         }
-      } else if (trayData.sortId == "Send for RDL-two") {
+      } else if (trayData.sortId == "Send for RDL-2") {
         data = await masters.findOneAndUpdate(
           { code: trayData.trayId },
           {
             $set: {
               actual_items: [],
               description: trayData.description,
-              sort_id: "Issued to RDL-two",
+              sort_id: "Issued to RDL-2",
               rack_id: null,
               requested_date: Date.now(),
               assigned_date: Date.now(),
@@ -3142,7 +3142,7 @@ module.exports = {
           let state = "Tray";
           for (let x of data.items) {
             const addLogsofUnits = await unitsActionLog.create({
-              action_type: "Issued to RDL-two",
+              action_type: "Issued to RDL-2",
               created_at: Date.now(),
               uic: x.uic,
               agent_name: data.issued_user_name,
@@ -3150,14 +3150,14 @@ module.exports = {
               tray_id: trayData.trayId,
               user_type: "PRC Warehouse",
               track_tray: state,
-              description: `Issued to RDL-two :${data.issued_user_name} by WH :${trayData.actionUser}`,
+              description: `Issued to RDL-2 :${data.issued_user_name} by WH :${trayData.actionUser}`,
             });
             state = "Units";
             let deliveryUpdate = await delivery.findOneAndUpdate(
               { tracking_id: x.tracking_id },
               {
                 $set: {
-                  tray_status: "Issued to RDL-two",
+                  tray_status: "Issued to RDL-2",
                   rdl_two_user_name: data?.issued_user_name,
                   issued_to_rdl_two_date: Date.now(),
                   tray_location: "RDL-2",
@@ -3323,7 +3323,7 @@ module.exports = {
       }
     });
   },
-  /*----------------------------RPT TRAY RETURN FROM RDL-TWO---------------------*/
+  /*----------------------------RPT TRAY RETURN FROM RDL-2---------------------*/
   getRpTrayRetunrFromRdlTwo: (location) => {
     return new Promise(async (resolve, reject) => {
       const data = await masters.find({
@@ -3331,12 +3331,12 @@ module.exports = {
           {
             type_taxanomy: "RPT",
             location: location,
-            sort_id: "Closed by RDL-two",
+            sort_id: "Closed by RDL-2",
           },
           {
             type_taxanomy: "RPT",
             location: location,
-            sort_id: "Received from RDL-two",
+            sort_id: "Received from RDL-2",
           },
         ],
       });
@@ -3632,13 +3632,13 @@ module.exports = {
       let stage;
       if (trayData?.length == trayData?.limit && trayData.trayType == "WHT") {
         falg = true;
-        stage = "Ready to RDL";
+        stage = "Ready to RDL-1";
         data = await masters.findOneAndUpdate(
           { code: trayData.trayId },
           {
             $set: {
               rack_id: trayData.rackId,
-              sort_id: "Ready to RDL",
+              sort_id: "Ready to RDL-1",
               closed_time_wharehouse: Date.now(),
               actual_items: [],
               issued_user_name: null,
@@ -4071,7 +4071,7 @@ module.exports = {
           data.sort_id === "Audit Done Merge Request Sent To Wharehouse" ||
           data.sort_id == "Ready to BQC Merge Request Sent To Wharehouse" ||
           data.sort_id ==
-            "Ready to RDL-Repair Merge Request Sent To Wharehouse" ||
+            "Ready to RDL-2 Merge Request Sent To Wharehouse" ||
           data.sort_id == "Ready to Audit Merge Request Sent To Wharehouse" ||
           data.sort_id == "Ctx to Stx Send for Sorting"
         ) {
@@ -4515,7 +4515,7 @@ module.exports = {
               to_merge: { $ne: null },
             },
             {
-              sort_id: "Ready to RDL-Repair Merge Request Sent To Wharehouse",
+              sort_id: "Ready to RDL-2 Merge Request Sent To Wharehouse",
               cpc: location,
               to_merge: { $ne: null },
             },
@@ -4647,7 +4647,7 @@ module.exports = {
         }
       } else if (
         checkFromTray.sort_id ==
-        "Ready to RDL-Repair Merge Request Sent To Wharehouse"
+        "Ready to RDL-2 Merge Request Sent To Wharehouse"
       ) {
         updaFromTray = await masters.findOneAndUpdate(
           { code: fromTray },
@@ -4655,7 +4655,7 @@ module.exports = {
             $set: {
               assigned_date: Date.now(),
               rack_id: null,
-              sort_id: "Ready to RDL-Repair Issued to Merging",
+              sort_id: "Ready to RDL-2 Issued to Merging",
               "track_tray.issue_to_merging": Date.now(),
             },
           }
@@ -4667,7 +4667,7 @@ module.exports = {
               $set: {
                 assigned_date: Date.now(),
                 rack_id: null,
-                sort_id: "Ready to RDL-Repair Issued to Merging",
+                sort_id: "Ready to RDL-2 Issued to Merging",
                 "track_tray.issue_to_merging": Date.now(),
               },
             }
@@ -4855,12 +4855,12 @@ module.exports = {
           {
             cpc: location,
             refix: "tray-master",
-            sort_id: "Ready to RDL-Repair Merging Done",
+            sort_id: "Ready to RDL-2 Merging Done",
           },
           {
             cpc: location,
             refix: "tray-master",
-            sort_id: "Ready to RDL-Repair Received From Merging",
+            sort_id: "Ready to RDL-2 Received From Merging",
           },
           {
             cpc: location,
@@ -5027,13 +5027,13 @@ module.exports = {
         } else {
           if (status == "Audit Done Received From Merging") {
             if (limit == length) {
-              stage = "Ready to RDL";
+              stage = "Ready to RD-1";
               data = await masters.findOneAndUpdate(
                 { code: toTray },
                 {
                   $set: {
                     rack_id: rackId,
-                    sort_id: "Ready to RDL",
+                    sort_id: "Ready to RDL-1",
                     actual_items: [],
                     issued_user_name: null,
                     from_merge: null,
@@ -5059,14 +5059,14 @@ module.exports = {
                 }
               );
             }
-          } else if (status == "Ready to RDL-Repair Received From Merging") {
-            stage = "Ready to RDL-Repair";
+          } else if (status == "Ready to RDL-2 Received From Merging") {
+            stage = "Ready to RDL-2";
             data = await masters.findOneAndUpdate(
               { code: toTray },
               {
                 $set: {
                   rack_id: rackId,
-                  sort_id: "Ready to RDL-Repair",
+                  sort_id: "Ready to RDL-2",
                   actual_items: [],
                   issued_user_name: null,
                   from_merge: null,
@@ -5267,7 +5267,7 @@ module.exports = {
             },
             {
               issued_user_name: username,
-              sort_id: "Ready to RDL-Repair Issued to Merging",
+              sort_id: "Ready to RDL-2 Issued to Merging",
             },
             {
               issued_user_name: username,
@@ -5276,7 +5276,7 @@ module.exports = {
 
             {
               issued_user_name: username,
-              sort_id: "Ready to RDL-Repair Merging Done",
+              sort_id: "Ready to RDL-2 Merging Done",
             },
             {
               issued_user_name: username,
@@ -6223,14 +6223,14 @@ module.exports = {
               },
             }
           );
-        } else if (trayData.stage == "Ready to RDL-Repair") {
-          status = "Ready to RDL-Repair";
+        } else if (trayData.stage == "Ready to RDL-2") {
+          status = "Ready to RDL-2";
           data = await masters.findOneAndUpdate(
             { code: trayData.trayId },
             {
               $set: {
                 rack_id: trayData.rackId,
-                sort_id: "Ready to RDL-Repair",
+                sort_id: "Ready to RDL-2",
                 issued_user_name: null,
                 actual_items: [],
                 temp_array: [],
@@ -6239,14 +6239,14 @@ module.exports = {
               },
             }
           );
-        } else if (trayData.stage == "RDL two done closed by warehouse") {
-          status = "RDL two done closed by warehouse";
+        } else if (trayData.stage == "RDL-2 done closed by warehouse") {
+          status = "RDL-2 done closed by warehouse";
           data = await masters.findOneAndUpdate(
             { code: trayData.trayId },
             {
               $set: {
                 rack_id: trayData.rackId,
-                sort_id: "RDL two done closed by warehouse",
+                sort_id: "RDL-2 done closed by warehouse",
                 closed_time_wharehouse: Date.now(),
                 issued_user_name: null,
                 actual_items: [],
@@ -6257,13 +6257,13 @@ module.exports = {
             }
           );
         } else {
-          status = "Ready to RDL";
+          status = "Ready to RDL-1";
           data = await masters.findOneAndUpdate(
             { code: trayData.trayId },
             {
               $set: {
                 rack_id: trayData.rackId,
-                sort_id: "Ready to RDL",
+                sort_id: "Ready to RDL-1",
                 closed_time_wharehouse: Date.now(),
                 issued_user_name: null,
                 actual_items: [],
@@ -6317,8 +6317,8 @@ module.exports = {
       if (userActive.status == "Active") {
         let data = await masters.findOne({
           $or: [
-            { issued_user_name: username, sort_id: "Issued to RDL-FLS" },
-            { issued_user_name: username, sort_id: "Closed By RDL-FLS" },
+            { issued_user_name: username, sort_id: "Issued to RDL-1" },
+            { issued_user_name: username, sort_id: "Closed By RDL-1" },
           ],
         });
 
@@ -6340,7 +6340,7 @@ module.exports = {
           $or: [
             {
               issued_user_name: username,
-              sort_id: "Issued to RDL-two",
+              sort_id: "Issued to RDL-2",
               type_taxanomy: "RPT",
             },
             {
@@ -6350,7 +6350,7 @@ module.exports = {
             },
             {
               issued_user_name: username,
-              sort_id: "Rdl-two inprogress",
+              sort_id: "Rdl-2 in-progress",
               type_taxanomy: "RPT",
             },
           ],
@@ -6443,7 +6443,7 @@ module.exports = {
           {
             prefix: "tray-master",
             type_taxanomy: "WHT",
-            sort_id: "Received From RDL-FLS",
+            sort_id: "Received From RDL-1",
             cpc: location,
           },
         ],
@@ -6456,7 +6456,7 @@ module.exports = {
 
   issueToagentWhtReciveRdOne: (trayData) => {
     return new Promise(async (resolve, reject) => {
-      if (trayData.sortId == "Closed by RDL-FLS") {
+      if (trayData.sortId == "Closed by RDL-1") {
         data = await masters.findOneAndUpdate(
           { code: trayData?.trayId },
           {
@@ -6464,7 +6464,7 @@ module.exports = {
               actual_items: [],
               description: trayData?.description,
               temp_array: [],
-              sort_id: "Recived from RDL-FLS",
+              sort_id: "Recived from RDL-1",
               assigned_date: Date.now(),
             },
           }
@@ -6486,7 +6486,7 @@ module.exports = {
           { code: trayData.trayId },
           {
             $set: {
-              sort_id: "Received From RDL-FLS",
+              sort_id: "Received From RDL-1",
             },
           }
         );
@@ -6494,7 +6494,7 @@ module.exports = {
           let state = "Tray";
           for (let x of data.items) {
             let unitsLogCreation = await unitsActionLog.create({
-              action_type: "Recevied From RDL-One",
+              action_type: "Recevied From RDL-1",
               created_at: Date.now(),
               user_name_of_action: trayData.actioUser,
               agent_name: data.issued_user_name,
@@ -6502,14 +6502,14 @@ module.exports = {
               uic: x.uic,
               tray_id: trayData.trayId,
               track_tray: state,
-              description: `Recevied From RDL-One to agent :${data.issued_user_name} by Wh :${trayData.actioUser}`,
+              description: `Recevied From RDL-1 to agent :${data.issued_user_name} by Wh :${trayData.actioUser}`,
             });
             state = "Units";
             let deliveryTrack = await delivery.findOneAndUpdate(
               { tracking_id: x.tracking_id },
               {
                 $set: {
-                  tray_status: "Recevied From RDL-One",
+                  tray_status: "Recevied From RDL-1",
                   tray_location: "Warehouse",
                   rdl_fls_done_recieved_date: Date.now(),
                   updated_at: Date.now(),
@@ -6608,7 +6608,7 @@ module.exports = {
             actual_items: [],
             description: trayData.description,
             temp_array: [],
-            sort_id: "Ready to RDL-Repair",
+            sort_id: "Ready to RDL-2",
             closed_time_wharehouse: Date.now(),
             rack_id: trayData.rackId,
             assigned_date: Date.now(),
@@ -6625,10 +6625,10 @@ module.exports = {
               { tracking_id: x.tracking_id },
               {
                 $set: {
-                  tray_status: "Ready to RDL-Repair",
+                  tray_status: "Ready to RDL-2",
                   wht_to_rp_sorting_done_wh_closed: Date.now(),
                   tray_location: "Warehouse",
-                  tray_status: "Ready to RDL-Repair",
+                  tray_status: "Ready to RDL-2",
                   updated_at: Date.now(),
                 },
               },
@@ -6642,7 +6642,7 @@ module.exports = {
               { tracking_id: x.tracking_id },
               {
                 $set: {
-                  tray_status: "Ready to RDL-Repair",
+                  tray_status: "Ready to RDL-2",
                   rdl_fls_done_closed_wh: Date.now(),
                   updated_at: Date.now(),
                 },
@@ -6654,11 +6654,11 @@ module.exports = {
             );
           }
           const addLogsofUnits = await unitsActionLog.create({
-            action_type: "Ready to RDL-Repair",
+            action_type: "Ready to RDL-2",
             created_at: Date.now(),
             uic: x.uic,
             tray_id: data.code,
-            description: `Ready to RDL-Repair closed by agent :${trayData.actUser}`,
+            description: `Ready to RDL-2 closed by agent :${trayData.actUser}`,
             track_tray: state,
             user_type: "PRC Warehouse",
           });
@@ -6685,7 +6685,7 @@ module.exports = {
             temp_array: [],
             rack_id: trayData.rackId,
             issued_user_name: null,
-            sort_id: "RDL two done closed by warehouse",
+            sort_id: "RDL-2 done closed by warehouse",
           },
         }
       );
@@ -6703,7 +6703,7 @@ module.exports = {
             { tracking_id: x.tracking_id },
             {
               $set: {
-                tray_status: "RDL two done closed by warehouse",
+                tray_status: "RDL-2 done closed by warehouse",
                 rdl_two_done_close_by_warehouse: Date.now(),
                 tray_location: "Warehouse",
                 updated_at: Date.now(),

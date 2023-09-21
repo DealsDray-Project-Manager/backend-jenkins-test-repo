@@ -4230,7 +4230,7 @@ module.exports = {
               to_merge: { $ne: null },
             },
             {
-              sort_id: "Ready to RDL-Repair Merge Request Sent To Wharehouse",
+              sort_id: "Ready to RDL-2 Merge Request Sent To Wharehouse",
               to_merge: { $ne: null },
             },
             {
@@ -4387,7 +4387,7 @@ module.exports = {
   },
   extraRdlOneReport: () => {
     return new Promise(async (resolve, reject) => {
-      let getTray = await masters.find({ sort_id: "Issued to RDL-FLS" });
+      let getTray = await masters.find({ sort_id: "Issued to RDL-1" });
       for (let x of getTray) {
         for (let y of x.actual_items) {
           let deliveryUpdate = await delivery.findOneAndUpdate(
@@ -4518,7 +4518,7 @@ module.exports = {
   },
   extraRdlOneReport: () => {
     return new Promise(async (resolve, reject) => {
-      let getTray = await masters.find({ sort_id: "Issued to RDL-FLS" });
+      let getTray = await masters.find({ sort_id: "Issued to RDL-1" });
       for (let x of getTray) {
         for (let y of x.actual_items) {
           let deliveryUpdate = await delivery.findOneAndUpdate(
@@ -4542,7 +4542,7 @@ module.exports = {
   extraRdlOneUserNameAdd: () => {
     return new Promise(async (resolve, reject) => {
       let getRdlRepairTray = await masters.find({
-        sort_id: "Ready to RDL-Repair",
+        sort_id: "Ready to RDL-2",
       });
       for (let x of getRdlRepairTray) {
         for (let y of x.items) {
@@ -5175,7 +5175,7 @@ module.exports = {
       // }
       // resolve(BqcDoneUnits);
       const BqcDoneUnits = await masters.find({
-        sort_id: "Ready to RDL-Repair",
+        sort_id: "Ready to RDL-2",
       });
       for (let x of BqcDoneUnits) {
         if (x?.track_tray?.rdl_1_done_close_by_wh == undefined) {
@@ -5451,7 +5451,7 @@ module.exports = {
         });
 
         if (checkTray) {
-          if (checkTray.sort_id == "Ready to RDL-Repair") {
+          if (checkTray.sort_id == "Ready to RDL-2") {
             let updateDelivery = await delivery.updateOne(
               { "uic_code.code": x.uic?.toString() },
               {
@@ -5540,7 +5540,7 @@ module.exports = {
         },
         {
           $set: {
-            sort_id: "Send for RDL-FLS",
+            sort_id: "Send for RDL-1",
           },
         }
       );
@@ -5799,59 +5799,96 @@ module.exports = {
       resolve({ status: true });
     });
   },
-  removeAddToMmt: () => {
-    return new Promise(async (resolve, reject) => {
-      let findTray = await masters.aggregate([
+  removeAddToMmt: async () => {
+    try {
+      const findAllTray = await masters.find(
         {
-          $match: {
-            type_taxanomy: "ST",
-            sort_id: { $ne: "Open" },
-            sp_price: { $exists: true, $ne: null },
-            mrp_price: { $exists: true, $ne: null },
-          },
+          $or: [
+            { sort_id: "Issued to RDL-two" },
+            { sort_id: "Rdl-two inprogress" },
+            { sort_id: "Closed by RDL-two" },
+            { sort_id: "Send for RDL-two" },
+            { sort_id: "Received from RDL-two" },
+            { sort_id: "Ready to RDL-Repair" },
+            { sort_id: "Ready to RDL-Repair Issued to Merging" },
+            { sort_id: "Ready to RDL-Repair Merging Done" },
+            { sort_id: "Ready to RDL-Repair Merge Request Sent To Wharehouse" },
+            { sort_id: "Ready to RDL-Repair Received From Merging" },
+            { sort_id: "Ready to RDL" },
+            { sort_id: "Send for RDL-FLS" },
+            { sort_id: "Issued to RDL-FLS" },
+            { sort_id: "Closed by RDL-FLS" },
+            { sort_id: "Received From RDL-FLS" },
+          ],
         },
         {
-          $group: {
-            _id: {
-              model: "$model",
-              brand: "$brand",
-              grade: "$tray_grade",
-            },
-            sp: { $first: "$sp_price" },
-            mrp: { $first: "$mrp_price" },
-          },
-        },
-      ]);
-      for (let x of findTray) {
-        let update = await masters.updateMany(
-          {
-            brand: x._id.brand,
-            model: x._id.model,
-            tray_grade: x._id.grade,
-            type_taxanomy: "ST",
-            sp_price: { $exists: false },
-            mrp_price: { $exists: false },
-            sort_id: {
-              $nin: [
-                "Open",
-                "Issued to Sorting for Ctx to Stx",
-                "Ctx to Stx Sorting Done",
-                "Received From Sorting Agent After Ctx to Stx",
-                "STX-Utility In-progress",
-              ],
-            },
-          },
+          code: 1,
+          sort_id: 1,
+        }
+      );
+      let tempStatus = "";
+      for (let x of findAllTray) {
+        if (x.sort_id == "Issued to RDL-two") {
+          tempStatus = "Issued to RDL-2";
+        } else if (x.sort_id == "Rdl-two in-progress") {
+          tempStatus = "Rdl-2 in-progress";
+        } else if (x.sort_id == "Closed by RDL-two") {
+          tempStatus = "Closed by RDL-2";
+        } else if (x.sort_id == "Send for RDL-two") {
+          tempStatus = "Send for RDL-2";
+        } else if (x.sort_id == "Received from RDL-two") {
+          tempStatus = "Received from RDL-2";
+        } else if (x.sort_id == "Ready to RDL-Repair") {
+          tempStatus = "Ready to RDL-2";
+        } else if (x.sort_id == "Ready to RDL-Repair Issued to Merging") {
+          tempStatus = "Ready to RDL-2 Issued to Merging";
+        } else if (x.sort_id == "Ready to RDL-Repair Merging Done") {
+          tempStatus = "Ready to RDL-2 Merging Done";
+        } else if (
+          x.sort_id == "Ready to RDL-Repair Merge Request Sent To Wharehouse"
+        ) {
+          tempStatus = "Ready to RDL-2 Merge Request Sent To Wharehouse";
+        } else if (x.sort_id == "Ready to RDL-Repair Received From Merging") {
+          tempStatus = "Ready to RDL-2 Received From Merging";
+        } else if (x.sort_id == "Ready to RDL") {
+          tempStatus = "Ready to RDL-1";
+        } else if (x.sort_id == "Send for RDL-FLS") {
+          tempStatus = "Send for RDL-1";
+        } else if (x.sort_id == "Issued to RDL-FLS") {
+          tempStatus = "Issued to RDL-1";
+        } else if (x.sort_id == "Closed by RDL-FLS") {
+          tempStatus = "Closed by RDL-1";
+        } else if (x.sort_id == "Received From RDL-FLS") {
+          tempStatus = "Received From RDL-1";
+        }
+        else if (x.sort_id == "RDL two done closed by warehouse") {
+          tempStatus = "RDL-2 done closed by warehouse";
+        }
+        let updateStatus = await masters.updateOne(
+          { code: x.code },
           {
             $set: {
-              sp_price: x.sp,
-              mrp_price: x.mrp,
+              sort_id: tempStatus,
             },
           }
         );
-        console.log(update);
       }
-      resolve({ status: true });
-    });
+     
+      let updateUsersRdl1=await user.updateMany({user_type:"RDL-One"},{
+        $set:{
+          user_type: "RDL-1"
+        }
+      })
+      console.log(updateUsersRdl1);
+      let updateUsersRdl2=await user.updateMany({user_type:"RDL-two"},{
+        $set:{
+          user_type:"RDL-two"
+        }
+      })
+      return { status: true };
+    } catch (error) {
+      return error;
+    }
   },
   tempDataAddRequerment: () => {
     return new Promise(async (resolve, reject) => {

@@ -113,12 +113,12 @@ router.post("/login", async (req, res, next) => {
   try {
     let loginData = await superAdminController.doLogin(req.body);
     if (loginData.status == 1) {
-      const jwtToken = jwt.jwtSign(loginData.data,process.env.NODE_ENV);
+      const jwtToken = jwt.jwtSign(loginData.data, process.env.NODE_ENV);
       if (jwtToken) {
         const updateJwtToken = await superAdminController.updateJwtTokeInDb(
           loginData.data._id,
           jwtToken,
-          loginData.data.user_type,
+          loginData.data.user_type
         );
         console.log(process.env.NODE_ENV);
         if (updateJwtToken.status == 1) {
@@ -129,7 +129,7 @@ router.post("/login", async (req, res, next) => {
               jwt: jwtToken,
               user_type: loginData?.data?.user_type,
               data: loginData.data,
-              serverType:process.env.NODE_ENV
+              serverType: process.env.NODE_ENV,
             },
           });
         } else {
@@ -337,10 +337,8 @@ router.get("/getEditData/:username", async (req, res) => {
 /*------------------------------EDITED BUYER DATA-------------------------------------*/
 router.get("/getEditBuyerData/:buyername", async (req, res) => {
   try {
-    const {buyername}=req.params
-    let buyer = await superAdminController.getEditBuyerData(
-      buyername
-    );
+    const { buyername } = req.params;
+    let buyer = await superAdminController.getEditBuyerData(buyername);
     if (buyer) {
       res.status(200).json({ data: buyer });
     }
@@ -3647,7 +3645,6 @@ router.post("/extra/reAuditTray", async (req, res, next) => {
       res.status(202).json({
         message: "Failed",
       });
-      
     }
   } catch (error) {
     next(error);
@@ -3757,7 +3754,7 @@ router.post("/extra/partid/add", async (req, res, next) => {
 });
 
 // EXTRA FOR RDL-1- ISSUED TRAY
-router.post("/extra/rdl-one/report", async (req, res, next) => {
+router.post("/extra/rdl-1/report", async (req, res, next) => {
   try {
     let data = await superAdminController.extraRdlOneReport();
     if (data) {
@@ -4114,7 +4111,7 @@ router.post("/extra/removeProcurmentRequest", async (req, res, next) => {
   }
 });
 // REMOVE ITEM
-router.post("/extra/updatePrice", async (req, res, next) => {
+router.post("/extra/updateStatusRDL", async (req, res, next) => {
   try {
     let data = await superAdminController.removeAddToMmt();
     if (data.status == true) {

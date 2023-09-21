@@ -14,12 +14,12 @@ module.exports = {
         $or: [
           {
             issued_user_name: username,
-            sort_id: "Issued to RDL-two",
+            sort_id: "Issued to RDL-2",
             type_taxanomy: "RPT",
           },
           {
             issued_user_name: username,
-            sort_id: "Rdl-two inprogress",
+            sort_id: "Rdl-2 in-progress",
             type_taxanomy: "RPT",
           },
         ],
@@ -37,12 +37,12 @@ module.exports = {
             $or: [
               {
                 issued_user_name: username,
-                sort_id: "Issued to RDL-two",
+                sort_id: "Issued to RDL-2",
                 type_taxanomy: "RPT",
               },
               {
                 issued_user_name: username,
-                sort_id: "Rdl-two inprogress",
+                sort_id: "Rdl-2 in-progress",
                 type_taxanomy: "RPT",
               },
             ],
@@ -77,7 +77,7 @@ module.exports = {
             { code: trayData.trayId },
             {
               $set: {
-                sort_id: "Rdl-two inprogress",
+                sort_id: "Rdl-2 in-progress",
                 actual_items: [],
               },
             }
@@ -101,7 +101,7 @@ module.exports = {
         { code: trayid },
         {
           $set: {
-            sort_id: "Rdl-two inprogress",
+            sort_id: "Rdl-2 in-progress",
             actual_items: [],
           },
         }
@@ -187,7 +187,7 @@ module.exports = {
         { code: trayItemData.trayId },
         { sort_id: 1 }
       );
-      if (checkTray.sort_id == "Rdl-two inprogress") {
+      if (checkTray.sort_id == "Rdl-2 in-progress") {
         let dupEntry = await masters.findOne({
           code: trayItemData.trayId,
           "actual_items.uic": trayItemData.uic,
@@ -303,14 +303,14 @@ module.exports = {
   traySummary: (trayId, user_name) => {
     return new Promise(async (resolve, reject) => {
       const getTheTray = await masters.findOne({ code: trayId });
-      if (getTheTray.sort_id == "Rdl-two inprogress") {
+      if (getTheTray.sort_id == "Rdl-2 in-progress") {
         if (getTheTray.issued_user_name == user_name) {
           if (getTheTray.items.length == 0) {
             let obj = {
               morePartRequred: [],
             };
             obj.spTray = await masters.findOne({
-              sort_id: "Rdl-two inprogress",
+              sort_id: "Rdl-2 in-progress",
               type_taxanomy: "SPT",
               issued_user_name: user_name,
             });
@@ -334,12 +334,12 @@ module.exports = {
   closeSpAndRp: (trayData) => {
     return new Promise(async (resolve, reject) => {
       const getRpTray = await masters.findOne({ code: trayData.rpTrayId });
-      if (getRpTray.sort_id == "Rdl-two inprogress") {
+      if (getRpTray.sort_id == "Rdl-2 in-progress") {
         let updateSpTray = await masters.updateOne(
           { code: trayData.sptrayId },
           {
             $set: {
-              sort_id: "Closed by RDL-two",
+              sort_id: "Closed by RDL-2",
               "track_tray.rdl_two_done_closed_by_agent": Date.now(),
             },
           }
@@ -352,7 +352,7 @@ module.exports = {
                 items: getRpTray.actual_items,
                 actual_items: [],
                 temp_array: [],
-                sort_id: "Closed by RDL-two",
+                sort_id: "Closed by RDL-2",
                 "track_tray.rdl_two_done_closed_by_agent": Date.now(),
               },
             }
@@ -361,14 +361,14 @@ module.exports = {
             let state = "Tray";
             for (let x of getRpTray.actual_items) {
               const addLogsofUnits = await unitsActionLog.create({
-                action_type: "Closed by RDL-two",
+                action_type: "Closed by RDL-2",
                 created_at: Date.now(),
                 uic: x.uic,
                 tray_id: trayData.rpTrayId,
                 user_name_of_action: getRpTray.issued_user_name,
                 report: x.rdl_repair_report,
                 track_tray: state,
-                user_type: "PRC RDL-Two",
+                user_type: "PRC RDL-2",
                 description: `RDL Two done and sent to warehouse by agent:${updateRpTray.issued_user_name}`,
               });
               state = "Units";
@@ -379,7 +379,7 @@ module.exports = {
                     rdl_two_closed_date: Date.now(),
                     rdl_fls_one_report: x.rdl_fls_report,
                     rdl_two_report: x.rdl_repair_report,
-                    tray_status: "Closed by RDL-two",
+                    tray_status: "Closed by RDL-2",
                     tray_type: "RPT",
                     updated_at: Date.now(),
                   },

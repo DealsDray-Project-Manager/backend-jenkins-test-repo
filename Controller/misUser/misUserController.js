@@ -307,12 +307,12 @@ module.exports = {
       count.rdl = await masters.count({
         prefix: "tray-master",
         type_taxanomy: "WHT",
-        sort_id: "Ready to RDL",
+        sort_id: "Ready to RDL-1",
         cpc: location,
       });
       count.rdl_two = await masters.countDocuments({
         cpc: location,
-        sort_id: "Ready to RDL-Repair",
+        sort_id: "Ready to RDL-2",
         type_taxanomy: "RPT",
       });
       count.botToWht = await masters.count({
@@ -349,7 +349,7 @@ module.exports = {
                 { $ne: [{ $size: "$items" }, { $toInt: "$limit" }] },
               ],
             },
-            sort_id: "Ready to RDL-Repair",
+            sort_id: "Ready to RDL-2",
           },
           {
             cpc: location,
@@ -3303,16 +3303,16 @@ module.exports = {
           resolve({ status: 0 });
         }
       } else if (
-        whtTray.sort_id === "Ready to RDL-Repair" &&
+        whtTray.sort_id === "Ready to RDL-2" &&
         whtTray.type_taxanomy == "WHT"
       ) {
         dep = "PRC MIS";
-        stage = "Ready to RDL-Repair Merge Request Sent To Wharehouse";
+        stage = "Ready to RDL-2 Merge Request Sent To Wharehouse";
         updateFromTray = await masters.findOneAndUpdate(
           { code: fromTray },
           {
             $set: {
-              sort_id: "Ready to RDL-Repair Merge Request Sent To Wharehouse",
+              sort_id: "Ready to RDL-2 Merge Request Sent To Wharehouse",
               status_change_time: Date.now(),
               issued_user_name: sortingAgent,
               to_merge: toTray,
@@ -3325,7 +3325,7 @@ module.exports = {
             { code: toTray },
             {
               $set: {
-                sort_id: "Ready to RDL-Repair Merge Request Sent To Wharehouse",
+                sort_id: "Ready to RDL-2 Merge Request Sent To Wharehouse",
                 status_change_time: Date.now(),
                 issued_user_name: sortingAgent,
                 from_merge: fromTray,
@@ -3598,7 +3598,7 @@ module.exports = {
           {
             $match: {
               "track_tray.audit_done_close_wh": { $gte: threeDaysAgo },
-              sort_id: "Ready to RDL",
+              sort_id: "Ready to RDL-1",
               cpc: location,
             },
           },
@@ -3615,7 +3615,7 @@ module.exports = {
             },
           },
         ]);
-      } else if (type == "RDL two done closed by warehouse") {
+      } else if (type == "RDL-2 done closed by warehouse") {
         items = await masters.aggregate([
           {
             $match: {
@@ -3718,7 +3718,7 @@ module.exports = {
           {
             $match: {
               "items.audit_report.stage": { $in: selectedStatus },
-              sort_id: "Ready to RDL",
+              sort_id: "Ready to RDL-1",
               cpc: location,
             },
           },
@@ -3747,7 +3747,7 @@ module.exports = {
           {
             $match: {
               "items.rdl_fls_report.selected_status": { $in: selectedStatus },
-              sort_id: "Ready to RDL-Repair",
+              sort_id: "Ready to RDL-2",
               cpc: location,
             },
           },
@@ -3891,7 +3891,7 @@ module.exports = {
         items = await masters.aggregate([
           {
             $match: {
-              sort_id: "Ready to RDL",
+              sort_id: "Ready to RDL-1",
               brand: brand,
               model: model,
               cpc: location,
@@ -4083,7 +4083,7 @@ module.exports = {
               },
             }
           );
-          if (itemData.value == "RDL two done closed by warehouse") {
+          if (itemData.value == "RDL-2 done closed by warehouse") {
             sendtoPickupRequest = await masters.findOneAndUpdate(
               {
                 $or: [{ "items.uic": x, type_taxanomy: "RPT" }],
@@ -4186,7 +4186,7 @@ module.exports = {
   getAuditDone: (location) => {
     return new Promise(async (resolve, reject) => {
       let data = await masters.find({
-        sort_id: "Ready to RDL",
+        sort_id: "Ready to RDL-1",
         type_taxanomy: "WHT",
         cpc: location,
       });
@@ -4200,7 +4200,7 @@ module.exports = {
       let sendtoRdlMis;
       let newStatus = sortId;
       for (let x of tray) {
-        if (sortId == "Send for RDL-two") {
+        if (sortId == "Send for RDL-2") {
           sendtoRdlMis = await masters.findOneAndUpdate(
             { code: x },
             {
@@ -4241,8 +4241,8 @@ module.exports = {
         }
         if (sendtoRdlMis.items?.length !== 0) {
           let state = "Tray";
-          if (newStatus == "Send for RDL-FLS") {
-            newStatus = "Send for RDL-One";
+          if (newStatus == "Send for RDL-1") {
+            newStatus = "Send for RDL-1";
           }
           for (let y of sendtoRdlMis.items) {
             let unitsLogCreation = await unitsActionLog.create({
@@ -4282,7 +4282,7 @@ module.exports = {
       let data = await masters.aggregate([
         {
           $match: {
-            sort_id: "Ready to RDL-Repair",
+            sort_id: "Ready to RDL-2",
             type_taxanomy: "RPT",
             cpc: location,
           },
@@ -4401,7 +4401,7 @@ module.exports = {
           $match: {
             "items.rdl_fls_report.selected_status": "Repair Required",
             cpc: location,
-            sort_id: "Ready to RDL-Repair",
+            sort_id: "Ready to RDL-2",
           },
         },
         {
@@ -4434,7 +4434,7 @@ module.exports = {
           $match: {
             "items.rdl_fls_report.selected_status": "Repair Required",
             cpc: location,
-            sort_id: "Ready to RDL-Repair",
+            sort_id: "Ready to RDL-2",
           },
         },
         {
@@ -4516,7 +4516,7 @@ module.exports = {
             brand: brand,
             model: model,
             type_taxanomy: "WHT",
-            sort_id: "Ready to RDL-Repair",
+            sort_id: "Ready to RDL-2",
           },
         },
         {

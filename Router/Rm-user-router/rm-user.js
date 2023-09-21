@@ -89,7 +89,7 @@ router.post("/spTrayClose", async (req, res, next) => {
 
     if (data.status == 1) {
       res.status(200).json({
-        message: "Successfully Closed & Ready to RDL-Repair",
+        message: "Successfully Closed & Ready to RDL-2",
       });
     } else {
       res.status(202).json({
@@ -100,7 +100,7 @@ router.post("/spTrayClose", async (req, res, next) => {
     next(error);
   }
 });
-// GET READY TO RDL-REPAIR TRAY SP
+// GET READY TO RDL-2 TRAY SP
 router.post("/spTray/readyToRdlRepair/:user_name", async (req, res, next) => {
   try {
     const { user_name } = req.params;

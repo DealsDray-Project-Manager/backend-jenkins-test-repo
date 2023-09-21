@@ -14,7 +14,7 @@ module.exports = {
           $match: {
             "items.rdl_fls_report.selected_status": "Repair Required",
             cpc: location,
-            sort_id: "Ready to RDL-Repair",
+            sort_id: "Ready to RDL-2",
           },
         },
         {
@@ -110,7 +110,7 @@ module.exports = {
             cpc: location,
             brand: brand,
             model: model,
-            sort_id: "Ready to RDL-Repair",
+            sort_id: "Ready to RDL-2",
           },
         },
         {

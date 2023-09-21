@@ -63,7 +63,7 @@ app.use("/api/v7/reporting-agent", ReportingPanel);
 /* API for pricing AGNET panel */
 app.use("/api/v7/pricing-agent", pricingpanel);
 /* API FOR RDL 2 PANEL */
-app.use("/api/v7/rdl-two", Rdl2Panel);
+app.use("/api/v7/rdl-2", Rdl2Panel);
 /* API FOR RM USER PANEL */
 app.use("/api/v7/rm-user", RmUserPanel);
 /* API FOR RM PANEL */
