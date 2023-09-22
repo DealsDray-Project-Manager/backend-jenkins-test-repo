@@ -5819,6 +5819,7 @@ module.exports = {
             { sort_id: "Issued to RDL-FLS" },
             { sort_id: "Closed by RDL-FLS" },
             { sort_id: "Received From RDL-FLS" },
+            {sort_id:"Ready to Pricing"}
           ],
         },
         {
@@ -5863,6 +5864,9 @@ module.exports = {
         }
         else if (x.sort_id == "RDL two done closed by warehouse") {
           tempStatus = "RDL-2 done closed by warehouse";
+        }
+        else if (x.sort_id == "Ready to Pricing") {
+          tempStatus = "Inuse";
         }
         let updateStatus = await masters.updateOne(
           { code: x.code },

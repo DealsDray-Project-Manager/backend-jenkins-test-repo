@@ -63,9 +63,8 @@ module.exports = {
         allRpTray: 0,
         rackChangeStockin: 0,
         rackChangeStockOut: 0,
-        displayGradingRequest:0,
-        returnFromDisplayGrading:0
-
+        displayGradingRequest: 0,
+        returnFromDisplayGrading: 0,
       };
       count.rackChangeStockin = await masters.count({
         $or: [
@@ -82,7 +81,7 @@ module.exports = {
       count.rackChangeStockOut = await masters.count({
         issued_user_name: username,
         sort_id: "Assigned to warehouae for rack change",
-        temp_rack: { $ne:null},
+        temp_rack: { $ne: null },
       });
       count.displayGradingRequest = await masters.count({
         sort_id: "Assigned for Display Grading",
@@ -102,7 +101,7 @@ module.exports = {
             type_taxanomy: "ST",
             sort_id: "Received From Sorting After Display Grading",
             cpc: location,
-          }
+          },
         ],
       });
       count.allRpTray = await masters.count({
@@ -4070,8 +4069,7 @@ module.exports = {
           data.sort_id === "Sorting Request Sent To Warehouse" ||
           data.sort_id === "Audit Done Merge Request Sent To Wharehouse" ||
           data.sort_id == "Ready to BQC Merge Request Sent To Wharehouse" ||
-          data.sort_id ==
-            "Ready to RDL-2 Merge Request Sent To Wharehouse" ||
+          data.sort_id == "Ready to RDL-2 Merge Request Sent To Wharehouse" ||
           data.sort_id == "Ready to Audit Merge Request Sent To Wharehouse" ||
           data.sort_id == "Ctx to Stx Send for Sorting"
         ) {
@@ -4909,39 +4907,21 @@ module.exports = {
           length !== undefined &&
           limit !== undefined
         ) {
-          if (type == "ST") {
-            stage = "Ready to Pricing";
-            data = await masters.findOneAndUpdate(
-              { code: toTray },
-              {
-                $set: {
-                  rack_id: rackId,
-                  sort_id: "Ready to Pricing",
-                  actual_items: [],
-                  issued_user_name: null,
-                  from_merge: null,
-                  to_merge: null,
-                  closed_time_wharehouse: Date.now(),
-                },
-              }
-            );
-          } else {
-            stage = "Ready to Transfer to Sales";
-            data = await masters.findOneAndUpdate(
-              { code: toTray },
-              {
-                $set: {
-                  rack_id: rackId,
-                  sort_id: "Ready to Transfer to Sales",
-                  actual_items: [],
-                  issued_user_name: null,
-                  from_merge: null,
-                  to_merge: null,
-                  closed_time_wharehouse: Date.now(),
-                },
-              }
-            );
-          }
+          stage = "Ready to Transfer to Sales";
+          data = await masters.findOneAndUpdate(
+            { code: toTray },
+            {
+              $set: {
+                rack_id: rackId,
+                sort_id: "Ready to Transfer to Sales",
+                actual_items: [],
+                issued_user_name: null,
+                from_merge: null,
+                to_merge: null,
+                closed_time_wharehouse: Date.now(),
+              },
+            }
+          );
         } else if (length == 0) {
           stage = "Open";
           let updateFromTray = await masters.findOneAndUpdate(
@@ -4954,8 +4934,8 @@ module.exports = {
                 track_tray: {},
                 temp_array: [],
                 items: [],
-                count_of_c_display:0,
-                count_of_g_display:0,
+                count_of_c_display: 0,
+                count_of_g_display: 0,
                 issued_user_name: null,
                 from_merge: null,
                 to_merge: null,
@@ -6368,9 +6348,9 @@ module.exports = {
   },
   getRequestForApproval: (status, location, type) => {
     return new Promise(async (resolve, reject) => {
-      let data
-      if(status == "Display Grading Done Closed By Sorting"){
-         data = await masters.find({
+      let data;
+      if (status == "Display Grading Done Closed By Sorting") {
+        data = await masters.find({
           $or: [
             {
               prefix: "tray-master",
@@ -6383,12 +6363,11 @@ module.exports = {
               type_taxanomy: type,
               sort_id: "Received From Sorting After Display Grading",
               cpc: location,
-            }
+            },
           ],
         });
-      }
-      else{
-         data = await masters.find({
+      } else {
+        data = await masters.find({
           $or: [
             {
               prefix: "tray-master",
@@ -7003,7 +6982,6 @@ module.exports = {
     return new Promise(async (resolve, reject) => {
       let dataUpdate;
       if (trayData.type == "ST") {
-
         let findMrpSp = await masters.findOne(
           {
             brand: trayData?.brand,
@@ -7014,56 +6992,7 @@ module.exports = {
           },
           { sp_price: 1, mrp_price: 1 }
         );
-        if (
-          Number(trayData.limit) == Number(trayData.itemCount) &&
-          trayData.limit !== undefined &&
-          trayData.itemCount !== undefined
-        ) {
-          if (findMrpSp) {
-            dataUpdate = await masters.findOneAndUpdate(
-              { code: trayData.trayId },
-              {
-                $set: {
-                  rack_id: trayData.rackId,
-                  issued_user_name: null,
-                  actual_items: [],
-                  temp_array: [],
-                  from_merge: null,
-                  sp_price: findMrpSp?.sp_price,
-                  mrp_price: findMrpSp?.mrp_price,
-                  to_merge: null,
-                  rack_id: trayData.rackId,
-                  sort_id: "Ready to Pricing",
-                  "track_tray.ctx_sorting_done": Date.now(),
-                  description: trayData.description,
-                },
-              }
-            );
-          } else {
-            dataUpdate = await masters.findOneAndUpdate(
-              { code: trayData.trayId },
-              {
-                $set: {
-                  rack_id: trayData.rackId,
-                  issued_user_name: null,
-                  actual_items: [],
-                  temp_array: [],
-                  from_merge: null,
-                  to_merge: null,
-                  rack_id: trayData.rackId,
-                  sort_id: "Ready to Pricing",
-                  "track_tray.ctx_sorting_done": Date.now(),
-                  description: trayData.description,
-                },
-              }
-            );
-          }
-          if (dataUpdate) {
-            resolve({ status: 1, tray: dataUpdate });
-          } else {
-            resolve({ status: 0 });
-          }
-        } else if (trayData.itemCount == "0") {
+        if (trayData.itemCount == "0") {
           dataUpdate = await masters.findOneAndUpdate(
             { code: trayData.trayId },
             {
@@ -7218,12 +7147,6 @@ module.exports = {
               sort_id: type,
               type_taxanomy: "ST",
             },
-            {
-              prefix: "tray-master",
-              cpc: location,
-              sort_id: "Ready to Pricing",
-              type_taxanomy: "ST",
-            },
           ],
         });
         if (tray) {
@@ -7237,14 +7160,7 @@ module.exports = {
       let tray = await masters.aggregate([
         {
           $match: {
-            $or: [
-              {
-                cpc: location,
-                type_taxanomy: "ST",
-                sort_id: "Ready to Pricing",
-              },
-              { cpc: location, type_taxanomy: "ST", sort_id: "Inuse" },
-            ],
+            $or: [{ cpc: location, type_taxanomy: "ST", sort_id: "Inuse" }],
           },
         },
         {
@@ -7602,7 +7518,7 @@ module.exports = {
         data = await masters.find({
           issued_user_name: username,
           sort_id: sortId,
-          temp_rack: {$ne:null},
+          temp_rack: { $ne: null },
         });
       }
       if (data) {

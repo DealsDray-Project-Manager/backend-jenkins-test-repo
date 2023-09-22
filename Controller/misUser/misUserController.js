@@ -272,12 +272,6 @@ module.exports = {
             sort_id: "Inuse",
             type_taxanomy: "ST",
           },
-          {
-            prefix: "tray-master",
-            cpc: location,
-            sort_id: "Ready to Pricing",
-            type_taxanomy: "ST",
-          },
         ],
       });
       count.readyToTransfer = await masters.count({
@@ -2950,16 +2944,7 @@ module.exports = {
                 sort_id: sortId,
                 code: { $ne: fromTray },
               },
-              {
-                prefix: "tray-master",
-                type_taxanomy: type,
-                tray_grade: grade,
-                brand: brand,
-                model: model,
-                cpc: location,
-                sort_id: "Ready to Pricing",
-                code: { $ne: fromTray },
-              },
+              
             ],
           })
           .catch((err) => reject(err));

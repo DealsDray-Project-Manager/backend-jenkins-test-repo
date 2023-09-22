@@ -25,7 +25,7 @@ module.exports = {
           $match: {
             type_taxanomy: "ST",
             cpc: location,
-            sort_id: { $in: ["Ready to Pricing", "Inuse"] },
+            sort_id: { $in: ["Inuse"] },
             sp_price: { $exists: true, $ne: null }, // Filter out documents with null or missing sp_price
             mrp_price: { $exists: true, $ne: null }, // Filter out documents with null or missing mrp_price
           },
@@ -50,7 +50,7 @@ module.exports = {
           $match: {
             type_taxanomy: "ST",
             cpc: location,
-            sort_id: { $in: ["Ready to Pricing", "Inuse"] },
+            sort_id: { $in: ["Inuse"] },
             sp_price: { $exists: true, $ne: null },
             mrp_price: { $exists: true, $ne: null },
           },
