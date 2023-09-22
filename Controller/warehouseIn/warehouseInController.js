@@ -1831,6 +1831,7 @@ module.exports = {
             uic: x.uic,
             tray_id: trayData.trayId,
             track_tray: state,
+            rack_id: trayData.rackId,
             description: `Bot done closed by warehouse agent :${trayData.username}`,
           });
           let deliveryTrack = await delivery.findOneAndUpdate(
@@ -1903,6 +1904,7 @@ module.exports = {
             uic: x.uic,
             track_tray: state,
             tray_id: trayData.trayId,
+            rack_id: trayData.rackId,
             description: `Bot done closed by warehouse agent :${trayData.username}`,
           });
           state = "Units";
@@ -3525,6 +3527,7 @@ module.exports = {
               uic: x.uic,
               tray_id: trayData.trayId,
               track_tray: state,
+              rack_id: trayData.rackId,
               description: `Bqc done closed by Wh :${trayData.actioUser}`,
             });
             state = "Units";
@@ -3591,6 +3594,7 @@ module.exports = {
               user_name_of_action: trayData.actioUser,
               user_type: "PRC Warehouse",
               uic: x.uic,
+              rack_id: trayData.rackId,
               tray_id: trayData.trayId,
               description: `Charging done closed by WH :${trayData.actioUser}`,
               track_tray: state,
@@ -3711,6 +3715,7 @@ module.exports = {
             uic: x.uic,
             tray_id: trayData.trayId,
             track_tray: state,
+            rack_id: trayData.rackId,
             description: `${stage} closed by Wh:${trayData.actioUser}`,
           });
           state = "Units";
@@ -4178,6 +4183,7 @@ module.exports = {
               uic: x.uic,
               tray_id: trayData.code,
               track_tray: state,
+              rack_id: trayData.rackId,
               description: `Ready for Charging Closed by Wh :${trayData.username}`,
             });
             state = "Units";
@@ -5156,6 +5162,7 @@ module.exports = {
             uic: x.uic,
             tray_id: toTray,
             track_tray: state,
+            rack_id:rackId,
             description: `${stage}  by WH :${actioUser}`,
           });
           state = "Units";
@@ -6637,6 +6644,7 @@ module.exports = {
             created_at: Date.now(),
             uic: x.uic,
             tray_id: data.code,
+            rack_id: trayData.rackId,
             description: `Ready to RDL-2 closed by agent :${trayData.actUser}`,
             track_tray: state,
             user_type: "PRC Warehouse",
@@ -6669,15 +6677,20 @@ module.exports = {
         }
       );
       if (data) {
-        let updateRack = await trayRack.findOneAndUpdate(
-          { rack_id: trayData.rackId },
-          {
-            $push: {
-              bag_or_tray: data.code,
-            },
-          }
-        );
+        let state = "Tray";
         for (let x of data.items) {
+          await unitsActionLog.create({
+            action_type: "RDL-2 done closed by warehouse",
+            created_at: Date.now(),
+            uic: x.uic,
+            user_name_of_action: trayData.actionUser,
+            tray_id: trayData.trayId,
+            user_type: "PRC Warehouse",
+            track_tray: state,
+            rack_id: trayData.rackId,
+            description: `RDL-2 done closed by warehouse by WH :${trayData.actionUser}`,
+          });
+          state = "Units";
           let deliveryUpdate = await delivery.findOneAndUpdate(
             { tracking_id: x.tracking_id },
             {
@@ -6695,7 +6708,6 @@ module.exports = {
           );
         }
       }
-
       if (data) {
         resolve(data);
       } else {
@@ -6742,7 +6754,20 @@ module.exports = {
             }
           );
           if (data) {
+            let state = "Tray";
             for (let x of data.items) {
+              const addLogsofUnits = await unitsActionLog.create({
+                action_type:
+                  "CTX Received from processing and closed by sales warehouse",
+                created_at: Date.now(),
+                uic: x.uic,
+                tray_id: trayData.trayId,
+                description: `Ready to Transfer to STX closed by agent :${trayData.actUser}`,
+                track_tray: state,
+                rack_id: trayData.rackId,
+                user_type: `Sales Warehouse`,
+              });
+              state = "Units";
               let updateTrack = await delivery.findOneAndUpdate(
                 { tracking_id: x.tracking_id },
                 {
@@ -6959,7 +6984,7 @@ module.exports = {
       resolve(tray);
     });
   },
-  sortingDonectxTostxCloseLogData: (items, trayId, stage, username) => {
+  sortingDonectxTostxCloseLogData: (items, trayId, stage, username,rackId) => {
     return new Promise(async (resolve, reject) => {
       let state = "Tray";
       for (let x of items) {
@@ -6968,6 +6993,7 @@ module.exports = {
           created_at: Date.now(),
           uic: x.uic,
           tray_id: trayId,
+          rack_id:rackId,
           user_name_of_action: username,
           description: `${stage} closed by agent :${username}`,
           track_tray: state,
@@ -7481,7 +7507,8 @@ module.exports = {
             uic: x.uic,
             tray_id: updateRackId.code,
             track_tray: state,
-            user_type: "PRC Warehouse",
+            rack_id:rackid,
+            user_type: "Warehouse",
             description: `${sortId} closed by the agent :${actionUser}`,
           });
           state = "Units";

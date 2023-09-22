@@ -2519,24 +2519,14 @@ router.post(
   async (req, res, next) => {
     try {
       let data = await warehouseInController.sortingDoneCtxStxClose(req.body);
-      if (data.status == 1) {
-        let logUpdate =
-          await warehouseInController.sortingDonectxTostxCloseLogData(
-            data.tray.items,
-            data.tray.code,
-            "Ready for Pricing",
-            req.body.actUser
-          );
-        res.status(200).json({
-          message: "Successfully Closed and Ready for Pricing",
-        });
-      } else if (data.status == 2) {
+     if (data.status == 2) {
         let logUpdate =
           await warehouseInController.sortingDonectxTostxCloseLogData(
             data.tray.items,
             data.tray.code,
             "Ready to Transfer to Processing",
-            req.body.actUser
+            req.body.actUser,
+            req.body.rackId
           );
 
         res.status(200).json({
@@ -2548,7 +2538,8 @@ router.post(
             data.tray.items,
             data.tray.code,
             "Merging Done Closed by Wh",
-            req.body.actUser
+            req.body.actUser,
+            req.body.rackId
           );
 
         res.status(200).json({
@@ -2560,7 +2551,8 @@ router.post(
             data.tray.items,
             data.tray.code,
             "Inuse State",
-            req.body.actUser
+            req.body.actUser,
+            req.body.rackId
           );
 
         res.status(200).json({

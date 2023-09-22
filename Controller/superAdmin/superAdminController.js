@@ -5819,7 +5819,7 @@ module.exports = {
             { sort_id: "Issued to RDL-FLS" },
             { sort_id: "Closed by RDL-FLS" },
             { sort_id: "Received From RDL-FLS" },
-            {sort_id:"Ready to Pricing"}
+            { sort_id: "Ready to Pricing" },
           ],
         },
         {
@@ -5861,11 +5861,9 @@ module.exports = {
           tempStatus = "Closed by RDL-1";
         } else if (x.sort_id == "Received From RDL-FLS") {
           tempStatus = "Received From RDL-1";
-        }
-        else if (x.sort_id == "RDL two done closed by warehouse") {
+        } else if (x.sort_id == "RDL two done closed by warehouse") {
           tempStatus = "RDL-2 done closed by warehouse";
-        }
-        else if (x.sort_id == "Ready to Pricing") {
+        } else if (x.sort_id == "Ready to Pricing") {
           tempStatus = "Inuse";
         }
         let updateStatus = await masters.updateOne(
@@ -5877,18 +5875,24 @@ module.exports = {
           }
         );
       }
-     
-      let updateUsersRdl1=await user.updateMany({user_type:"RDL-One"},{
-        $set:{
-          user_type: "RDL-1"
+
+      let updateUsersRdl1 = await user.updateMany(
+        { user_type: "RDL-One" },
+        {
+          $set: {
+            user_type: "RDL-1",
+          },
         }
-      })
+      );
       console.log(updateUsersRdl1);
-      let updateUsersRdl2=await user.updateMany({user_type:"RDL-two"},{
-        $set:{
-          user_type:"RDL-two"
+      let updateUsersRdl2 = await user.updateMany(
+        { user_type: "RDL-two" },
+        {
+          $set: {
+            user_type: "RDL-two",
+          },
         }
-      })
+      );
       return { status: true };
     } catch (error) {
       return error;
