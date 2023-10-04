@@ -4911,7 +4911,7 @@ module.exports = {
         if (
           Number(length) == Number(limit) &&
           length !== undefined &&
-          limit !== undefined
+          limit !== undefined && type == "CT"
         ) {
           stage = "Ready to Transfer to Sales";
           data = await masters.findOneAndUpdate(
@@ -5162,7 +5162,7 @@ module.exports = {
             uic: x.uic,
             tray_id: toTray,
             track_tray: state,
-            rack_id:rackId,
+            rack_id: rackId,
             description: `${stage}  by WH :${actioUser}`,
           });
           state = "Units";
@@ -5467,6 +5467,7 @@ module.exports = {
     });
   },
   getCtxCategorysForIssue: (grades) => {
+    console.log(grades);
     return new Promise(async (resolve, reject) => {
       const fetchData = await trayCategory.find({ code: { $nin: grades } });
       resolve(fetchData);
@@ -5993,14 +5994,7 @@ module.exports = {
           },
         }
       );
-      let updateRackOne = await trayRack.findOneAndUpdate(
-        { rack_id: fromTray },
-        {
-          $pull: {
-            bag_or_tray: updateFromTray.code,
-          },
-        }
-      );
+  
       let updateToTray = await masters.findOneAndUpdate(
         {
           code: toTray,
@@ -6984,7 +6978,7 @@ module.exports = {
       resolve(tray);
     });
   },
-  sortingDonectxTostxCloseLogData: (items, trayId, stage, username,rackId) => {
+  sortingDonectxTostxCloseLogData: (items, trayId, stage, username, rackId) => {
     return new Promise(async (resolve, reject) => {
       let state = "Tray";
       for (let x of items) {
@@ -6993,7 +6987,7 @@ module.exports = {
           created_at: Date.now(),
           uic: x.uic,
           tray_id: trayId,
-          rack_id:rackId,
+          rack_id: rackId,
           user_name_of_action: username,
           description: `${stage} closed by agent :${username}`,
           track_tray: state,
@@ -7507,7 +7501,7 @@ module.exports = {
             uic: x.uic,
             tray_id: updateRackId.code,
             track_tray: state,
-            rack_id:rackid,
+            rack_id: rackid,
             user_type: "Warehouse",
             description: `${sortId} closed by the agent :${actionUser}`,
           });

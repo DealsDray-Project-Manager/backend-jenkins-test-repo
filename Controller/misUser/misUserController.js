@@ -4020,6 +4020,7 @@ module.exports = {
       let item_id_wht = "";
       for (let x of itemData.isCheck) {
         let checkBrand = await delivery.findOne({ "uic_code.code": x });
+        console.log(checkBrand);
         item_id_wht = checkBrand.item_id;
         if (prodct.length == 0) {
           prodct.push(checkBrand.item_id);

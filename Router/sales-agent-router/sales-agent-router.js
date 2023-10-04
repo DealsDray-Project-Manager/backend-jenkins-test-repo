@@ -25,6 +25,7 @@ router.post("/viewPrice/:location", async (req, res, next) => {
   try {
     const { location } = req.params;
     let data = await salesController.viewPrice(location);
+    console.log(data);
     if (data) {
       res.status(200).json({
         data: data,

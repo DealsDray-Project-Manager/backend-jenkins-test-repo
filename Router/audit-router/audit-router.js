@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const auditController = require("../../Controller/audit-controller/audit-controller");
+const fs = require("fs");
 
 /*-------------------------------AUDIT DASHBOARD------------------------------------------*/
 router.post("/dashboard/:username", async (req, res, next) => {
@@ -120,8 +121,68 @@ router.post("/bqcReport/:uic/:trayId", async (req, res, next) => {
 /*---------------------------TRAY SEGRIGATION-------------------------------------*/
 router.post("/traySegrigation", async (req, res, next) => {
   try {
-    const { type, stage } = req.body;
-    let data = await auditController.traySegrigation(req.body);
+    let {
+      type,
+      stage,
+      subMuic,
+      color,
+      storage_verification,
+      ram_verification,
+      muic,
+      actionUser,
+      currentSubMuicCount,
+    } = req.body;
+    let createSubMuic;
+    let data;
+    currentSubMuicCount = `${muic} - ${currentSubMuicCount}`;
+    if (stage !== "BQC Not Done / Unverified imei" && subMuic == null) {
+      createSubMuic = await auditController.createSubMuic(
+        color,
+        storage_verification,
+        ram_verification,
+        muic,
+        actionUser,
+        currentSubMuicCount
+      );
+      console.log(createSubMuic);
+      if (createSubMuic.status == 1) {
+        fs.readFile(
+          "myjsonfile.json",
+          "utf8",
+          function readFileCallback(err, datafile) {
+            if (err) {
+            } else {
+              obj = JSON.parse(datafile);
+              let num = parseInt(obj.SUBMUIC.substring(0)) + 1;
+              let updatedStr =
+                obj.SUBMUIC.substring(0, 0) + num.toString().padStart(6, "0");
+              obj.SUBMUIC = updatedStr;
+              json = JSON.stringify(obj);
+              fs.writeFile(
+                "myjsonfile.json",
+                json,
+                "utf8",
+                function readFileCallback(err, data) {
+                  if (err) {
+                  }
+                }
+              );
+            }
+          }
+        );
+        data = await auditController.traySegrigation(
+          req.body,
+          createSubMuic?.subMuicCode
+        );
+      } else {
+        res.status(202).json({
+          message: "Failed please try again",
+        });
+      }
+    } else {
+      data = await auditController.traySegrigation(req.body, subMuic);
+    }
+
     if (data.status == 1) {
       if (stage == "BQC Not Done / Unverified imei") {
         res.status(200).json({
@@ -205,17 +266,47 @@ router.post("/trayClose/:trayId", async (req, res, next) => {
 // GET COLOR AND STORAGE AND RAM
 router.post("/getColorStorageRam", async (req, res, next) => {
   try {
-    const {grade}=req.body
-    console.log(grade);
+    const { grade } = req.body;
     let data = await auditController.getAllStorageAndRamAndColor(grade);
-    console.log(data.flagToHigh);
     if (data) {
       res.status(200).json({
         data: data.allOtherData,
-        upArray:data.upArray,
-        downArray:data.downArray,
-        flagToHigh:data.flagToHigh
+        upArray: data.upArray,
+        downArray: data.downArray,
+        flagToHigh: data.flagToHigh,
       });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+/*---------------------------------SUB MUIC -----------------------------------*/
+router.post("/fetchSubMuic", async (req, res, next) => {
+  try {
+    console.log(req.body);
+    const { storage, ram, color, muic } = req.body;
+    const fetchSubMuic = await auditController.findSubMuic(
+      storage,
+      ram,
+      color,
+      muic
+    );
+    console.log(fetchSubMuic);
+    if (fetchSubMuic) {
+      fs.readFile(
+        "myjsonfile.json",
+        "utf8",
+        async function readFileCallback(err, data) {
+          if (err) {
+          } else {
+            obj = JSON.parse(data);
+            res.status(200).json({
+              subMuic: fetchSubMuic.subMuicData,
+              currentSubMuicCount: obj.SUBMUIC,
+            });
+          }
+        }
+      );
     }
   } catch (error) {
     next(error);

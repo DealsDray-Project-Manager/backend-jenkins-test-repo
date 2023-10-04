@@ -37,8 +37,12 @@ router.post("/readyForPricing/:location", async (req, res, next) => {
 /*--------------------------------ADD PRICING-------------------------------------------------*/
 router.post("/addPrice", async (req, res, next) => {
   try {
-    const { muicDetails, location, screen} = req.body;
-    let data = await PricingAgentController.addPrice(muicDetails, location,screen);
+    const { muicDetails, location, screen } = req.body;
+    let data = await PricingAgentController.addPrice(
+      muicDetails,
+      location,
+      screen
+    );
     if (data.status == true) {
       res.status(200).json({
         message: "Price sucessfully updated",

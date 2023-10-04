@@ -311,7 +311,12 @@ const deliverySchema = mongoose.Schema({
   copy_grading_report:Object,
   copy_grading_done_date:Date,
   for_copy_grade_username:String,
-  copy_grading_done_received:Date
+  copy_grading_done_received:Date,
+  mrp_price:Number,
+  sp_price:Number,
+  final_grade:String,
+  price_updation_date:Date,
+  price_creation_date:Date,
 });
 
 const delivery = mongoose.model("delivery", deliverySchema);

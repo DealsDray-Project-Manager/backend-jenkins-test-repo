@@ -23,24 +23,21 @@ module.exports = {
       count.viewPriceCount = await masters.aggregate([
         {
           $match: {
-            type_taxanomy: "ST",
-            cpc: location,
-            sort_id: { $in: ["Inuse"] },
-            sp_price: { $exists: true, $ne: null }, // Filter out documents with null or missing sp_price
-            mrp_price: { $exists: true, $ne: null }, // Filter out documents with null or missing mrp_price
+            tray_type: "ST",
+            item_moved_to_billed_bin: { $exists: false },
+            stx_tray_id: { $exists: true },
+            sp_price: { $exists: true }, // Filter out documents with null or missing sp_price
+            mrp_price: { $exists: true },
+            final_grade: { $exists: true },
+            "audit_report.sub_muic": { $exists: true },
           },
         },
         {
           $group: {
             _id: {
-              model: "$model",
-              brand: "$brand",
-              grade: "$tray_grade",
+              grade: "$final_grade",
+              sub_muic: "$audit_report.sub_muic",
             },
-            itemCount: { $sum: { $size: "$items" } },
-            muic: { $first: "$items.muic" },
-            sp: { $first: "$sp_price" },
-            mrp: { $first: "$mrp_price" },
           },
         },
       ]);
@@ -49,7 +46,6 @@ module.exports = {
         {
           $match: {
             type_taxanomy: "ST",
-            cpc: location,
             sort_id: { $in: ["Inuse"] },
             sp_price: { $exists: true, $ne: null },
             mrp_price: { $exists: true, $ne: null },
@@ -79,29 +75,29 @@ module.exports = {
   viewPrice: (location) => {
     //PROMISE
     return new Promise(async (resolve, reject) => {
-      const getBasedOnMuic = await masters.aggregate([
+      const getBasedOnMuic = await delivery.aggregate([
         {
           $match: {
-            type_taxanomy: "ST",
-            cpc: location,
-            sort_id: { $ne: "Open" },
+            tray_type: "ST",
+            item_moved_to_billed_bin: { $exists: false },
+            stx_tray_id: { $exists: true },
             sp_price: { $exists: true, $ne: null },
             mrp_price: { $exists: true, $ne: null },
+            final_grade: { $exists: true },
+            "audit_report.sub_muic": { $exists: true },
           },
         },
         {
           $group: {
             _id: {
-              model: "$model",
-              brand: "$brand",
-              grade: "$tray_grade",
+              grade: "$final_grade",
+              sub_muic: "$audit_report.sub_muic",
             },
-            itemCount: { $sum: { $size: "$items" } },
-            muic: { $first: "$items.muic" },
+            itemCount: { $sum: 1 },
+            item_id: { $first: "$item_id" },
             sp: { $first: "$sp_price" },
             mrp: { $first: "$mrp_price" },
-            count_of_g_display: { $sum:  "$count_of_g_display" },
-            count_of_c_display: { $sum:  "$count_of_c_display" },
+            sub_muic: { $first: "$audit_report.sub_muic" },
             price_updation_date: { $first: "$price_updation_date" },
             price_creation_date: { $first: "$price_creation_date" },
           },
@@ -109,23 +105,31 @@ module.exports = {
         {
           $lookup: {
             from: "products", // Replace with the name of the collection you want to lookup from
-            localField: "muic",
-            foreignField: "muic",
+            localField: "item_id",
+            foreignField: "vendor_sku_id",
             as: "muicDetails",
           },
         },
         {
-          $sort: {
-            "_id.brand": 1, // 1 for ascending, -1 for descending
-            "_id.model": 1, // 1 for ascending, -1 for descending
+          $lookup: {
+            from: "submuics", // Replace with the name of the collection you want to lookup from
+            localField: "sub_muic",
+            foreignField: "sub_muic",
+            as: "subMuicDetails",
           },
         },
       ]);
 
       for (let x of getBasedOnMuic) {
-      
-        x["muic_one"] = x.muic[0];
+        x["muic_one"] = x.muicDetails?.[0]?.muic;
+        x["item_id"] = x.muicDetails?.[0]?.vendor_sku_id;
+        x["ram"] = x.subMuicDetails?.[0]?.ram;
+        x["storage"] = x.subMuicDetails?.[0]?.storage;
+        x["color"] = x.subMuicDetails?.[0]?.color;
+        x["brand_name"] = x.muicDetails?.[0]?.brand_name;
+        x["model_name"] = x.muicDetails?.[0]?.model_name;
       }
+      console.log(getBasedOnMuic);
       resolve(getBasedOnMuic);
     });
   },

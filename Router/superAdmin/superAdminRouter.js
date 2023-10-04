@@ -3610,6 +3610,19 @@ router.post("/globeDuplicateRemove", async (req, res, next) => {
     next(error);
   }
 });
+/*-------------------------------------------SUB MUIC-------------------------------------------------------------*/
+router.post("/subMuic/view", async (req, res, next) => {
+  try {
+    const subMuic = await superAdminController.getSubMuic();
+    if (subMuic) {
+      res.status(200).json({
+        data: subMuic,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
 /*---------------------------------------------------------------------------------------------------------------------------*/
 
 /***********************************************EXTRA  SECTION*********************************************************** */
@@ -4131,7 +4144,7 @@ router.post("/extra/updateStatusRDL", async (req, res, next) => {
 router.post("/extra/tempRequerment", async (req, res, next) => {
   try {
     let data = await superAdminController.tempDataAddRequerment();
-    if (data.status == true) {
+    if (data) {
       res.status(200).json({
         message: "Successfully Update",
       });
@@ -4144,5 +4157,21 @@ router.post("/extra/tempRequerment", async (req, res, next) => {
     next(error);
   }
 });
-
+// ISSUE WITH PICKUP
+router.post("/extra/pickupIssue", async (req, res, next) => {
+  try {
+    let data = await superAdminController.pickupIssue();
+    if (data) {
+      res.status(200).json({
+        message: "Successfully Update",
+      });
+    } else {
+      res.status(202).json({
+        message: "Failed",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
 module.exports = router;

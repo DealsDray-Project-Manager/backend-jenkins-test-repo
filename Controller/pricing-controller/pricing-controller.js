@@ -17,108 +17,65 @@ module.exports = {
         unitsCount: 0,
         unitsCountSales: 0,
       };
-      count.unitsCount = await masters.aggregate([
+      count.unitsCount = await delivery.count({
+        tray_type: "ST",
+        item_moved_to_billed_bin: { $exists: false },
+        stx_tray_id: { $exists: true },
+        sp_price: { $exists: false }, // Filter out documents with null or missing sp_price
+        mrp_price: { $exists: false },
+        final_grade: { $exists: true },
+        "audit_report.sub_muic": { $exists: true },
+      }); // Convert aggregation result to an array
+
+      count.unitsCountSales = await delivery.count({
+        tray_type: "ST",
+        item_moved_to_billed_bin: { $exists: false },
+        stx_tray_id: { $exists: true },
+        sp_price: { $exists: true },
+        final_grade: { $exists: true },
+        "audit_report.sub_muic": { $exists: true },
+        mrp_price: { $exists: true },
+      }); // Convert aggregation result to an array
+      count.radyForPricing = await delivery.aggregate([
         {
           $match: {
-            type_taxanomy: "ST",
-            cpc: location,
-            sort_id: {
-              $nin: [
-                "Open",
-                "Issued to Sorting for Ctx to Stx",
-                "Ctx to Stx Sorting Done",
-                "Received From Sorting Agent After Ctx to Stx",
-                "STX-Utility In-progress",
-              ],
-            },
-            sp_price: { $exists: false },
-            mrp_price: { $exists: false },
-          },
-        },
-        {
-          $group: {
-            _id: null, // Group all documents together
-            itemCountSum: { $sum: { $size: "$items" } }, // Sum the itemCount for all documents
-          },
-        },
-      ]); // Convert aggregation result to an array
-      if (count.unitsCount.length > 0) {
-        count.unitsCount = count.unitsCount[0].itemCountSum; // Extract the sum from the result
-      } else {
-        count.unitsCount = 0; // If there are no results, set unitsCount to 0
-      }
-      count.unitsCountSales = await masters.aggregate([
-        {
-          $match: {
-            type_taxanomy: "ST",
-            cpc: location,
-            sort_id: { $ne: "Open" },
-            sp_price: { $exists: true },
-            mrp_price: { $exists: true },
-          },
-        },
-        {
-          $group: {
-            _id: null, // Group all documents together
-            itemCountSum: { $sum: { $size: "$items" } }, // Sum the itemCount for all documents
-          },
-        },
-      ]); // Convert aggregation result to an array
-      if (count.unitsCountSales.length > 0) {
-        count.unitsCountSales = count.unitsCountSales[0].itemCountSum; // Extract the sum from the result
-      } else {
-        count.unitsCountSales = 0; // If there are no results, set unitsCount to 0
-      }
-      count.radyForPricing = await masters.aggregate([
-        {
-          $match: {
-            type_taxanomy: "ST",
-            cpc: location,
-            sort_id: {
-              $nin: [
-                "Open",
-                "Issued to Sorting for Ctx to Stx",
-                "Ctx to Stx Sorting Done",
-                "Received From Sorting Agent After Ctx to Stx",
-                "STX-Utility In-progress",
-              ],
-            },
+            tray_type: "ST",
+            item_moved_to_billed_bin: { $exists: false },
+            stx_tray_id: { $exists: true },
             sp_price: { $exists: false }, // Filter out documents with null or missing sp_price
             mrp_price: { $exists: false },
+            final_grade: { $exists: true },
+            "audit_report.sub_muic": { $exists: true },
           },
         },
         {
           $group: {
             _id: {
-              model: "$model",
-              brand: "$brand",
-              grade: "$tray_grade",
+              grade: "$final_grade",
+              sub_muic: "$audit_report.sub_muic",
             },
             // Count the number of items in the 'items' array within each group
           },
         },
       ]);
-      count.viewPriceCount = await masters.aggregate([
+      count.viewPriceCount = await delivery.aggregate([
         {
           $match: {
-            type_taxanomy: "ST",
-            cpc: location,
-            sort_id: { $ne: "Open" },
-            sp_price: { $exists: true, $ne: null }, // Filter out documents with null or missing sp_price
-            mrp_price: { $exists: true, $ne: null }, // Filter out documents with null or missing mrp_price
+            tray_type: "ST",
+            item_moved_to_billed_bin: { $exists: false },
+            stx_tray_id: { $exists: true },
+            sp_price: { $exists: true }, // Filter out documents with null or missing sp_price
+            mrp_price: { $exists: true },
+            final_grade: { $exists: true },
+            "audit_report.sub_muic": { $exists: true },
           },
         },
         {
           $group: {
             _id: {
-              model: "$model",
-              brand: "$brand",
-              grade: "$tray_grade",
+              grade: "$final_grade",
+              sub_muic: "$audit_report.sub_muic",
             },
-            itemCount: { $sum: { $size: "$items" } },
-            muic: { $first: "$items.muic" },
-            sp: { $first: "$sp_price" },
-            mrp: { $first: "$mrp_price" },
           },
         },
       ]);
@@ -132,54 +89,58 @@ module.exports = {
   },
   /*---------------------------READY FOR PRICING SCREEN --------------------------------------------*/
   readyForPricingScreen: (location) => {
-    // PROMIS
+    // PROMISE
     return new Promise(async (resolve, reject) => {
-      const getBasedOnMuic = await masters.aggregate([
+      const getBasedOnMuic = await delivery.aggregate([
         {
           $match: {
-            type_taxanomy: "ST",
-            cpc: location,
-            sort_id: {
-              $nin: [
-                "Open",
-                "Issued to Sorting for Ctx to Stx",
-                "Ctx to Stx Sorting Done",
-                "Received From Sorting Agent After Ctx to Stx",
-                "STX-Utility In-progress",
-              ],
-            },
+            tray_type: "ST",
+            item_moved_to_billed_bin: { $exists: false },
+            stx_tray_id: { $exists: true },
             sp_price: { $exists: false }, // Filter out documents with null or missing sp_price
             mrp_price: { $exists: false },
+            final_grade: { $exists: true },
+            "audit_report.sub_muic": { $exists: true },
           },
         },
         {
           $group: {
             _id: {
-              model: "$model",
-              brand: "$brand",
-              grade: "$tray_grade",
+              grade: "$final_grade",
+              sub_muic: "$audit_report.sub_muic",
             },
-            itemCount: { $sum: { $size: "$items" } },
-            muic: { $first: "$items.muic" },
+            documentCount: { $sum: 1 },
+            item_id: { $first: "$item_id" },
             sp: { $first: "$sp_price" },
             mrp: { $first: "$mrp_price" },
-            count_of_g_display: { $sum:  "$count_of_g_display" },
-            count_of_c_display: { $sum:  "$count_of_c_display" },
+            sub_muic: { $first: "$audit_report.sub_muic" },
             // Count the number of items in the 'items' array within each group
           },
         },
         {
           $lookup: {
             from: "products", // Replace with the name of the collection you want to lookup from
-            localField: "muic",
-            foreignField: "muic",
+            localField: "item_id",
+            foreignField: "vendor_sku_id",
             as: "muicDetails",
           },
         },
+        {
+          $lookup: {
+            from: "submuics", // Replace with the name of the collection you want to lookup from
+            localField: "sub_muic",
+            foreignField: "sub_muic",
+            as: "subMuicDetails",
+          },
+        },
       ]);
-      console.log(getBasedOnMuic);
       for (let x of getBasedOnMuic) {
-        x["muic_one"] = x.muic[0];
+        x["muic_one"] = x.muicDetails?.[0]?.muic;
+        x["ram"] = x.subMuicDetails?.[0]?.ram;
+        x["storage"] = x.subMuicDetails?.[0]?.storage;
+        x["color"] = x.subMuicDetails?.[0]?.color;
+        x["brand_name"] = x.muicDetails?.[0]?.brand_name;
+        x["model_name"] = x.muicDetails?.[0]?.model_name;
       }
 
       resolve(getBasedOnMuic);
@@ -195,18 +156,17 @@ module.exports = {
       let flag = true;
       for (let x of muicDetails) {
         let updatePriceTrayWise;
-        const findSkuId = await products.findOne({ muic: x.muic });
+        console.log(x);
         if (screen == "Price updation") {
-          updatePriceTrayWise = await masters.updateMany(
+          updatePriceTrayWise = await delivery.updateMany(
             {
-              brand: findSkuId.brand_name,
-              model: findSkuId.model_name,
-              tray_grade: x.grade,
-              type_taxanomy: "ST",
-              cpc: location,
-              sort_id: { $ne: "Open" },
+              item_moved_to_billed_bin: { $exists: false },
+              stx_tray_id: { $exists: true },
+              tray_type: "ST",
               sp_price: { $exists: true }, // Filter out documents with null or missing sp_price
               mrp_price: { $exists: true },
+              final_grade: x.grade,
+              "audit_report.sub_muic": x.submuic,
             },
             {
               $set: {
@@ -219,18 +179,13 @@ module.exports = {
         } else {
           // FIND OUT SKUID OF THE PRODUCT USING MUIC
           // UPDATE THE PRICE IN TRAY WAISE
-          updatePriceTrayWise = await masters.updateMany(
+          updatePriceTrayWise = await delivery.updateMany(
             {
-              $or: [
-                {
-                  brand: findSkuId.brand_name,
-                  model: findSkuId.model_name,
-                  tray_grade: x.grade,
-                  type_taxanomy: "ST",
-                  cpc: location,
-                  sort_id: { $ne: "Open" },
-                },
-              ],
+                  item_moved_to_billed_bin: { $exists: false },
+                  stx_tray_id: { $exists: true },
+                  tray_type: "ST",
+                  final_grade: x.grade,
+                  "audit_report.sub_muic": x.submuic,
             },
             {
               $set: {
@@ -244,6 +199,7 @@ module.exports = {
             }
           );
         }
+        console.log(updatePriceTrayWise);
         if (updatePriceTrayWise.modifiedCount == 0) {
           flag = false;
         }
