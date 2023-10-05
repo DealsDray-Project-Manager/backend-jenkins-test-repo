@@ -20,7 +20,7 @@ router.post("/dashboard/:location/:username", async (req, res, next) => {
   }
 });
 
-// VIEW THE PRICE
+// VIEW THE PRICE BASIS OF SUB-MUIC
 router.post("/viewPrice/:location", async (req, res, next) => {
   try {
     const { location } = req.params;
@@ -35,8 +35,21 @@ router.post("/viewPrice/:location", async (req, res, next) => {
     next(error);
   }
 });
-//VIEW ITEMS
-
+//VIEW THE PRICE BASIS OF MUIC
+router.post("/viewPriceBasisMuic/:location", async (req, res, next) => {
+  try {
+    const { location } = req.params;
+    let data = await salesController.viewPriceBasisMuic(location);
+    console.log(data);
+    if (data) {
+      res.status(200).json({
+        data: data,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
 router.post("/viewItemsForReadyForSales", async (req, res, next) => {
   try {
    

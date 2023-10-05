@@ -4141,7 +4141,7 @@ router.post("/extra/updateStatusRDL", async (req, res, next) => {
   }
 });
 /*-------------------------------------TEMP REQUERMENT---------------------------------------*/
-router.post("/extra/tempRequerment", async (req, res, next) => {
+router.post("/extra/addFinelGrade", async (req, res, next) => {
   try {
     let data = await superAdminController.tempDataAddRequerment();
     if (data) {

@@ -2944,7 +2944,6 @@ module.exports = {
                 sort_id: sortId,
                 code: { $ne: fromTray },
               },
-              
             ],
           })
           .catch((err) => reject(err));
@@ -5659,8 +5658,20 @@ module.exports = {
         );
         if (updateTheTray) {
           let state = "Tray";
+          if (updateTheTray.items?.length == 0) {
+            await unitsActionLog.create({
+              action_type: "Assigned to warehouae for rack change",
+              created_at: Date.now(),
+              user_name_of_action: actUser,
+              agent_name: scanOutWh,
+              user_type: "PRC MIS",
+              tray_id: x,
+              track_tray: state,
+              description: `Assigned to warehouae for rack change to agent scan out :${scanOutWh} by mis :${actUser}`,
+            });
+          }
           for (let y of updateTheTray.items) {
-            let unitsLogCreation = await unitsActionLog.create({
+            await unitsActionLog.create({
               action_type: "Assigned to warehouae for rack change",
               created_at: Date.now(),
               user_name_of_action: actUser,

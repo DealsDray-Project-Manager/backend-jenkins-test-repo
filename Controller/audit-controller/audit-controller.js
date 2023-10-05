@@ -197,7 +197,7 @@ module.exports = {
       }
     });
   },
-  traySegrigation: (itemData,subMuic) => {
+  traySegrigation: (itemData, subMuic) => {
     return new Promise(async (resolve, reject) => {
       let checkAlreadyAdded = await masters.findOne({
         $or: [
@@ -224,7 +224,7 @@ module.exports = {
           color: itemData.color,
           storage_verification: itemData.storage_verification,
           ram_verification: itemData.ram_verification,
-          sub_muic:subMuic
+          sub_muic: subMuic,
         };
         let findTray = await masters.findOne({
           $or: [
@@ -367,7 +367,7 @@ module.exports = {
                       tray_location: "Audit",
                       audit_report: obj,
                       updated_at: Date.now(),
-                      final_grade:findTray?.tray_grade
+                      final_grade: findTray?.tray_grade,
                     },
                   },
                   {
@@ -390,9 +390,8 @@ module.exports = {
       }
     });
   },
-  createSubMuic: async (color, storage,ram, muic, user,currentMuic) => {
+  createSubMuic: async (color, storage, ram, muic, user, currentMuic) => {
     try {
-      
       console.log(currentMuic);
       let obj = {
         muic: muic,
@@ -404,7 +403,7 @@ module.exports = {
       };
       const createSub = await subMuic.create(obj);
       if (createSub) {
-        return { status: 1,subMuicCode:createSub.sub_muic };
+        return { status: 1, subMuicCode: createSub.sub_muic };
       } else {
         return { status: 0 };
       }
@@ -444,8 +443,19 @@ module.exports = {
         );
       }
       let state = "Tray";
+      if (data.items?.length == 0) {
+        await unitsActionLog.create({
+          action_type: "Audit Done",
+          created_at: Date.now(),
+          tray_id: trayId,
+          user_name_of_action: data.issued_user_name,
+          track_tray: "Tray",
+          user_type: "PRC Audit",
+          description: `Audit done closed by the agent :${data.issued_user_name}`,
+        });
+      }
       for (let x of data.items) {
-        const addLogsofUnits = await unitsActionLog.create({
+          await unitsActionLog.create({
           action_type: "Audit Done",
           created_at: Date.now(),
           uic: x.uic,

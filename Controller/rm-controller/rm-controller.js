@@ -121,14 +121,7 @@ module.exports = {
         }
       );
       if (updateTheTray) {
-        let updateRack = await trayRack.findOneAndUpdate(
-          { rack_id: rackId },
-          {
-            $push: {
-              bag_or_tray: updateTheTray.code,
-            },
-          }
-        );
+       
         resolve({ status: 1 });
       } else {
         resolve({ status: 0 });

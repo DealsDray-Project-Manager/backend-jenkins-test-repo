@@ -5723,16 +5723,30 @@ module.exports = {
           ],
         });
         for (let x of findTray) {
-          let update = await delivery.updateMany(
-            { $or: [{ stx_tray_id: x.code }, { ctx_tray_id: x.code }] },
-            {
-              $set: {
-                final_grade: x.tray_grade,
-                tray_type:x.type_taxanomy
-              },
+            let update = await delivery.updateMany(
+              { $or: [{ ctx_tray_id: x.code,stx_tray_id:{$exists:false} },{ stx_tray_id: x.code }] },
+              {
+                $set: {
+                  final_grade: x.tray_grade,
+                  tray_type:x.type_taxanomy
+                },
+              }
+            );
+          
+          if(x.type_taxanomy == "ST" && x.sp_price !== undefined && x.mrp_price !== undefined){
+            for(let y of x.items){
+              let updatePrice=await delivery.updateOne({"uic_code.code":y.uic},{
+                $set:{
+                  mrp_price:x.mrp_price,
+                  sp_price:x.sp_price,
+                  price_updation_date:x.price_updation_date,
+                  price_creation_date:x.price_creation_date
+                }
+              })
             }
-          );
+          }
         }
+
 
         resolve(findTray); // You can resolve with the orderData if needed.
       } catch (error) {

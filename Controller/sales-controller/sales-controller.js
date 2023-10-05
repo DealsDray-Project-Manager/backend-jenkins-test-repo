@@ -13,6 +13,7 @@ module.exports = {
     return new Promise(async (resolve, reject) => {
       let count = {
         viewPriceCount: 0,
+        viewPriceCountMuicBasis: 0,
         buyerCount: 0,
         readyForSalesCount: 0,
       };
@@ -20,7 +21,7 @@ module.exports = {
         user_type: "Buyer",
         sales_users: username,
       });
-      count.viewPriceCount = await masters.aggregate([
+      count.viewPriceCount = await delivery.aggregate([
         {
           $match: {
             tray_type: "ST",
@@ -41,6 +42,28 @@ module.exports = {
           },
         },
       ]);
+       count.viewPriceCountMuicBasis = await delivery.aggregate([
+        {
+          $match: {
+            tray_type: "ST",
+            item_moved_to_billed_bin: { $exists: false },
+            stx_tray_id: { $exists: true },
+            sp_price: { $exists: true, $ne: null },
+            mrp_price: { $exists: true, $ne: null },
+            final_grade: { $exists: true },
+            "audit_report.sub_muic": { $exists: false },
+          },
+        },
+        {
+          $group: {
+            _id: {
+              grade: "$final_grade",
+              item_id: "$item_id",
+            },
+          },
+        },
+      ]);
+      count.viewPriceCountMuicBasis = count.viewPriceCountMuicBasis.length;
       count.viewPriceCount = count.viewPriceCount.length;
       count.readyForSalesCount = await masters.aggregate([
         {
@@ -126,6 +149,54 @@ module.exports = {
         x["ram"] = x.subMuicDetails?.[0]?.ram;
         x["storage"] = x.subMuicDetails?.[0]?.storage;
         x["color"] = x.subMuicDetails?.[0]?.color;
+        x["brand_name"] = x.muicDetails?.[0]?.brand_name;
+        x["model_name"] = x.muicDetails?.[0]?.model_name;
+      }
+      console.log(getBasedOnMuic);
+      resolve(getBasedOnMuic);
+    });
+  },
+  viewPriceBasisMuic: (location) => {
+    //PROMISE
+    return new Promise(async (resolve, reject) => {
+      const getBasedOnMuic = await delivery.aggregate([
+        {
+          $match: {
+            tray_type: "ST",
+            item_moved_to_billed_bin: { $exists: false },
+            stx_tray_id: { $exists: true },
+            sp_price: { $exists: true, $ne: null },
+            mrp_price: { $exists: true, $ne: null },
+            final_grade: { $exists: true },
+            "audit_report.sub_muic": { $exists: false },
+          },
+        },
+        {
+          $group: {
+            _id: {
+              grade: "$final_grade",
+              sub_muic: "$item_id",
+            },
+            itemCount: { $sum: 1 },
+            item_id: { $first: "$item_id" },
+            sp: { $first: "$sp_price" },
+            mrp: { $first: "$mrp_price" },
+            price_updation_date: { $max: "$price_updation_date" },
+            price_creation_date: { $max: "$price_creation_date" },
+          },
+        },
+        {
+          $lookup: {
+            from: "products", // Replace with the name of the collection you want to lookup from
+            localField: "item_id",
+            foreignField: "vendor_sku_id",
+            as: "muicDetails",
+          },
+        },
+      ]);
+
+      for (let x of getBasedOnMuic) {
+        x["muic_one"] = x.muicDetails?.[0]?.muic;
         x["brand_name"] = x.muicDetails?.[0]?.brand_name;
         x["model_name"] = x.muicDetails?.[0]?.model_name;
       }
