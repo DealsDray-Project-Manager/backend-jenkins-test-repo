@@ -4403,12 +4403,59 @@ module.exports = {
               model: "$items.model_name",
               brand: "$items.brand_name",
               muic: "$items.muic",
+              part_id: "$items.rdl_fls_report.partRequired.part_id",
             },
             count: { $sum: 1 },
           },
         },
+        {
+          $group: {
+            _id: {
+              brand: "$_id.brand",
+              model: "$_id.model",
+              muic: "$_id.muic",
+            },
+            parts: {
+              $push: {
+                part_id: "$_id.part_id",
+                count: "$count",
+              },
+            },
+          },
+        },
       ]);
+      const partCodes = findItem.flatMap((x) =>
+        x.parts.map((part) => part.part_id?.[0])
+      );
 
+      const partAndColorData = await partAndColor.find({
+        part_code: { $in: partCodes },
+      });
+      const newArr = findItem.map((x) => {
+        let required_qty = 0;
+        let unitsCount = 0;
+        x.parts.forEach((y) => {
+          const checkThePart = partAndColorData.find(
+            (part) => part.part_code === y.part_id?.[0]
+          );
+          if (checkThePart) {
+            let qty = checkThePart.avl_stock - y.count;
+            unitsCount += y.count;
+            if (0 < qty) {
+              let required = Math.abs(qty);
+              required_qty += required;
+            }
+          } else {
+            required_qty += y.count;
+          }
+        });
+        x["repair_units"] = unitsCount;
+        if (required_qty >= 0) {
+          x["required_qty"] = required_qty;
+          return x;
+        }
+      });
+      const resolvedArr = newArr.filter(Boolean); // Remove any null values from the array
       resolve(findItem);
     });
   },
@@ -4459,17 +4506,16 @@ module.exports = {
       ]);
 
       const partCodes = findItem.flatMap((x) =>
-        x.parts.map((part) => part.part_id[0])
+        x.parts.map((part) => part.part_id?.[0])
       );
       const partAndColorData = await partAndColor.find({
         part_code: { $in: partCodes },
       });
-
       const newArr = findItem.map((x) => {
         let required_qty = 0;
         x.parts.forEach((y) => {
           const checkThePart = partAndColorData.find(
-            (part) => part.part_code === y.part_id[0]
+            (part) => part.part_code === y.part_id?.[0]
           );
           if (checkThePart) {
             let qty = checkThePart.avl_stock - y.count;
@@ -4520,6 +4566,11 @@ module.exports = {
           },
         },
       ]);
+      let partsAvailable = [];
+      let partsNotAvailable = [];
+      let units = [];
+      let temp = [];
+      console.log(findItem);
       if (findItem) {
         for (let x of findItem) {
           for (let y of x?.items?.rdl_fls_report?.partRequired) {
@@ -4531,9 +4582,26 @@ module.exports = {
             } else {
               y["avl_qty"] = 0;
             }
+            temp.push(y.part_id);
+
+            let count = temp.filter(function (element) {
+              return element === y.part_id;
+            }).length;
+            if (units.includes(x.items.uic) == false) {
+              if (Number(count) <= Number(checkPart?.avl_stock)) {
+                partsAvailable.push(x);
+              } else {
+                partsNotAvailable.push(x);
+              }
+              units.push(x.items.uic);
+            }
           }
         }
-        resolve({ findItem: findItem, status: 1 });
+        resolve({
+          partsNotAvailable: partsNotAvailable,
+          partsAvailable: partsAvailable,
+          status: 1,
+        });
       } else {
         resolve({ status: 2 });
       }

@@ -1560,31 +1560,28 @@ router.post("/auditDoneWht/:location", async (req, res, next) => {
   }
 });
 
-router.post(
-  "/assignToAgent/rdl-1/sentToWarehouse",
-  async (req, res, next) => {
-    try {
-      const { tray, user_name, sortId, actUser } = req.body;
-      let data = await misUserController.assignToAgentRequestToWhRdlFls(
-        tray,
-        user_name,
-        sortId,
-        actUser
-      );
-      if (data.status == true) {
-        res.status(200).json({
-          message: "Request sent to Warehouse",
-        });
-      } else {
-        res.status(202).json({
-          message: "Request failed please try again...",
-        });
-      }
-    } catch (error) {
-      next(error);
+router.post("/assignToAgent/rdl-1/sentToWarehouse", async (req, res, next) => {
+  try {
+    const { tray, user_name, sortId, actUser } = req.body;
+    let data = await misUserController.assignToAgentRequestToWhRdlFls(
+      tray,
+      user_name,
+      sortId,
+      actUser
+    );
+    if (data.status == true) {
+      res.status(200).json({
+        message: "Request sent to Warehouse",
+      });
+    } else {
+      res.status(202).json({
+        message: "Request failed please try again...",
+      });
     }
+  } catch (error) {
+    next(error);
   }
-);
+});
 
 router.post(
   "/assignToAgent/rdl-1/users/:user_type/:location",
@@ -1747,7 +1744,8 @@ router.post("/whToRpAssignForRepair", async (req, res, next) => {
     );
     if (data.status == 1) {
       res.status(200).json({
-        data: data.findItem,
+        partsAvailable: data.partsAvailable,
+        partsNotAvailable: data.partsNotAvailable,
       });
     } else {
       res.status(202).json({
