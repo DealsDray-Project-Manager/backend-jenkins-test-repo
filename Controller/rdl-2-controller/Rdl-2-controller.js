@@ -334,24 +334,25 @@ module.exports = {
   closeSpAndRp: (trayData) => {
     return new Promise(async (resolve, reject) => {
       const getRpTray = await masters.findOne({ code: trayData.rpTrayId });
+      let updateRpTray, updateSpTray;
       if (getRpTray.sort_id == "Rdl-2 in-progress") {
-        let updateSpTray = await masters.updateOne(
-          { code: trayData.sptrayId },
+        updateRpTray = await masters.findOneAndUpdate(
+          { code: trayData.rpTrayId },
           {
             $set: {
+              items: getRpTray.actual_items,
+              actual_items: [],
+              temp_array: [],
               sort_id: "Closed by RDL-2",
               "track_tray.rdl_two_done_closed_by_agent": Date.now(),
             },
           }
         );
-        if (updateSpTray.modifiedCount != 0) {
-          let updateRpTray = await masters.findOneAndUpdate(
-            { code: trayData.rpTrayId },
+        if (updateRpTray) {
+          updateSpTray = await masters.updateOne(
+            { code: trayData.sptrayId },
             {
               $set: {
-                items: getRpTray.actual_items,
-                actual_items: [],
-                temp_array: [],
                 sort_id: "Closed by RDL-2",
                 "track_tray.rdl_two_done_closed_by_agent": Date.now(),
               },

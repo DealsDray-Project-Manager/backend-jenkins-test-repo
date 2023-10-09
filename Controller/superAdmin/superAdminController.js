@@ -2393,7 +2393,32 @@ module.exports = {
 
   extraReAudit: () => {
     return new Promise(async (resolve, reject) => {
-      let arr = ["WHT1128", "WHT1108", "WHT10116", "WHT1145", "WHT1133"];
+      let arr = [
+        "WHT10159",
+        "WHT10035",
+        "WHT10039",
+        "WHT10157",
+        "WHT10017",
+        "WHT10018",
+        "WHT10038",
+        "WHT10136",
+        "WHT10137",
+        "WHT10152",
+        "WHT10133",
+        "WHT10134",
+        "WHT10148",
+        "WHT10158",
+        "WHT10146",
+        "WHT10147",
+        "WHT10164",
+        "WHT10140",
+        "WHT10020",
+        "WHT10138",
+        "WHT10139",
+        "WHT10028",
+        "WHT10036",
+        "WHT10037",
+      ];
       for (let x of arr) {
         let data = await masters.updateOne(
           {
@@ -2401,12 +2426,7 @@ module.exports = {
           },
           {
             $set: {
-              sort_id: "Closed",
-              issued_user_name: null,
-              actual_items: [],
-              temp_array: [],
-              from_merge: null,
-              to_merge: null,
+              limit:40
             },
           }
         );

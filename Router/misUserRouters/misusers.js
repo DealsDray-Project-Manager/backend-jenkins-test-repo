@@ -1719,6 +1719,20 @@ router.post("/whToRp/muicList/repair/:location", async (req, res, next) => {
     next(error);
   }
 });
+// SCREEN LIST OF MUIC TO REPAIR WITHOUT SP
+router.post("/whToRp/muicList/repairWithoutSp/:location", async (req, res, next) => {
+  try {
+    const { location } = req.params;
+    let data = await misUserController.whtToRpMuicListToRepairWithoutSp(location);
+    if (data) {
+      res.status(200).json({
+        data: data,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
 // PROCUREMENT SCREEN
 router.post("/procurmentRepair/:location", async (req, res, next) => {
   try {
@@ -1746,6 +1760,29 @@ router.post("/whToRpAssignForRepair", async (req, res, next) => {
       res.status(200).json({
         partsAvailable: data.partsAvailable,
         partsNotAvailable: data.partsNotAvailable,
+      });
+    } else {
+      res.status(202).json({
+        message: "",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+// REPAIR WITHOUT SP PROCESS PAGE
+
+router.post("/whToRpAssignForRepairWithoutSp", async (req, res, next) => {
+  try {
+    const { location, brand, model } = req.body;
+    let data = await misUserController.whtToRpMuicListToRepairAssignForRepairWithoutSp(
+      location,
+      brand,
+      model
+    );
+    if (data) {
+      res.status(200).json({
+       data:data
       });
     } else {
       res.status(202).json({
@@ -1866,6 +1903,7 @@ router.post("/whtToRpSorting/assign", async (req, res, next) => {
       sortingUser,
       selectedUic,
       actUser,
+      screen
     } = req.body;
     let data = await misUserController.whtToRpSortingAssign(
       spDetails,
@@ -1874,7 +1912,8 @@ router.post("/whtToRpSorting/assign", async (req, res, next) => {
       spwhuser,
       sortingUser,
       selectedUic,
-      actUser
+      actUser,
+      screen
     );
     if (data.status == 1) {
       res.status(200).json({

@@ -6,6 +6,8 @@ const router = express.Router();
 const superAdminController = require("../../Controller/superAdmin/superAdminController");
 // Multer
 const upload = require("../../Utils/multer");
+// BQC SYNC / BLANCOO AUTOMATION
+const BqcSynAction = require("../../Utils/blancooAutomation");
 // jwt token
 const jwt = require("../../Utils/jwt_token");
 /* FS */
@@ -3617,6 +3619,26 @@ router.post("/subMuic/view", async (req, res, next) => {
     if (subMuic) {
       res.status(200).json({
         data: subMuic,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+/*--------------------------------------------BQC SYNC ----------------------------------------------------------------------*/
+router.post("/bqcSynAction/:type", async (req, res, next) => {
+  try {
+    const { type } = req.params;
+    if (type == "XML") {
+      let update = BqcSynAction.xmlFileRead();
+      res.status(200).json({
+        message: "Successfully Update the XML File please do Windows task scheduler",
+      });
+    } else {
+    
+      let update = BqcSynAction.blancooFileUpload();
+      res.status(200).json({
+        message: "Successfully Updated please check your mail!",
       });
     }
   } catch (error) {

@@ -1447,12 +1447,17 @@ module.exports = {
             stage = "Received From Merging";
           }
           let state = "Tray";
+          let whType="PRC"
+          console.log(data.type_taxanomy);
+          if(data.type_taxanomy == "ST"){
+            whType="Sales"
+          }
           if (data.items.length == 0) {
             await unitsActionLog.create({
               action_type: stage,
               created_at: Date.now(),
               user_name_of_action: trayData.actioUser,
-              user_type: "PRC Warehouse",
+              user_type: `${whType} Warehouse`,
               agent_name: data.issued_user_name,
               tray_id: trayData.trayId,
               track_tray: state,
@@ -1464,7 +1469,7 @@ module.exports = {
               action_type: stage,
               created_at: Date.now(),
               user_name_of_action: trayData.actioUser,
-              user_type: "PRC Warehouse",
+              user_type: `${whType} Warehouse`,
               agent_name: data.issued_user_name,
               uic: x.uic,
               tray_id: trayData.trayId,
@@ -1487,6 +1492,7 @@ module.exports = {
               }
             );
           }
+          resolve({ status: 1 });
         } else {
           resolve({ status: 3 });
         }
@@ -2492,24 +2498,56 @@ module.exports = {
   /*-----------------------PLANNER FOR CHARGING AND BQC-------------------------------*/
   plannerPageDataFetch: (status, location) => {
     return new Promise(async (resolve, reject) => {
-      const data = await masters.aggregate([
-        {
-          $match: {
-            sort_id: status,
-            cpc: location,
-            prefix: "tray-master",
-            type_taxanomy: "WHT",
+      let data;
+      if (status == "Closed") {
+        data = await masters.aggregate([
+          {
+            $match: {
+              $or: [
+                {
+                  sort_id: status,
+                  cpc: location,
+                  prefix: "tray-master",
+                  type_taxanomy: "WHT",
+                },
+                {
+                  sort_id: "Recharging",
+                  cpc: location,
+                  prefix: "tray-master",
+                  type_taxanomy: "WHT",
+                },
+              ],
+            },
           },
-        },
-        {
-          $lookup: {
-            from: "products",
-            localField: "items.muic",
-            foreignField: "muic",
-            as: "products",
+          {
+            $lookup: {
+              from: "products",
+              localField: "items.muic",
+              foreignField: "muic",
+              as: "products",
+            },
           },
-        },
-      ]);
+        ]);
+      } else {
+        data = await masters.aggregate([
+          {
+            $match: {
+              sort_id: status,
+              cpc: location,
+              prefix: "tray-master",
+              type_taxanomy: "WHT",
+            },
+          },
+          {
+            $lookup: {
+              from: "products",
+              localField: "items.muic",
+              foreignField: "muic",
+              as: "products",
+            },
+          },
+        ]);
+      }
       let trayData = [];
       if (data.length !== 0) {
         for (let x of data) {
@@ -2520,9 +2558,10 @@ module.exports = {
           var today = new Date(Date.now());
           if (status == "Ready to BQC") {
             if (
-              new Date(x.closed_time_bot) >=
+              new Date(x.closed_time_bot) <=
               new Date(today.setDate(today.getDate() - 4))
             ) {
+            } else {
               trayData.push(x);
             }
           } else {
@@ -2530,7 +2569,7 @@ module.exports = {
           }
         }
       }
-      resolve(data);
+      resolve(trayData);
     });
   },
 
@@ -3861,7 +3900,7 @@ module.exports = {
                 action_type: "Received From Sorting Agent After Ctx to Stx",
                 created_at: Date.now(),
                 agent_name: data.issued_user_name,
-                user_type: "PRC Warehouse",
+                user_type: "Sales Warehouse",
                 tray_id: trayData.trayId,
                 track_tray: state,
                 description: `Received From Sorting Agent After Ctx to Stx agent: ${data.issued_user_name} By Wh:${trayData.username}`,
@@ -3872,7 +3911,7 @@ module.exports = {
                 action_type: "Received From Sorting Agent After Ctx to Stx",
                 created_at: Date.now(),
                 agent_name: data.issued_user_name,
-                user_type: "PRC Warehouse",
+                user_type: "Sales Warehouse",
                 uic: x.uic,
                 tray_id: trayData.trayId,
                 track_tray: state,
@@ -3886,7 +3925,7 @@ module.exports = {
                 {
                   $set: {
                     tray_status: "Received From Sorting Agent After Ctx to Stx",
-                    tray_location: "Sales-Warehouse",
+                    tray_location: "Sales Warehouse",
                     received_from_sorting: Date.now(),
                     updated_at: Date.now(),
                   },
@@ -6750,6 +6789,15 @@ module.exports = {
           );
 
           if (data) {
+            await unitsActionLog.create({
+              action_type: "Received from sales and closed by warehouse",
+              created_at: Date.now(),
+              tray_id: data.trayId,
+              description: `Received from sales and closed by warehouse by agent :${trayData.actUser}`,
+              track_tray: "Tray",
+              rack_id: trayData.rackId,
+              user_type: `Processing Warehouse`,
+            });
             resolve({ status: 5 });
           }
         }
@@ -6795,13 +6843,22 @@ module.exports = {
         }
         if (data) {
           let state = "Tray";
+          if (data.items.length == 0) {
+            const addLogsofUnits = await unitsActionLog.create({
+              action_type: "CTX Transffer",
+              created_at: Date.now(),
+              tray_id: trayData.trayId,
+              description: `${trayData.sortId} by agent :${trayData.actUser}`,
+              track_tray: state,
+              user_type: `${trayData.userCpcType} Warehouse`,
+            });
+          }
           for (let x of data.items) {
             const addLogsofUnits = await unitsActionLog.create({
               action_type: "CTX Transffer",
               created_at: Date.now(),
               uic: x.uic,
               tray_id: trayData.trayId,
-              report: x.bqc_report,
               description: `${trayData.sortId} by agent :${trayData.actUser}`,
               track_tray: state,
               user_type: `${trayData.userCpcType} Warehouse`,

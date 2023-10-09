@@ -680,7 +680,7 @@ module.exports = {
         }
       }
       let actUser = "PRC Sorting";
-      if (fromtray.type_taxanomy == "ST") {
+      if (updateToTray.type_taxanomy == "ST") {
         actUser = "Sales Sorting";
       }
       if (fromtray) {
