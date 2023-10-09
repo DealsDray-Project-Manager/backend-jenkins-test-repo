@@ -80,7 +80,7 @@ module.exports = {
           {
             issued_user_name: username,
             to_merge: { $ne: null },
-            sort_id: "Ready to RDL-Repair Issued to Merging",
+            sort_id: "Ready to RDL-2 Issued to Merging",
           },
           {
             issued_user_name: username,
@@ -370,7 +370,7 @@ module.exports = {
           {
             issued_user_name: username,
             to_merge: { $ne: null },
-            sort_id: "Ready to RDL-Repair Issued to Merging",
+            sort_id: "Ready to RDL-2 Issued to Merging",
           },
           {
             issued_user_name: username,
@@ -594,13 +594,13 @@ module.exports = {
         } else {
           resolve({ status: 0 });
         }
-      } else if (finedTray.sort_id == "Ready to RDL-Repair Issued to Merging") {
-        stage = "Ready to RDL-Repair Merging Done";
+      } else if (finedTray.sort_id == "Ready to RDL-2 Issued to Merging") {
+        stage = "Ready to RDL-2 Merging Done";
         fromtray = await masters.findOneAndUpdate(
           { code: trayData.fromTray },
           {
             $set: {
-              sort_id: "Ready to RDL-Repair Merging Done",
+              sort_id: "Ready to RDL-2 Merging Done",
               closed_time_sorting_agent: Date.now(),
               "track_tray.merging_done_close_sorting": Date.now(),
               actual_items: [],
@@ -612,7 +612,7 @@ module.exports = {
             { code: trayData.toTray },
             {
               $set: {
-                sort_id: "Ready to RDL-Repair Merging Done",
+                sort_id: "Ready to RDL-2 Merging Done",
                 closed_time_sorting_agent: Date.now(),
                 "track_tray.merging_done_close_sorting": Date.now(),
                 actual_items: [],
@@ -651,6 +651,7 @@ module.exports = {
           resolve({ status: 0 });
         }
       } else {
+        stage = "Merging Done";
         fromtray = await masters.findOneAndUpdate(
           { code: trayData.fromTray },
           {
@@ -679,13 +680,24 @@ module.exports = {
         }
       }
       let actUser = "PRC Sorting";
-      if (fromtray.type_taxanomy == "ST") {
+      if (updateToTray.type_taxanomy == "ST") {
         actUser = "Sales Sorting";
       }
       if (fromtray) {
         let state = "Tray";
+        if (fromtray.items?.length == 0) {
+          await unitsActionLog.create({
+            action_type: stage,
+            created_at: Date.now(),
+            agent_name: fromtray.issued_user_name,
+            tray_id: fromtray.code,
+            user_type: actUser,
+            track_tray: state,
+            description: `${stage} and sent to warehouse by agent:${fromtray.issued_user_name}`,
+          });
+        }
         for (let x of fromtray.items) {
-          const addLogsofUnits = await unitsActionLog.create({
+          await unitsActionLog.create({
             action_type: "Merging Done",
             created_at: Date.now(),
             uic: x.uic,
@@ -693,13 +705,13 @@ module.exports = {
             tray_id: fromtray.code,
             user_type: actUser,
             track_tray: state,
-            description: `Merging Done and sent to warehouse by agent:${fromtray.issued_user_name}`,
+            description: `${stage} and sent to warehouse by agent:${fromtray.issued_user_name}`,
           });
           state = "Units";
         }
         let state1 = "Tray";
         for (let x of updateToTray.items) {
-          const addLogsofUnits = await unitsActionLog.create({
+          await unitsActionLog.create({
             action_type: "Merging Done",
             created_at: Date.now(),
             uic: x.uic,
@@ -707,7 +719,7 @@ module.exports = {
             tray_id: updateToTray.code,
             user_type: actUser,
             track_tray: state1,
-            description: `Merging Done by agent :${fromtray.issued_user_name}`,
+            description: `${stage} by agent :${fromtray.issued_user_name}`,
           });
           state1 = "Units";
         }
@@ -866,9 +878,6 @@ module.exports = {
               projection: { _id: 0 },
             }
           );
-          // let updateElasticSearch = await Elasticsearch.uicCodeGen(
-          //   updateDelivery
-          // );
 
           if (updateDelivery.modifiedCount !== 0) {
             resolve({ status: 1 });
@@ -895,8 +904,19 @@ module.exports = {
         { new: true } // This option returns the updated document
       );
       let state = "Tray";
+      if (updateFromTray?.items?.length == 0) {
+        await unitsActionLog.create({
+          action_type: "Pickup Done Closed by Sorting Agent",
+          created_at: Date.now(),
+          agent_name: updateFromTray.issued_user_name,
+          user_type: "PRC Sorting",
+          tray_id: updateFromTray.code,
+          track_tray: state,
+          description: `Pickup Done Closed by Sorting Agent :${updateFromTray.issued_user_name}`,
+        });
+      }
       for (let x of updateFromTray?.items) {
-        let unitsLogCreation = await unitsActionLog.create({
+        await unitsActionLog.create({
           action_type: "Pickup Done Closed by Sorting Agent",
           created_at: Date.now(),
           agent_name: updateFromTray.issued_user_name,
@@ -1056,11 +1076,11 @@ module.exports = {
           if (getTray.sort_id == "Issued to sorting (Wht to rp)") {
             const rpTray = await masters.findOne({ code: getTray.rp_tray });
             if (rpTray) {
-              if (rpTray.sort_id == "Issued to sorting (Wht to rp)") {
-                resolve({ status: 1, tray: getTray, rpTray: rpTray });
-              } else {
-                resolve({ status: 3 });
-              }
+              resolve({ status: 1, tray: getTray, rpTray: rpTray });
+              // if (rpTray.sort_id == "Issued to sorting (Wht to rp)") {
+              // } else {
+              //   resolve({ status: 3 });
+              // }
             } else {
               resolve({ status: 3 });
             }
@@ -1262,15 +1282,31 @@ module.exports = {
           concatenatedArray = data.items;
         }
         let state = "Tray";
+        if (data?.items?.length == 0) {
+          await unitsActionLog.create({
+            action_type: "Sorting done (Wht to rp)",
+            created_at: Date.now(),
+            user_name_of_action: trayDetails.actionUser,
+            agent_name: data.issued_user_name,
+            user_type: "PRC Soriting",
+            tray_id: data.code,
+            track_tray: state,
+            description: `Sorting done (Wht to rp) by agent :${data.issued_user_name} `,
+          });
+        }
         for (let x of concatenatedArray) {
-          let unitsLogCreation = await unitsActionLog.create({
+          let trayIdCode = data.code;
+          if (x.rp_tray !== undefined) {
+            trayIdCode = x.rp_tray;
+          }
+          await unitsActionLog.create({
             action_type: "Sorting done (Wht to rp)",
             created_at: Date.now(),
             user_name_of_action: trayDetails.actionUser,
             agent_name: data.issued_user_name,
             user_type: "PRC Soriting",
             uic: x.uic,
-            tray_id: data.code,
+            tray_id: trayIdCode,
             track_tray: state,
             description: `Sorting done (Wht to rp) by agent :${data.issued_user_name} `,
           });
@@ -1331,7 +1367,6 @@ module.exports = {
   },
   addItemsForDisplayGrading: async (uicData) => {
     try {
-      
       uicData.item["screen_type_utility"] = uicData.screenType;
       let fetchData;
       if (uicData.screenType == "C") {
@@ -1339,7 +1374,7 @@ module.exports = {
           {
             code: uicData.trayId,
             sort_id: "Issued to Sorting Agent For Display Grading",
-            "actual_items.uic": { $nin: [uicData.item.uic] } 
+            "actual_items.uic": { $nin: [uicData.item.uic] },
           },
           {
             $push: {
@@ -1355,7 +1390,7 @@ module.exports = {
           {
             code: uicData.trayId,
             sort_id: "Issued to Sorting Agent For Display Grading",
-            "actual_items.uic": { $nin: [uicData.item.uic] } 
+            "actual_items.uic": { $nin: [uicData.item.uic] },
           },
           {
             $push: {
@@ -1454,5 +1489,43 @@ module.exports = {
     } catch (error) {
       return error;
     }
+  },
+  copyGradingCheckUic: (uic, trayId) => {
+    return new Promise(async (resolve, reject) => {
+      let data = await delivery.findOne({ "uic_code.code": uic });
+      if (data) {
+        let checkExitThisTray = await masters.findOne({
+          code: trayId,
+          items: { $elemMatch: { uic: uic } },
+        });
+        if (checkExitThisTray) {
+          let alreadyAdded = await masters.findOne({
+            code: trayId,
+            "actual_items.uic": uic,
+          });
+          if (alreadyAdded) {
+            resolve({ status: 3 });
+          } else {
+            let obj;
+            let copyGradeReport = {};
+            if (data?.copy_grading_report !== undefined) {
+              (copyGradeReport.grade = data?.copy_grading_report?.scree_type),
+                (copyGradeReport.date = data?.copy_grading_done_date);
+            }
+
+            for (let x of checkExitThisTray.items) {
+              if (x.uic == uic) {
+                obj = x;
+              }
+            }
+            resolve({ status: 4, data: obj, copyGradeReport: copyGradeReport });
+          }
+        } else {
+          resolve({ status: 2 });
+        }
+      } else {
+        resolve({ status: 1 });
+      }
+    });
   },
 };

@@ -1148,7 +1148,7 @@ router.post("/auditDoneClose", async (req, res, next) => {
     let data = await warehouseInController.auditDoneClose(req.body);
     if (data.status == 1) {
       res.status(200).json({
-        message: "Successfully Closed Ready to RDL",
+        message: "Successfully Closed Ready to RDL-1",
       });
     } else if (data.status == 2) {
       res.status(200).json({
@@ -2198,8 +2198,8 @@ router.post("/pickupDone/close", async (req, res, next) => {
 });
 
 /*-----------------------------------------RDL WORK--------------------------------------*/
-//CHECK RDL-FLS USER FREE OR NOT
-router.post("/checkRdl-flsUserStatus/:username", async (req, res, next) => {
+//CHECK RDL-1 USER FREE OR NOT
+router.post("/checkRdl-1UserStatus/:username", async (req, res, next) => {
   try {
     const { username } = req.params;
     let data = await warehouseInController.checkRdlFlsUserStatus(username);
@@ -2221,7 +2221,7 @@ router.post("/checkRdl-flsUserStatus/:username", async (req, res, next) => {
   }
 });
 //CHECK RDL-2 USER FREE OR NOT
-router.post("/checkRdl-two/status/:username", async (req, res, next) => {
+router.post("/checkRdl-2/status/:username", async (req, res, next) => {
   try {
     const { username } = req.params;
     let data = await warehouseInController.checkRdl2UserStatus(username);
@@ -2283,7 +2283,7 @@ router.post("/wht-add-actual-item-rdl-return", async (req, res, next) => {
   }
 });
 
-router.post("/issue-to-agent-wht-recived-rdl-one", async (req, res, next) => {
+router.post("/issue-to-agent-wht-recived-rdl-1", async (req, res, next) => {
   try {
     let data = await warehouseInController.issueToagentWhtReciveRdOne(req.body);
     if (data) {
@@ -2351,7 +2351,7 @@ router.post(
 );
 
 router.post(
-  "/request-for-RDL_one_returnrdl-fls/:status/:location",
+  "/request-for-RDL_one_returnrdl-1/:status/:location",
   async (req, res, next) => {
     try {
       let data = await warehouseInController.getRDLonereturn(
@@ -2410,7 +2410,7 @@ router.post("/check-uic-RDL-done", async (req, res, next) => {
   }
 });
 
-router.post("/rdl-fls/closedByWh", async (req, res, next) => {
+router.post("/rdl-1/closedByWh", async (req, res, next) => {
   try {
     let data = await warehouseInController.rdlFlsDoneClose(req.body);
     if (data) {
@@ -2426,8 +2426,8 @@ router.post("/rdl-fls/closedByWh", async (req, res, next) => {
     next(error);
   }
 });
-/*---------------------------RDL-TWO DONE CLOSE ---------------------------------------------------------*/
-router.post("/rdl-two/closedByWh", async (req, res, next) => {
+/*---------------------------RDL-2 DONE CLOSE ---------------------------------------------------------*/
+router.post("/rdl-2/closedByWh", async (req, res, next) => {
   try {
     let data = await warehouseInController.rdlTwoDoneClose(req.body);
     if (data) {
@@ -2519,24 +2519,14 @@ router.post(
   async (req, res, next) => {
     try {
       let data = await warehouseInController.sortingDoneCtxStxClose(req.body);
-      if (data.status == 1) {
-        let logUpdate =
-          await warehouseInController.sortingDonectxTostxCloseLogData(
-            data.tray.items,
-            data.tray.code,
-            "Ready for Pricing",
-            req.body.actUser
-          );
-        res.status(200).json({
-          message: "Successfully Closed and Ready for Pricing",
-        });
-      } else if (data.status == 2) {
+     if (data.status == 2) {
         let logUpdate =
           await warehouseInController.sortingDonectxTostxCloseLogData(
             data.tray.items,
             data.tray.code,
             "Ready to Transfer to Processing",
-            req.body.actUser
+            req.body.actUser,
+            req.body.rackId
           );
 
         res.status(200).json({
@@ -2548,7 +2538,8 @@ router.post(
             data.tray.items,
             data.tray.code,
             "Merging Done Closed by Wh",
-            req.body.actUser
+            req.body.actUser,
+            req.body.rackId
           );
 
         res.status(200).json({
@@ -2560,7 +2551,8 @@ router.post(
             data.tray.items,
             data.tray.code,
             "Inuse State",
-            req.body.actUser
+            req.body.actUser,
+            req.body.rackId
           );
 
         res.status(200).json({

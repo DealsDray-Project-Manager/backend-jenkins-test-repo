@@ -6,6 +6,8 @@ const router = express.Router();
 const superAdminController = require("../../Controller/superAdmin/superAdminController");
 // Multer
 const upload = require("../../Utils/multer");
+// BQC SYNC / BLANCOO AUTOMATION
+const BqcSynAction = require("../../Utils/blancooAutomation");
 // jwt token
 const jwt = require("../../Utils/jwt_token");
 /* FS */
@@ -113,12 +115,12 @@ router.post("/login", async (req, res, next) => {
   try {
     let loginData = await superAdminController.doLogin(req.body);
     if (loginData.status == 1) {
-      const jwtToken = jwt.jwtSign(loginData.data,process.env.NODE_ENV);
+      const jwtToken = jwt.jwtSign(loginData.data, process.env.NODE_ENV);
       if (jwtToken) {
         const updateJwtToken = await superAdminController.updateJwtTokeInDb(
           loginData.data._id,
           jwtToken,
-          loginData.data.user_type,
+          loginData.data.user_type
         );
         console.log(process.env.NODE_ENV);
         if (updateJwtToken.status == 1) {
@@ -129,7 +131,7 @@ router.post("/login", async (req, res, next) => {
               jwt: jwtToken,
               user_type: loginData?.data?.user_type,
               data: loginData.data,
-              serverType:process.env.NODE_ENV
+              serverType: process.env.NODE_ENV,
             },
           });
         } else {
@@ -337,9 +339,8 @@ router.get("/getEditData/:username", async (req, res) => {
 /*------------------------------EDITED BUYER DATA-------------------------------------*/
 router.get("/getEditBuyerData/:buyername", async (req, res) => {
   try {
-    let buyer = await superAdminController.getEditBuyerData(
-      req.params.buyername
-    );
+    const { buyername } = req.params;
+    let buyer = await superAdminController.getEditBuyerData(buyername);
     if (buyer) {
       res.status(200).json({ data: buyer });
     }
@@ -350,12 +351,17 @@ router.get("/getEditBuyerData/:buyername", async (req, res) => {
 
 router.post(
   "/editBuyerDetails",
-  upload.userProfile.single("profile"),
+  upload.documents.fields([
+    { name: "profile" },
+    { name: "aadhar_proof" },
+    { name: "pan_card_proof" },
+    { name: "business_address_proof" },
+  ]),
   async (req, res, next) => {
     try {
       let data = await superAdminController.editBuyerDetails(
         req.body,
-        req.file ? req.file.filename : undefined
+        req.files
       );
       if (data) {
         res.status(200).json({ data: data });
@@ -3606,6 +3612,39 @@ router.post("/globeDuplicateRemove", async (req, res, next) => {
     next(error);
   }
 });
+/*-------------------------------------------SUB MUIC-------------------------------------------------------------*/
+router.post("/subMuic/view", async (req, res, next) => {
+  try {
+    const subMuic = await superAdminController.getSubMuic();
+    if (subMuic) {
+      res.status(200).json({
+        data: subMuic,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+/*--------------------------------------------BQC SYNC ----------------------------------------------------------------------*/
+router.post("/bqcSynAction/:type", async (req, res, next) => {
+  try {
+    const { type } = req.params;
+    if (type == "XML") {
+      let update = BqcSynAction.xmlFileRead();
+      res.status(200).json({
+        message: "Successfully Update the XML File please do Windows task scheduler",
+      });
+    } else {
+    
+      let update = BqcSynAction.blancooFileUpload();
+      res.status(200).json({
+        message: "Successfully Updated please check your mail!",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
 /*---------------------------------------------------------------------------------------------------------------------------*/
 
 /***********************************************EXTRA  SECTION*********************************************************** */
@@ -3641,7 +3680,6 @@ router.post("/extra/reAuditTray", async (req, res, next) => {
       res.status(202).json({
         message: "Failed",
       });
-      
     }
   } catch (error) {
     next(error);
@@ -3751,7 +3789,7 @@ router.post("/extra/partid/add", async (req, res, next) => {
 });
 
 // EXTRA FOR RDL-1- ISSUED TRAY
-router.post("/extra/rdl-one/report", async (req, res, next) => {
+router.post("/extra/rdl-1/report", async (req, res, next) => {
   try {
     let data = await superAdminController.extraRdlOneReport();
     if (data) {
@@ -4108,7 +4146,7 @@ router.post("/extra/removeProcurmentRequest", async (req, res, next) => {
   }
 });
 // REMOVE ITEM
-router.post("/extra/updatePrice", async (req, res, next) => {
+router.post("/extra/updateStatusRDL", async (req, res, next) => {
   try {
     let data = await superAdminController.removeAddToMmt();
     if (data.status == true) {
@@ -4125,10 +4163,10 @@ router.post("/extra/updatePrice", async (req, res, next) => {
   }
 });
 /*-------------------------------------TEMP REQUERMENT---------------------------------------*/
-router.post("/extra/tempRequerment", async (req, res, next) => {
+router.post("/extra/addFinelGrade", async (req, res, next) => {
   try {
     let data = await superAdminController.tempDataAddRequerment();
-    if (data.status == true) {
+    if (data) {
       res.status(200).json({
         message: "Successfully Update",
       });
@@ -4141,5 +4179,21 @@ router.post("/extra/tempRequerment", async (req, res, next) => {
     next(error);
   }
 });
-
+// ISSUE WITH PICKUP
+router.post("/extra/pickupIssue", async (req, res, next) => {
+  try {
+    let data = await superAdminController.pickupIssue();
+    if (data) {
+      res.status(200).json({
+        message: "Successfully Update",
+      });
+    } else {
+      res.status(202).json({
+        message: "Failed",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
 module.exports = router;

@@ -548,4 +548,32 @@ router.post("/copyGradingCloseTray/:trayId", async (req, res, next) => {
     next(error);
   }
 });
+// CHECK UIC FOR COPY GRADING
+router.post("/copyGradingCheckUic", async (req, res, next) => {
+  try {
+    const { trayId, uic } = req.body;
+    let data = await sortingAgentController.copyGradingCheckUic(uic, trayId);
+    if (data.status == 1) {
+      res.status(202).json({
+        message: "UIC Does Not Exists",
+      });
+    } else if (data.status == 2) {
+      res.status(202).json({
+        message: "UIC Not Exists In This Tray",
+      });
+    } else if (data.status == 3) {
+      res.status(202).json({
+        message: "Already Added",
+      });
+    } else if (data.status == 4) {
+      res.status(200).json({
+        message: "Valid UIC",
+        data: data.data,
+        copyGradeReport:data.copyGradeReport
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
 module.exports = router;

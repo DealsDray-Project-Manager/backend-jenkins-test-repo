@@ -75,7 +75,7 @@ router.post("/wht-add-actual-item", async (req, res, next) => {
   }
 });
 
-router.post("/rdl-fls/closeRdlFlsWhtTray", async (req, res, next) => {
+router.post("/rdl-1/closeRdlFlsWhtTray", async (req, res, next) => {
   try {
     let data = await RDL_0neController.rdlFlsDoneClose(req.body);
     if (data) {
@@ -94,7 +94,7 @@ router.post("/rdl-fls/closeRdlFlsWhtTray", async (req, res, next) => {
 
 /*----------------------------------------FETCH MUIC BASED PART LIST FROM MASTER -------------------------------*/
 // PART LIST FETCH
-router.post("/rdl-fls/fetchPart/:muic", async (req, res, next) => {
+router.post("/rdl-1/fetchPart/:muic", async (req, res, next) => {
   try {
     const { muic } = req.params;
     let data = await RDL_0neController.rdlFlsFetchPartList(muic);

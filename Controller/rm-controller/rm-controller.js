@@ -26,19 +26,19 @@ module.exports = {
         prefix: "tray-master",
         type_taxanomy: "SPT",
         issued_user_name: username,
-        sort_id: "Ready to RDL-Repair",
+        sort_id: "Ready to RDL-2",
         cpc: location,
       });
       count.rdl_two = await masters.count({
         prefix: "tray-master",
         type_taxanomy: "WHT",
-        sort_id: "Ready to RDL-Repair",
+        sort_id: "Ready to RDL-2",
         cpc: location,
       });
       count.rdl2Request = await masters.count({
         prefix: "tray-master",
         type_taxanomy: "WHT",
-        sort_id: "Send for RDL-two",
+        sort_id: "Send for RDL-2",
         cpc: location,
       });
       if (count) {
@@ -114,21 +114,14 @@ module.exports = {
         { code: trayid },
         {
           $set: {
-            sort_id: "Ready to RDL-Repair",
+            sort_id: "Ready to RDL-2",
             temp_array: [],
             rack_id: rackId,
           },
         }
       );
       if (updateTheTray) {
-        let updateRack = await trayRack.findOneAndUpdate(
-          { rack_id: rackId },
-          {
-            $push: {
-              bag_or_tray: updateTheTray.code,
-            },
-          }
-        );
+       
         resolve({ status: 1 });
       } else {
         resolve({ status: 0 });
@@ -139,7 +132,7 @@ module.exports = {
     return new Promise(async (resolve, reject) => {
       const getTray = await masters.find({
         prefix: "tray-master",
-        sort_id: "Ready to RDL-Repair",
+        sort_id: "Ready to RDL-2",
         type_taxanomy: "SPT",
         issued_user_name: username,
       });
@@ -151,12 +144,12 @@ module.exports = {
       const data = await masters.find({
         $or: [
           {
-            sort_id: "Received from RDL-two",
+            sort_id: "Received from RDL-2",
             type_taxanomy: "SPT",
             cpc: location,
           },
           {
-            sort_id: "Closed by RDL-two",
+            sort_id: "Closed by RDL-2",
             type_taxanomy: "SPT",
             cpc: location,
           },

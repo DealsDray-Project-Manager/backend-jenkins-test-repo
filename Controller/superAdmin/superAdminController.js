@@ -31,6 +31,7 @@ const moment = require("moment");
 const elasticsearch = require("../../Elastic-search/elastic");
 const { purchaseOrder } = require("../../Model/Purchase-order/purchase-order");
 const { tempOrdersReq } = require("../../Model/temp-req/temp-req");
+const { subMuic } = require("../../Model/sub-muic/sub-muic");
 
 const IISDOMAIN = "https://prexo-v9-dev-api.dealsdray.com/user/profile/";
 const IISDOMAINBUYERDOC =
@@ -134,6 +135,7 @@ module.exports = {
       count.ramList = await rammodel.count({});
       count.boxList = await box.count({});
       count.trayRacks = await trayRack.count({});
+      count.subMuic = await subMuic.count({});
       count.readyForTransferSales = await masters.count({
         prefix: "tray-master",
         sort_id: "Audit Done Closed By Warehouse",
@@ -473,18 +475,45 @@ module.exports = {
   },
   /*--------------------------------EDIT BUYER DATA-----------------------------------*/
 
-  editBuyerDetails: (userData, profile) => {
-    if (profile != undefined) {
-      profile = IISDOMAIN + profile;
+  editBuyerDetails: (buyerData, docuemnts) => {
+    if (docuemnts != null) {
+      buyerData.profile = "";
+      buyerData.aadhar_proof = "";
+      buyerData.pan_card_proof = "";
+      buyerData.business_address_proof = "";
+      if (docuemnts.profile && docuemnts.profile[0]) {
+        buyerData.profile = IISDOMAINBUYERDOC + docuemnts.profile[0].filename;
+      }
+      if (docuemnts.aadhar_proof && docuemnts.aadhar_proof[0]) {
+        buyerData.aadhar_proof =
+          IISDOMAINBUYERDOC + docuemnts.aadhar_proof[0].filename;
+      }
+      if (docuemnts.pan_card_proof && docuemnts.pan_card_proof[0]) {
+        buyerData.pan_card_proof =
+          IISDOMAINBUYERDOC + docuemnts.pan_card_proof[0].filename;
+      }
+      if (
+        docuemnts.business_address_proof &&
+        docuemnts.business_address_proof[0]
+      ) {
+        buyerData.business_address_proof =
+          IISDOMAINBUYERDOC + docuemnts.business_address_proof[0].filename;
+      }
     }
     return new Promise(async (resolve, reject) => {
       let userDetails = await user.findOneAndUpdate(
-        { user_name: userData.user_name },
+        { user_name: buyerData.user_name },
         {
           $set: {
-            contact: userData.contact,
-            email: userData.email,
-            password: userData.password,
+            contact: buyerData.contact,
+            email: buyerData.email,
+            name: buyerData.name,
+            business_address_proof: buyerData.business_address_proof,
+            aadhar_proof: buyerData.aadhar_proof,
+            pan_card_proof: buyerData.pan_card_proof,
+            profile: buyerData.profile,
+            mobile_verification_status: buyerData.mobile_verification_status,
+            email_verification_status: buyerData.email_verification_status,
           },
         },
         { returnOriginal: false }
@@ -2365,19 +2394,30 @@ module.exports = {
   extraReAudit: () => {
     return new Promise(async (resolve, reject) => {
       let arr = [
-        "WHT10028",
-        "WHT10020",
-        "WHT1918",
-        "WHT10021",
-        "WHT10022",
-        "WHT10040",
-        "WHT10038",
-        "WHT10037",
-        "WHT10036",
+        "WHT10159",
         "WHT10035",
-        "WHT10048",
-        "WHT10000",
-        "WHT10041",
+        "WHT10039",
+        "WHT10157",
+        "WHT10017",
+        "WHT10018",
+        "WHT10038",
+        "WHT10136",
+        "WHT10137",
+        "WHT10152",
+        "WHT10133",
+        "WHT10134",
+        "WHT10148",
+        "WHT10158",
+        "WHT10146",
+        "WHT10147",
+        "WHT10164",
+        "WHT10140",
+        "WHT10020",
+        "WHT10138",
+        "WHT10139",
+        "WHT10028",
+        "WHT10036",
+        "WHT10037",
       ];
       for (let x of arr) {
         let data = await masters.updateOne(
@@ -2386,12 +2426,7 @@ module.exports = {
           },
           {
             $set: {
-              sort_id: "Ready to RDL-Repair",
-              issued_user_name: null,
-              actual_items: [],
-              temp_array: [],
-              from_merge: null,
-              to_merge: null,
+              limit:40
             },
           }
         );
@@ -4199,6 +4234,26 @@ module.exports = {
       return error;
     }
   },
+  /*---------------------------------------SUB MUIC --------------------------------------------*/
+  getSubMuic: async () => {
+    try {
+      const fetchSubMuic = await subMuic.aggregate([
+        { $match: {} },
+        {
+          $lookup: {
+            from: "products",
+            foreignField: "muic",
+            localField: "muic",
+            as: "product",
+          },
+        },
+      ]);
+      console.log(fetchSubMuic);
+      return fetchSubMuic;
+    } catch (error) {
+      return error;
+    }
+  },
   getAssignedTrayForMerging: () => {
     return new Promise(async (resolve, reject) => {
       const tray = await masters
@@ -4217,7 +4272,7 @@ module.exports = {
               to_merge: { $ne: null },
             },
             {
-              sort_id: "Ready to RDL-Repair Merge Request Sent To Wharehouse",
+              sort_id: "Ready to RDL-2 Merge Request Sent To Wharehouse",
               to_merge: { $ne: null },
             },
             {
@@ -4374,7 +4429,7 @@ module.exports = {
   },
   extraRdlOneReport: () => {
     return new Promise(async (resolve, reject) => {
-      let getTray = await masters.find({ sort_id: "Issued to RDL-FLS" });
+      let getTray = await masters.find({ sort_id: "Issued to RDL-1" });
       for (let x of getTray) {
         for (let y of x.actual_items) {
           let deliveryUpdate = await delivery.findOneAndUpdate(
@@ -4505,7 +4560,7 @@ module.exports = {
   },
   extraRdlOneReport: () => {
     return new Promise(async (resolve, reject) => {
-      let getTray = await masters.find({ sort_id: "Issued to RDL-FLS" });
+      let getTray = await masters.find({ sort_id: "Issued to RDL-1" });
       for (let x of getTray) {
         for (let y of x.actual_items) {
           let deliveryUpdate = await delivery.findOneAndUpdate(
@@ -4529,7 +4584,7 @@ module.exports = {
   extraRdlOneUserNameAdd: () => {
     return new Promise(async (resolve, reject) => {
       let getRdlRepairTray = await masters.find({
-        sort_id: "Ready to RDL-Repair",
+        sort_id: "Ready to RDL-2",
       });
       for (let x of getRdlRepairTray) {
         for (let y of x.items) {
@@ -4558,27 +4613,7 @@ module.exports = {
   },
   addBotTrayFromBackend: () => {
     return new Promise(async (resolve, reject) => {
-      let arr = [
-        "92100002330",
-        "92100002353",
-        "92100002350",
-        "92100002332",
-        "92100002796",
-        "92100002831",
-        "92100002810",
-        "92100003515",
-        "92100002465",
-        "92100003340",
-        "92100002207",
-        "92100002219",
-        "92100002214",
-        "92100002213",
-        "92100002658",
-        "92100002663",
-        "92100002680",
-        "92100002677",
-        "92100002661",
-      ];
+      let arr = [];
 
       for (let x of arr) {
         let getDelivery = await delivery.findOne({ "uic_code.code": x });
@@ -4654,43 +4689,7 @@ module.exports = {
   },
   botTrayTransfer: () => {
     return new Promise(async (resolve, reject) => {
-      let arr = [
-        "92030001979",
-        "92030001298",
-        "92030001850",
-        "92030001057",
-        "92030003602",
-        "92030000083",
-        "91010002245",
-        "91010002169",
-        "91010002130",
-        "92030000801",
-        "92030004358",
-        "92030001737",
-        "92030000255",
-        "92030001811",
-        "92030004261",
-        "92030001423",
-        "91010002331",
-        "91010001923",
-        "91010003312",
-        "91010002158",
-        "91010003256",
-        "91010005339",
-        "91010000943",
-        "91010003623",
-        "91010003169",
-        "92030001470",
-        "91010003440",
-        "92030000426",
-        "91010003433",
-        "91010003639",
-        "92030002650",
-        "91010003238",
-        "91010003365",
-        "91010004516",
-        "91010004785",
-      ];
+      let arr = [];
 
       let arr2 = [];
 
@@ -5162,7 +5161,7 @@ module.exports = {
       // }
       // resolve(BqcDoneUnits);
       const BqcDoneUnits = await masters.find({
-        sort_id: "Ready to RDL-Repair",
+        sort_id: "Ready to RDL-2",
       });
       for (let x of BqcDoneUnits) {
         if (x?.track_tray?.rdl_1_done_close_by_wh == undefined) {
@@ -5438,7 +5437,7 @@ module.exports = {
         });
 
         if (checkTray) {
-          if (checkTray.sort_id == "Ready to RDL-Repair") {
+          if (checkTray.sort_id == "Ready to RDL-2") {
             let updateDelivery = await delivery.updateOne(
               { "uic_code.code": x.uic?.toString() },
               {
@@ -5523,14 +5522,11 @@ module.exports = {
     return new Promise(async (resolve, reject) => {
       const updateRdl = await masters.updateMany(
         {
-          $or: [
-            { sort_id: "Send for RDL-One" },
-          
-          ],
+          $or: [{ sort_id: "Send for RDL-One" }],
         },
         {
           $set: {
-            sort_id: "Send for RDL-FLS",
+            sort_id: "Send for RDL-1",
           },
         }
       );
@@ -5549,24 +5545,25 @@ module.exports = {
       //   arr1.push(x.muic);
       // }
       // resolve(arr2);
-      // const findTemp = await masters.updateMany(
-      //   {
-      //     prefix: "tray-master",
-      //     sort_id: {
-      //       $nin: [
-      //         "Assigned to warehouae for rack change",
-      //         "Received for rack change",
-      //         "Issued to scan in for rack change",
-      //       ],
-      //     },
-      //     temp_rack: { $exists: true },
-      //   },
-      //   {
-      //     $set: {
-      //       temp_rack: null,
-      //     },
-      //   }
-      // );
+      const findTemp = await masters.updateMany(
+        {
+          prefix: "tray-master",
+          sort_id: {
+            $in: [
+              "Received for rack change",
+              "Issued to scan in for rack change",
+            ],
+          },
+          temp_rack: null,
+        },
+        {
+          $set: {
+            temp_rack: "RAC999999",
+          },
+        }
+      );
+
+      resolve({ status: 1 });
       // let findRpt=await masters.find({type_taxanomy:"RPT"})
       // for(let x of findRpt){
       //   for(let y of x.items){
@@ -5577,108 +5574,26 @@ module.exports = {
       //     })
       //   }
       // }
-      let findTray = await masters.findOne({ code: "RPT18008" });
-      for (let x of findTray.actual_items) {
-        let update = await masters.updateOne(
-          { code: "RPT18008" },
-          {
-            $set: {
-              actual_items: [],
-            },
-            $push: {
-              items: x,
-            },
-          }
-        );
-      }
-      resolve({ status: true });
+      // let findTray = await masters.findOne({ code: "RPT18008" });
+      // for (let x of findTray.actual_items) {
+      //   let update = await masters.updateOne(
+      //     { code: "RPT18008" },
+      //     {
+      //       $set: {
+      //         actual_items: [],
+      //       },
+      //       $push: {
+      //         items: x,
+      //       },
+      //     }
+      //   );
+      // }
+      // resolve({ status: true });
     });
   },
   extraUpdateRack: () => {
     return new Promise(async (resolve, reject) => {
-      let arr = [
-        "WHT10163",
-        "WHT10153",
-        "WHT10151",
-        "WHT10150",
-        "WHT10145",
-        "WHT10143",
-        "WHT10142",
-        "WHT10131",
-        "WHT10129",
-        "WHT10031",
-        "WHT10016",
-        "WHT10015",
-        "WHT10013",
-        "WHT10012",
-        "WHT10010",
-        "WHT1976",
-        "WHT1975",
-        "WHT1966",
-        "WHT1912",
-        "WHT1848",
-        "WHT1838",
-        "WHT1837",
-        "WHT1827",
-        "WHT1765",
-        "WHT1728",
-        "WHT1714",
-        "WHT1708",
-        "WHT1701",
-        "WHT1697",
-        "WHT1683",
-        "WHT1658",
-        "WHT1645",
-        "WHT1595",
-        "WHT1589",
-        "WHT1544",
-        "WHT1531",
-        "WHT1493",
-        "WHT1459",
-        "WHT1417",
-        "WHT1411",
-        "WHT1391",
-        "WHT1387",
-        "WHT1356",
-        "WHT1328",
-        "WHT1082",
-        "WHT1080",
-        "WHT1079",
-        "WHT1071",
-        "WHT1069",
-        "WHT1060",
-        "WHT1144",
-        "WHT1178",
-        "WHT1188",
-        "WHT1200",
-        "WHT1318",
-        "WHT1327",
-        "WHT1404",
-        "WHT1419",
-        "WHT1428",
-        "WHT1460",
-        "WHT1461",
-        "WHT1487",
-        "WHT1519",
-        "WHT1520",
-        "WHT1534",
-        "WHT1554",
-        "WHT1570",
-        "WHT1577",
-        "WHT1685",
-        "WHT1688",
-        "WHT1712",
-        "WHT10053",
-        "WHT10065",
-        "WHT10078",
-        "WHT10105",
-        "WHT10111",
-        "WHT10127",
-        "WHT10078",
-        "WHT10105",
-        "WHT10111",
-        "WHT10127",
-      ];
+      let arr = [];
       for (let x of arr) {
         console.log(x);
         let findRack = await masters.findOne(
@@ -5704,79 +5619,7 @@ module.exports = {
   },
   removeProcurmentRequest: () => {
     return new Promise(async (resolve, reject) => {
-      let arr = [
-        "P8089293996",
-        "P8090051754",
-        "P2442567362",
-        "P2443255354",
-        "P2444099005",
-        "P2444477545",
-        "P2446886832",
-        "P2447457414",
-        "P2447852751",
-        "P2450048037",
-        "P2450474960",
-        "P8159099817",
-        "P8159630845",
-        "P8161257748",
-        "P7469810294",
-        "P7473459794",
-        "P7475652026",
-        "P7477323095",
-        "P7478691108",
-        "P7479036250",
-        "P7479322198",
-        "P7479814476",
-        "P4741633673",
-        "P0713640213",
-        "P3848974878",
-        "P8611210823",
-        "P3849382276",
-        "P8612583296",
-        "P6720163040",
-        "P0706990039",
-        "P0707990825",
-        "P8621520317",
-        "P0967230413",
-        "P0967924061",
-        "P0968387003",
-        "P8607596694",
-        "P8610010671",
-        "P8610767241",
-        "P8613070947",
-        "P8613537743",
-        "P8614174579",
-        "P8614656665",
-        "P8615049922",
-        "P8615779334",
-        "P8616174328",
-        "P8616676009",
-        "P8617023372",
-        "P8617440894",
-        "P8617816260",
-        "P8618223652",
-        "P8618788509",
-        "P8619190171",
-        "P8619414087",
-        "P8619889396",
-        "P8620714677",
-        "P8621184778",
-        "P8622274207",
-        "P8622882699",
-        "P8623345487",
-        "P8623778340",
-        "P8624247235",
-        "P8624622965",
-        "P8625128227",
-        "P8625569604",
-        "P8625970933",
-        "P8626493192",
-        "P8626870649",
-        "P8627271612",
-        "P8627599499",
-        "P8628289130",
-        "P8628687306",
-      ];
+      let arr = [];
       for (let x of arr) {
         const data = await purchaseOrder.findOne({ request_id: x });
         if (data.status == "Pending") {
@@ -5788,142 +5631,163 @@ module.exports = {
       resolve({ status: true });
     });
   },
-  removeAddToMmt: () => {
-    return new Promise(async (resolve, reject) => {
-      let findTray = await masters.aggregate([
+  removeAddToMmt: async () => {
+    try {
+      const findAllTray = await masters.find(
         {
-          $match: {
-            type_taxanomy: "ST",
-            sort_id: { $ne: "Open" },
-            sp_price: { $exists: true, $ne: null },
-            mrp_price: { $exists: true, $ne: null },
-          },
+          $or: [
+            { sort_id: "Issued to RDL-two" },
+            { sort_id: "Rdl-two inprogress" },
+            { sort_id: "Closed by RDL-two" },
+            { sort_id: "Send for RDL-two" },
+            { sort_id: "Received from RDL-two" },
+            { sort_id: "Ready to RDL-Repair" },
+            { sort_id: "Ready to RDL-Repair Issued to Merging" },
+            { sort_id: "Ready to RDL-Repair Merging Done" },
+            { sort_id: "Ready to RDL-Repair Merge Request Sent To Wharehouse" },
+            { sort_id: "Ready to RDL-Repair Received From Merging" },
+            { sort_id: "Ready to RDL" },
+            { sort_id: "Send for RDL-FLS" },
+            { sort_id: "Issued to RDL-FLS" },
+            { sort_id: "Closed by RDL-FLS" },
+            { sort_id: "Received From RDL-FLS" },
+            { sort_id: "Ready to Pricing" },
+            {sort_id:"RDL two done closed by warehouse"}
+          ],
         },
         {
-          $group: {
-            _id: {
-              model: "$model",
-              brand: "$brand",
-              grade: "$tray_grade",
-            },
-            sp: { $first: "$sp_price" },
-            mrp: { $first: "$mrp_price" },
-          },
-        },
-      ]);
-      for (let x of findTray) {
-        let update = await masters.updateMany(
-          {
-            brand: x._id.brand,
-            model: x._id.model,
-            tray_grade: x._id.grade,
-            type_taxanomy: "ST",
-            sp_price: { $exists: false },
-            mrp_price: { $exists: false },
-            sort_id: {
-              $nin: [
-                "Open",
-                "Issued to Sorting for Ctx to Stx",
-                "Ctx to Stx Sorting Done",
-                "Received From Sorting Agent After Ctx to Stx",
-                "STX-Utility In-progress",
-              ],
-            },
-          },
+          code: 1,
+          sort_id: 1,
+        }
+      );
+      let tempStatus = "";
+      for (let x of findAllTray) {
+        if (x.sort_id == "Issued to RDL-two") {
+          tempStatus = "Issued to RDL-2";
+        } else if (x.sort_id == "Rdl-two in-progress") {
+          tempStatus = "Rdl-2 in-progress";
+        } else if (x.sort_id == "Closed by RDL-two") {
+          tempStatus = "Closed by RDL-2";
+        } else if (x.sort_id == "Send for RDL-two") {
+          tempStatus = "Send for RDL-2";
+        } else if (x.sort_id == "Received from RDL-two") {
+          tempStatus = "Received from RDL-2";
+        } else if (x.sort_id == "Ready to RDL-Repair") {
+          tempStatus = "Ready to RDL-2";
+        } else if (x.sort_id == "Ready to RDL-Repair Issued to Merging") {
+          tempStatus = "Ready to RDL-2 Issued to Merging";
+        } else if (x.sort_id == "Ready to RDL-Repair Merging Done") {
+          tempStatus = "Ready to RDL-2 Merging Done";
+        } else if (
+          x.sort_id == "Ready to RDL-Repair Merge Request Sent To Wharehouse"
+        ) {
+          tempStatus = "Ready to RDL-2 Merge Request Sent To Wharehouse";
+        } else if (x.sort_id == "Ready to RDL-Repair Received From Merging") {
+          tempStatus = "Ready to RDL-2 Received From Merging";
+        } else if (x.sort_id == "Ready to RDL") {
+          tempStatus = "Ready to RDL-1";
+        } else if (x.sort_id == "Send for RDL-FLS") {
+          tempStatus = "Send for RDL-1";
+        } else if (x.sort_id == "Issued to RDL-FLS") {
+          tempStatus = "Issued to RDL-1";
+        } else if (x.sort_id == "Closed by RDL-FLS") {
+          tempStatus = "Closed by RDL-1";
+        } else if (x.sort_id == "Received From RDL-FLS") {
+          tempStatus = "Received From RDL-1";
+        } else if (x.sort_id == "RDL two done closed by warehouse") {
+          tempStatus = "RDL-2 done closed by warehouse";
+        } else if (x.sort_id == "Ready to Pricing") {
+          tempStatus = "Inuse";
+        }
+        
+        let updateStatus = await masters.updateOne(
+          { code: x.code },
           {
             $set: {
-              sp_price: x.sp,
-              mrp_price: x.mrp,
+              sort_id: tempStatus,
             },
           }
         );
-        console.log(update);
+        tempStatus=''
       }
-      resolve({ status: true });
-    });
+
+      let updateUsersRdl1 = await user.updateMany(
+        { user_type: "RDL-One" },
+        {
+          $set: {
+            user_type: "RDL-1",
+          },
+        }
+      );
+      console.log(updateUsersRdl1);
+      let updateUsersRdl2 = await user.updateMany(
+        { user_type: "RDL-two" },
+        {
+          $set: {
+            user_type: "RDL-2",
+          },
+        }
+      );
+      return { status: true };
+    } catch (error) {
+      return error;
+    }
   },
   tempDataAddRequerment: () => {
     return new Promise(async (resolve, reject) => {
       try {
-        const threeMonthsAgo = new Date();
-        threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
-
-        const orderData = await delivery.find(
-          {
-            issued_to_rdl_two_date: { $gte: threeMonthsAgo },
-          },
-          { _id: 0, __v: 0 }
-        );
-
-        for (let x of orderData) {
-          let obj = {
-            tracking_id: x.tracking_id,
-            order_id: x.order_id,
-            order_date: x.order_date,
-            item_id: x.item_id,
-            gep_order: x.gep_order,
-            old_item_details: x.old_item_details,
-            imei: x.imei,
-            partner_purchase_price: x.partner_purchase_price,
-            partner_shop: x.partner_shop,
-            base_discount: x.base_discount,
-            diagnostics_discount: x.diagnostics_discount,
-            storage_discount: x.storage_discount,
-            buyback_category: x.buyback_category,
-            doorstep_diagnostics: x.doorstep_diagnostics,
-            delivery_date: x.delivery_date,
-            uic_status: x.uic_status,
-            uic_code: x.uic_code,
-            created_at: x.created_at,
-            Uic_download_time: x.download_time,
-            bagging_date: x.stockin_date,
-            bag_id: x.bag_id,
-            tray_id: x.tray_id,
-            assign_to_bot_agent: x.assign_to_agent,
-            bot_agent_name: x.agent_name,
-            bag_close_date: x.bag_close_date,
-            tray_closed_by_bot: x.tray_closed_by_bot,
-            wht_tray: x.wht_tray,
-            sorting_agent_name: x.sorting_agent_name,
-            assign_to_agent_charging: x.assign_to_agent_charging,
-            bot_report: x.bot_report,
-            charging_report: x.charging,
-            assign_to_agent_charging: x.assign_to_agent_charging,
-            charging_done_date: x.charging_done_date,
-            charging_in_date: x.charging_in_date,
-            agent_name_charging: x.agent_name_charging,
-            bqc_in_date: x.bqc_in_date,
-            bqc_out_date: x.bqc_out_date,
-            bqc_done_received: x.bqc_done_received,
-            bqc_done_close: x.bqc_done_close,
-            bqc_report: x.bqc_report,
-            assign_to_agent_bqc: x.assign_to_agent_bqc,
-            agent_name_bqc: x.agent_name_bqc,
-            issued_to_audit: x.issued_to_audit,
-            audit_user_name: x.audit_user_name,
-            audit_report: x.audit_report,
-            audit_done_date: x.audit_done_date,
-            audit_done_recieved: x.audit_done_recieved,
-            audit_done_close: x.audit_done_close,
-            rdl_fls_issued_date: x.rdl_fls_issued_date,
-            rdl_fls_one_user_name: x.rdl_fls_one_user_name,
-            rdl_fls_closed_date: x.rdl_fls_closed_date,
-            rdl_fls_done_recieved_date: x.rdl_fls_done_recieved_date,
-            rdl_fls_one_report: x.rdl_fls_one_report,
-            rp_tray: x.rp_tray,
-            rdl_two_user_name: x.rdl_two_user_name,
-            issued_to_rdl_two_date: x.issued_to_rdl_two_date,
-            rdl_two_closed_date: x.rdl_two_closed_date,
-            rdl_two_report: x.rdl_two_report,
-          };
-          let dataUpdate = await tempOrdersReq.create(obj);
+        let findTray = await masters.find({
+          $or: [
+            { sort_id: { $ne: "Open"}, type_taxanomy: "ST" },
+            { sort_id: { $ne: "Open"}, type_taxanomy: "CT" },
+          ],
+        });
+        for (let x of findTray) {
+            let update = await delivery.updateMany(
+              { $or: [{ ctx_tray_id: x.code,stx_tray_id:{$exists:false} },{ stx_tray_id: x.code }] },
+              {
+                $set: {
+                  final_grade: x.tray_grade,
+                  tray_type:x.type_taxanomy
+                },
+              }
+            );
+          
+          if(x.type_taxanomy == "ST" && x.sp_price !== undefined && x.mrp_price !== undefined){
+            for(let y of x.items){
+              let updatePrice=await delivery.updateOne({"uic_code.code":y.uic},{
+                $set:{
+                  mrp_price:x.mrp_price,
+                  sp_price:x.sp_price,
+                  price_updation_date:x.price_updation_date,
+                  price_creation_date:x.price_creation_date
+                }
+              })
+            }
+          }
         }
 
-        resolve(orderData); // You can resolve with the orderData if needed.
+
+        resolve(findTray); // You can resolve with the orderData if needed.
       } catch (error) {
         console.error("An error occurred:", error);
         reject(error); // Reject the promise with the error.
       }
     });
   },
+  pickupIssue:async()=>{
+    try {
+      const fetchTray=await  masters.findOne({code:"WHT1564"})
+      for(let x of fetchTray.items){
+        const pushUic=await masters.updateOne({code:"WHT1564"},{
+          $push:{
+            temp_array:x.uic
+          }
+        })
+      }
+      return fetchTray
+    } catch (error) {
+      return error
+    }
+  }
 };

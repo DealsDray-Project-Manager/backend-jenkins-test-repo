@@ -1560,34 +1560,31 @@ router.post("/auditDoneWht/:location", async (req, res, next) => {
   }
 });
 
-router.post(
-  "/assignToAgent/rdl-fls/sentToWarehouse",
-  async (req, res, next) => {
-    try {
-      const { tray, user_name, sortId, actUser } = req.body;
-      let data = await misUserController.assignToAgentRequestToWhRdlFls(
-        tray,
-        user_name,
-        sortId,
-        actUser
-      );
-      if (data.status == true) {
-        res.status(200).json({
-          message: "Request sent to Warehouse",
-        });
-      } else {
-        res.status(202).json({
-          message: "Request failed please try again...",
-        });
-      }
-    } catch (error) {
-      next(error);
+router.post("/assignToAgent/rdl-1/sentToWarehouse", async (req, res, next) => {
+  try {
+    const { tray, user_name, sortId, actUser } = req.body;
+    let data = await misUserController.assignToAgentRequestToWhRdlFls(
+      tray,
+      user_name,
+      sortId,
+      actUser
+    );
+    if (data.status == true) {
+      res.status(200).json({
+        message: "Request sent to Warehouse",
+      });
+    } else {
+      res.status(202).json({
+        message: "Request failed please try again...",
+      });
     }
+  } catch (error) {
+    next(error);
   }
-);
+});
 
 router.post(
-  "/assignToAgent/rdl-fls/users/:user_type/:location",
+  "/assignToAgent/rdl-1/users/:user_type/:location",
   async (req, res, next) => {
     try {
       let data = await misUserController.getRdlFlsUser(
@@ -1722,6 +1719,20 @@ router.post("/whToRp/muicList/repair/:location", async (req, res, next) => {
     next(error);
   }
 });
+// SCREEN LIST OF MUIC TO REPAIR WITHOUT SP
+router.post("/whToRp/muicList/repairWithoutSp/:location", async (req, res, next) => {
+  try {
+    const { location } = req.params;
+    let data = await misUserController.whtToRpMuicListToRepairWithoutSp(location);
+    if (data) {
+      res.status(200).json({
+        data: data,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
 // PROCUREMENT SCREEN
 router.post("/procurmentRepair/:location", async (req, res, next) => {
   try {
@@ -1747,7 +1758,31 @@ router.post("/whToRpAssignForRepair", async (req, res, next) => {
     );
     if (data.status == 1) {
       res.status(200).json({
-        data: data.findItem,
+        partsAvailable: data.partsAvailable,
+        partsNotAvailable: data.partsNotAvailable,
+      });
+    } else {
+      res.status(202).json({
+        message: "",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+// REPAIR WITHOUT SP PROCESS PAGE
+
+router.post("/whToRpAssignForRepairWithoutSp", async (req, res, next) => {
+  try {
+    const { location, brand, model } = req.body;
+    let data = await misUserController.whtToRpMuicListToRepairAssignForRepairWithoutSp(
+      location,
+      brand,
+      model
+    );
+    if (data) {
+      res.status(200).json({
+       data:data
       });
     } else {
       res.status(202).json({
@@ -1868,6 +1903,7 @@ router.post("/whtToRpSorting/assign", async (req, res, next) => {
       sortingUser,
       selectedUic,
       actUser,
+      screen
     } = req.body;
     let data = await misUserController.whtToRpSortingAssign(
       spDetails,
@@ -1876,7 +1912,8 @@ router.post("/whtToRpSorting/assign", async (req, res, next) => {
       spwhuser,
       sortingUser,
       selectedUic,
-      actUser
+      actUser,
+      screen
     );
     if (data.status == 1) {
       res.status(200).json({

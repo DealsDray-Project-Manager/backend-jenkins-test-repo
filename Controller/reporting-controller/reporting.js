@@ -629,7 +629,7 @@ module.exports = {
         cpc: location,
         type_taxanomy: "WHT",
         prefix: "tray-master",
-        sort_id: "Ready to RDL",
+        sort_id: "Ready to RDL-1",
       });
       count.readyToRdlFlsItemCount = await masters.aggregate([
         {
@@ -637,7 +637,7 @@ module.exports = {
             cpc: location,
             type_taxanomy: "WHT",
             prefix: "tray-master",
-            sort_id: "Ready to RDL",
+            sort_id: "Ready to RDL-1",
             items: { $exists: true, $type: "array" },
           },
         },
@@ -727,7 +727,7 @@ module.exports = {
           {
             cpc: location,
             to_merge: { $ne: null },
-            sort_id: "Ready to RDL-Repair Issued to Merging",
+            sort_id: "Ready to RDL-2 Issued to Merging",
           },
           {
             cpc: location,
@@ -756,7 +756,7 @@ module.exports = {
               {
                 cpc: location,
                 to_merge: { $ne: null },
-                sort_id: "Ready to RDL-Repair Issued to Merging",
+                sort_id: "Ready to RDL-2 Issued to Merging",
                 items: { $exists: true, $type: "array" },
               },
               {
@@ -888,7 +888,7 @@ module.exports = {
         cpc: location,
         type_taxanomy: "WHT",
         prefix: "tray-master",
-        sort_id: "Issued to RDL-FLS",
+        sort_id: "Issued to RDL-1",
       });
       count.inRdlFlsItemCount = await masters.aggregate([
         {
@@ -896,7 +896,7 @@ module.exports = {
             cpc: location,
             type_taxanomy: "WHT",
             prefix: "tray-master",
-            sort_id: "Issued to RDL-FLS",
+            sort_id: "Issued to RDL-1",
           },
         },
         {
@@ -939,7 +939,7 @@ module.exports = {
                 { $ne: [{ $size: "$items" }, { $toInt: "$limit" }] },
               ],
             },
-            sort_id: "Ready to RDL-Repair",
+            sort_id: "Ready to RDL-2",
           },
           {
             cpc: location,
@@ -997,7 +997,7 @@ module.exports = {
                     { $ne: [{ $size: "$items" }, { $toInt: "$limit" }] },
                   ],
                 },
-                sort_id: "Ready to RDL-Repair",
+                sort_id: "Ready to RDL-2",
               },
               {
                 cpc: location,
@@ -1159,7 +1159,7 @@ module.exports = {
             {
               cpc: location,
               to_merge: { $ne: null },
-              sort_id: "Ready to RDL-Repair Issued to Merging",
+              sort_id: "Ready to RDL-2 Issued to Merging",
             },
             {
               cpc: location,

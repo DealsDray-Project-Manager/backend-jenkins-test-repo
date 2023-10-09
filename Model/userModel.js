@@ -7,9 +7,6 @@ const userSchema = mongoose.Schema({
   email: {
     type: String,
   },
-  businessName:{
-    type: String,
-  },
   contact: {
     type: String,
   },
@@ -19,9 +16,6 @@ const userSchema = mongoose.Schema({
   password: {
     type: String,
   },
-  designation: {
-    type: String,
-  },
   cpc: {
     type: String,
   },
@@ -29,18 +23,6 @@ const userSchema = mongoose.Schema({
     type: String,
   },
   sales_users:{
-    type: String,
-  },
-  department: {
-    type: String,
-  },
-  store: {
-    type: String,
-  },
-  is_super_admin: {
-    type: String,
-  },
-  reporting_manager: {
     type: String,
   },
   device_id: {
@@ -66,10 +48,6 @@ const userSchema = mongoose.Schema({
     type: Date,
     default: null,
   },
-  last_otp: {
-    type: Number,
-    default: null,
-  },
   cpc_type: {
     type: String,
   },
@@ -86,9 +64,6 @@ const userSchema = mongoose.Schema({
     type: String,
   },
   state: {
-    type: String,
-  },
-  country: {
     type: String,
   },
   pincode: {
@@ -114,7 +89,10 @@ const userSchema = mongoose.Schema({
   },
   business_address_proof:{
     type: String,
-  }
+  },
+  business_name:String,
+  contact_person_name:String,
+  billing_address:String
   
 });
 const user = mongoose.model("users", userSchema);

@@ -164,7 +164,7 @@ module.exports = {
         prefix: "tray-master",
         sort_id: "Assigned to warehouae for rack change",
         cpc: location,
-        temp_rack: { $eq: null, $exists: false },
+        temp_rack: { $eq: null },
       });
       count.orders = await orders.count({
         partner_shop: location,
@@ -272,12 +272,6 @@ module.exports = {
             sort_id: "Inuse",
             type_taxanomy: "ST",
           },
-          {
-            prefix: "tray-master",
-            cpc: location,
-            sort_id: "Ready to Pricing",
-            type_taxanomy: "ST",
-          },
         ],
       });
       count.readyToTransfer = await masters.count({
@@ -307,12 +301,12 @@ module.exports = {
       count.rdl = await masters.count({
         prefix: "tray-master",
         type_taxanomy: "WHT",
-        sort_id: "Ready to RDL",
+        sort_id: "Ready to RDL-1",
         cpc: location,
       });
       count.rdl_two = await masters.countDocuments({
         cpc: location,
-        sort_id: "Ready to RDL-Repair",
+        sort_id: "Ready to RDL-2",
         type_taxanomy: "RPT",
       });
       count.botToWht = await masters.count({
@@ -349,7 +343,7 @@ module.exports = {
                 { $ne: [{ $size: "$items" }, { $toInt: "$limit" }] },
               ],
             },
-            sort_id: "Ready to RDL-Repair",
+            sort_id: "Ready to RDL-2",
           },
           {
             cpc: location,
@@ -2950,16 +2944,6 @@ module.exports = {
                 sort_id: sortId,
                 code: { $ne: fromTray },
               },
-              {
-                prefix: "tray-master",
-                type_taxanomy: type,
-                tray_grade: grade,
-                brand: brand,
-                model: model,
-                cpc: location,
-                sort_id: "Ready to Pricing",
-                code: { $ne: fromTray },
-              },
             ],
           })
           .catch((err) => reject(err));
@@ -3303,16 +3287,16 @@ module.exports = {
           resolve({ status: 0 });
         }
       } else if (
-        whtTray.sort_id === "Ready to RDL-Repair" &&
+        whtTray.sort_id === "Ready to RDL-2" &&
         whtTray.type_taxanomy == "WHT"
       ) {
         dep = "PRC MIS";
-        stage = "Ready to RDL-Repair Merge Request Sent To Wharehouse";
+        stage = "Ready to RDL-2 Merge Request Sent To Wharehouse";
         updateFromTray = await masters.findOneAndUpdate(
           { code: fromTray },
           {
             $set: {
-              sort_id: "Ready to RDL-Repair Merge Request Sent To Wharehouse",
+              sort_id: "Ready to RDL-2 Merge Request Sent To Wharehouse",
               status_change_time: Date.now(),
               issued_user_name: sortingAgent,
               to_merge: toTray,
@@ -3325,7 +3309,7 @@ module.exports = {
             { code: toTray },
             {
               $set: {
-                sort_id: "Ready to RDL-Repair Merge Request Sent To Wharehouse",
+                sort_id: "Ready to RDL-2 Merge Request Sent To Wharehouse",
                 status_change_time: Date.now(),
                 issued_user_name: sortingAgent,
                 from_merge: fromTray,
@@ -3598,7 +3582,7 @@ module.exports = {
           {
             $match: {
               "track_tray.audit_done_close_wh": { $gte: threeDaysAgo },
-              sort_id: "Ready to RDL",
+              sort_id: "Ready to RDL-1",
               cpc: location,
             },
           },
@@ -3615,7 +3599,7 @@ module.exports = {
             },
           },
         ]);
-      } else if (type == "RDL two done closed by warehouse") {
+      } else if (type == "RDL-2 done closed by warehouse") {
         items = await masters.aggregate([
           {
             $match: {
@@ -3718,7 +3702,7 @@ module.exports = {
           {
             $match: {
               "items.audit_report.stage": { $in: selectedStatus },
-              sort_id: "Ready to RDL",
+              sort_id: "Ready to RDL-1",
               cpc: location,
             },
           },
@@ -3747,7 +3731,7 @@ module.exports = {
           {
             $match: {
               "items.rdl_fls_report.selected_status": { $in: selectedStatus },
-              sort_id: "Ready to RDL-Repair",
+              sort_id: "Ready to RDL-2",
               cpc: location,
             },
           },
@@ -3891,7 +3875,7 @@ module.exports = {
         items = await masters.aggregate([
           {
             $match: {
-              sort_id: "Ready to RDL",
+              sort_id: "Ready to RDL-1",
               brand: brand,
               model: model,
               cpc: location,
@@ -4035,6 +4019,7 @@ module.exports = {
       let item_id_wht = "";
       for (let x of itemData.isCheck) {
         let checkBrand = await delivery.findOne({ "uic_code.code": x });
+        console.log(checkBrand);
         item_id_wht = checkBrand.item_id;
         if (prodct.length == 0) {
           prodct.push(checkBrand.item_id);
@@ -4083,7 +4068,7 @@ module.exports = {
               },
             }
           );
-          if (itemData.value == "RDL two done closed by warehouse") {
+          if (itemData.value == "RDL-2 done closed by warehouse") {
             sendtoPickupRequest = await masters.findOneAndUpdate(
               {
                 $or: [{ "items.uic": x, type_taxanomy: "RPT" }],
@@ -4146,7 +4131,6 @@ module.exports = {
           }
         );
       }
-
       if (sendtoPickupRequest.matchedCount != 0) {
         resolve(sendtoPickupRequest);
       } else {
@@ -4186,7 +4170,7 @@ module.exports = {
   getAuditDone: (location) => {
     return new Promise(async (resolve, reject) => {
       let data = await masters.find({
-        sort_id: "Ready to RDL",
+        sort_id: "Ready to RDL-1",
         type_taxanomy: "WHT",
         cpc: location,
       });
@@ -4200,7 +4184,7 @@ module.exports = {
       let sendtoRdlMis;
       let newStatus = sortId;
       for (let x of tray) {
-        if (sortId == "Send for RDL-two") {
+        if (sortId == "Send for RDL-2") {
           sendtoRdlMis = await masters.findOneAndUpdate(
             { code: x },
             {
@@ -4214,7 +4198,11 @@ module.exports = {
               },
             }
           );
-          if (sendtoRdlMis) {
+          if (
+            sendtoRdlMis &&
+            sendtoRdlMis.sp_tray !== null &&
+            sendtoRdlMis.sp_tray !== undefined
+          ) {
             const updateSp = await masters.findOneAndUpdate(
               { code: sendtoRdlMis.sp_tray },
               {
@@ -4241,8 +4229,8 @@ module.exports = {
         }
         if (sendtoRdlMis.items?.length !== 0) {
           let state = "Tray";
-          if (newStatus == "Send for RDL-FLS") {
-            newStatus = "Send for RDL-One";
+          if (newStatus == "Send for RDL-1") {
+            newStatus = "Send for RDL-1";
           }
           for (let y of sendtoRdlMis.items) {
             let unitsLogCreation = await unitsActionLog.create({
@@ -4282,7 +4270,7 @@ module.exports = {
       let data = await masters.aggregate([
         {
           $match: {
-            sort_id: "Ready to RDL-Repair",
+            sort_id: "Ready to RDL-2",
             type_taxanomy: "RPT",
             cpc: location,
           },
@@ -4315,7 +4303,7 @@ module.exports = {
   ctxTrayTransferRequestSend: (trayData) => {
     return new Promise(async (resolve, reject) => {
       for (let x of trayData.tray) {
-        const sentToWarehouse = await masters.updateOne(
+        const sentToWarehouse = await masters.findOneAndUpdate(
           { code: x },
           {
             $set: {
@@ -4325,7 +4313,36 @@ module.exports = {
             },
           }
         );
+        if (sentToWarehouse.items.length == 0) {
+          await unitsActionLog.create({
+            action_type: "Transfer Request sent to Warehouse",
+            created_at: Date.now(),
+            user_name_of_action: trayData.actioUser,
+            user_type: `${trayData?.cpc_type} Warehouse`,
+            agent_name: trayData.actionUser,
+            tray_id: x,
+            track_tray: "Tray",
+            description: `Transfer Request sent to Warehouse by MIS :${trayData.actionUser}`,
+          });
+        } else {
+          let state = "Tray";
+          for (let y of sentToWarehouse.items) {
+            await unitsActionLog.create({
+              action_type: "Transfer Request sent to Warehouse",
+              created_at: Date.now(),
+              user_name_of_action: trayData.actioUser,
+              user_type: `${trayData?.cpc_type} Warehouse`,
+              agent_name: trayData.actionUser,
+              tray_id: x,
+              uic: y.uic,
+              track_tray: state,
+              description: `Transfer Request sent to Warehouse by MIS :${trayData.actionUser}`,
+            });
+            state = "Units";
+          }
+        }
       }
+
       resolve({ status: 1 });
     });
   },
@@ -4399,9 +4416,13 @@ module.exports = {
       const findItem = await masters.aggregate([
         {
           $match: {
-            "items.rdl_fls_report.selected_status": "Repair Required",
-            cpc: location,
-            sort_id: "Ready to RDL-Repair",
+            $or: [
+              {
+                "items.rdl_fls_report.selected_status": "Repair Required",
+                cpc: location,
+                sort_id: "Ready to RDL-2",
+              },
+            ],
           },
         },
         {
@@ -4418,12 +4439,107 @@ module.exports = {
               model: "$items.model_name",
               brand: "$items.brand_name",
               muic: "$items.muic",
+              part_id: "$items.rdl_fls_report.partRequired.part_id",
+            },
+            count: { $sum: 1 },
+          },
+        },
+        {
+          $group: {
+            _id: {
+              brand: "$_id.brand",
+              model: "$_id.model",
+              muic: "$_id.muic",
+            },
+            parts: {
+              $push: {
+                part_id: "$_id.part_id",
+                count: "$count",
+              },
+            },
+          },
+        },
+      ]);
+      const partCodes = findItem.flatMap((x) =>
+        x.parts.map((part) => part.part_id?.[0])
+      );
+
+      const partAndColorData = await partAndColor.find({
+        part_code: { $in: partCodes },
+      });
+      const newArr = findItem.map((x) => {
+        let required_qty = 0;
+        let unitsCount = 0;
+        x.parts.forEach((y) => {
+          const checkThePart = partAndColorData.find(
+            (part) => part.part_code === y.part_id?.[0]
+          );
+          if (checkThePart) {
+            let qty = checkThePart.avl_stock - y.count;
+            unitsCount += y.count;
+            if (0 < qty) {
+              let required = Math.abs(qty);
+              required_qty += required;
+            }
+          } else {
+            required_qty += y.count;
+          }
+        });
+        x["repair_units"] = unitsCount;
+        if (required_qty >= 0) {
+          x["required_qty"] = required_qty;
+          return x;
+        }
+      });
+      const resolvedArr = newArr.filter(Boolean); // Remove any null values from the array
+      resolve(resolvedArr);
+    });
+  },
+  whtToRpMuicListToRepairWithoutSp: (location) => {
+    return new Promise(async (resolve, reject) => {
+      const findItem = await masters.aggregate([
+        {
+          $match: {
+            $or: [
+              {
+                "items.rdl_fls_report.selected_status": "Software Installation",
+                cpc: location,
+                sort_id: "Ready to RDL-2",
+              },
+              {
+                "items.rdl_fls_report.selected_status": "Motherboard Work",
+                cpc: location,
+                sort_id: "Ready to RDL-2",
+              },
+            ],
+          },
+        },
+        {
+          $unwind: "$items",
+        },
+        {
+          $match: {
+            $or: [
+              {
+                "items.rdl_fls_report.selected_status": "Motherboard Work",
+              },
+              {
+                "items.rdl_fls_report.selected_status": "Software Installation",
+              },
+            ],
+          },
+        },
+        {
+          $group: {
+            _id: {
+              model: "$items.model_name",
+              brand: "$items.brand_name",
+              muic: "$items.muic",
             },
             count: { $sum: 1 },
           },
         },
       ]);
-
       resolve(findItem);
     });
   },
@@ -4434,7 +4550,7 @@ module.exports = {
           $match: {
             "items.rdl_fls_report.selected_status": "Repair Required",
             cpc: location,
-            sort_id: "Ready to RDL-Repair",
+            sort_id: "Ready to RDL-2",
           },
         },
         {
@@ -4474,17 +4590,16 @@ module.exports = {
       ]);
 
       const partCodes = findItem.flatMap((x) =>
-        x.parts.map((part) => part.part_id[0])
+        x.parts.map((part) => part.part_id?.[0])
       );
       const partAndColorData = await partAndColor.find({
         part_code: { $in: partCodes },
       });
-
       const newArr = findItem.map((x) => {
         let required_qty = 0;
         x.parts.forEach((y) => {
           const checkThePart = partAndColorData.find(
-            (part) => part.part_code === y.part_id[0]
+            (part) => part.part_code === y.part_id?.[0]
           );
           if (checkThePart) {
             let qty = checkThePart.avl_stock - y.count;
@@ -4511,12 +4626,16 @@ module.exports = {
       const findItem = await masters.aggregate([
         {
           $match: {
-            "items.rdl_fls_report.selected_status": "Repair Required",
-            cpc: location,
-            brand: brand,
-            model: model,
-            type_taxanomy: "WHT",
-            sort_id: "Ready to RDL-Repair",
+            $or: [
+              {
+                "items.rdl_fls_report.selected_status": "Repair Required",
+                cpc: location,
+                brand: brand,
+                model: model,
+                type_taxanomy: "WHT",
+                sort_id: "Ready to RDL-2",
+              },
+            ],
           },
         },
         {
@@ -4535,6 +4654,11 @@ module.exports = {
           },
         },
       ]);
+      let partsAvailable = [];
+      let partsNotAvailable = [];
+      let units = [];
+      let temp = [];
+      console.log(findItem);
       if (findItem) {
         for (let x of findItem) {
           for (let y of x?.items?.rdl_fls_report?.partRequired) {
@@ -4546,12 +4670,80 @@ module.exports = {
             } else {
               y["avl_qty"] = 0;
             }
+            temp.push(y.part_id);
+
+            let count = temp.filter(function (element) {
+              return element === y.part_id;
+            }).length;
+            if (units.includes(x.items.uic) == false) {
+              if (Number(count) <= Number(checkPart?.avl_stock)) {
+                partsAvailable.push(x);
+              } else {
+                partsNotAvailable.push(x);
+              }
+              units.push(x.items.uic);
+            }
           }
         }
-        resolve({ findItem: findItem, status: 1 });
+        resolve({
+          partsNotAvailable: partsNotAvailable,
+          partsAvailable: partsAvailable,
+          status: 1,
+        });
       } else {
         resolve({ status: 2 });
       }
+    });
+  },
+  whtToRpMuicListToRepairAssignForRepairWithoutSp: (location, brand, model) => {
+    return new Promise(async (resolve, reject) => {
+      const findItem = await masters.aggregate([
+        {
+          $match: {
+            $or: [
+              {
+                "items.rdl_fls_report.selected_status": "Software Installation",
+                cpc: location,
+                brand: brand,
+                model: model,
+                type_taxanomy: "WHT",
+                sort_id: "Ready to RDL-2",
+              },
+              {
+                "items.rdl_fls_report.selected_status": "Motherboard Work",
+                cpc: location,
+                brand: brand,
+                model: model,
+                type_taxanomy: "WHT",
+                sort_id: "Ready to RDL-2",
+              },
+            ],
+          },
+        },
+        {
+          $unwind: "$items",
+        },
+        {
+          $match: {
+            $or: [
+              {
+                "items.rdl_fls_report.selected_status": "Motherboard Work",
+              },
+              {
+                "items.rdl_fls_report.selected_status": "Software Installation",
+              },
+            ],
+          },
+        },
+        {
+          $project: {
+            items: "$items",
+            closed_date_agent: "$closed_date_agent",
+            code: "$code",
+          },
+        },
+      ]);
+      resolve(findItem);
     });
   },
   assignForRepairStockCheck: (partId, uic, isCheck, checked, selectedQtySp) => {
@@ -4772,11 +4964,14 @@ module.exports = {
     spwhuser,
     sortingUser,
     selectedUic,
-    actUser
+    actUser,
+    screen
   ) => {
+    console.log(screen);
     return new Promise(async (resolve, reject) => {
       let whtTrayArr = [];
       for (let uic of selectedUic) {
+        console.log(uic);
         const updateItem = await masters.findOneAndUpdate(
           {
             "items.uic": uic,
@@ -4793,6 +4988,7 @@ module.exports = {
             },
           }
         );
+        console.log(updateItem);
         if (updateItem) {
           if (whtTrayArr.includes(updateItem.code) == false) {
             state = "Tray";
@@ -4829,7 +5025,7 @@ module.exports = {
             },
           }
         );
-        if (rpTrayUpdation) {
+        if (rpTrayUpdation && screen == "WithSp") {
           const spTrayUpdation = await masters.findOneAndUpdate(
             { code: spTray },
             {
@@ -4843,7 +5039,7 @@ module.exports = {
             }
           );
 
-          if (spTrayUpdation) {
+          if (spTrayUpdation && screen == "WithSp") {
             for (let x of spDetails) {
               let updateParts = await partAndColor.updateOne(
                 { part_code: x.partId },
@@ -4874,6 +5070,8 @@ module.exports = {
           } else {
             resolve({ status: 0 });
           }
+        } else if (screen == "WithoutSp" && rpTrayUpdation) {
+          resolve({ status: 1 });
         } else {
           resolve({ status: 0 });
         }
@@ -4924,7 +5122,7 @@ module.exports = {
               action_type: "Ctx to Stx Send for Sorting",
               created_at: Date.now(),
               agent_name: sortingAgent,
-              user_type: "PRC Mis",
+              user_type: "Sales Mis",
               uic: x.uic,
               tray_id: updateFromTray.code,
               track_tray: state,
@@ -5673,8 +5871,20 @@ module.exports = {
         );
         if (updateTheTray) {
           let state = "Tray";
+          if (updateTheTray.items?.length == 0) {
+            await unitsActionLog.create({
+              action_type: "Assigned to warehouae for rack change",
+              created_at: Date.now(),
+              user_name_of_action: actUser,
+              agent_name: scanOutWh,
+              user_type: "PRC MIS",
+              tray_id: x,
+              track_tray: state,
+              description: `Assigned to warehouae for rack change to agent scan out :${scanOutWh} by mis :${actUser}`,
+            });
+          }
           for (let y of updateTheTray.items) {
-            let unitsLogCreation = await unitsActionLog.create({
+            await unitsActionLog.create({
               action_type: "Assigned to warehouae for rack change",
               created_at: Date.now(),
               user_name_of_action: actUser,

@@ -41,6 +41,9 @@ const unitsActionLogSchema = mongoose.Schema({
   },
   track_tray:{
     type:String
+  },
+  rack_id:{
+    type:String
   }
 });
 const unitsActionLog = mongoose.model("unitsActionLog", unitsActionLogSchema);
