@@ -134,7 +134,7 @@ router.post("/traySegrigation", async (req, res, next) => {
     } = req.body;
     let createSubMuic;
     let data;
-    currentSubMuicCount = `${muic} - ${currentSubMuicCount}`;
+    currentSubMuicCount = `${muic}-${currentSubMuicCount}`;
     if (stage !== "BQC Not Done / Unverified imei" && subMuic == null) {
       createSubMuic = await auditController.createSubMuic(
         color,
@@ -144,7 +144,6 @@ router.post("/traySegrigation", async (req, res, next) => {
         actionUser,
         currentSubMuicCount
       );
-      console.log(createSubMuic);
       if (createSubMuic.status == 1) {
         fs.readFile(
           "myjsonfile.json",
@@ -283,7 +282,6 @@ router.post("/getColorStorageRam", async (req, res, next) => {
 /*---------------------------------SUB MUIC -----------------------------------*/
 router.post("/fetchSubMuic", async (req, res, next) => {
   try {
-    console.log(req.body);
     const { storage, ram, color, muic } = req.body;
     const fetchSubMuic = await auditController.findSubMuic(
       storage,
@@ -291,7 +289,6 @@ router.post("/fetchSubMuic", async (req, res, next) => {
       color,
       muic
     );
-    console.log(fetchSubMuic);
     if (fetchSubMuic) {
       fs.readFile(
         "myjsonfile.json",

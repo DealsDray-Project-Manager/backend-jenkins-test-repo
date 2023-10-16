@@ -174,7 +174,6 @@ module.exports = {
                 .findOne({ uic: uic, action_type: "Charging Done" })
                 .sort({ _id: -1 })
                 .skip(1);
-              console.log(previousCharging);
               if (previousCharging) {
                 obj.preChargeData = previousCharging;
               }
@@ -392,7 +391,6 @@ module.exports = {
   },
   createSubMuic: async (color, storage, ram, muic, user, currentMuic) => {
     try {
-      console.log(currentMuic);
       let obj = {
         muic: muic,
         action_user: user,
@@ -455,7 +453,7 @@ module.exports = {
         });
       }
       for (let x of data.items) {
-          await unitsActionLog.create({
+        await unitsActionLog.create({
           action_type: "Audit Done",
           created_at: Date.now(),
           uic: x.uic,

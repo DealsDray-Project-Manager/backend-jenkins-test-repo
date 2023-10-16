@@ -208,7 +208,6 @@ module.exports = {
               }
             );
           }
-
           if (
             x.rdl_two_status == "Used" ||
             x.rdl_two_status == "Not used" ||
@@ -243,7 +242,6 @@ module.exports = {
             }
           );
         }
-
         await masters.updateOne(
           {
             code: trayItemData.spTray,
@@ -268,7 +266,6 @@ module.exports = {
             },
           }
         );
-
         checkAlreadyAdded.items[0].rdl_repair_report =
           trayItemData.rdl_repair_report;
 
@@ -285,8 +282,18 @@ module.exports = {
             },
           }
         );
-
         if (data.matchedCount !== 0) {
+          await unitsActionLog.create({
+            action_type: "Repair Done",
+            created_at: Date.now(),
+            uic: trayItemData.uic,
+            tray_id: trayItemData.trayId,
+            user_name_of_action: getRpTray.issued_user_name,
+            report: trayItemData.rdl_repair_report,
+            track_tray: "Units",
+            user_type: "PRC RDL-2",
+            description: `Repair Done by agent:${checkAlreadyAdded.issued_user_name}`,
+          });
           return { status: 1 };
         } else {
           return { status: 2 };
@@ -299,7 +306,6 @@ module.exports = {
       throw error;
     }
   },
-
   traySummary: (trayId, user_name) => {
     return new Promise(async (resolve, reject) => {
       const getTheTray = await masters.findOne({ code: trayId });

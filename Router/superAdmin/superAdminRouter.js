@@ -122,7 +122,7 @@ router.post("/login", async (req, res, next) => {
           jwtToken,
           loginData.data.user_type
         );
-        console.log(process.env.NODE_ENV);
+
         if (updateJwtToken.status == 1) {
           res.status(200).json({
             status: 1,
@@ -213,7 +213,6 @@ router.post("/changePassword", async (req, res, next) => {
 /*----------------------------Get sales location for buyer ---------------------------------------*/
 router.get("/getCpcSalesLocation/", async (req, res) => {
   let data = await superAdminController.getCpcSalesLocation();
-
   if (data) {
     res.status(200).json({ status: 1, data: { data } });
   } else {
@@ -237,7 +236,7 @@ router.post("/getWarehouseByLocation", async (req, res) => {
   try {
     const { name, type } = req.body;
     let warehouse = await superAdminController.getWarehouse(name, type);
-    console.log(warehouse);
+
     if (warehouse) {
       res.status(200).json({ data: { warehouse } });
     }
@@ -3593,7 +3592,6 @@ router.post("/updateUnverifiedImei", async (req, res, next) => {
 router.post("/globeDuplicateRemove", async (req, res, next) => {
   try {
     const { trayId, id, arrayType } = req.body;
-    console.log(req.body);
     const data = await superAdminController.globeRemoveDuplicate(
       trayId,
       id,
@@ -3632,10 +3630,10 @@ router.post("/bqcSynAction/:type", async (req, res, next) => {
     if (type == "XML") {
       let update = BqcSynAction.xmlFileRead();
       res.status(200).json({
-        message: "Successfully Update the XML File please do Windows task scheduler",
+        message:
+          "Successfully Update the XML File please do Windows task scheduler",
       });
     } else {
-    
       let update = BqcSynAction.blancooFileUpload();
       res.status(200).json({
         message: "Successfully Updated please check your mail!",
@@ -4180,9 +4178,9 @@ router.post("/extra/addFinelGrade", async (req, res, next) => {
   }
 });
 // ISSUE WITH PICKUP
-router.post("/extra/pickupIssue", async (req, res, next) => {
+router.post("/extra/tempReq", async (req, res, next) => {
   try {
-    let data = await superAdminController.pickupIssue();
+    let data = await superAdminController.tempReq();
     if (data) {
       res.status(200).json({
         message: "Successfully Update",
