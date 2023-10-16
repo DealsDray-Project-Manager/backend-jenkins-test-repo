@@ -18,6 +18,7 @@ const elasticsearch = require("../../Elastic-search/elastic");
 const { stxUtility } = require("../../Model/Stx-utility/stx-utility");
 const { unitsActionLog } = require("../../Model/units-log/units-action-log");
 const { bagTransfer } = require("../../Model/bag-transfer/bag-transfer");
+let mongoose = require("mongoose");
 /******************************************************************* */
 
 module.exports = {
@@ -37,90 +38,94 @@ module.exports = {
       let i = 0;
       const imeiRegex = /^\d{15}$/; // Regex pattern for 15 digits
       for (let x of ordersData.item) {
-        if (x.order_status == "NEW") {
-          if (x?.imei.match(/[0-9]/g).join("").length !== 15) {
-            // IMEI length is correct
-            imei.push(x.imei);
-            err["imei_number_is_duplicate"] = imei;
-          }
-          const orderDate = x?.order_date; // Assuming `data` is available
-          const parsedDate = new Date(orderDate);
-          if (isNaN(parsedDate)) {
-            order_date.push(x.order_date);
-            err["order_date"] = order_date;
-          } else {
-            const currentDate = new Date(); // Get the current date
-
-            if (parsedDate > currentDate) {
-              order_date.push(x.order_date);
-              err["order_date"] = order_date;
-            }
-          }
-          if (x.tracking_id !== undefined) {
-            if (x?.tracking_id.match(/[0-9]/g).join("").length !== 12) {
-              tracking_id.push(x.tracking_id);
-              err["tracking_id"] = tracking_id;
-            }
-          }
-          let orderExists = await orders.findOne({
-            order_id: x.order_id,
-          });
-          if (orderExists) {
-            order_id.push(x.order_id);
-            err["order_id_is_duplicate"] = order_id;
-          } else {
-            if (
-              ordersData.item.some(
-                (data, index) => data?.order_id == x?.order_id && index != i
-              )
-            ) {
-              order_id.push(x?.order_id);
-              err["order_id_is_duplicate"] = order_id;
-            }
-          }
-          if (x?.partner_shop != ordersData?.location) {
-            partner_shop.push(x?.partner_shop);
-            err["location_does_not_exist"] = partner_shop;
-          }
-          if (x?.partner_id != "1613633867") {
-            partner_id.push(x?.partner_id);
-            err["partner_id_does_not_exist"] = partner_id;
-          }
-          let itemId = await products.findOne({
-            vendor_sku_id: x?.item_id,
-          });
-          if (itemId == null) {
-            item_id.push(x?.item_id);
-            err["item_id_does_not_exist"] = item_id;
-          }
-          let brand = await brands.findOne({
-            brand_name: {
-              $regex: new RegExp(
-                "^" + x?.old_item_details?.split(":")[0] + "$",
-                "i"
-              ),
-            },
-          });
-          if (brand == null) {
-            brand_name.push(x?.old_item_details?.split(":")[0]);
-            err["brand_name_does_not_exist"] = brand_name;
-          }
-          let model = await products.findOne({
-            model_name: {
-              $regex: new RegExp(
-                "^" + x?.old_item_details?.split(":")[1] + "$",
-                "i"
-              ),
-            },
-          });
-          if (model == null) {
-            model_name.push(x?.old_item_details?.split(":")[1]);
-            err["model_name_does_not_exist"] = model_name;
-          }
-        } else {
+        if (x.order_status != "NEW") {
           order_status.push(x.order_status);
           err["order_status"] = order_status;
         }
+        if (x?.imei.match(/[0-9]/g).join("").length !== 15) {
+          // IMEI length is correct
+          imei.push(x.imei);
+          err["imei_number_is_duplicate"] = imei;
+        }
+        const orderDate = x?.order_date; // Assuming `data` is available
+        const parsedDate = new Date(orderDate);
+        if (isNaN(parsedDate)) {
+          order_date.push(x.order_date);
+          err["order_date"] = order_date;
+        } else {
+          const currentDate = new Date(); // Get the current date
+
+          if (parsedDate > currentDate) {
+            order_date.push(x.order_date);
+            err["order_date"] = order_date;
+          }
+        }
+        if (x.tracking_id !== undefined) {
+          if (x?.tracking_id.match(/[0-9]/g).join("").length !== 12) {
+            tracking_id.push(x.tracking_id);
+            err["tracking_id"] = tracking_id;
+          }
+        }
+        let orderExists = await orders.findOne({
+          order_id: x.order_id,
+        });
+        if (orderExists) {
+          order_id.push(x.order_id);
+          err["order_id_is_duplicate"] = order_id;
+        } else {
+          if (
+            ordersData.item.some(
+              (data, index) => data?.order_id == x?.order_id && index != i
+            )
+          ) {
+            order_id.push(x?.order_id);
+            err["order_id_is_duplicate"] = order_id;
+          }
+        }
+        if (x?.partner_shop != ordersData?.location) {
+          partner_shop.push(x?.partner_shop);
+          err["location_does_not_exist"] = partner_shop;
+        }
+        if (x?.partner_id != "1613633867") {
+          partner_id.push(x?.partner_id);
+          err["partner_id_does_not_exist"] = partner_id;
+        }
+        let itemId = await products.findOne({
+          vendor_sku_id: x?.item_id,
+        });
+        if (itemId == null) {
+          item_id.push(x?.item_id);
+          err["item_id_does_not_exist"] = item_id;
+        }
+        let brand = await brands.findOne({
+          brand_name: {
+            $regex: new RegExp(
+              "^" + x?.old_item_details?.split(":")[0] + "$",
+              "i"
+            ),
+          },
+          vendor_sku_id: x?.item_id,
+        });
+        if (brand == null) {
+          brand_name.push(x?.old_item_details?.split(":")[0]);
+          err["brand_name_does_not_exist"] = brand_name;
+        }
+        const itemDetails = x?.old_item_details;
+        const parts = itemDetails ? itemDetails.split(":") : [];
+        // Combine the last two elements into one
+        let lastTwoElements = parts.slice(1).join("");
+        console.log(lastTwoElements);
+        let model = await products.findOne({
+          model_name: {
+            $regex: new RegExp("^" + lastTwoElements + "$", "i"),
+          },
+          vendor_sku_id: x?.item_id,
+        });
+        if (model == null) {
+          model_name.push(lastTwoElements);
+          err["model_name_does_not_exist"] = model_name;
+        }
+
         i++;
       }
       if (Object.keys(err).length === 0) {
@@ -547,12 +552,6 @@ module.exports = {
           },
         ]);
       } else if (searchType == "order_date") {
-        // let  date=new Date(value)
-        // console.log(date);
-        //  if(date == "Invalid Date"){
-        //    value = moment(value, "DD-MM-YYYY HH:mm").toDate();
-        //  }
-
         allOrders = await orders.aggregate([
           {
             $match: {
@@ -2599,7 +2598,6 @@ module.exports = {
       obj.temp_array = temp_array;
       obj.assigned_count = assigned_count;
       obj.items = items;
-      // console.log(obj);
       if (temp_array) {
         resolve(obj);
       } else {
@@ -2899,7 +2897,6 @@ module.exports = {
     grade
   ) => {
     return new Promise(async (resolve, reject) => {
-      console.log(grade);
       let arr = [];
       let whtTray;
       if (type == "WHT") {
@@ -3018,7 +3015,6 @@ module.exports = {
         }
         let state = "Tray";
         let typeOfpanel = "PRC MIS";
-        console.log(whtTrayData.sort_id);
         if (whtTrayData.sort_id == "Assigned for Display Grading") {
           typeOfpanel = "Sales MIS";
         }
@@ -3177,8 +3173,13 @@ module.exports = {
       }
     });
   },
-  mmtMergeRequestSendToWh: (sortingAgent, fromTray, toTray, actionUser) => {
-    return new Promise(async (resolve, reject) => {
+  mmtMergeRequestSendToWh: async (
+    sortingAgent,
+    fromTray,
+    toTray,
+    actionUser
+  ) => {
+    try {
       let whtTray = await masters.findOne({ code: fromTray });
       let updateFromTray, updateToTray, stage, dep;
       if (
@@ -3199,6 +3200,7 @@ module.exports = {
             },
           }
         );
+
         if (updateFromTray) {
           updateToTray = await masters.findOneAndUpdate(
             { code: toTray },
@@ -3214,7 +3216,7 @@ module.exports = {
             }
           );
         } else {
-          resolve({ status: 0 });
+          return { status: 0 };
         }
       } else if (
         whtTray.sort_id === "Ready to BQC" &&
@@ -3234,6 +3236,7 @@ module.exports = {
             },
           }
         );
+
         if (updateFromTray) {
           updateToTray = await masters.findOneAndUpdate(
             { code: toTray },
@@ -3249,7 +3252,7 @@ module.exports = {
             }
           );
         } else {
-          resolve({ status: 0 });
+          return { status: 0 };
         }
       } else if (
         whtTray.sort_id === "Ready to Audit" &&
@@ -3269,6 +3272,7 @@ module.exports = {
             },
           }
         );
+
         if (updateFromTray) {
           updateToTray = await masters.findOneAndUpdate(
             { code: toTray },
@@ -3284,7 +3288,7 @@ module.exports = {
             }
           );
         } else {
-          resolve({ status: 0 });
+          return { status: 0 };
         }
       } else if (
         whtTray.sort_id === "Ready to RDL-2" &&
@@ -3304,6 +3308,7 @@ module.exports = {
             },
           }
         );
+
         if (updateFromTray) {
           updateToTray = await masters.findOneAndUpdate(
             { code: toTray },
@@ -3319,7 +3324,7 @@ module.exports = {
             }
           );
         } else {
-          resolve({ status: 0 });
+          return { status: 0 };
         }
       } else {
         dep = "PRC MIS";
@@ -3336,6 +3341,7 @@ module.exports = {
             },
           }
         );
+
         if (updateFromTray) {
           updateToTray = await masters.findOneAndUpdate(
             { code: toTray },
@@ -3351,12 +3357,13 @@ module.exports = {
             }
           );
         } else {
-          resolve({ status: 0 });
+          return { status: 0 };
         }
       }
       if (whtTray.type_taxanomy == "ST") {
         dep = "Sales MIS";
       }
+
       if (updateFromTray) {
         let state1 = "Tray";
         for (let x of updateFromTray.items) {
@@ -3371,6 +3378,7 @@ module.exports = {
             track_tray: state1,
             description: `${stage} to agent :${sortingAgent} by mis :${actionUser}`,
           });
+
           state1 = "Units";
         }
 
@@ -3387,13 +3395,17 @@ module.exports = {
             track_tray: state2,
             description: `${stage} to agent :${sortingAgent} by mis :${actionUser}`,
           });
+
           state2 = "Units";
         }
-        resolve({ status: 1 });
+
+        return { status: 1 };
       } else {
-        resolve({ status: 0 });
+        return { status: 0 };
       }
-    });
+    } catch (error) {
+      return error;
+    }
   },
   imeiSearchDelivery: (value) => {
     return new Promise(async (resolve, reject) => {
@@ -4019,7 +4031,6 @@ module.exports = {
       let item_id_wht = "";
       for (let x of itemData.isCheck) {
         let checkBrand = await delivery.findOne({ "uic_code.code": x });
-        console.log(checkBrand);
         item_id_wht = checkBrand.item_id;
         if (prodct.length == 0) {
           prodct.push(checkBrand.item_id);
@@ -4047,27 +4058,14 @@ module.exports = {
       }
     });
   },
-  pickupRequestSendToWh: (itemData) => {
-    return new Promise(async (resolve, reject) => {
-      let sendtoPickupRequest;
+  pickupRequestSendToWh: async (itemData) => {
+    let sendtoPickupRequest;
+    let toTray;
+    try {
       let arr = [];
       for (let x of itemData.isCheck) {
         let getDeliveryData = await delivery.findOne({ "uic_code.code": x });
         if (getDeliveryData) {
-          let toTray = await masters.findOneAndUpdate(
-            { code: itemData.toTray },
-            {
-              $set: {
-                sort_id: "Pickup Request sent to Warehouse",
-                issued_user_name: itemData.user_name,
-                pickup_type: itemData.value,
-                pickup_next_stage: itemData.nextStage,
-              },
-              $push: {
-                temp_array: x,
-              },
-            }
-          );
           if (itemData.value == "RDL-2 done closed by warehouse") {
             sendtoPickupRequest = await masters.findOneAndUpdate(
               {
@@ -4105,38 +4103,64 @@ module.exports = {
               }
             );
           }
-        }
-        let state = "Tray";
-        if (arr.includes(sendtoPickupRequest.code)) {
-          state = "Units";
-        }
-        arr.push(sendtoPickupRequest.code);
-        let unitsLogCreation = await unitsActionLog.create({
-          action_type: "Pickup Request sent to Warehouse",
-          created_at: Date.now(),
-          agent_name: itemData.user_name,
-          user_type: "PRC Mis",
-          uic: x,
-          tray_id: sendtoPickupRequest.code,
-          track_tray: state,
-          description: `Pickup Request sent to Warehouse to agent :${itemData.user_name} by Mis :${itemData.actUser}`,
-        });
-        let updateDelivery = await delivery.updateOne(
-          { "uic_code.code": x },
-          {
-            $set: {
-              pickup_request_sent_to_wh_date: Date.now(),
-              tray_status: "Pickup Request sent to Warehouse",
-            },
+          if (sendtoPickupRequest) {
+            toTray = await masters.findOneAndUpdate(
+              { code: itemData.toTray },
+              {
+                $set: {
+                  sort_id: "Pickup Request sent to Warehouse",
+                  issued_user_name: itemData.user_name,
+                  pickup_type: itemData.value,
+                  pickup_next_stage: itemData.nextStage,
+                },
+                $push: {
+                  temp_array: x,
+                },
+              }
+            );
+          } else {
+            await session.abortTransaction();
+            session.endSession();
+            return null;
           }
-        );
+
+          let state = "Tray";
+          if (arr.includes(sendtoPickupRequest.code)) {
+            state = "Units";
+          }
+          arr.push(sendtoPickupRequest.code);
+
+          let unitsLogCreation = await unitsActionLog.create({
+            action_type: "Pickup Request sent to Warehouse",
+            created_at: Date.now(),
+            agent_name: itemData.user_name,
+            user_type: "PRC Mis",
+            uic: x,
+            tray_id: sendtoPickupRequest.code,
+            track_tray: state,
+            description: `Pickup Request sent to Warehouse to agent :${itemData.user_name} by Mis :${itemData.actUser}`,
+          });
+
+          let updateDelivery = await delivery.updateOne(
+            { "uic_code.code": x },
+            {
+              $set: {
+                pickup_request_sent_to_wh_date: Date.now(),
+                tray_status: "Pickup Request sent to Warehouse",
+              },
+            }
+          );
+        }
       }
+
       if (sendtoPickupRequest.matchedCount != 0) {
-        resolve(sendtoPickupRequest);
+        return sendtoPickupRequest;
       } else {
-        resolve();
+        return null;
       }
-    });
+    } catch (error) {
+      return error;
+    }
   },
   pickUpReassign: (reAssignData) => {
     return new Promise(async (resolve, reject) => {
@@ -4658,9 +4682,9 @@ module.exports = {
       let partsNotAvailable = [];
       let units = [];
       let temp = [];
-      console.log(findItem);
       if (findItem) {
         for (let x of findItem) {
+          let flag = false;
           for (let y of x?.items?.rdl_fls_report?.partRequired) {
             const checkPart = await partAndColor.findOne({
               part_code: y?.part_id,
@@ -4671,18 +4695,20 @@ module.exports = {
               y["avl_qty"] = 0;
             }
             temp.push(y.part_id);
-
             let count = temp.filter(function (element) {
               return element === y.part_id;
             }).length;
-            if (units.includes(x.items.uic) == false) {
-              if (Number(count) <= Number(checkPart?.avl_stock)) {
-                partsAvailable.push(x);
-              } else {
-                partsNotAvailable.push(x);
-              }
-              units.push(x.items.uic);
+
+            if (Number(count) <= Number(checkPart?.avl_stock)) {
+            } else {
+              flag = true;
             }
+          }
+
+          if (flag) {
+            partsNotAvailable.push(x);
+          } else {
+            partsAvailable.push(x);
           }
         }
         resolve({
@@ -4967,11 +4993,9 @@ module.exports = {
     actUser,
     screen
   ) => {
-    console.log(screen);
     return new Promise(async (resolve, reject) => {
       let whtTrayArr = [];
       for (let uic of selectedUic) {
-        console.log(uic);
         const updateItem = await masters.findOneAndUpdate(
           {
             "items.uic": uic,
@@ -4988,7 +5012,6 @@ module.exports = {
             },
           }
         );
-        console.log(updateItem);
         if (updateItem) {
           if (whtTrayArr.includes(updateItem.code) == false) {
             state = "Tray";
@@ -5592,9 +5615,8 @@ module.exports = {
   /*--------------------------------------------STX UTILITY ---------------------------------------*/
   stxUtilityImportXlsx: () => {
     return new Promise(async (resolve, reject) => {
-      let arr = [];
+      let arr = []
 
-      let arr1 = [];
       for (let x of arr) {
         let obj = {
           uic: x.uic?.toString(),
@@ -5606,7 +5628,7 @@ module.exports = {
         };
         let createTo = await stxUtility.create(obj);
       }
-      resolve({ status: 1, data: arr1 });
+      resolve({ status: 1,  });
     });
   },
   //SEARCH UIC FROM STX UTILITY COLLECTION
@@ -5703,7 +5725,6 @@ module.exports = {
     screen,
     actUser
   ) => {
-    console.log(screen);
     return new Promise(async (resolve, reject) => {
       let obj = {};
       if (screen == "Stx to Stx") {
@@ -5717,7 +5738,6 @@ module.exports = {
             },
           }
         );
-        console.log(removeFromCurrentTray);
         if (removeFromCurrentTray.modifiedCount == 0) {
           resolve({ status: 2 });
         }

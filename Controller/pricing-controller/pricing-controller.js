@@ -7,6 +7,7 @@ const { user } = require("../../Model/userModel");
 const { masters } = require("../../Model/mastersModel");
 const { badOrders } = require("../../Model/ordersModel/bad-orders-model");
 const { badDelivery } = require("../../Model/deliveryModel/bad-delivery");
+const { pricingLog } = require("../../Model/pricing-log/pricing-log");
 
 module.exports = {
   dashboardCount: (location) => {
@@ -269,7 +270,6 @@ module.exports = {
       let flag = true;
       for (let x of muicDetails) {
         let updatePriceTrayWise;
-        console.log(x);
         if (screen == "Price updation") {
           updatePriceTrayWise = await delivery.updateMany(
             {
@@ -312,9 +312,14 @@ module.exports = {
             }
           );
         }
-        console.log(updatePriceTrayWise);
         if (updatePriceTrayWise.modifiedCount == 0) {
           flag = false;
+        } else {
+          await module.exports.addLogOfPrice({
+            muic_sub: x.submuic,
+            sp_price: parseInt(x.sp),
+            mrp_price: parseInt(x.mrp),
+          });
         }
       }
       if (flag) {
@@ -323,6 +328,14 @@ module.exports = {
         resolve({ status: false });
       }
     });
+  },
+  addLogOfPrice: async (obj) => {
+    try {
+      const createLog = await pricingLog.create(obj);
+      return createLog;
+    } catch (error) {
+      return error;
+    }
   },
   addPriceMuicBasis: (muicDetails, location, screen) => {
     //PROMISE
@@ -379,6 +392,12 @@ module.exports = {
         }
         if (updatePriceTrayWise.modifiedCount == 0) {
           flag = false;
+        } else {
+          await module.exports.addLogOfPrice({
+            muic_sub: findProduct.muic,
+            sp_price: parseInt(x.sp),
+            mrp_price: parseInt(x.mrp),
+          });
         }
       }
       if (flag) {

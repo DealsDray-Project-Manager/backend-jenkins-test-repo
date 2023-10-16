@@ -117,7 +117,7 @@ module.exports = {
             }
           }
         }
-        console.log(updatedMuic);
+
         let check = emailNotification.blancoDataUpdateNotification(
           updatedMuic,
           arrofTray

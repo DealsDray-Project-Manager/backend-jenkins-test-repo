@@ -1447,10 +1447,9 @@ module.exports = {
             stage = "Received From Merging";
           }
           let state = "Tray";
-          let whType="PRC"
-          console.log(data.type_taxanomy);
-          if(data.type_taxanomy == "ST"){
-            whType="Sales"
+          let whType = "PRC";
+          if (data.type_taxanomy == "ST") {
+            whType = "Sales";
           }
           if (data.items.length == 0) {
             await unitsActionLog.create({
@@ -5256,8 +5255,6 @@ module.exports = {
             },
           ],
         });
-        console.log(data);
-
         if (data) {
           resolve({ status: 2 });
         } else {
@@ -5422,7 +5419,6 @@ module.exports = {
     });
   },
   getCtxCategorysForIssue: (grades) => {
-    console.log(grades);
     return new Promise(async (resolve, reject) => {
       const fetchData = await trayCategory.find({ code: { $nin: grades } });
       resolve(fetchData);

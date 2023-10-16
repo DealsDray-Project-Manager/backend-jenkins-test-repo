@@ -1423,7 +1423,6 @@ module.exports = {
   },
   DisplayGradeCloseTray: async (trayId) => {
     try {
-      console.log(trayId);
       const findTray = await masters.findOne({ code: trayId });
       if (findTray) {
         const getTrayData = await masters.findOneAndUpdate(
@@ -1477,7 +1476,6 @@ module.exports = {
                 projection: { _id: 0 },
               }
             );
-            console.log(updateDelivery);
           }
           return { status: 1 };
         } else {

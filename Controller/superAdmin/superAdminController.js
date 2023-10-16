@@ -32,6 +32,7 @@ const elasticsearch = require("../../Elastic-search/elastic");
 const { purchaseOrder } = require("../../Model/Purchase-order/purchase-order");
 const { tempOrdersReq } = require("../../Model/temp-req/temp-req");
 const { subMuic } = require("../../Model/sub-muic/sub-muic");
+const { unitsActionLog } = require("../../Model/units-log/units-action-log");
 
 const IISDOMAIN = "https://prexo-v9-dev-api.dealsdray.com/user/profile/";
 const IISDOMAINBUYERDOC =
@@ -942,7 +943,6 @@ module.exports = {
         .catch((err) => reject(err));
       if (data) {
         let ordersCheck = await orders.findOne({ item_id: data.vendor_sku_id });
-        console.log(ordersCheck);
         if (ordersCheck) {
           resolve({ status: 3, data: data });
         } else {
@@ -2426,7 +2426,7 @@ module.exports = {
           },
           {
             $set: {
-              limit:40
+              limit: 40,
             },
           }
         );
@@ -2702,7 +2702,6 @@ module.exports = {
           { $sort: { rack_id: 1 } },
         ];
         const rackCounts = await trayRack.aggregate(aggregatePipeline);
-        console.log(rackCounts);
 
         resolve(rackCounts);
       } catch (error) {
@@ -4194,7 +4193,6 @@ module.exports = {
       let remove;
       id = mongoose.Types.ObjectId(id);
       if (arrayType == "Main") {
-        console.log("working");
         remove = await masters.updateOne(
           { code: trayId },
           {
@@ -4203,7 +4201,6 @@ module.exports = {
             },
           }
         );
-        console.log(remove);
       } else if (arrayType == "Second-main") {
         remove = await masters.updateOne(
           { code: trayId },
@@ -4248,7 +4245,6 @@ module.exports = {
           },
         },
       ]);
-      console.log(fetchSubMuic);
       return fetchSubMuic;
     } catch (error) {
       return error;
@@ -5321,13 +5317,27 @@ module.exports = {
   },
   resolveOrderDateIssue: () => {
     return new Promise(async (resolve, reject) => {
-      let arr = [];
+      let arr = ["407-1947201-7605117"];
       for (let x of arr) {
+        let findOrderdata = await orders.findOne(
+          { order_id: x },
+          { order_date: 1 }
+        );
+        console.log("ex", findOrderdata.order_date);
+        const originalDate = new Date(findOrderdata.order_date);
+        // Create a new Date with day and month swapped
+        const updatedDate = new Date(
+          originalDate.getFullYear(),
+          originalDate.getDate() - 1, // Adjust for the day (subtract 1)
+          originalDate.getMonth() + 1 // Month remains the same
+        );
+        console.log(updatedDate);
         let orderDate = await orders.updateOne(
-          { order_id: x.order_id },
+          { order_id: x },
           {
             $set: {
-              order_date: new Date(x.order_date),
+              order_date: updatedDate,
+              order_timestamp: updatedDate,
             },
           }
         );
@@ -5595,12 +5605,10 @@ module.exports = {
     return new Promise(async (resolve, reject) => {
       let arr = [];
       for (let x of arr) {
-        console.log(x);
         let findRack = await masters.findOne(
           { code: x, sort_id: "Open" },
           { code: 1, rack_id: 1 }
         );
-        console.log(findRack);
         if (findRack) {
           if (findRack.rack_id == "RAC000025") {
             let updateNewRack = await masters.findOneAndUpdate(
@@ -5652,7 +5660,7 @@ module.exports = {
             { sort_id: "Closed by RDL-FLS" },
             { sort_id: "Received From RDL-FLS" },
             { sort_id: "Ready to Pricing" },
-            {sort_id:"RDL two done closed by warehouse"}
+            { sort_id: "RDL two done closed by warehouse" },
           ],
         },
         {
@@ -5699,7 +5707,7 @@ module.exports = {
         } else if (x.sort_id == "Ready to Pricing") {
           tempStatus = "Inuse";
         }
-        
+
         let updateStatus = await masters.updateOne(
           { code: x.code },
           {
@@ -5708,7 +5716,7 @@ module.exports = {
             },
           }
         );
-        tempStatus=''
+        tempStatus = "";
       }
 
       let updateUsersRdl1 = await user.updateMany(
@@ -5719,7 +5727,6 @@ module.exports = {
           },
         }
       );
-      console.log(updateUsersRdl1);
       let updateUsersRdl2 = await user.updateMany(
         { user_type: "RDL-two" },
         {
@@ -5738,35 +5745,46 @@ module.exports = {
       try {
         let findTray = await masters.find({
           $or: [
-            { sort_id: { $ne: "Open"}, type_taxanomy: "ST" },
-            { sort_id: { $ne: "Open"}, type_taxanomy: "CT" },
+            { sort_id: { $ne: "Open" }, type_taxanomy: "ST" },
+            { sort_id: { $ne: "Open" }, type_taxanomy: "CT" },
           ],
         });
         for (let x of findTray) {
-            let update = await delivery.updateMany(
-              { $or: [{ ctx_tray_id: x.code,stx_tray_id:{$exists:false} },{ stx_tray_id: x.code }] },
-              {
-                $set: {
-                  final_grade: x.tray_grade,
-                  tray_type:x.type_taxanomy
-                },
-              }
-            );
-          
-          if(x.type_taxanomy == "ST" && x.sp_price !== undefined && x.mrp_price !== undefined){
-            for(let y of x.items){
-              let updatePrice=await delivery.updateOne({"uic_code.code":y.uic},{
-                $set:{
-                  mrp_price:x.mrp_price,
-                  sp_price:x.sp_price,
-                  price_updation_date:x.price_updation_date,
-                  price_creation_date:x.price_creation_date
+          let update = await delivery.updateMany(
+            {
+              $or: [
+                { ctx_tray_id: x.code, stx_tray_id: { $exists: false } },
+                { stx_tray_id: x.code },
+              ],
+            },
+            {
+              $set: {
+                final_grade: x.tray_grade,
+                tray_type: x.type_taxanomy,
+              },
+            }
+          );
+
+          if (
+            x.type_taxanomy == "ST" &&
+            x.sp_price !== undefined &&
+            x.mrp_price !== undefined
+          ) {
+            for (let y of x.items) {
+              let updatePrice = await delivery.updateOne(
+                { "uic_code.code": y.uic },
+                {
+                  $set: {
+                    mrp_price: x.mrp_price,
+                    sp_price: x.sp_price,
+                    price_updation_date: x.price_updation_date,
+                    price_creation_date: x.price_creation_date,
+                  },
                 }
-              })
+              );
             }
           }
         }
-
 
         resolve(findTray); // You can resolve with the orderData if needed.
       } catch (error) {
@@ -5775,19 +5793,96 @@ module.exports = {
       }
     });
   },
-  pickupIssue:async()=>{
+  tempReq: async () => {
     try {
-      const fetchTray=await  masters.findOne({code:"WHT1564"})
-      for(let x of fetchTray.items){
-        const pushUic=await masters.updateOne({code:"WHT1564"},{
-          $push:{
-            temp_array:x.uic
-          }
-        })
+      let arr = [
+        "92080013384",
+        "92080012541",
+        "93060013048",
+        "93020010470",
+        "91010000625",
+        "93020010466",
+        "93020010476",
+        "93060012643",
+        "93020010565",
+        "91010000651",
+        "91010000786",
+        "91010000775",
+        "93050011118",
+        "93020010840",
+        "93070013468",
+        "93020010462",
+        "93060012923",
+        "91010000647",
+        "93070013810",
+        "92080012908",
+        "92080012523",
+        "93020010212",
+        "93030010902",
+        "92030008116",
+        "92070012281",
+        "93070013819",
+        "93030010889",
+        "93020010479",
+        "93020010698",
+        "93020010507",
+        "92080012878",
+        "92050004841",
+        "92030000519",
+        "93050011797",
+        "93050011400",
+        "93070013814",
+        "93020010579",
+        "93050011092",
+        "93050011474",
+        "93020010480",
+      ];
+      for (let x of arr) {
+        //  let find=await unitsActionLog.find({$or:[{uic:x,action_type: "Item not transfferd to ctx"},{uic:x,action_type: "Item transfferd to ctx"}]})
+        // let find=await unitsActionLog.find({$or:[{uic:x,action_type: "Closed by RDL-One"}]})
+        let find = await unitsActionLog.find({
+          $or: [{ uic: x, action_type: "Closed by RDL-two" }],
+        });
+        for (let y of find) {
+          let findItem = await delivery.findOne({ "uic_code.code": x });
+          let findPrc = await products.findOne({
+            vendor_sku_id: findItem.item_id,
+          });
+          //  let obj={
+          //   uic:y.uic,
+          //   model_name:findPrc.model_name,
+          //   tray_id:y.tray_id,
+          //   auditor_feedback:y.report.stage,
+          //   auditor_remarks:y.report.description,
+          //   audit_date:y.created_at,
+          //   auditor_name:y.user_name_of_action,
+          //  }
+          //  let obj={
+          //   uic:y.uic,
+          //   model_name:findPrc.model_name,
+          //   tray_id:y.tray_id,
+          //   rdl_1_status:y.report.selected_status,
+          //   rdl_1_spn:y.report.partRequired,
+          //   rdl_1_done_date:y.created_at,
+          //   rdl_1_agent:y.user_name_of_action,
+          //  }
+          let obj = {
+            uic: y.uic,
+            model_name: findPrc.model_name,
+            tray_id: y.tray_id,
+            rdl_2_status: y.report.status,
+            rdl_2_remark: y.report.description,
+            rdl_2_done_date: y.created_at,
+            rdl_2_agent: y.user_name_of_action,
+          };
+
+          let add = await tempOrdersReq.create(obj);
+          console.log(add);
+        }
       }
-      return fetchTray
+      return fetchTray;
     } catch (error) {
-      return error
+      return error;
     }
-  }
+  },
 };

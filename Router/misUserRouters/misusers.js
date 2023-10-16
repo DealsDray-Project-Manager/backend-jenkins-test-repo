@@ -1129,6 +1129,7 @@ router.post("/TrayMergeRequestSend", async (req, res, next) => {
       toTray,
       actionUser
     );
+    console.log(data);
     if (data.status === 1) {
       res.status(200).json({
         message: "Request Successfully Sent to Warehouse",
@@ -1310,6 +1311,7 @@ router.post("/pickup/whtTray", async (req, res, next) => {
 router.post("/pickup/requestSendToWh", async (req, res, next) => {
   try {
     let data = await misUserController.pickupRequestSendToWh(req.body);
+    console.log(data);
     if (data) {
       res.status(200).json({
         message: "Request sent to warehouse",

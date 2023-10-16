@@ -152,7 +152,6 @@ module.exports = {
         x["brand_name"] = x.muicDetails?.[0]?.brand_name;
         x["model_name"] = x.muicDetails?.[0]?.model_name;
       }
-      console.log(getBasedOnMuic);
       resolve(getBasedOnMuic);
     });
   },
@@ -160,7 +159,6 @@ module.exports = {
     //PROMISE
     return new Promise(async (resolve, reject) => {
       let findSku=await products.findOne({brand_name:brand,model_name:model})
-      console.log(findSku);
       const getBasedOnMuic = await delivery.aggregate([
         {
           $match: {
@@ -208,7 +206,6 @@ module.exports = {
       ]);
 
       for (let x of getBasedOnMuic) {
-        console.log(x);
         x["muic_one"] = x.muicDetails?.[0]?.muic;
         x["item_id"] = x.muicDetails?.[0]?.vendor_sku_id;
         x["ram"] = x.subMuicDetails?.[0]?.ram;
@@ -217,7 +214,6 @@ module.exports = {
         x["brand_name"] = x.muicDetails?.[0]?.brand_name;
         x["model_name"] = x.muicDetails?.[0]?.model_name;
       }
-      console.log(getBasedOnMuic);
       resolve(getBasedOnMuic);
     });
   },
@@ -265,7 +261,6 @@ module.exports = {
         x["brand_name"] = x.muicDetails?.[0]?.brand_name;
         x["model_name"] = x.muicDetails?.[0]?.model_name;
       }
-      console.log(getBasedOnMuic);
       resolve(getBasedOnMuic);
     });
   },
