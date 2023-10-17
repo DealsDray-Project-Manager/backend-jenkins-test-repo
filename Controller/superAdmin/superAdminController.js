@@ -5317,13 +5317,14 @@ module.exports = {
   },
   resolveOrderDateIssue: () => {
     return new Promise(async (resolve, reject) => {
-      let arr = ["407-1947201-7605117"];
+      let arr = [
+        "171-8585838-8066743"
+      ]
       for (let x of arr) {
         let findOrderdata = await orders.findOne(
           { order_id: x },
           { order_date: 1 }
         );
-        console.log("ex", findOrderdata.order_date);
         const originalDate = new Date(findOrderdata.order_date);
         // Create a new Date with day and month swapped
         const updatedDate = new Date(
@@ -5331,16 +5332,32 @@ module.exports = {
           originalDate.getDate() - 1, // Adjust for the day (subtract 1)
           originalDate.getMonth() + 1 // Month remains the same
         );
-        console.log(updatedDate);
-        let orderDate = await orders.updateOne(
-          { order_id: x },
-          {
-            $set: {
-              order_date: updatedDate,
-              order_timestamp: updatedDate,
-            },
-          }
-        );
+        console.log(findOrderdata.order_date);
+        console.log(new Date(findOrderdata.order_date) == new Date("2023-07-08T18:30:00.000Z"));
+        if(new Date(findOrderdata.order_date) == new Date("2023-07-08T18:30:00.000Z")){
+          console.log("w");
+          // let orderDate1 = await orders.updateMany(
+          //   { order_date: new Date("2023-07-08T18:30:00.000Z") },
+          //   {
+          //     $set: {
+          //       order_date: new Date("2023-06-09T18:30:00.000Z"),
+          //       order_timestamp:  new Date("2023-06-09T18:30:00.000Z"),
+          //     },
+          //   }
+          // );
+        }
+        // else if(new Date(findOrderdata.order_date) !== new Date("2023-06-09T18:30:00.000Z")){
+        //   let orderDate = await orders.updateOne(
+        //     { order_id: x },
+        //     {
+        //       $set: {
+        //         order_date: updatedDate,
+        //         order_timestamp: updatedDate,
+        //       },
+        //     }
+        //   );
+        // }
+        
       }
       resolve({ status: true });
     });

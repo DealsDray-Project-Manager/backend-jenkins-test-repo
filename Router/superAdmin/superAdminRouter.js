@@ -1076,6 +1076,7 @@ router.post("/createBulkTray", async (req, res, next) => {
             for (let key in allCount) {
               obj[key] = allCount[key];
             }
+            
             // obj.BOT = req.body.allCount.BOT;
             // obj.MMT = req.body.allCount.MMT;
             // obj.WHT = req.body.allCount.WHT;
