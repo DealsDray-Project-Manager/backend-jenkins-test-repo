@@ -7443,7 +7443,6 @@ module.exports = {
         partner_shop: location,
         "audit_report.stage": "Upgrade",
       });
-
       resolve({ upgaradeReport: findUpgardeUnits });
     });
   },

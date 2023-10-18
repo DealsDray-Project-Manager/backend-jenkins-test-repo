@@ -13,6 +13,12 @@ const cors = require("cors");
 connectDb();
 /* NODE CRON */
 const corn = require("./Utils/node-cron")();
+/* SENTRY.IO */
+const Sentry = require('@sentry/node');
+Sentry.init({
+  dsn: process.env.SENTRYDSN,
+});
+app.use(Sentry.Handlers.requestHandler());
 // Routers
 const superAdmin = require("./Router/superAdmin/superAdminRouter");
 const mobileUserRouter = require("./Router/MobileRouters/Users/user");
@@ -86,6 +92,7 @@ app.use((err, req, res, next) => {
     },
   });
 });
+app.use(Sentry.Handlers.errorHandler());
 // Server Running at port 8000
 const PORT = process.env.PORT || 8001;
 app.listen(

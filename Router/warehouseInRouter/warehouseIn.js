@@ -1493,6 +1493,7 @@ router.post("/viewTrayFromAndTo", async (req, res, next) => {
       type
     );
     if (data) {
+      console.log(data);
       let checkDup = data;
       if (type == "ctx-to-stx-sorting-page") {
         checkDup = await duplicateEntryCheck.onlyItemsArrayForSortingLevel(
