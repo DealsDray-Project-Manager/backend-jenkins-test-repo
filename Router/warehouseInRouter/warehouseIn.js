@@ -2520,7 +2520,7 @@ router.post(
   async (req, res, next) => {
     try {
       let data = await warehouseInController.sortingDoneCtxStxClose(req.body);
-     if (data.status == 2) {
+      if (data.status == 2) {
         let logUpdate =
           await warehouseInController.sortingDonectxTostxCloseLogData(
             data.tray.items,

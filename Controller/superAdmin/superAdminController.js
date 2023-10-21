@@ -34,10 +34,10 @@ const { tempOrdersReq } = require("../../Model/temp-req/temp-req");
 const { subMuic } = require("../../Model/sub-muic/sub-muic");
 const { unitsActionLog } = require("../../Model/units-log/units-action-log");
 
-const IISDOMAIN = "https://prexo-v9-dev-api.dealsdray.com/user/profile/";
+const IISDOMAIN = "https://prexo-v9-2-dev-api.dealsdray.com/user/profile/";
 const IISDOMAINBUYERDOC =
-  "https://prexo-v9-dev-api.dealsdray.com/user/document/";
-const IISDOMAINPRDT = "https://prexo-v9-dev-api.dealsdray.com/product/image/";
+  "https://prexo-v9-2-dev-api.dealsdray.com/user/document/";
+const IISDOMAINPRDT = "https://prexo-v9-2-dev-api.dealsdray.com/product/image/";
 
 /************************************************************************************************** */
 
@@ -2715,15 +2715,27 @@ module.exports = {
     return new Promise(async (resolve, reject) => {
       let arr = [];
       const rackIdData = await trayRack.find({ warehouse: warehouse });
+
       for (let x of rackIdData) {
-        const findRack = await masters.find(
-          {
-            $or: [{ rack_id: x.rack_id }, { temp_rack: x.rack_id }],
-          },
-          { rack_id: 1 }
-        );
-        if (x.limit > findRack.length) {
-          arr.push(x);
+        const countOfCurrent = await masters.count({
+          rack_id: x.rack_id,
+        });
+        const countOfUpComing = await masters.count({
+          temp_rack: x.rack_id,
+        });
+        // console.log("Upcoming",countOfUpComing,"current count",countOfCurrent);
+        if (x.limit > countOfCurrent + countOfUpComing) {
+          let obj = {
+            rack_id: x.rack_id,
+            display: x.display,
+            current_tray_count: countOfCurrent,
+            upcoming_tray_count: countOfUpComing,
+            avl_spc: x.limit - Number(countOfCurrent + countOfUpComing),
+          };
+          // x["current_tray_count"]=countOfCurrent
+          // x["upcoming_tray_count"]=countOfUpComing
+          // x['avl_spc']= x.limit - (Number(countOfCurrent + countOfUpComing))
+          arr.push(obj);
         }
       }
       resolve(arr);
@@ -4338,6 +4350,24 @@ module.exports = {
       resolve(dataFetch);
     });
   },
+  /*-----------------------------------------GET TRAY FOR REMOVE DUPLICATE UNITS------------------------------*/
+  getTrayForRemoveDuplicateUnits: async (trayId) => {
+    try {
+      console.log(trayId);
+      const trayData = await masters.findOne({ code: trayId });
+      if (trayData) {
+        if (trayData.sort_id != "Open") {
+          return { trayData: trayData, status: 1 };
+        } else {
+          return { status: 2 };
+        }
+      } else {
+        return { status: 0 };
+      }
+    } catch (error) {
+      return error;
+    }
+  },
   /*-----------------------------------------EXTRA------------------------------------------------------------*/
   addCpcType: () => {
     return new Promise(async (resolve, reject) => {
@@ -5317,9 +5347,7 @@ module.exports = {
   },
   resolveOrderDateIssue: () => {
     return new Promise(async (resolve, reject) => {
-      let arr = [
-        "171-8585838-8066743"
-      ]
+      let arr = ["171-8585838-8066743"];
       for (let x of arr) {
         let findOrderdata = await orders.findOne(
           { order_id: x },
@@ -5333,8 +5361,14 @@ module.exports = {
           originalDate.getMonth() + 1 // Month remains the same
         );
         console.log(findOrderdata.order_date);
-        console.log(new Date(findOrderdata.order_date) == new Date("2023-07-08T18:30:00.000Z"));
-        if(new Date(findOrderdata.order_date) == new Date("2023-07-08T18:30:00.000Z")){
+        console.log(
+          new Date(findOrderdata.order_date) ==
+            new Date("2023-07-08T18:30:00.000Z")
+        );
+        if (
+          new Date(findOrderdata.order_date) ==
+          new Date("2023-07-08T18:30:00.000Z")
+        ) {
           console.log("w");
           // let orderDate1 = await orders.updateMany(
           //   { order_date: new Date("2023-07-08T18:30:00.000Z") },
@@ -5357,7 +5391,6 @@ module.exports = {
         //     }
         //   );
         // }
-        
       }
       resolve({ status: true });
     });

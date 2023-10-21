@@ -1722,19 +1722,24 @@ router.post("/whToRp/muicList/repair/:location", async (req, res, next) => {
   }
 });
 // SCREEN LIST OF MUIC TO REPAIR WITHOUT SP
-router.post("/whToRp/muicList/repairWithoutSp/:location", async (req, res, next) => {
-  try {
-    const { location } = req.params;
-    let data = await misUserController.whtToRpMuicListToRepairWithoutSp(location);
-    if (data) {
-      res.status(200).json({
-        data: data,
-      });
+router.post(
+  "/whToRp/muicList/repairWithoutSp/:location",
+  async (req, res, next) => {
+    try {
+      const { location } = req.params;
+      let data = await misUserController.whtToRpMuicListToRepairWithoutSp(
+        location
+      );
+      if (data) {
+        res.status(200).json({
+          data: data,
+        });
+      }
+    } catch (error) {
+      next(error);
     }
-  } catch (error) {
-    next(error);
   }
-});
+);
 // PROCUREMENT SCREEN
 router.post("/procurmentRepair/:location", async (req, res, next) => {
   try {
@@ -1777,14 +1782,15 @@ router.post("/whToRpAssignForRepair", async (req, res, next) => {
 router.post("/whToRpAssignForRepairWithoutSp", async (req, res, next) => {
   try {
     const { location, brand, model } = req.body;
-    let data = await misUserController.whtToRpMuicListToRepairAssignForRepairWithoutSp(
-      location,
-      brand,
-      model
-    );
+    let data =
+      await misUserController.whtToRpMuicListToRepairAssignForRepairWithoutSp(
+        location,
+        brand,
+        model
+      );
     if (data) {
       res.status(200).json({
-       data:data
+        data: data,
       });
     } else {
       res.status(202).json({
@@ -1905,7 +1911,7 @@ router.post("/whtToRpSorting/assign", async (req, res, next) => {
       sortingUser,
       selectedUic,
       actUser,
-      screen
+      screen,
     } = req.body;
     let data = await misUserController.whtToRpSortingAssign(
       spDetails,
@@ -2127,6 +2133,7 @@ router.post("/rackChangeByMis", async (req, res, next) => {
 });
 /*------------------------------------------BAG TRANSFER -----------------------------------------------*/
 // BAG TRANSFER PAGE / BAG RECEIVE PAGE
+
 router.post("/bagTransferAndReceive", async (req, res, next) => {
   try {
     const { location, status } = req.body;
@@ -2144,14 +2151,37 @@ router.post("/bagTransferAndReceive", async (req, res, next) => {
     next(error);
   }
 });
+
 // SEND THE BAG VIA COURIER OR HAND DELIVERY
 router.post("/bagTransferSend", async (req, res, next) => {
   try {
+    console.log(req.body);
     let data = await misUserController.sendTheBagViaCourierOrHand(req.body);
-    if (data) {
+    if (data.status == 1) {
       res.status(200).json({
-        data: data,
-        message: "Success",
+        message: "Successfully Transferred",
+      });
+    } else {
+      res.status(202).json({
+        message: "Failed please try again...",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+router.post("/bagTransferReceive", async (req, res, next) => {
+  try {
+    console.log(req.body);
+    let data = await misUserController.bagTransferReceive(req.body);
+    console.log(data);
+    if (data.status == 1) {
+      res.status(200).json({
+        message: "Successfully Received",
+      });
+    } else {
+      res.status(202).json({
+        message: "Failed please try again...",
       });
     }
   } catch (error) {

@@ -2398,7 +2398,7 @@ module.exports = {
   getStockin: (location) => {
     return new Promise(async (resolve, reject) => {
       let data = await masters.find({
-        sort_id: { $ne: "No Status" },
+        sort_id: { $in: ["Closed", "Pre-closure"] },
         prefix: "bag-master",
         cpc: location,
       });
@@ -4994,7 +4994,8 @@ module.exports = {
     screen
   ) => {
     return new Promise(async (resolve, reject) => {
-      let whtTrayArr = [];
+      let whtTrayArr = [],
+        otherTray = [];
       for (let uic of selectedUic) {
         const updateItem = await masters.findOneAndUpdate(
           {
@@ -5048,6 +5049,7 @@ module.exports = {
             },
           }
         );
+        otherTray.push(rpTray);
         if (rpTrayUpdation && screen == "WithSp") {
           const spTrayUpdation = await masters.findOneAndUpdate(
             { code: spTray },
@@ -5061,8 +5063,8 @@ module.exports = {
               },
             }
           );
-
           if (spTrayUpdation && screen == "WithSp") {
+            otherTray.push(spTray);
             for (let x of spDetails) {
               let updateParts = await partAndColor.updateOne(
                 { part_code: x.partId },
@@ -5089,12 +5091,36 @@ module.exports = {
                 resolve({ status: 0 });
               }
             }
-            resolve({ status: 1 });
+            let obj = {
+              code: spTray,
+              agent_name: spwhuser,
+              description: "Assigned to sp warehouse for parts issue to agent:",
+            };
+            let logCreationRes = await module.exports.trackSpAndRpAssignLevel(
+              obj
+            );
+            if (logCreationRes.status == 1) {
+              resolve({ status: 1 });
+            } else {
+              resolve({ status: 0 });
+            }
           } else {
             resolve({ status: 0 });
           }
         } else if (screen == "WithoutSp" && rpTrayUpdation) {
-          resolve({ status: 1 });
+          let obj = {
+            code: rpTray,
+            agent_name: sortingUser,
+            description: "Assigned to sorting (Wht to rp) to agent",
+          };
+          let logCreationRes = await module.exports.trackSpAndRpAssignLevel(
+            obj
+          );
+          if (logCreationRes.status == 1) {
+            resolve({ status: 1 });
+          } else {
+            resolve({ status: 0 });
+          }
         } else {
           resolve({ status: 0 });
         }
@@ -5102,6 +5128,33 @@ module.exports = {
         resolve({ status: 0 });
       }
     });
+  },
+  trackSpAndRpAssignLevel: async (arr, actUser) => {
+    try {
+      let flag = true;
+      for (let x of arr) {
+        let unitsLogCreation = await unitsActionLog.create({
+          action_type: x.description,
+          created_at: Date.now(),
+          agent_name: x.agent_name,
+          user_type: "PRC MIS",
+          tray_id: x.code,
+          track_tray: "Tray",
+          description: `${x.description} :${sortingUser} by mis :${actUser}`,
+        });
+        if (unitsLogCreation == null) {
+          flag = false;
+          break;
+        }
+      }
+      if (flag) {
+        return { status: 1 };
+      } else {
+        return { status: 0 };
+      }
+    } catch (error) {
+      return error;
+    }
   },
   sortingCtxtoStxRequestSendToWh: (
     sortingAgent,
@@ -5615,7 +5668,7 @@ module.exports = {
   /*--------------------------------------------STX UTILITY ---------------------------------------*/
   stxUtilityImportXlsx: () => {
     return new Promise(async (resolve, reject) => {
-      let arr = []
+      let arr = [];
 
       for (let x of arr) {
         let obj = {
@@ -5628,7 +5681,7 @@ module.exports = {
         };
         let createTo = await stxUtility.create(obj);
       }
-      resolve({ status: 1,  });
+      resolve({ status: 1 });
     });
   },
   //SEARCH UIC FROM STX UTILITY COLLECTION
@@ -5678,6 +5731,14 @@ module.exports = {
             $or: [
               {
                 sort_id: "Open",
+                type_taxanomy: "ST",
+                cpc: location,
+                tray_grade: grade,
+                brand: brandAndModel.brand_name,
+                model: brandAndModel.model_name,
+              },
+              {
+                sort_id: "Inuse",
                 type_taxanomy: "ST",
                 cpc: location,
                 tray_grade: grade,
@@ -5967,7 +6028,7 @@ module.exports = {
             reject(err);
           });
       } else {
-        data = await masters.find({});
+        data = await bagTransfer.find({ status: "Transferd", cpc: location });
       }
       resolve(data);
     });
@@ -5975,31 +6036,47 @@ module.exports = {
   sendTheBagViaCourierOrHand: (deliveryData) => {
     return new Promise(async (resolve, reject) => {
       let updateBag;
-      for (let x of delivery.bag_details) {
+      const prefix = "RQ";
+      const randomDigits = Math.floor(Math.random() * 90000) + 10000; // Generates a random 5-digit number
+      const timestamp = Date.now().toString().slice(-5); // Uses the last 5 digits of the current timestamp
+      deliveryData.req_id = prefix + timestamp + randomDigits;
+      for (let x of deliveryData.bag_details) {
+        let checkStatus = await masters.findOne({ code: x }, { sort_id: 1 });
         updateBag = await masters.findOneAndUpdate(
           {
-            code: x,
+            $or: [
+              {
+                code: x,
+                sort_id: "Closed",
+              },
+              {
+                code: x,
+                sort_id: "Pre-closure",
+              },
+            ],
           },
           {
             $set: {
               sort_id: "Bag Transferred to new location",
+              cpc: deliveryData.cpc,
+              temp_status: checkStatus.sort_id,
             },
           }
         );
         if (updateBag) {
-          for (let x of updateBag.items) {
-            await unitsActionLog
-              .create({
-                created_at: Date.now(),
-                awbn_number: x.awbn_number,
-                user_name_of_action: deliveryData.username,
-                action_type: "Bag Transfer",
-                user_type: `${deliveryData.warehouseType} Mis`,
-                description: `Bag Transferd to this location ${deliveryData.cpc} ,warehoue name:${deliveryData?.warehoue} done by:${deliveryData.username}`,
-                bag_id: x,
-              })
-              .catch((err) => reject(err));
-          }
+          // for (let x of updateBag.items) {
+          //   await unitsActionLog
+          //     .create({
+          //       created_at: Date.now(),
+          //       awbn_number: x.awbn_number,
+          //       user_name_of_action: deliveryData.username,
+          //       action_type: "Bag Transfer",
+          //       user_type: `${deliveryData.warehouseType} Mis`,
+          //       description: `Bag Transferred to this location ${deliveryData.cpc} ,warehoue name:${deliveryData?.warehoue} done by:${deliveryData.username}`,
+          //       bag_id: x,
+          //     })
+          //     .catch((err) => reject(err));
+          // }
         }
       }
       if (updateBag) {
@@ -6013,5 +6090,60 @@ module.exports = {
         resolve({ status: 0 });
       }
     });
+  },
+  bagTransferReceive: async (dataOfRequestReceive) => {
+    try {
+      for (let x of dataOfRequestReceive.bags) {
+        let findTheBag = await masters.findOne(
+          { code: x },
+          { temp_status: 1, items: 1, cpc: 1 }
+        );
+        let updateBag = await masters.updateOne(
+          { code: x, sort_id: "Bag Transferred to new location" },
+          {
+            $set: {
+              sort_id: findTheBag.temp_status,
+            },
+          }
+        );
+        if (updateBag.modifiedCount == 0) {
+          return { status: 0 };
+        } else {
+          let changeRequesStatus = await bagTransfer.updateOne(
+            { req_id: dataOfRequestReceive.req_id },
+            {
+              $set: {
+                status: "Received by mis",
+              },
+            }
+          );
+          if (changeRequesStatus.matchedCount == 0) {
+            return 0;
+          } else {
+            for (let y of findTheBag.items) {
+              let updatLocation = await orders.updateOne(
+                { order_id: y.order_id },
+                {
+                  $set: {
+                    partner_shop: findTheBag.cpc,
+                  },
+                }
+              );
+              let updateLocationDelivery = await orders.updateOne(
+                { order_id: y.order_id },
+                {
+                  $set: {
+                    partner_shop: findTheBag.cpc,
+                  },
+                }
+              );
+            }
+          }
+        }
+      }
+      return { status: 1 };
+    } catch (error) {
+      return error;
+    }
   },
 };

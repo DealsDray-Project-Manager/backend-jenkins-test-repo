@@ -202,7 +202,7 @@ module.exports = {
       }
     });
   },
-  rdlTwoDoneCloseSpTray: (trayId) => {
+  rdlTwoDoneCloseSpTray: (trayId,actionUser) => {
     return new Promise(async (resolve, reject) => {
       const closeSpTray = await masters.updateOne(
         { code: trayId },
@@ -216,6 +216,15 @@ module.exports = {
         }
       );
       if (closeSpTray.modifiedCount !== 0) {
+        await unitsActionLog.create({
+          action_type: "RDL-2 Done Closed by SP Warehouse",
+          created_at: Date.now(),
+          user_name_of_action: actionUser,
+          user_type: "SP Warehouse",
+          tray_id:trayId,
+          track_tray: "Tray",
+          description: `RDL-2 Done Closed by SP Warehouse:${actionUser}`,
+        });
         resolve({ status: 1 });
       } else {
         resolve({ status: 0 });

@@ -1323,6 +1323,16 @@ module.exports = {
               }
             );
             if (data) {
+              await unitsActionLog.create({
+                action_type: "Received from RDL-2",
+                created_at: Date.now(),
+                user_name_of_action: trayData.actioUser,
+                user_type: "SP Warehouse",
+                agent_name: data.issued_user_name,
+                tray_id: trayData.trayId,
+                track_tray: "Tray",
+                description: `Received from RDL-2 to agent:${data.issued_user_name} by WH :${trayData.actioUser}`,
+              });
               resolve({ status: 1 });
             }
           }
@@ -2890,6 +2900,16 @@ module.exports = {
             },
           }
         );
+        await unitsActionLog.create({
+          action_type: "Issued to RDL-2",
+          created_at: Date.now(),
+          agent_name: data.issued_user_name,
+          user_name_of_action: trayData.actionUser,
+          tray_id: trayData.trayId,
+          user_type: "SP Warehouse",
+          track_tray: "Tray",
+          description: `Issued to RDL-2 to agent :${data.issued_user_name} by WH :${trayData.actionUser}`,
+        });
       } else if (trayData.sortId == "Send for BQC") {
         data = await masters.findOneAndUpdate(
           { code: trayData.trayId },

@@ -14,6 +14,7 @@ const jwt = require("../../Utils/jwt_token");
 const fs = require("fs");
 /* ELASTIC SEARCH */
 const elasticsearch = require("../../Elastic-search/elastic");
+const duplicateEntryCheck = require("../../Controller/Duplicate-entry-check/duplicate-entry-check");
 /**************************************************************************************************/
 
 /*
@@ -1073,12 +1074,12 @@ router.post("/createBulkTray", async (req, res, next) => {
           if (err) {
           } else {
             obj = JSON.parse(datafile);
-            for (let key in  allCount) {
-              console.log(key,allCount[key]);
+            for (let key in allCount) {
+              console.log(key, allCount[key]);
               obj[key] = allCount[key];
             }
-            
-           console.log(obj);
+
+            console.log(obj);
 
             json = JSON.stringify(obj);
             fs.writeFile(
@@ -1924,6 +1925,7 @@ router.post("/trayracks/view/:warehouse", async (req, res, next) => {
     const trayracksData = await superAdminController.getRackBasedOnTheWarehouse(
       warehouse
     );
+    console.log(trayracksData);
     if (trayracksData) {
       res.status(200).json({
         data: trayracksData,
@@ -3638,6 +3640,33 @@ router.post("/bqcSynAction/:type", async (req, res, next) => {
     next(error);
   }
 });
+/*----------------------------------------------REMOVE DUPLICATE UNITS FROM TRAY ---------------------------------------------*/
+router.post("/getTrayForRemoveDuplicate/:trayId", async (req, res, next) => {
+  try {
+    const { trayId } = req.params;
+    const tray = await superAdminController.getTrayForRemoveDuplicateUnits(
+      trayId
+    );
+    if (tray.status == 1) {
+      let checkDup = await duplicateEntryCheck.itemsArrayAndActualArray(
+        tray.trayData
+      );
+      res.status(200).json({
+        data: checkDup,
+      });
+    } else if (tray.status == 2) {
+      res.status(202).json({
+        message: "No items were found in this tray",
+      });
+    } else {
+      res.status(202).json({
+        message: "Invalid tray please enter valid tray",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
 /*---------------------------------------------------------------------------------------------------------------------------*/
 
 /***********************************************EXTRA  SECTION*********************************************************** */
@@ -4177,17 +4206,17 @@ router.post("/extra/tempReq", async (req, res, next) => {
   try {
     let data = await superAdminController.tempReq();
     if (data) {
-        res.status(200).json({
-            message: "Successfully Update",
-          });
-        } else {
-            res.status(202).json({
+      res.status(200).json({
+        message: "Successfully Update",
+      });
+    } else {
+      res.status(202).json({
         message: "Failed",
       });
     }
     // throw new Error('This is a test for sentry');
   } catch (error) {
-    console.log(error)
+    console.log(error);
     next(error);
   }
 });
