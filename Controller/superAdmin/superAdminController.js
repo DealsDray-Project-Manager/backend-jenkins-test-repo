@@ -293,7 +293,13 @@ module.exports = {
 
     buyerData.creation_date = Date.now();
     return new Promise(async (resolve, rejects) => {
-      let buyerExist = await user.findOne({ user_name: buyerData.user_name });
+      let buyerExist = await user.findOne({
+        $or: [
+          { user_name: buyerData.user_name },
+          { email: buyerData.email },
+          { contact: buyerData.contact },
+        ],
+      });
       if (buyerExist) {
         resolve({ status: true, buyer: buyerExist });
       } else {
@@ -323,6 +329,7 @@ module.exports = {
     return new Promise(async (resolve, reject) => {
       let data = await usersHistory.find({ user_name: username });
       if (data) {
+        console.log(data);
         resolve(data);
       }
     });
@@ -501,7 +508,20 @@ module.exports = {
           IISDOMAINBUYERDOC + docuemnts.business_address_proof[0].filename;
       }
     }
+
     return new Promise(async (resolve, reject) => {
+      let checkBuyerExists = await user.findOne({
+        $or: [
+          {
+            contact: buyerData.contact,
+            user_name: { $ne: buyerData.user_name },
+          },
+          { email: buyerData.email, user_name: { $ne: buyerData.user_name } },
+        ],
+      });
+      if (checkBuyerExists) {
+        resolve({ status: 1 });
+      }
       let userDetails = await user.findOneAndUpdate(
         { user_name: buyerData.user_name },
         {
@@ -515,31 +535,35 @@ module.exports = {
             profile: buyerData.profile,
             mobile_verification_status: buyerData.mobile_verification_status,
             email_verification_status: buyerData.email_verification_status,
+            contact_person_name: buyerData.contact_person_name,
+            last_update_date: Date.now(),
           },
         },
         { returnOriginal: false }
       );
+      console.log(userDetails);
 
       if (userDetails) {
         let obj = {
-          name: userDetails.name,
-          email: userDetails.email,
           contact: userDetails.contact,
-          user_name: userDetails.user_name,
-          password: userDetails.password,
-          cpc: userDetails.cpc,
+          email: userDetails.email,
+          name: buyerData.name,
           profile: userDetails.profile,
-          user_type: userDetails.user_type,
-          status: userDetails.status,
+          user_name: userDetails.user_name,
+          business_address_proof: userDetails.business_address_proof,
+          aadhar_proof: userDetails.aadhar_proof,
+          pan_card_proof: userDetails.pan_card_proof,
           creation_date: userDetails.creation_date,
           last_update_date: userDetails.last_update_date,
-          last_otp: userDetails.last_otp,
-          profile: userDetails.profile,
+          email_verification_status: userDetails.email_verification_status,
+          mobile_verification_status: userDetails.mobile_verification_status,
+          contact_person_name: userDetails.contact_person_name,
         };
+        console.log("ss", obj);
         let historyTab = await usersHistory.create(obj);
-        resolve(userDetails);
+        resolve({ status: 1 });
       } else {
-        resolve();
+        resolve({ status: 0 });
       }
     });
   },
@@ -579,7 +603,6 @@ module.exports = {
           status: userDetails.status,
           creation_date: userDetails.creation_date,
           last_update_date: userDetails.last_update_date,
-          last_otp: userDetails.last_otp,
           profile: userDetails.profile,
         };
         let historyTab = await usersHistory.create(obj);
@@ -899,6 +922,7 @@ module.exports = {
       resolve(allProducts);
     });
   },
+  
 
   /*--------------------------------FIND IMAGE FOR EDITING-----------------------------------*/
 
@@ -2254,53 +2278,32 @@ module.exports = {
   },
   extraCtxRelease: () => {
     return new Promise(async (resolve, reject) => {
-      let getCtx = await masters.find({
-        prefix: "tray-master",
-        type_taxanomy: "CT",
-        sort_id: "Audit Done Closed By Warehouse",
-      });
-
-      for (let x of getCtx) {
-        if (
-          x.code !== "CTC3051" &&
-          x.code !== "CTC3052" &&
-          x.code !== "CTC3053" &&
-          x.code !== "CTC3054" &&
-          x.code !== "CTC3055"
-        ) {
-          for (let y of x.items) {
-            let updateDelivery = await delivery.findOneAndUpdate(
-              { tracking_id: y.tracking_id },
-              {
-                $set: {
-                  tray_location: "Warehouse",
-                  sales_bin_status: "Sales Bin",
-                  sales_bin_date: Date.now(),
-                  sales_bin_grade: x.tray_grade,
-                  sales_bin_wh_agent_name: "From Bakend",
-                  sales_bin_desctiption: "From Bakend",
-                },
-              }
-            );
-          }
-          let updateRetuTray = await masters.updateOne(
-            {
-              code: x.code,
-            },
-            {
-              $set: {
-                sort_id: "Open",
-                actual_items: [],
-                temp_array: [],
-                items: [],
-                issued_user_name: null,
-                from_merge: null,
-                to_merge: null,
-              },
-            }
-          );
+      let updateDelivery = await delivery.findOneAndUpdate(
+        { "uic_code.code": "92100000526" },
+        {
+          $set: {
+            tray_location: "Warehouse",
+            item_moved_to_billed_bin: "Yes",
+            "bqc_software_report.final_grade": "B",
+            item_moved_to_billed_bin_date: Date.now(),
+            item_moved_to_billed_bin_done_username: "From Bakend",
+          },
         }
-      }
+      );
+
+      let updateRetuTray = await masters.updateOne(
+        {
+          "items.uic": "92100000526",
+        },
+        {
+          $pull: {
+            items: {
+              uic: "92100000526",
+            },
+          },
+        }
+      );
+
       resolve({ status: true });
     });
   },
@@ -5317,9 +5320,7 @@ module.exports = {
   },
   resolveOrderDateIssue: () => {
     return new Promise(async (resolve, reject) => {
-      let arr = [
-        "171-8585838-8066743"
-      ]
+      let arr = ["171-8585838-8066743"];
       for (let x of arr) {
         let findOrderdata = await orders.findOne(
           { order_id: x },
@@ -5333,8 +5334,14 @@ module.exports = {
           originalDate.getMonth() + 1 // Month remains the same
         );
         console.log(findOrderdata.order_date);
-        console.log(new Date(findOrderdata.order_date) == new Date("2023-07-08T18:30:00.000Z"));
-        if(new Date(findOrderdata.order_date) == new Date("2023-07-08T18:30:00.000Z")){
+        console.log(
+          new Date(findOrderdata.order_date) ==
+            new Date("2023-07-08T18:30:00.000Z")
+        );
+        if (
+          new Date(findOrderdata.order_date) ==
+          new Date("2023-07-08T18:30:00.000Z")
+        ) {
           console.log("w");
           // let orderDate1 = await orders.updateMany(
           //   { order_date: new Date("2023-07-08T18:30:00.000Z") },
@@ -5357,7 +5364,6 @@ module.exports = {
         //     }
         //   );
         // }
-        
       }
       resolve({ status: true });
     });
@@ -5812,92 +5818,111 @@ module.exports = {
   },
   tempReq: async () => {
     try {
-      let arr = [
-        "92080013384",
-        "92080012541",
-        "93060013048",
-        "93020010470",
-        "91010000625",
-        "93020010466",
-        "93020010476",
-        "93060012643",
-        "93020010565",
-        "91010000651",
-        "91010000786",
-        "91010000775",
-        "93050011118",
-        "93020010840",
-        "93070013468",
-        "93020010462",
-        "93060012923",
-        "91010000647",
-        "93070013810",
-        "92080012908",
-        "92080012523",
-        "93020010212",
-        "93030010902",
-        "92030008116",
-        "92070012281",
-        "93070013819",
-        "93030010889",
-        "93020010479",
-        "93020010698",
-        "93020010507",
-        "92080012878",
-        "92050004841",
-        "92030000519",
-        "93050011797",
-        "93050011400",
-        "93070013814",
-        "93020010579",
-        "93050011092",
-        "93050011474",
-        "93020010480",
-      ];
-      for (let x of arr) {
-        //  let find=await unitsActionLog.find({$or:[{uic:x,action_type: "Item not transfferd to ctx"},{uic:x,action_type: "Item transfferd to ctx"}]})
-        // let find=await unitsActionLog.find({$or:[{uic:x,action_type: "Closed by RDL-One"}]})
-        let find = await unitsActionLog.find({
-          $or: [{ uic: x, action_type: "Closed by RDL-two" }],
-        });
-        for (let y of find) {
-          let findItem = await delivery.findOne({ "uic_code.code": x });
-          let findPrc = await products.findOne({
-            vendor_sku_id: findItem.item_id,
-          });
-          //  let obj={
-          //   uic:y.uic,
-          //   model_name:findPrc.model_name,
-          //   tray_id:y.tray_id,
-          //   auditor_feedback:y.report.stage,
-          //   auditor_remarks:y.report.description,
-          //   audit_date:y.created_at,
-          //   auditor_name:y.user_name_of_action,
-          //  }
-          //  let obj={
-          //   uic:y.uic,
-          //   model_name:findPrc.model_name,
-          //   tray_id:y.tray_id,
-          //   rdl_1_status:y.report.selected_status,
-          //   rdl_1_spn:y.report.partRequired,
-          //   rdl_1_done_date:y.created_at,
-          //   rdl_1_agent:y.user_name_of_action,
-          //  }
-          let obj = {
-            uic: y.uic,
-            model_name: findPrc.model_name,
-            tray_id: y.tray_id,
-            rdl_2_status: y.report.status,
-            rdl_2_remark: y.report.description,
-            rdl_2_done_date: y.created_at,
-            rdl_2_agent: y.user_name_of_action,
-          };
-
-          let add = await tempOrdersReq.create(obj);
-          console.log(add);
+      const startDate = new Date("2023-10-23T00:00:00.000+00:00");
+      const endDate = new Date("2023-10-23T23:59:59.999+00:00");
+      const find = await unitsActionLog.updateMany(
+        {
+          created_at: {
+            $gte: startDate,
+            $lt: endDate,
+          },
+          tray_id: "RPT18042",
+          action_type: "Closed by RDL-two",
+        },
+        {
+          $set: {
+            temp_flag: "YES",
+          },
         }
+      );
+      console.log(find);
+    } catch (error) {
+      return error;
+    }
+  },
+  pickupIssue: async () => {
+    try {
+      const fetchTray = await masters.findOne({ code: "WHT1564" });
+      for (let x of fetchTray.items) {
+        const pushUic = await masters.updateOne(
+          { code: "WHT1564" },
+          {
+            $push: {
+              temp_array: x.uic,
+            },
+          }
+        );
       }
       return fetchTray;
+    } catch (error) {
+      return error;
+    }
+  },
+  pickupIssueRollBack: async () => {
+    try {
+      let arr = [
+        "WHT1610",
+        "WHT1038",
+        "WHT1139",
+        "WHT1151",
+        "WHT1160",
+        "WHT1405",
+        "WHT1461",
+        "WHT1610",
+        "WHT1729",
+        "WHT1787",
+      ];
+      for (let x of arr) {
+        let findUpdate = await masters.updateOne(
+          { code: x },
+          {
+            $set: {
+              sort_id: "Open",
+              temp_array: [],
+              actual_items: [],
+              items: [],
+            },
+          }
+        );
+      }
+      let findTray = await masters.find({
+        sort_id: "Pickup Request sent to Warehouse",
+        to_tray_for_pickup: { $ne: null },
+      });
+      for (let y of findTray) {
+        let updateData = await masters.findOneAndUpdate(
+          { code: y.code },
+          {
+            $set: {
+              sort_id: "RDL-2 done closed by warehouse",
+              temp_array: [],
+              actual_items: [],
+            },
+          }
+        );
+        for (let m of y.items) {
+          let update3 = await masters.findOneAndUpdate(
+            { "items.uic": m.uic },
+            {
+              $set: {
+                "items.$.pickup_toTray": null,
+              },
+            }
+          );
+        }
+        console.log(updateData);
+        let update2 = await masters.updateOne(
+          { code: y.to_tray_for_pickup },
+          {
+            $set: {
+              sort_id: "Open",
+              temp_array: [],
+              actual_items: [],
+            },
+          }
+        );
+      }
+      return { status: true };
     } catch (error) {
       return error;
     }

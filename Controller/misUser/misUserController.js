@@ -3640,6 +3640,7 @@ module.exports = {
               "track_tray.rdl_1_done_close_by_wh": { $gte: threeDaysAgo },
               sort_id: type,
               cpc: location,
+              type_taxanomy:"WHT"
             },
           },
           {
@@ -3738,13 +3739,15 @@ module.exports = {
             $unwind: "$items",
           },
         ]);
-      } else {
+      }
+       else {
         items = await masters.aggregate([
           {
             $match: {
               "items.rdl_fls_report.selected_status": { $in: selectedStatus },
               sort_id: "Ready to RDL-2",
               cpc: location,
+              type_taxanomy:"WHT"
             },
           },
           {
@@ -3779,7 +3782,6 @@ module.exports = {
       let items = [];
       const today = new Date(); // Get the current date
       today.setHours(0, 0, 0, 0); // Set the time to midnight
-
       const threeDaysAgo = new Date();
       threeDaysAgo.setDate(today.getDate() - 3);
       if (type == "Charge Done") {
@@ -3830,7 +3832,25 @@ module.exports = {
             },
           },
         ]);
-      } else {
+      }
+      else if(type == "Ready to RDL-2"){
+        items = await masters.aggregate([
+          { $match: { sort_id: "Ready to RDL-2",type_taxanomy:"WHT", cpc: location } },
+          {
+            $unwind: "$items",
+          },
+          {
+            $project: {
+              items: 1,
+              brand: 1,
+              model: 1,
+              code: 1,
+              closed_date_agent: 1,
+            },
+          },
+        ]);
+      }
+       else {
         items = await masters.aggregate([
           { $match: { sort_id: type, cpc: location } },
           {
@@ -3873,7 +3893,7 @@ module.exports = {
         items = await masters.aggregate([
           {
             $match: {
-              sort_id: "Ready to Audit",
+              sort_id: "  ",
               brand: brand,
               model: model,
               cpc: location,
@@ -4119,8 +4139,6 @@ module.exports = {
               }
             );
           } else {
-            await session.abortTransaction();
-            session.endSession();
             return null;
           }
 
@@ -4153,7 +4171,7 @@ module.exports = {
         }
       }
 
-      if (sendtoPickupRequest.matchedCount != 0) {
+      if (sendtoPickupRequest) {
         return sendtoPickupRequest;
       } else {
         return null;
@@ -4523,28 +4541,28 @@ module.exports = {
     return new Promise(async (resolve, reject) => {
       const findItem = await masters.aggregate([
         {
-          $match: {
-            $or: [
-              {
-                "items.rdl_fls_report.selected_status": "Software Installation",
-                cpc: location,
-                sort_id: "Ready to RDL-2",
-              },
-              {
-                "items.rdl_fls_report.selected_status": "Motherboard Work",
-                cpc: location,
-                sort_id: "Ready to RDL-2",
-              },
-            ],
-          },
-        },
-        {
           $unwind: "$items",
         },
         {
           $match: {
             $or: [
               {
+                "items.rdl_fls_report.selected_status": "Software Installation",
+                cpc: location,
+                sort_id: "Ready to RDL-2",
+              },
+              {
+                "items.rdl_fls_report.selected_status": "Motherboard Work",
+                cpc: location,
+                sort_id: "Ready to RDL-2",
+              },
+            ],
+          },
+        },
+        {
+          $match: {
+            $or: [
+              {
                 "items.rdl_fls_report.selected_status": "Motherboard Work",
               },
               {
@@ -4553,6 +4571,7 @@ module.exports = {
             ],
           },
         },
+
         {
           $group: {
             _id: {
@@ -4560,10 +4579,21 @@ module.exports = {
               brand: "$items.brand_name",
               muic: "$items.muic",
             },
+            items: { $push: "$items" },
             count: { $sum: 1 },
           },
         },
       ]);
+      findItem.map((data) => {
+        (data["Motherboard"] = data.items.filter(
+          (item) => item.rdl_fls_report.selected_status === "Motherboard Work"
+        ).length),
+          (data["Software"] = data.items.filter(
+            (item) =>
+              item.rdl_fls_report.selected_status === "Software Installation"
+          ).length);
+      });
+      console.log(findItem);
       resolve(findItem);
     });
   },
@@ -4612,7 +4642,6 @@ module.exports = {
           },
         },
       ]);
-
       const partCodes = findItem.flatMap((x) =>
         x.parts.map((part) => part.part_id?.[0])
       );
@@ -4627,6 +4656,7 @@ module.exports = {
           );
           if (checkThePart) {
             let qty = checkThePart.avl_stock - y.count;
+         
             if (qty < 0) {
               let required = Math.abs(qty);
               required_qty += required;
@@ -4635,7 +4665,6 @@ module.exports = {
             required_qty += y.count;
           }
         });
-
         if (required_qty !== 0) {
           x["required_qty"] = required_qty;
           return x;
@@ -5615,7 +5644,7 @@ module.exports = {
   /*--------------------------------------------STX UTILITY ---------------------------------------*/
   stxUtilityImportXlsx: () => {
     return new Promise(async (resolve, reject) => {
-      let arr = []
+      let arr = [];
 
       for (let x of arr) {
         let obj = {
@@ -5628,7 +5657,7 @@ module.exports = {
         };
         let createTo = await stxUtility.create(obj);
       }
-      resolve({ status: 1,  });
+      resolve({ status: 1 });
     });
   },
   //SEARCH UIC FROM STX UTILITY COLLECTION
@@ -6014,4 +6043,4 @@ module.exports = {
       }
     });
   },
-};
+};  

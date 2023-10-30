@@ -146,7 +146,7 @@ module.exports = {
           },
         },
       ]);
-      
+      console.log(findItem);
       if (findItem) {
         let arr = [];
         if (findItem.length !== 0) {

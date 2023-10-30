@@ -27,7 +27,9 @@ router.post("/viewPrice/:location", async (req, res, next) => {
     let data = await salesController.viewPrice(location);
     if (data) {
       res.status(200).json({
-        data: data,
+        data: data.mainData,
+        skuData:data.skuData,
+        arrOfBrand:data.arrOfBrand
       });
     }
   } catch (error) {
@@ -37,8 +39,8 @@ router.post("/viewPrice/:location", async (req, res, next) => {
 // VIEW PRICE BASIS OF SUB MUIC AND FILTER
 router.post("/viewPriceFilter", async (req, res, next) => {
   try {
-    const { location, brand, model } = req.body;
-    let data = await salesController.viewPriceFilter(location, brand, model);
+    const { location, brand, model,grade } = req.body;
+    let data = await salesController.viewPriceFilter(location, brand, model,grade);
     if (data) {
       res.status(200).json({
         data: data,
@@ -53,9 +55,12 @@ router.post("/viewPriceBasisMuic/:location", async (req, res, next) => {
   try {
     const { location } = req.params;
     let data = await salesController.viewPriceBasisMuic(location);
+    console.log(data);
     if (data) {
       res.status(200).json({
-        data: data,
+        data: data.mainData,
+        skuData:data.skuData,
+        arrOfBrand:data.arrOfBrand
       });
     }
   } catch (error) {
@@ -65,11 +70,13 @@ router.post("/viewPriceBasisMuic/:location", async (req, res, next) => {
 // FILTER ON MUIC PRICE PAGE BRAND / MODEL
 router.post("/viewPriceBasisMuicFilter", async (req, res, next) => {
   try {
-    const { location, brand, model } = req.body;
+    console.log(req.body);
+    const { location, brand, model,grade } = req.body;
     let data = await salesController.viewPriceBasisMuicFilter(
       location,
       brand,
-      model
+      model,
+      grade
     );
     if (data) {
       res.status(200).json({
@@ -116,6 +123,39 @@ router.post("/ReadyForSalesUnits", async (req, res, next) => {
     } else {
       res.status(202).json({
         message: "",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+/*-----------------------------------------------BRAND AND MODEL DROPDOWN CONDITIONAL-----------------------------------------------------------*/
+// BRAND 
+router.post("/getBrandsAlpha", async (req, res, next) => {
+  try {
+    let data = await salesController.getBrandsAlpha();
+    if (data) {
+      res.status(200).json({
+        data: data,
+        message: "Success",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+// MODEL
+router.post("/getModelBasisOfArray", async (req, res, next) => {
+  try {
+   console.log(req.body);
+    let data = await salesController.getBrandBasedPrdouctArray(
+      req.body
+    );
+
+    if (data) {
+      res.status(200).json({
+        data: data,
+        message: "Success",
       });
     }
   } catch (error) {
