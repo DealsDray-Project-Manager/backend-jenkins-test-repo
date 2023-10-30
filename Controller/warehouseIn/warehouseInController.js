@@ -6528,7 +6528,6 @@ module.exports = {
       }
     });
   },
-
   getTrayItmes: (trayId) => {
     return new Promise(async (resolve, reject) => {
       let data = await masters.findOne({ code: trayId });
@@ -6537,7 +6536,6 @@ module.exports = {
       }
     });
   },
-
   checkUicCodeRDLDone: (uic, trayId) => {
     return new Promise(async (resolve, reject) => {
       let data = await delivery.findOne({ "uic_code.code": uic });
@@ -6570,27 +6568,59 @@ module.exports = {
       }
     });
   },
-
   rdlFlsDoneClose: (trayData) => {
     return new Promise(async (resolve, reject) => {
       let data;
-      data = await masters.findOneAndUpdate(
-        { code: trayData.trayId },
-        {
-          $set: {
+      if (trayData.length == 0) {
+        data = await masters.updateOne(
+          { code: trayData.trayId },
+          {
+            $set: {
+              rack_id: trayData.rackId,
+              actual_items: [],
+              description: trayData.description,
+              temp_array: [],
+              sort_id: "Open",
+              items: [],
+              closed_time_wharehouse: Date.now(),
+              assigned_date: Date.now(),
+              issued_user_name: null,
+              "track_tray.rdl_1_done_close_by_wh": Date.now(),
+            },
+          }
+        );
+        if (data.modifiedCount !== 0) {
+          const addLogsofUnits = await unitsActionLog.create({
+            action_type: "Open",
+            created_at: Date.now(),
+            tray_id: data.code,
             rack_id: trayData.rackId,
-            actual_items: [],
-            description: trayData.description,
-            temp_array: [],
-            sort_id: "Ready to RDL-2",
-            closed_time_wharehouse: Date.now(),
-            rack_id: trayData.rackId,
-            assigned_date: Date.now(),
-            issued_user_name: null,
-            "track_tray.rdl_1_done_close_by_wh": Date.now(),
-          },
+            description: `Open state closed by agent :${trayData.actUser}`,
+            track_tray: state,
+            user_type: "PRC Warehouse",
+          });
+          resolve(data);
+        } else {
+          resolve();
         }
-      );
+      } else {
+        data = await masters.findOneAndUpdate(
+          { code: trayData.trayId },
+          {
+            $set: {
+              rack_id: trayData.rackId,
+              actual_items: [],
+              description: trayData.description,
+              temp_array: [],
+              sort_id: "Ready to RDL-2",
+              closed_time_wharehouse: Date.now(),
+              assigned_date: Date.now(),
+              issued_user_name: null,
+              "track_tray.rdl_1_done_close_by_wh": Date.now(),
+            },
+          }
+        );
+      }
       if (data) {
         let state = "Tray";
         if (data?.items.length == 0) {

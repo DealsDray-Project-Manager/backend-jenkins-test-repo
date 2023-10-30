@@ -828,7 +828,8 @@ module.exports = {
         if (
           itemData.item.pickup_toTray == undefined ||
           itemData.item.pickup_toTray == "" ||
-          itemData.item.pickup_toTray == null
+          itemData.item.pickup_toTray == null ||
+          itemData.item.pickup_toTray !== itemData.toTray 
         ) {
           let updateData = await masters.updateOne(
             { code: itemData.fromTray },

@@ -42,7 +42,7 @@ module.exports = {
           },
         },
       ]);
-       count.viewPriceCountMuicBasis = await delivery.aggregate([
+      count.viewPriceCountMuicBasis = await delivery.aggregate([
         {
           $match: {
             tray_type: "ST",
@@ -142,8 +142,14 @@ module.exports = {
           },
         },
       ]);
-
-      for (let x of getBasedOnMuic) {
+      let arrOfSKu = [];
+      let arrOfBrand=[]
+      for (let x of getBasedOnMuic) { if (arrOfSKu.includes(x.muicDetails?.[0]?.muic) == false) {
+        arrOfSKu.push(x.muicDetails?.[0]?.muic);
+      }
+      if (arrOfBrand.includes(x.muicDetails?.[0]?.brand_name) == false) {
+        arrOfBrand.push(x.muicDetails?.[0]?.brand_name);
+      }
         x["muic_one"] = x.muicDetails?.[0]?.muic;
         x["item_id"] = x.muicDetails?.[0]?.vendor_sku_id;
         x["ram"] = x.subMuicDetails?.[0]?.ram;
@@ -152,58 +158,166 @@ module.exports = {
         x["brand_name"] = x.muicDetails?.[0]?.brand_name;
         x["model_name"] = x.muicDetails?.[0]?.model_name;
       }
-      resolve(getBasedOnMuic);
+      resolve({ mainData: getBasedOnMuic, skuData: arrOfSKu,arrOfBrand:arrOfBrand });
     });
   },
-  viewPriceFilter:(location,brand,model) => {
+  viewPriceFilter: (location, brand, model, grade) => {
     //PROMISE
     return new Promise(async (resolve, reject) => {
-      let findSku=await products.findOne({brand_name:brand,model_name:model})
-      const getBasedOnMuic = await delivery.aggregate([
-        {
-          $match: {
-            tray_type: "ST",
-            item_moved_to_billed_bin: { $exists: false },
-            stx_tray_id: { $exists: true },
-            sp_price: { $exists: true, $ne: null },
-            mrp_price: { $exists: true, $ne: null },
-            final_grade: { $exists: true },
-            item_id:findSku.vendor_sku_id,
-            "audit_report.sub_muic": { $exists: true },
-          },
-        },
-        {
-          $group: {
-            _id: {
-              grade: "$final_grade",
-              sub_muic: "$audit_report.sub_muic",
+      let findSku, getBasedOnMuic;
+      if (brand.length !== 0 && model.length == 0) {
+        findSku = await products.find(
+          { brand_name: { $in: brand } },
+          { vendor_sku_id: 1, _id: 0 }
+        );
+      } else if (brand.length !== 0 && model.length !== 0) {
+        findSku = await products.find(
+          { model_name: { $in: model }, brand_name: { $in: brand } },
+          { vendor_sku_id: 1, _id: 0 }
+        );
+      }
+      if (brand.length == 0 && grade.length !== 0) {
+        getBasedOnMuic = await delivery.aggregate([
+          {
+            $match: {
+              tray_type: "ST",
+              item_moved_to_billed_bin: { $exists: false },
+              stx_tray_id: { $exists: true },
+              sp_price: { $exists: true, $ne: null },
+              mrp_price: { $exists: true, $ne: null },
+              final_grade: { $in: grade },
+              "audit_report.sub_muic": { $exists: true },
             },
-            itemCount: { $sum: 1 },
-            item_id: { $first: "$item_id" },
-            sp: { $first: "$sp_price" },
-            mrp: { $first: "$mrp_price" },
-            sub_muic: { $first: "$audit_report.sub_muic" },
-            price_updation_date: { $first: "$price_updation_date" },
-            price_creation_date: { $first: "$price_creation_date" },
           },
-        },
-        {
-          $lookup: {
-            from: "products", // Replace with the name of the collection you want to lookup from
-            localField: "item_id",
-            foreignField: "vendor_sku_id",
-            as: "muicDetails",
+          {
+            $group: {
+              _id: {
+                grade: "$final_grade",
+                sub_muic: "$audit_report.sub_muic",
+              },
+              itemCount: { $sum: 1 },
+              item_id: { $first: "$item_id" },
+              sp: { $first: "$sp_price" },
+              mrp: { $first: "$mrp_price" },
+              sub_muic: { $first: "$audit_report.sub_muic" },
+              price_updation_date: { $first: "$price_updation_date" },
+              price_creation_date: { $first: "$price_creation_date" },
+            },
           },
-        },
-        {
-          $lookup: {
-            from: "submuics", // Replace with the name of the collection you want to lookup from
-            localField: "sub_muic",
-            foreignField: "sub_muic",
-            as: "subMuicDetails",
+          {
+            $lookup: {
+              from: "products", // Replace with the name of the collection you want to lookup from
+              localField: "item_id",
+              foreignField: "vendor_sku_id",
+              as: "muicDetails",
+            },
           },
-        },
-      ]);
+          {
+            $lookup: {
+              from: "submuics", // Replace with the name of the collection you want to lookup from
+              localField: "sub_muic",
+              foreignField: "sub_muic",
+              as: "subMuicDetails",
+            },
+          },
+        ]);
+      } else if (grade.length == 0) {
+        getBasedOnMuic = await delivery.aggregate([
+          {
+            $match: {
+              tray_type: "ST",
+              item_moved_to_billed_bin: { $exists: false },
+              stx_tray_id: { $exists: true },
+              sp_price: { $exists: true, $ne: null },
+              mrp_price: { $exists: true, $ne: null },
+              final_grade: { $exists: true },
+              item_id: {
+                $in: findSku.map((obj) => obj.vendor_sku_id),
+              },
+              "audit_report.sub_muic": { $exists: true },
+            },
+          },
+          {
+            $group: {
+              _id: {
+                grade: "$final_grade",
+                sub_muic: "$audit_report.sub_muic",
+              },
+              itemCount: { $sum: 1 },
+              item_id: { $first: "$item_id" },
+              sp: { $first: "$sp_price" },
+              mrp: { $first: "$mrp_price" },
+              sub_muic: { $first: "$audit_report.sub_muic" },
+              price_updation_date: { $first: "$price_updation_date" },
+              price_creation_date: { $first: "$price_creation_date" },
+            },
+          },
+          {
+            $lookup: {
+              from: "products", // Replace with the name of the collection you want to lookup from
+              localField: "item_id",
+              foreignField: "vendor_sku_id",
+              as: "muicDetails",
+            },
+          },
+          {
+            $lookup: {
+              from: "submuics", // Replace with the name of the collection you want to lookup from
+              localField: "sub_muic",
+              foreignField: "sub_muic",
+              as: "subMuicDetails",
+            },
+          },
+        ]);
+      } else {
+        getBasedOnMuic = await delivery.aggregate([
+          {
+            $match: {
+              tray_type: "ST",
+              item_moved_to_billed_bin: { $exists: false },
+              stx_tray_id: { $exists: true },
+              sp_price: { $exists: true, $ne: null },
+              mrp_price: { $exists: true, $ne: null },
+              final_grade: { $in: grade },
+              item_id: {
+                $in: findSku.map((obj) => obj.vendor_sku_id),
+              },
+              "audit_report.sub_muic": { $exists: true },
+            },
+          },
+          {
+            $group: {
+              _id: {
+                grade: "$final_grade",
+                sub_muic: "$audit_report.sub_muic",
+              },
+              itemCount: { $sum: 1 },
+              item_id: { $first: "$item_id" },
+              sp: { $first: "$sp_price" },
+              mrp: { $first: "$mrp_price" },
+              sub_muic: { $first: "$audit_report.sub_muic" },
+              price_updation_date: { $first: "$price_updation_date" },
+              price_creation_date: { $first: "$price_creation_date" },
+            },
+          },
+          {
+            $lookup: {
+              from: "products", // Replace with the name of the collection you want to lookup from
+              localField: "item_id",
+              foreignField: "vendor_sku_id",
+              as: "muicDetails",
+            },
+          },
+          {
+            $lookup: {
+              from: "submuics", // Replace with the name of the collection you want to lookup from
+              localField: "sub_muic",
+              foreignField: "sub_muic",
+              as: "subMuicDetails",
+            },
+          },
+        ]);
+      }
 
       for (let x of getBasedOnMuic) {
         x["muic_one"] = x.muicDetails?.[0]?.muic;
@@ -255,55 +369,153 @@ module.exports = {
           },
         },
       ]);
-
+      let arrOfSKu = [];
+      let arrOfBrand=[]
       for (let x of getBasedOnMuic) {
+        if (arrOfSKu.includes(x.muicDetails?.[0]?.muic) == false) {
+          arrOfSKu.push(x.muicDetails?.[0]?.muic);
+        }
+        if (arrOfBrand.includes(x.muicDetails?.[0]?.brand_name) == false) {
+          arrOfBrand.push(x.muicDetails?.[0]?.brand_name);
+        }
+        
         x["muic_one"] = x.muicDetails?.[0]?.muic;
         x["brand_name"] = x.muicDetails?.[0]?.brand_name;
         x["model_name"] = x.muicDetails?.[0]?.model_name;
       }
-      resolve(getBasedOnMuic);
+      resolve({ mainData: getBasedOnMuic, skuData: arrOfSKu,arrOfBrand:arrOfBrand });
     });
   },
-  viewPriceBasisMuicFilter: (location,brand,model) => {
+  viewPriceBasisMuicFilter: (location, brand, model, grade) => {
     //PROMISE
     return new Promise(async (resolve, reject) => {
-      let findSku=await products.findOne({brand_name:brand,model_name:model})
-      const getBasedOnMuic = await delivery.aggregate([
-        {
-          $match: {
-            tray_type: "ST",
-            item_moved_to_billed_bin: { $exists: false },
-            stx_tray_id: { $exists: true },
-            sp_price: { $exists: true, $ne: null },
-            mrp_price: { $exists: true, $ne: null },
-            final_grade: { $exists: true },
-            item_id:findSku?.vendor_sku_id,
-            "audit_report.sub_muic": { $exists: false },
-          },
-        },
-        {
-          $group: {
-            _id: {
-              grade: "$final_grade",
-              sub_muic: "$item_id",
+      let findSku, getBasedOnMuic;
+      if (brand.length !== 0 && model.length == 0) {
+        findSku = await products.find(
+          { brand_name: { $in: brand } },
+          { vendor_sku_id: 1, _id: 0 }
+        );
+      } else if (brand.length !== 0 && model.length !== 0) {
+        findSku = await products.find(
+          { model_name: { $in: model }, brand_name: { $in: brand } },
+          { vendor_sku_id: 1, _id: 0 }
+        );
+      }
+      if (brand.length == 0 && grade.length !== 0) {
+        getBasedOnMuic = await delivery.aggregate([
+          {
+            $match: {
+              tray_type: "ST",
+              item_moved_to_billed_bin: { $exists: false },
+              stx_tray_id: { $exists: true },
+              sp_price: { $exists: true, $ne: null },
+              mrp_price: { $exists: true, $ne: null },
+              final_grade: { $in: grade },
+              "audit_report.sub_muic": { $exists: false },
             },
-            itemCount: { $sum: 1 },
-            item_id: { $first: "$item_id" },
-            sp: { $first: "$sp_price" },
-            mrp: { $first: "$mrp_price" },
-            price_updation_date: { $max: "$price_updation_date" },
-            price_creation_date: { $max: "$price_creation_date" },
           },
-        },
-        {
-          $lookup: {
-            from: "products", // Replace with the name of the collection you want to lookup from
-            localField: "item_id",
-            foreignField: "vendor_sku_id",
-            as: "muicDetails",
+          {
+            $group: {
+              _id: {
+                grade: "$final_grade",
+                sub_muic: "$item_id",
+              },
+              itemCount: { $sum: 1 },
+              item_id: { $first: "$item_id" },
+              sp: { $first: "$sp_price" },
+              mrp: { $first: "$mrp_price" },
+              price_updation_date: { $max: "$price_updation_date" },
+              price_creation_date: { $max: "$price_creation_date" },
+            },
           },
-        },
-      ]);
+          {
+            $lookup: {
+              from: "products", // Replace with the name of the collection you want to lookup from
+              localField: "item_id",
+              foreignField: "vendor_sku_id",
+              as: "muicDetails",
+            },
+          },
+        ]);
+      } else if (grade.length == 0) {
+        getBasedOnMuic = await delivery.aggregate([
+          {
+            $match: {
+              tray_type: "ST",
+              item_moved_to_billed_bin: { $exists: false },
+              stx_tray_id: { $exists: true },
+              sp_price: { $exists: true, $ne: null },
+              mrp_price: { $exists: true, $ne: null },
+              final_grade: { $exists: true },
+              item_id: {
+                $in: findSku.map((obj) => obj.vendor_sku_id),
+              },
+              "audit_report.sub_muic": { $exists: false },
+            },
+          },
+          {
+            $group: {
+              _id: {
+                grade: "$final_grade",
+                sub_muic: "$item_id",
+              },
+              itemCount: { $sum: 1 },
+              item_id: { $first: "$item_id" },
+              sp: { $first: "$sp_price" },
+              mrp: { $first: "$mrp_price" },
+              price_updation_date: { $max: "$price_updation_date" },
+              price_creation_date: { $max: "$price_creation_date" },
+            },
+          },
+          {
+            $lookup: {
+              from: "products", // Replace with the name of the collection you want to lookup from
+              localField: "item_id",
+              foreignField: "vendor_sku_id",
+              as: "muicDetails",
+            },
+          },
+        ]);
+      } else {
+        getBasedOnMuic = await delivery.aggregate([
+          {
+            $match: {
+              tray_type: "ST",
+              item_moved_to_billed_bin: { $exists: false },
+              stx_tray_id: { $exists: true },
+              sp_price: { $exists: true, $ne: null },
+              mrp_price: { $exists: true, $ne: null },
+              final_grade: { $in: grade },
+              item_id: {
+                $in: findSku.map((obj) => obj.vendor_sku_id),
+              },
+              "audit_report.sub_muic": { $exists: false },
+            },
+          },
+          {
+            $group: {
+              _id: {
+                grade: "$final_grade",
+                sub_muic: "$item_id",
+              },
+              itemCount: { $sum: 1 },
+              item_id: { $first: "$item_id" },
+              sp: { $first: "$sp_price" },
+              mrp: { $first: "$mrp_price" },
+              price_updation_date: { $max: "$price_updation_date" },
+              price_creation_date: { $max: "$price_creation_date" },
+            },
+          },
+          {
+            $lookup: {
+              from: "products", // Replace with the name of the collection you want to lookup from
+              localField: "item_id",
+              foreignField: "vendor_sku_id",
+              as: "muicDetails",
+            },
+          },
+        ]);
+      }
 
       for (let x of getBasedOnMuic) {
         x["muic_one"] = x.muicDetails?.[0]?.muic;
@@ -400,6 +612,27 @@ module.exports = {
         arr.push(obj);
       }
       resolve(arr);
+    });
+  },
+  getBrandsAlpha: () => {
+    return new Promise(async (resolve, reject) => {
+      let allBrands = await brands
+        .find({})
+        .sort({ brand_name: 1 })
+        .collation({ locale: "en_US", numericOrdering: true })
+        .catch((err) => reject(err));
+      if (allBrands) {
+        resolve(allBrands);
+      }
+    });
+  },
+  getBrandBasedPrdouctArray: (brands) => {
+    return new Promise(async (resolve, reject) => {
+      let allProducts = await products
+        .find({ brand_name: { $in: brands } })
+        .sort({ model_name: 1 })
+        .collation({ locale: "en_US", numericOrdering: true });
+      resolve(allProducts);
     });
   },
 };

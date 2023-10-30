@@ -363,8 +363,17 @@ router.post(
         req.body,
         req.files
       );
-      if (data) {
+      if (data.status == 1) {
         res.status(200).json({ data: data });
+      } else if (data.status == 2) {
+        res
+          .status(202)
+          .json({
+            message:
+              "Buyer exist, Please check your username or Email or Mobile Number",
+          });
+      } else {
+        res.status(202).json({ message: "Failed please tray again." });
       }
     } catch (error) {
       next(error);
@@ -1079,7 +1088,14 @@ router.post("/createBulkTray", async (req, res, next) => {
               obj[key] = allCount[key];
             }
 
-            console.log(obj);
+            // obj.BOT = req.body.allCount.BOT;
+            // obj.MMT = req.body.allCount.MMT;
+            // obj.WHT = req.body.allCount.WHT;
+            // obj.PMT = req.body.allCount.PMT;
+            // obj.CTA = req.body.allCount.CTA;
+            // obj.CTB = req.body.allCount.CTB;
+            // obj.CTC = req.body.allCount.CTC;
+            // obj.CTD = req.body.allCount.CTD;
 
             json = JSON.stringify(obj);
             fs.writeFile(
@@ -4216,7 +4232,39 @@ router.post("/extra/tempReq", async (req, res, next) => {
     }
     // throw new Error('This is a test for sentry');
   } catch (error) {
-    console.log(error);
+    next(error);
+  }
+});
+router.post("/extra/pickupIssue", async (req, res, next) => {
+  try {
+    let data = await superAdminController.pickupIssue();
+    if (data) {
+      res.status(200).json({
+        message: "Successfully Update",
+      });
+    } else {
+      res.status(202).json({
+        message: "Failed",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+router.post("/extra/pickupIssueRollBack", async (req, res, next) => {
+  try {
+    let data = await superAdminController.pickupIssueRollBack();
+    console.log(data);
+    if (data.status == 1) {
+      res.status(200).json({
+        message: "Successfully Update",
+      });
+    } else {
+      res.status(202).json({
+        message: "Failed",
+      });
+    }
+  } catch (error) {
     next(error);
   }
 });

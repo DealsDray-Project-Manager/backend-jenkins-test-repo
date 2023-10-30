@@ -288,7 +288,7 @@ module.exports = {
             created_at: Date.now(),
             uic: trayItemData.uic,
             tray_id: trayItemData.trayId,
-            user_name_of_action: getRpTray.issued_user_name,
+            user_name_of_action: checkAlreadyAdded.issued_user_name,
             report: trayItemData.rdl_repair_report,
             track_tray: "Units",
             user_type: "PRC RDL-2",
