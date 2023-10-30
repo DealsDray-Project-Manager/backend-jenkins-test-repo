@@ -362,8 +362,17 @@ router.post(
         req.body,
         req.files
       );
-      if (data) {
+      if (data.status == 1) {
         res.status(200).json({ data: data });
+      } else if (data.status == 2) {
+        res
+          .status(202)
+          .json({
+            message:
+              "Buyer exist, Please check your username or Email or Mobile Number",
+          });
+      } else {
+        res.status(202).json({ message: "Failed please tray again." });
       }
     } catch (error) {
       next(error);
@@ -1076,6 +1085,7 @@ router.post("/createBulkTray", async (req, res, next) => {
             for (let key in allCount) {
               obj[key] = allCount[key];
             }
+
             // obj.BOT = req.body.allCount.BOT;
             // obj.MMT = req.body.allCount.MMT;
             // obj.WHT = req.body.allCount.WHT;
@@ -4182,6 +4192,39 @@ router.post("/extra/tempReq", async (req, res, next) => {
   try {
     let data = await superAdminController.tempReq();
     if (data) {
+      res.status(200).json({
+        message: "Successfully Update",
+      });
+    } else {
+      res.status(202).json({
+        message: "Failed",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+router.post("/extra/pickupIssue", async (req, res, next) => {
+  try {
+    let data = await superAdminController.pickupIssue();
+    if (data) {
+      res.status(200).json({
+        message: "Successfully Update",
+      });
+    } else {
+      res.status(202).json({
+        message: "Failed",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+router.post("/extra/pickupIssueRollBack", async (req, res, next) => {
+  try {
+    let data = await superAdminController.pickupIssueRollBack();
+    console.log(data);
+    if (data.status == 1) {
       res.status(200).json({
         message: "Successfully Update",
       });

@@ -317,6 +317,7 @@ const deliverySchema = mongoose.Schema({
   final_grade:String,
   price_updation_date:Date,
   price_creation_date:Date,
+  temp_flag:String
 });
 
 const delivery = mongoose.model("delivery", deliverySchema);

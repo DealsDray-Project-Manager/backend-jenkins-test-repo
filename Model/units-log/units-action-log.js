@@ -44,7 +44,8 @@ const unitsActionLogSchema = mongoose.Schema({
   },
   rack_id:{
     type:String
-  }
+  },
+  temp_flag:String
 });
 const unitsActionLog = mongoose.model("unitsActionLog", unitsActionLogSchema);
 module.exports = {
