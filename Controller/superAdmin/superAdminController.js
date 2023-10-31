@@ -1951,12 +1951,25 @@ module.exports = {
 
   getWhtTrayInuse: () => {
     return new Promise(async (resolve, reject) => {
-      let data = await masters.find({
-        type_taxanomy: "WHT",
-        prefix: "tray-master",
-        sort_id: "Inuse",
-        items: { $ne: [] },
-      });
+      let data = await masters.aggregate([{
+        $match:{
+
+          type_taxanomy: "WHT",
+          prefix: "tray-master",
+          sort_id: "Inuse",
+          items: { $ne: [] },
+          items:{$ne:undefined}
+        }
+      },
+      {
+        $lookup:{
+          from:"trayracks",
+          localField:"rack_id",
+          foreignField:"rack_id",
+          as:"rackDetails"
+        }
+      }
+    ]);
       if (data) {
         resolve(data);
       }
@@ -2093,10 +2106,22 @@ module.exports = {
 
   chargeDoneTrayFourDayDiff: () => {
     return new Promise(async (resolve, reject) => {
-      let tray = await masters.find({
-        prefix: "tray-master",
-        sort_id: "Ready to BQC",
-      });
+      let tray = await masters.aggregate([{
+        $match:{
+
+          prefix: "tray-master",
+          sort_id: "Ready to BQC",
+        }
+      },
+      {
+        $lookup:{
+          from:"trayracks",
+          localField:"rack_id",
+          foreignField:"rack_id",
+          as:"rackDetails"
+        }
+      }
+    ]);
       if (tray) {
         let arr = [];
         for (let x of tray) {

@@ -2536,6 +2536,14 @@ module.exports = {
               as: "products",
             },
           },
+          {
+            $lookup: {
+              from: "trayracks",
+              localField: "rack_id",
+              foreignField: "rack_id",
+              as: "trayrack",
+            },
+          },
         ]);
       } else {
         data = await masters.aggregate([
