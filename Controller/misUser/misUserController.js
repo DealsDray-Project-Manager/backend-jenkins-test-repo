@@ -3640,7 +3640,7 @@ module.exports = {
               "track_tray.rdl_1_done_close_by_wh": { $gte: threeDaysAgo },
               sort_id: type,
               cpc: location,
-              type_taxanomy:"WHT"
+              type_taxanomy: "WHT",
             },
           },
           {
@@ -3739,15 +3739,14 @@ module.exports = {
             $unwind: "$items",
           },
         ]);
-      }
-       else {
+      } else {
         items = await masters.aggregate([
           {
             $match: {
               "items.rdl_fls_report.selected_status": { $in: selectedStatus },
               sort_id: "Ready to RDL-2",
               cpc: location,
-              type_taxanomy:"WHT"
+              type_taxanomy: "WHT",
             },
           },
           {
@@ -3832,10 +3831,15 @@ module.exports = {
             },
           },
         ]);
-      }
-      else if(type == "Ready to RDL-2"){
+      } else if (type == "Ready to RDL-2") {
         items = await masters.aggregate([
-          { $match: { sort_id: "Ready to RDL-2",type_taxanomy:"WHT", cpc: location } },
+          {
+            $match: {
+              sort_id: "Ready to RDL-2",
+              type_taxanomy: "WHT",
+              cpc: location,
+            },
+          },
           {
             $unwind: "$items",
           },
@@ -3849,8 +3853,7 @@ module.exports = {
             },
           },
         ]);
-      }
-       else {
+      } else {
         items = await masters.aggregate([
           { $match: { sort_id: type, cpc: location } },
           {
@@ -4325,7 +4328,16 @@ module.exports = {
             as: "spTray",
           },
         },
+        {
+          $lookup: {
+            from: "trayracks",
+            localField: "rack_id",
+            foreignField: "rack_id",
+            as: "rackDetails",
+          },
+        },
       ]);
+      console.log(data);
       if (data) {
         resolve(data);
       }
@@ -4656,7 +4668,7 @@ module.exports = {
           );
           if (checkThePart) {
             let qty = checkThePart.avl_stock - y.count;
-         
+
             if (qty < 0) {
               let required = Math.abs(qty);
               required_qty += required;

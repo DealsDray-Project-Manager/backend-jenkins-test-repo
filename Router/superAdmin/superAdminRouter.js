@@ -366,12 +366,10 @@ router.post(
       if (data.status == 1) {
         res.status(200).json({ data: data });
       } else if (data.status == 2) {
-        res
-          .status(202)
-          .json({
-            message:
-              "Buyer exist, Please check your username or Email or Mobile Number",
-          });
+        res.status(202).json({
+          message:
+            "Buyer exist, Please check your username or Email or Mobile Number",
+        });
       } else {
         res.status(202).json({ message: "Failed please tray again." });
       }
@@ -3677,6 +3675,31 @@ router.post("/getTrayForRemoveDuplicate/:trayId", async (req, res, next) => {
     } else {
       res.status(202).json({
         message: "Invalid tray please enter valid tray",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
+// REMOVE DUPLICATE ITEMS
+router.post("/removeDuplicteFromTray", async (req, res, next) => {
+  try {
+    console.log(req.body);
+    const { expectedSide, actualSide, trayId } = req.body;
+    const data = await superAdminController.removeDuplicateFromTray(
+      expectedSide,
+      actualSide,
+      trayId
+    );
+    console.log(data);
+    if (data.status == 1) {
+      res.status(200).json({
+        message: "Successfully Removed",
+      });
+    } else {
+      res.status(202).json({
+        message: "Failed please try again!",
       });
     }
   } catch (error) {

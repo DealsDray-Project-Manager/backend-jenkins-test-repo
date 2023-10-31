@@ -906,7 +906,7 @@ router.post("/toWhtTrayForMerge", async (req, res, next) => {
       sortId,
       grade,
     } = req.body;
-
+  
     let data = await misUserController.toWhtTrayForMerging(
       location,
       brand,

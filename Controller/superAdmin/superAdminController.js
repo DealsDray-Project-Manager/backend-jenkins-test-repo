@@ -485,10 +485,6 @@ module.exports = {
 
   editBuyerDetails: (buyerData, docuemnts) => {
     if (docuemnts != null) {
-      buyerData.profile = "";
-      buyerData.aadhar_proof = "";
-      buyerData.pan_card_proof = "";
-      buyerData.business_address_proof = "";
       if (docuemnts.profile && docuemnts.profile[0]) {
         buyerData.profile = IISDOMAINBUYERDOC + docuemnts.profile[0].filename;
       }
@@ -922,7 +918,6 @@ module.exports = {
       resolve(allProducts);
     });
   },
-  
 
   /*--------------------------------FIND IMAGE FOR EDITING-----------------------------------*/
 
@@ -2106,7 +2101,6 @@ module.exports = {
         let arr = [];
         for (let x of tray) {
           var today = new Date(Date.now());
-
           if (
             new Date(x.closed_time_bot) <=
             new Date(today.setDate(today.getDate() - 4))
@@ -4364,6 +4358,62 @@ module.exports = {
         } else {
           return { status: 2 };
         }
+      } else {
+        return { status: 0 };
+      }
+    } catch (error) {
+      return error;
+    }
+  },
+  // REMOVE DUPLICATE UNITS
+  removeDuplicateFromTray: async (expectedSide, actualSide, trayId) => {
+    try {
+      let flag = true;
+      for (let x of expectedSide) {
+        const document = await masters.findOne({ code: trayId });
+        if (document) {
+          const items = document.items;
+          const indexToRemove = items.findIndex((item) => item.uic === x);
+          if (indexToRemove !== -1) {
+            items.splice(indexToRemove, 1);
+            removeFromItemsArray = await masters.updateOne(
+              { code: trayId },
+              {
+                $set: {
+                  items: items,
+                },
+              }
+            );
+          }
+        }
+
+        if (removeFromItemsArray.modifiedCount == 0) {
+          flag = false;
+        }
+      }
+      for (let y of actualSide) {
+        const document = await masters.findOne({ code: trayId });
+        if (document) {
+          const items = document.actual_items;
+          const indexToRemove = items.findIndex((item) => item.uic === y);
+          if (indexToRemove !== -1) {
+            items.splice(indexToRemove, 1);
+            removeFromActualArray = await masters.updateOne(
+              { code: trayId },
+              {
+                $set: {
+                  actual_items: items,
+                },
+              }
+            );
+          }
+        }
+        if (removeFromActualArray.modifiedCount == 0) {
+          flag = false;
+        }
+      }
+      if (flag) {
+        return { status: 1 };
       } else {
         return { status: 0 };
       }
