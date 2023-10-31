@@ -485,10 +485,7 @@ module.exports = {
 
   editBuyerDetails: (buyerData, docuemnts) => {
     if (docuemnts != null) {
-      buyerData.profile = "";
-      buyerData.aadhar_proof = "";
-      buyerData.pan_card_proof = "";
-      buyerData.business_address_proof = "";
+    
       if (docuemnts.profile && docuemnts.profile[0]) {
         buyerData.profile = IISDOMAINBUYERDOC + docuemnts.profile[0].filename;
       }
