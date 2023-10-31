@@ -4322,6 +4322,14 @@ module.exports = {
         },
         {
           $lookup: {
+            from: "trayracks",
+            localField: "rack_id",
+            foreignField: "rack_id",
+            as: "rack",
+          },
+        },
+        {
+          $lookup: {
             from: "masters",
             localField: "sp_tray",
             foreignField: "code",
@@ -4329,11 +4337,14 @@ module.exports = {
           },
         },
         {
+          $unwind: "$spTray",
+        },
+        {
           $lookup: {
             from: "trayracks",
-            localField: "rack_id",
+            localField: "spTray.rack_id",
             foreignField: "rack_id",
-            as: "rackDetails",
+            as: "rackIdForSP",
           },
         },
       ]);
