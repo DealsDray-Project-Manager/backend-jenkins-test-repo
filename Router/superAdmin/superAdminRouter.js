@@ -582,6 +582,16 @@ router.post("/bulkValidationProduct", async (req, res, next) => {
       res.status(200).json({
         message: "Successfully Validated",
       });
+    } else if (data.status == 0) {
+      res.status(202).json({
+        status: "1",
+        message: "Error please import file again",
+      });
+    } else if (data.status == 1) {
+      res.status(202).json({
+        status: "1",
+        message: "Error some fileds are empty please check",
+      });
     } else {
       res.status(202).json({
         data: data.err,
@@ -1349,7 +1359,38 @@ router.post("/deleteMaster/:masterId", async (req, res, next) => {
     next(error);
   }
 });
-
+// GET DLETED MASTER
+router.post("/getDeletedMaster/:type", async (req, res, next) => {
+  try {
+    const { type } = req.params;
+    const data = await superAdminController.getDeletedMasters(type);
+    if (data) {
+      res.status(200).json({
+        data: data,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+// RESTORE DELETED MASTER
+router.post("/restoreDeletedMaster/:id", async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const dataOfRestore = await superAdminController.restoreDeletedMaster(id);
+    if (dataOfRestore.status === 1) {
+      res.status(200).json({
+        message: "Successfully Restored",
+      });
+    } else {
+      res.status(202).json({
+        message: "Request failed please try agin",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
 /*-----------------------------ITEM TRACKING--------------------------------------*/
 router.post("/itemTracking/:page/:size", async (req, res, next) => {
   try {
@@ -1931,6 +1972,20 @@ router.post("/trayracks/view", async (req, res, next) => {
     next(error);
   }
 });
+
+// RACK REPORT 
+router.post("/trayRacksReport",async(req,res,next)=>{
+  try {
+       const rackReport=await superAdminController.trayRackReport()
+       if(rackReport){
+        res.status(200).json({
+          data:rackReport
+        })
+       }
+  } catch (error) {
+    next(error)
+  }
+})
 
 /* ---------------------------GET RACK BASED ON THE WAREHOUSE ------------------*/
 router.post("/trayracks/view/:warehouse", async (req, res, next) => {
@@ -4277,7 +4332,6 @@ router.post("/extra/pickupIssue", async (req, res, next) => {
 router.post("/extra/pickupIssueRollBack", async (req, res, next) => {
   try {
     let data = await superAdminController.pickupIssueRollBack();
-    console.log(data);
     if (data.status == 1) {
       res.status(200).json({
         message: "Successfully Update",

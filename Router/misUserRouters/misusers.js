@@ -1923,6 +1923,7 @@ router.post("/whtToRpSorting/assign", async (req, res, next) => {
       actUser,
       screen
     );
+    console.log(data);
     if (data.status == 1) {
       res.status(200).json({
         message: "Successfully Assigned",

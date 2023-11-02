@@ -33,6 +33,9 @@ const { purchaseOrder } = require("../../Model/Purchase-order/purchase-order");
 const { tempOrdersReq } = require("../../Model/temp-req/temp-req");
 const { subMuic } = require("../../Model/sub-muic/sub-muic");
 const { unitsActionLog } = require("../../Model/units-log/units-action-log");
+const {
+  deletedMaster,
+} = require("../../Model/Deleted-masters/deleted-trays-bag");
 
 const IISDOMAIN = "https://prexo-v9-2-dev-api.dealsdray.com/user/profile/";
 const IISDOMAINBUYERDOC =
@@ -807,6 +810,17 @@ module.exports = {
       let model = [];
       let jack_type = [];
       for (let i = 0; i < productsData.length; i++) {
+        let checkMuic = await products.findOne({ muic: productsData[i]?.muic });
+        if (checkMuic) {
+          resolve({ status: 0 });
+        } else if (
+          productsData[i]?.variant == "" ||
+          productsData[i]?.variant == undefined ||
+          productsData[i]?.vendor_name == "" ||
+          productsData[i]?.vendor_name == undefined
+        ) {
+          resolve({ status: 1 });
+        }
         if (
           productsData[i]?.jack_type !== "Micro USB" &&
           productsData[i]?.jack_type !== "Type C" &&
@@ -1655,15 +1669,77 @@ module.exports = {
 
   delteMaster: (masterId) => {
     return new Promise(async (resolve, reject) => {
-      let data = await masters.deleteOne({ code: masterId });
-      if (data.deletedCount != 0) {
+      let data = await masters.findOneAndDelete({ code: masterId });
+      if (data) {
+        await deletedMaster.create({
+          name: data.name,
+          code: data.code,
+          type_taxanomy: data.type_taxanomy,
+          display: data.display,
+          cpc: data.cpc,
+          warehouse: data.warehouse,
+          tray_grade: data.tray_grade,
+          brand: data.brand,
+          model: data.model,
+          created_at: data.created_at,
+          prefix:data.prefix,
+          limit:data.limit
+        });
         resolve({ status: true });
       } else {
         resolve({ status: false });
       }
     });
   },
-
+  /*----------------------------------GET DELETED TRAYS -------------------------------*/
+  getDeletedMasters:async(type)=>{
+    try {
+      console.log(type);
+        const findData=await deletedMaster.find({prefix:type,status:"Pending"})
+        console.log(findData);
+        return findData
+    } catch (error) {
+      return error
+    }
+  },
+  /*--------------------------------RESTORE THE DELETED MASTER----------------------*/
+  restoreDeletedMaster:async(id)=>{
+    try {
+        const findAndUpdateStatus=await deletedMaster.findOneAndUpdate({code:id,status:"Pending"},{
+          $set:{
+            status:"Restored"
+          }
+        })
+        if(findAndUpdateStatus){
+          let restore=await masters.create({
+            name: findAndUpdateStatus.name,
+            code: findAndUpdateStatus.code,
+            type_taxanomy: findAndUpdateStatus.type_taxanomy,
+            display: findAndUpdateStatus.display,
+            cpc: findAndUpdateStatus.cpc,
+            warehouse: findAndUpdateStatus.warehouse,
+            tray_grade: findAndUpdateStatus.tray_grade,
+            brand: findAndUpdateStatus.brand,
+            model: findAndUpdateStatus.model,
+            created_at: findAndUpdateStatus.created_at,
+            prefix:findAndUpdateStatus.prefix,
+            limit:findAndUpdateStatus.limit,
+            sort_id:"Open"
+          })
+          if(restore){
+             return {status:1}
+          }
+          else{
+            return {status:2}
+          }
+        }
+        else{
+          return {status:2}
+        }
+    } catch (error) {
+      return error
+    }
+  },
   /*--------------------------------ITEM TRACKING-----------------------------------*/
 
   itemTracking: (limit, skip) => {
@@ -1951,25 +2027,25 @@ module.exports = {
 
   getWhtTrayInuse: () => {
     return new Promise(async (resolve, reject) => {
-      let data = await masters.aggregate([{
-        $match:{
-
-          type_taxanomy: "WHT",
-          prefix: "tray-master",
-          sort_id: "Inuse",
-          items: { $ne: [] },
-          items:{$ne:undefined}
-        }
-      },
-      {
-        $lookup:{
-          from:"trayracks",
-          localField:"rack_id",
-          foreignField:"rack_id",
-          as:"rackDetails"
-        }
-      }
-    ]);
+      let data = await masters.aggregate([
+        {
+          $match: {
+            type_taxanomy: "WHT",
+            prefix: "tray-master",
+            sort_id: "Inuse",
+            items: { $ne: [] },
+            items: { $ne: undefined },
+          },
+        },
+        {
+          $lookup: {
+            from: "trayracks",
+            localField: "rack_id",
+            foreignField: "rack_id",
+            as: "rackDetails",
+          },
+        },
+      ]);
       if (data) {
         resolve(data);
       }
@@ -2106,22 +2182,22 @@ module.exports = {
 
   chargeDoneTrayFourDayDiff: () => {
     return new Promise(async (resolve, reject) => {
-      let tray = await masters.aggregate([{
-        $match:{
-
-          prefix: "tray-master",
-          sort_id: "Ready to BQC",
-        }
-      },
-      {
-        $lookup:{
-          from:"trayracks",
-          localField:"rack_id",
-          foreignField:"rack_id",
-          as:"rackDetails"
-        }
-      }
-    ]);
+      let tray = await masters.aggregate([
+        {
+          $match: {
+            prefix: "tray-master",
+            sort_id: "Ready to BQC",
+          },
+        },
+        {
+          $lookup: {
+            from: "trayracks",
+            localField: "rack_id",
+            foreignField: "rack_id",
+            as: "rackDetails",
+          },
+        },
+      ]);
       if (tray) {
         let arr = [];
         for (let x of tray) {
@@ -2726,6 +2802,72 @@ module.exports = {
         const rackCounts = await trayRack.aggregate(aggregatePipeline);
 
         resolve(rackCounts);
+      } catch (error) {
+        reject(error);
+      }
+    });
+  },
+  /*-----------------------------------------RACK REPORT -------------------------------------*/
+
+  trayRackReport:()=>{
+ return new Promise(async (resolve, reject) => {
+      try {
+        const aggregatePipeline = [
+          {
+            $lookup: {
+              from: "masters", // Replace with the actual collection name
+              localField: "rack_id",
+              foreignField: "rack_id",
+              as: "rack_counts",
+            },
+          },
+          {
+            $lookup: {
+              from: "masters", // Replace with the actual collection name
+              localField: "rack_id",
+              foreignField: "temp_rack",
+              as: "upcoming_tray_count",
+            },
+          },
+          {
+            $project: {
+              _id: 1,
+              rack_id: 1,
+              name: 1,
+              display: 1,
+              limit: 1,
+              warehouse: 1,
+              parent_id: 1,
+              // Other fields you want to include
+              rack_count: { $size: "$rack_counts" },
+              upcoming_tray_count: { $size: "$upcoming_tray_count" },
+            },
+          },
+          { $sort: { rack_id: 1 } },
+        ];
+        const rackCounts = await trayRack.aggregate(aggregatePipeline);
+         for(let x of rackCounts){
+          let getAllReport = await masters.aggregate([
+            {
+              $match: {
+                rack_id: x.rack_id,
+              }
+            },
+            {
+              $group: {
+                _id: "$type_taxanomy", // Group by the "type_taxanomy" field
+                count: { $sum: 1 } // Count the number of documents in each group
+              }
+            }
+          ])
+          let count_report={}
+          for(let y of getAllReport){
+            count_report[y._id]=y.count
+          }
+          x['count_report']=count_report
+          console.log(x);
+         }
+         resolve(rackCounts);
       } catch (error) {
         reject(error);
       }
@@ -3976,25 +4118,59 @@ module.exports = {
     return new Promise(async (resolve, reject) => {
       if (sort_id == "Ctx to Stx Send for Sorting") {
         const res = await masters
-          .find({
-            type_taxanomy: { $in: ["CT", "ST"] },
-            to_merge: { $ne: null },
-            sort_id: sort_id,
-          })
+          .aggregate([
+            {
+              $match: {
+                type_taxanomy: { $in: ["CT", "ST"] },
+                to_merge: { $ne: null },
+                sort_id: sort_id,
+              },
+            },
+            {
+              $lookup: {
+                from: "trayracks",
+                localField: "rack_id",
+                foreignField: "rack_id",
+                as: "rackDetails",
+              },
+            },
+          ])
           .catch((err) => reject(err));
         resolve(res);
       } else if (sort_id == "Pickup Request sent to Warehouse") {
         const res = await masters
-          .find({
-            prefix: "tray-master",
-            sort_id: sort_id,
-            to_tray_for_pickup: { $ne: null },
-          })
+          .aggregate([
+            {
+              $match: {
+                prefix: "tray-master",
+                sort_id: sort_id,
+                to_tray_for_pickup: { $ne: null },
+              },
+            },
+            {
+              $lookup: {
+                from: "trayracks",
+                localField: "rack_id",
+                foreignField: "rack_id",
+                as: "rackDetails",
+              },
+            },
+          ])
           .catch((err) => reject(err));
         resolve(res);
       } else {
         const res = await masters
-          .find({ type_taxanomy: trayType, sort_id: sort_id })
+          .aggregate([
+            { $match: { type_taxanomy: trayType, sort_id: sort_id } },
+            {
+              $lookup: {
+                from: "trayracks",
+                localField: "rack_id",
+                foreignField: "rack_id",
+                as: "rackDetails",
+              },
+            },
+          ])
           .catch((err) => reject(err));
         resolve(res);
       }
@@ -4287,30 +4463,42 @@ module.exports = {
   getAssignedTrayForMerging: () => {
     return new Promise(async (resolve, reject) => {
       const tray = await masters
-        .find({
-          $or: [
-            {
-              sort_id: "Merge Request Sent To Wharehouse",
-              to_merge: { $ne: null },
+        .aggregate([
+          {
+            $match: {
+              $or: [
+                {
+                  sort_id: "Merge Request Sent To Wharehouse",
+                  to_merge: { $ne: null },
+                },
+                {
+                  sort_id: "Audit Done Merge Request Sent To Wharehouse",
+                  to_merge: { $ne: null },
+                },
+                {
+                  sort_id: "Ready to BQC Merge Request Sent To Wharehouse",
+                  to_merge: { $ne: null },
+                },
+                {
+                  sort_id: "Ready to RDL-2 Merge Request Sent To Wharehouse",
+                  to_merge: { $ne: null },
+                },
+                {
+                  sort_id: "Ready to Audit Merge Request Sent To Wharehouse",
+                  to_merge: { $ne: null },
+                },
+              ],
             },
-            {
-              sort_id: "Audit Done Merge Request Sent To Wharehouse",
-              to_merge: { $ne: null },
+          },
+          {
+            $lookup: {
+              from: "trayracks",
+              localField: "rack_id",
+              foreignField: "rack_id",
+              as: "rackDetails",
             },
-            {
-              sort_id: "Ready to BQC Merge Request Sent To Wharehouse",
-              to_merge: { $ne: null },
-            },
-            {
-              sort_id: "Ready to RDL-2 Merge Request Sent To Wharehouse",
-              to_merge: { $ne: null },
-            },
-            {
-              sort_id: "Ready to Audit Merge Request Sent To Wharehouse",
-              to_merge: { $ne: null },
-            },
-          ],
-        })
+          },
+        ])
         .catch((err) => reject(err));
       resolve(tray);
     });

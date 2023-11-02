@@ -13,7 +13,7 @@ const superAdminController = require("../Controller/superAdmin/superAdminControl
 
 exports = module.exports = () => {
   try {
-    corn.schedule("00 20 * * *", () => {
+    corn.schedule("17 11 * * *", () => {
       /*---------------------------xml read ------------------------------------*/
       BlancoAutoMation.xmlFileRead();
     });
@@ -22,7 +22,7 @@ exports = module.exports = () => {
   }
   // NIGHT 11 BLANCOO AUTOMATION
   try {
-    corn.schedule("00 23 * * *", () => {
+    corn.schedule("22 11 * * *", () => {
       /*----------------------------------------------CSV READ-----------------------------*/
       BlancoAutoMation.blancooFileUpload();
     });

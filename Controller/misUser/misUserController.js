@@ -5085,6 +5085,9 @@ module.exports = {
             whtTrayArr.push(updateItem.code);
           }
         }
+        else{
+          resolve({ status: 0 });
+        }
       }
       if (whtTrayArr.length !== 0) {
         const rpTrayUpdation = await masters.findOneAndUpdate(
@@ -5144,13 +5147,14 @@ module.exports = {
               }
             }
             let obj = {
-              code: spTray,
+              code: otherTray,
               agent_name: spwhuser,
               description: "Assigned to sp warehouse for parts issue to agent:",
             };
             let logCreationRes = await module.exports.trackSpAndRpAssignLevel(
               obj
             );
+            console.log(logCreationRes);
             if (logCreationRes.status == 1) {
               resolve({ status: 1 });
             } else {
@@ -5161,7 +5165,7 @@ module.exports = {
           }
         } else if (screen == "WithoutSp" && rpTrayUpdation) {
           let obj = {
-            code: rpTray,
+            code: otherTray,
             agent_name: sortingUser,
             description: "Assigned to sorting (Wht to rp) to agent",
           };
@@ -5181,18 +5185,18 @@ module.exports = {
       }
     });
   },
-  trackSpAndRpAssignLevel: async (arr, actUser) => {
+  trackSpAndRpAssignLevel: async (obj) => {
     try {
       let flag = true;
-      for (let x of arr) {
+      for (let x of obj.code) {
         let unitsLogCreation = await unitsActionLog.create({
           action_type: x.description,
           created_at: Date.now(),
-          agent_name: x.agent_name,
+          agent_name: obj.agent_name,
           user_type: "PRC MIS",
-          tray_id: x.code,
+          tray_id: x,
           track_tray: "Tray",
-          description: `${x.description} :${sortingUser} by mis :${actUser}`,
+          description: `${obj.description} :${sortingUser} by mis :${actUser}`,
         });
         if (unitsLogCreation == null) {
           flag = false;
