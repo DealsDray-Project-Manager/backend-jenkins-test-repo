@@ -160,16 +160,25 @@ router.post("/check-user-status", async (req, res, next) => {
       jwt,
       user_type
     );
+    console.log("work");
+    console.log(data);
     if (data.status == 1) {
       res.status(200).json({
         message: "Active user",
       });
     } else if (data.status == 3) {
       res.status(202).json({
+        status: 1,
         message: "Admin deactivated",
+      });
+    } else if (data.status == 4) {
+      res.status(202).json({
+        status: 0,
+        message: "You need to change your password.",
       });
     } else {
       res.status(202).json({
+        status: 1,
         message:
           "Another user has logged in with the same username and password. Please log in again.",
       });
@@ -197,9 +206,13 @@ router.post("/getUsersHistoy/:username", async (req, res, next) => {
 router.post("/changePassword", async (req, res, next) => {
   try {
     let data = await superAdminController.changePassword(req.body);
-    if (data) {
+    if (data.status == 1) {
       res.status(200).json({
         message: "Successfully Changed",
+      });
+    } else if (data.status == 2) {
+      res.status(202).json({
+        message: "Old and new passwords should not be the same.",
       });
     } else {
       res.status(202).json({
@@ -1973,19 +1986,19 @@ router.post("/trayracks/view", async (req, res, next) => {
   }
 });
 
-// RACK REPORT 
-router.post("/trayRacksReport",async(req,res,next)=>{
+// RACK REPORT
+router.post("/trayRacksReport", async (req, res, next) => {
   try {
-       const rackReport=await superAdminController.trayRackReport()
-       if(rackReport){
-        res.status(200).json({
-          data:rackReport
-        })
-       }
+    const rackReport = await superAdminController.trayRackReport();
+    if (rackReport) {
+      res.status(200).json({
+        data: rackReport,
+      });
+    }
   } catch (error) {
-    next(error)
+    next(error);
   }
-})
+});
 
 /* ---------------------------GET RACK BASED ON THE WAREHOUSE ------------------*/
 router.post("/trayracks/view/:warehouse", async (req, res, next) => {

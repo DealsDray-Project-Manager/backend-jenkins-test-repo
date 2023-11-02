@@ -202,7 +202,33 @@ module.exports = {
         let data = await admin.findOne({ user_name: userName });
         if (data) {
           if (data.jwt_token == jwt) {
-            resolve({ data: data, status: 1 });
+            // Assuming checkUser.last_password_changed is a Date object
+            const lastPasswordChangedDate = new Date(
+              data.last_password_changed
+            );
+            // Set the time component to midnight (00:00:00)
+            lastPasswordChangedDate.setHours(0, 0, 0, 0);
+
+            // Calculate the current date
+            const currentDate = new Date();
+            // Set the time component to midnight (00:00:00)
+            currentDate.setHours(0, 0, 0, 0);
+
+            // Calculate the time difference in milliseconds
+            const timeDifference = currentDate - lastPasswordChangedDate;
+
+            // Define the duration for one week in milliseconds
+            const oneWeekInMilliseconds = 7 * 24 * 60 * 60 * 1000;
+
+            // Check if the time difference is greater than or equal to one week
+            if(data.last_password_changed == undefined ||
+              timeDifference >= oneWeekInMilliseconds){
+             
+                resolve({ status: 4 });
+              }
+              else{
+                resolve({ data: data, status: 1 });
+              }
           } else {
             resolve({ status: 2 });
           }
@@ -216,7 +242,33 @@ module.exports = {
         });
         if (data) {
           if (data.jwt_token == jwt) {
-            resolve({ data: data, status: 1 });
+              // Assuming checkUser.last_password_changed is a Date object
+            const lastPasswordChangedDate = new Date(
+              data.last_password_changed
+            );
+            // Set the time component to midnight (00:00:00)
+            lastPasswordChangedDate.setHours(0, 0, 0, 0);
+
+            // Calculate the current date
+            const currentDate = new Date();
+            // Set the time component to midnight (00:00:00)
+            currentDate.setHours(0, 0, 0, 0);
+
+            // Calculate the time difference in milliseconds
+            const timeDifference = currentDate - lastPasswordChangedDate;
+
+            // Define the duration for one week in milliseconds
+            const oneWeekInMilliseconds = 7 * 24 * 60 * 60 * 1000;
+
+            // Check if the time difference is greater than or equal to one week
+            if(data.last_password_changed == undefined ||
+              timeDifference >= oneWeekInMilliseconds){
+                console.log("w");
+                resolve({ status: 4 });
+              }
+              else{
+                resolve({ data: data, status: 1 });
+              }
           } else {
             resolve({ status: 2 });
           }
@@ -231,18 +283,50 @@ module.exports = {
 
   changePassword: (userData) => {
     return new Promise(async (resolve, reject) => {
-      let data = await user.updateOne(
-        { _id: userData._id, password: userData.old_password },
-        {
-          $set: {
-            password: userData.new_password,
-          },
+      if(userData.user_type == "super-admin"){
+        let findData=await admin.findOne({_id: userData._id})
+        if(findData.password == userData.new_password){
+           resolve({status:2})
         }
-      );
-      if (data.matchedCount != 0) {
-        resolve(data);
-      } else {
-        resolve();
+        else{
+          let data = await admin.updateOne(
+            { _id: userData._id, password: userData.old_password },
+            {
+              $set: {
+                password: userData.new_password,
+                last_password_changed:Date.now()
+              },
+            }
+          );
+          if (data.matchedCount != 0) {
+            resolve({status:1});
+          } else {
+            resolve({status:0});
+          }
+        }
+       
+      }
+      else{
+        let findData=await user.findOne({_id: userData._id})
+        if(findData.password == userData.new_password){
+           resolve({status:2})
+        }
+        else{
+          let data = await user.updateOne(
+            { _id: userData._id, password: userData.old_password },
+            {
+              $set: {
+                password: userData.new_password,
+                last_password_changed:Date.now()
+              },
+            }
+          );
+          if (data.matchedCount != 0) {
+            resolve({status:1});
+          } else {
+            resolve({status:0});
+          }
+        }
       }
     });
   },

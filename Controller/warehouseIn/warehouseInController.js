@@ -2601,6 +2601,7 @@ module.exports = {
           x["jack_type"] = "";
           if (x?.products?.length !== 0) {
             x["jack_type"] = x?.products?.[0]?.jack_type;
+            x['variant']=x?.products?.[0]?.variant
           }
           var today = new Date(Date.now());
           if (status == "Ready to BQC") {

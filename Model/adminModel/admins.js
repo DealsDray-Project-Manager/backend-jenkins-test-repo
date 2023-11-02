@@ -18,7 +18,8 @@ const adminSchema = mongoose.Schema({
   },
   jwt_token:{
     type:String
-  }
+  },
+  last_password_changed:Date
 });
 
 const admin = mongoose.model("admin", adminSchema);
