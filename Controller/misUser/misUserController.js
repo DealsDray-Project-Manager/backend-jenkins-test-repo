@@ -228,12 +228,19 @@ module.exports = {
           },
         ],
       });
+      const fourDaysAgo = new Date();
+      fourDaysAgo.setDate(fourDaysAgo.getDate() - 4);
+      console.log(fourDaysAgo);
       count.bqc = await masters.count({
         prefix: "tray-master",
         type_taxanomy: "WHT",
         sort_id: "Ready to BQC",
         cpc: location,
+        $or: [
+          { closed_time_bot: { $not: { $lt: fourDaysAgo } } }, // Items closed on or after 4 days ago
+        ],
       });
+      console.log(count.bqc);
       count.ctxToStxSorting = await masters.count({
         prefix: "tray-master",
         type_taxanomy: {
@@ -3640,7 +3647,7 @@ module.exports = {
               "track_tray.rdl_1_done_close_by_wh": { $gte: threeDaysAgo },
               sort_id: type,
               cpc: location,
-              type_taxanomy:"WHT"
+              type_taxanomy: "WHT",
             },
           },
           {
@@ -3739,15 +3746,14 @@ module.exports = {
             $unwind: "$items",
           },
         ]);
-      }
-       else {
+      } else {
         items = await masters.aggregate([
           {
             $match: {
               "items.rdl_fls_report.selected_status": { $in: selectedStatus },
               sort_id: "Ready to RDL-2",
               cpc: location,
-              type_taxanomy:"WHT"
+              type_taxanomy: "WHT",
             },
           },
           {
@@ -3832,10 +3838,15 @@ module.exports = {
             },
           },
         ]);
-      }
-      else if(type == "Ready to RDL-2"){
+      } else if (type == "Ready to RDL-2") {
         items = await masters.aggregate([
-          { $match: { sort_id: "Ready to RDL-2",type_taxanomy:"WHT", cpc: location } },
+          {
+            $match: {
+              sort_id: "Ready to RDL-2",
+              type_taxanomy: "WHT",
+              cpc: location,
+            },
+          },
           {
             $unwind: "$items",
           },
@@ -3849,8 +3860,7 @@ module.exports = {
             },
           },
         ]);
-      }
-       else {
+      } else {
         items = await masters.aggregate([
           { $match: { sort_id: type, cpc: location } },
           {
@@ -4656,7 +4666,7 @@ module.exports = {
           );
           if (checkThePart) {
             let qty = checkThePart.avl_stock - y.count;
-         
+
             if (qty < 0) {
               let required = Math.abs(qty);
               required_qty += required;
@@ -5752,7 +5762,8 @@ module.exports = {
     model,
     muic,
     screen,
-    actUser
+    actUser,
+    grade
   ) => {
     return new Promise(async (resolve, reject) => {
       let obj = {};
@@ -5778,6 +5789,7 @@ module.exports = {
             stx_tray_id: stXTrayId,
             ctx_tray_id: ctxTrayId,
             updated_at: Date.now(),
+            final_grade:grade
           },
         }
       );
@@ -6043,4 +6055,4 @@ module.exports = {
       }
     });
   },
-};  
+};

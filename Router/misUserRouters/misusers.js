@@ -2006,7 +2006,7 @@ router.post("/stxUtilityGetStx", async (req, res, next) => {
 router.post("/stxUtilityAddToStx", async (req, res, next) => {
   try {
     // PARAMS
-    const { uic, stXTrayId, ctxTrayId, brand, model, muic, screen, actUser } =
+    const { uic, stXTrayId, ctxTrayId, brand, model, muic, screen, actUser,grade } =
       req.body;
     // FUNCTION FROM CONTROLLER
     let data = await misUserController.stxUtilityAddItems(
@@ -2017,7 +2017,8 @@ router.post("/stxUtilityAddToStx", async (req, res, next) => {
       model,
       muic,
       screen,
-      actUser
+      actUser,
+      grade
     );
     if (data.status == 1) {
       res.status(200).json({

@@ -282,6 +282,7 @@ router.post("/getColorStorageRam", async (req, res, next) => {
 /*---------------------------------SUB MUIC -----------------------------------*/
 router.post("/fetchSubMuic", async (req, res, next) => {
   try {
+    console.log(req.body);
     const { storage, ram, color, muic } = req.body;
     const fetchSubMuic = await auditController.findSubMuic(
       storage,
