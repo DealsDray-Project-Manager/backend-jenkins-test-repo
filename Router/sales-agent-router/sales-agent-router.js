@@ -55,7 +55,6 @@ router.post("/viewPriceBasisMuic/:location", async (req, res, next) => {
   try {
     const { location } = req.params;
     let data = await salesController.viewPriceBasisMuic(location);
-    console.log(data);
     if (data) {
       res.status(200).json({
         data: data.mainData,
@@ -70,7 +69,6 @@ router.post("/viewPriceBasisMuic/:location", async (req, res, next) => {
 // FILTER ON MUIC PRICE PAGE BRAND / MODEL
 router.post("/viewPriceBasisMuicFilter", async (req, res, next) => {
   try {
-    console.log(req.body);
     const { location, brand, model,grade } = req.body;
     let data = await salesController.viewPriceBasisMuicFilter(
       location,
@@ -147,7 +145,6 @@ router.post("/getBrandsAlpha", async (req, res, next) => {
 // MODEL
 router.post("/getModelBasisOfArray", async (req, res, next) => {
   try {
-   console.log(req.body);
     let data = await salesController.getBrandBasedPrdouctArray(
       req.body
     );

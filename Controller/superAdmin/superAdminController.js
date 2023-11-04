@@ -341,7 +341,6 @@ module.exports = {
     return new Promise(async (resolve, reject) => {
       let data = await usersHistory.find({ user_name: username });
       if (data) {
-        console.log(data);
         resolve(data);
       }
     });
@@ -496,7 +495,6 @@ module.exports = {
   /*--------------------------------EDIT BUYER DATA-----------------------------------*/
 
   editBuyerDetails: (buyerData, docuemnts) => {
-    console.log(docuemnts);
     if (Object.keys(docuemnts).length !== 0) {
       if (docuemnts.profile_file) {
         buyerData.profile = IISDOMAINBUYERDOC + docuemnts.profile_file[0].filename;
@@ -549,7 +547,6 @@ module.exports = {
         },
         { returnOriginal: false }
       );
-      console.log(userDetails);
 
       if (userDetails) {
         let obj = {
@@ -567,7 +564,6 @@ module.exports = {
           mobile_verification_status: userDetails.mobile_verification_status,
           contact_person_name: userDetails.contact_person_name,
         };
-        console.log("ss", obj);
         let historyTab = await usersHistory.create(obj);
         resolve({ status: 1 });
       } else {
@@ -5341,16 +5337,12 @@ module.exports = {
           originalDate.getDate() - 1, // Adjust for the day (subtract 1)
           originalDate.getMonth() + 1 // Month remains the same
         );
-        console.log(findOrderdata.order_date);
-        console.log(
-          new Date(findOrderdata.order_date) ==
-            new Date("2023-07-08T18:30:00.000Z")
-        );
+       
         if (
           new Date(findOrderdata.order_date) ==
           new Date("2023-07-08T18:30:00.000Z")
         ) {
-          console.log("w");
+       
           // let orderDate1 = await orders.updateMany(
           //   { order_date: new Date("2023-07-08T18:30:00.000Z") },
           //   {
@@ -5589,10 +5581,7 @@ module.exports = {
                   
                  }
                );
-               console.log(main1);
-
                
-               console.log(main2);
                  // After removing the element, you can set the "selected_status" field:
               let main3 = await delivery.updateMany(
                 {

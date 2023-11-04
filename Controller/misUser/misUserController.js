@@ -114,7 +114,6 @@ module.exports = {
         const parts = itemDetails ? itemDetails.split(":") : [];
         // Combine the last two elements into one
         let lastTwoElements = parts.slice(1).join("");
-        console.log(lastTwoElements);
         let model = await products.findOne({
           model_name: {
             $regex: new RegExp("^" + lastTwoElements + "$", "i"),
@@ -230,7 +229,6 @@ module.exports = {
       });
       const fourDaysAgo = new Date();
       fourDaysAgo.setDate(fourDaysAgo.getDate() - 4);
-      console.log(fourDaysAgo);
       count.bqc = await masters.count({
         prefix: "tray-master",
         type_taxanomy: "WHT",
@@ -240,7 +238,6 @@ module.exports = {
           { closed_time_bot: { $not: { $lt: fourDaysAgo } } }, // Items closed on or after 4 days ago
         ],
       });
-      console.log(count.bqc);
       count.ctxToStxSorting = await masters.count({
         prefix: "tray-master",
         type_taxanomy: {
