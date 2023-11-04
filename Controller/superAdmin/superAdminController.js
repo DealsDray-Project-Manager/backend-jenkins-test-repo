@@ -34,10 +34,10 @@ const { tempOrdersReq } = require("../../Model/temp-req/temp-req");
 const { subMuic } = require("../../Model/sub-muic/sub-muic");
 const { unitsActionLog } = require("../../Model/units-log/units-action-log");
 
-const IISDOMAIN = "https://prexo-v9-dev-api.dealsdray.com/user/profile/";
+const IISDOMAIN = "https://prexo-v9-1-uat-api.dealsdray.com/user/profile/";
 const IISDOMAINBUYERDOC =
-  "https://prexo-v9-dev-api.dealsdray.com/user/document/";
-const IISDOMAINPRDT = "https://prexo-v9-dev-api.dealsdray.com/product/image/";
+  "https://prexo-v9-1-uat-api.dealsdray.com/user/document/";
+const IISDOMAINPRDT = "https://prexo-v9-1-uat-api.dealsdray.com/product/image/";
 
 /************************************************************************************************** */
 
@@ -270,26 +270,38 @@ module.exports = {
   /*--------------------------------CREATE BUYERS-----------------------------------*/
 
   createBuyer: (buyerData, docuemnts) => {
-    if (docuemnts != null) {
-      if (docuemnts.profile && docuemnts.profile[0]) {
+    
+      if (docuemnts.profile && docuemnts?.profile[0]) {
         buyerData.profile = IISDOMAINBUYERDOC + docuemnts.profile[0].filename;
       }
-      if (docuemnts.aadhar_proof && docuemnts.aadhar_proof[0]) {
+      else{
+        buyerData.profile=""
+      }
+      if (docuemnts.aadhar_proof && docuemnts?.aadhar_proof[0]) {
         buyerData.aadhar_proof =
           IISDOMAINBUYERDOC + docuemnts.aadhar_proof[0].filename;
       }
-      if (docuemnts.pan_card_proof && docuemnts.pan_card_proof[0]) {
+      else{
+        buyerData.aadhar_proof=""
+      }
+      if (docuemnts.pan_card_proof && docuemnts?.pan_card_proof[0]) {
         buyerData.pan_card_proof =
           IISDOMAINBUYERDOC + docuemnts.pan_card_proof[0].filename;
       }
+      else{
+        buyerData.pan_card_proof=""
+      }
       if (
         docuemnts.business_address_proof &&
-        docuemnts.business_address_proof[0]
+        docuemnts?.business_address_proof[0]
       ) {
         buyerData.business_address_proof =
           IISDOMAINBUYERDOC + docuemnts.business_address_proof[0].filename;
       }
-    }
+      else{
+        buyerData.business_address_proof=""
+      }
+    
 
     buyerData.creation_date = Date.now();
     return new Promise(async (resolve, rejects) => {
@@ -484,25 +496,24 @@ module.exports = {
   /*--------------------------------EDIT BUYER DATA-----------------------------------*/
 
   editBuyerDetails: (buyerData, docuemnts) => {
-    if (docuemnts != null) {
-    
-      if (docuemnts.profile && docuemnts.profile[0]) {
-        buyerData.profile = IISDOMAINBUYERDOC + docuemnts.profile[0].filename;
+    console.log(docuemnts);
+    if (Object.keys(docuemnts).length !== 0) {
+      if (docuemnts.profile_file) {
+        buyerData.profile = IISDOMAINBUYERDOC + docuemnts.profile_file[0].filename;
       }
-      if (docuemnts.aadhar_proof && docuemnts.aadhar_proof[0]) {
+      if (docuemnts.aadhar_proof_file) {
         buyerData.aadhar_proof =
-          IISDOMAINBUYERDOC + docuemnts.aadhar_proof[0].filename;
+          IISDOMAINBUYERDOC + docuemnts.aadhar_proof_file[0].filename;
       }
-      if (docuemnts.pan_card_proof && docuemnts.pan_card_proof[0]) {
+      if (docuemnts.pan_card_proof_file) {
         buyerData.pan_card_proof =
-          IISDOMAINBUYERDOC + docuemnts.pan_card_proof[0].filename;
+          IISDOMAINBUYERDOC + docuemnts.pan_card_proof_file[0].filename;
       }
       if (
-        docuemnts.business_address_proof &&
-        docuemnts.business_address_proof[0]
+        docuemnts.business_address_proof_file 
       ) {
         buyerData.business_address_proof =
-          IISDOMAINBUYERDOC + docuemnts.business_address_proof[0].filename;
+          IISDOMAINBUYERDOC + docuemnts.business_address_proof_file[0].filename;
       }
     }
 
@@ -5494,57 +5505,120 @@ module.exports = {
   exUpdateWithNewSpn: () => {
     return new Promise(async (resolve, reject) => {
       let arr = [];
+      // for (let x of arr) {
+      //   if (x.old_spn !== x.new_spn) {
+      //     let findSpn = await partAndColor.findOne({ part_code: x.new_spn });
+      //     let obj = {
+      //       part_id: findSpn.part_code,
+      //       part_name: findSpn.name,
+      //       quantity: 1,
+      //     };
 
-      for (let x of arr) {
-        if (x.old_spn !== x.new_spn) {
-          let findSpn = await partAndColor.findOne({ part_code: x.new_spn });
-          let obj = {
-            part_id: findSpn.part_code,
-            part_name: findSpn.name,
-            quantity: 1,
-          };
+      //     let udpateDelivery = await delivery.updateMany(
+      //       { "rdl_fls_one_report.partRequired.part_id": x.old_spn },
+      //       {
+      //         $push: {
+      //           "rdl_fls_one_report.partRequired": obj,
+      //         },
+      //       }
+      //     );
 
-          let udpateDelivery = await delivery.updateMany(
-            { "rdl_fls_one_report.partRequired.part_id": x.old_spn },
-            {
-              $push: {
-                "rdl_fls_one_report.partRequired": obj,
-              },
-            }
-          );
+      //     let main = await delivery.updateMany(
+      //       {
+      //         "rdl_fls_one_report.partRequired.part_id": x.old_spn,
+      //       },
+      //       {
+      //         $pull: {
+      //           "rdl_fls_one_report.partRequired": { part_id: x.old_spn },
+      //         },
+      //       }
+      //     );
+      //     let udpateDelivery2 = await masters.updateMany(
+      //       { "items.rdl_fls_report.partRequired.part_id": x.old_spn },
+      //       {
+      //         $push: {
+      //           "items.$.rdl_fls_report.partRequired": obj,
+      //         },
+      //       }
+      //     );
 
-          let main = await delivery.updateMany(
-            {
-              "rdl_fls_one_report.partRequired.part_id": x.old_spn,
-            },
-            {
-              $pull: {
-                "rdl_fls_one_report.partRequired": { part_id: x.old_spn },
-              },
-            }
-          );
-          let udpateDelivery2 = await masters.updateMany(
-            { "items.rdl_fls_report.partRequired.part_id": x.old_spn },
-            {
-              $push: {
-                "items.$.rdl_fls_report.partRequired": obj,
-              },
-            }
-          );
-
-          let main2 = await masters.updateMany(
-            {
-              "items.rdl_fls_report.partRequired.part_id": x.old_spn,
-            },
-            {
-              $pull: {
-                "items.$.rdl_fls_report.partRequired": { part_id: x.old_spn },
-              },
-            }
-          );
+      //     let main2 = await masters.updateMany(
+      //       {
+      //         "items.rdl_fls_report.partRequired.part_id": x.old_spn,
+      //       },
+      //       {
+      //         $pull: {
+      //           "items.$.rdl_fls_report.partRequired": { part_id: x.old_spn },
+      //         },
+      //       }
+      //     );
+      //   }
+      // }
+       let arrOfMotherBoardSW=[
+        "SPN000734",
+        "SPN000731"
+       ]
+       for(let y of arrOfMotherBoardSW){
+        let status
+        if(y=="SPN000734"){
+          status="Motherboard Work"
         }
-      }
+        else{
+           status="Software Installation"
+        }
 
+        let main1 = await masters.updateMany(
+          {
+            "items.rdl_fls_report.partRequired.part_id": y,
+          },
+          {
+           
+            $set:{
+             "items.$.rdl_fls_report.selected_status":status
+            }
+          }
+        );
+         let main2 = await masters.updateMany(
+                 {
+                   "items.rdl_fls_report.partRequired.part_id": y,
+                 },
+                 {
+                   $pull: {
+                     "items.$.rdl_fls_report.partRequired": { part_id: y },
+                   },
+                  
+                 }
+               );
+               console.log(main1);
+
+               
+               console.log(main2);
+                 // After removing the element, you can set the "selected_status" field:
+              let main3 = await delivery.updateMany(
+                {
+                  "rdl_fls_one_report.partRequired.part_id": y,
+                },
+                {
+                  $set: {
+                    "rdl_fls_one_report.partRequired.$.selected_status": status
+                  },
+                }
+              );
+               let main4 = await delivery.updateMany(
+                {
+                  "rdl_fls_one_report.partRequired.part_id": y,
+                },
+                {
+                  $pull: {
+                    "rdl_fls_one_report.partRequired": { part_id: y },
+                  },
+                }
+              );
+              console.log(main3);
+
+            
+              console.log(main4);
+       }
       resolve({ status: true });
     });
   },
