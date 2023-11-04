@@ -64,15 +64,14 @@ module.exports = {
         if (getTheTray.sort_id == "Assigned to sp warehouse") {
           if (getTheTray.issued_user_name == userName) {
             for (let x of getTheTray?.items) {
-                let checkBoxId = await partAndColor.findOne({
-                  part_code: x?.partId,
-                });
-                if (checkBoxId) {
-                  x["avl_qty_box"] = checkBoxId?.avl_stock;
-                } else {
-                  x["avl_qty_box"] = "";
-                }
-              
+              let checkBoxId = await partAndColor.findOne({
+                part_code: x?.partId,
+              });
+              if (checkBoxId) {
+                x["avl_qty_box"] = checkBoxId?.avl_stock;
+              } else {
+                x["avl_qty_box"] = "";
+              }
             }
             resolve({ status: 2, tray: getTheTray });
           } else {
@@ -93,7 +92,7 @@ module.exports = {
       const updatePart = await masters.findOneAndUpdate(
         { code: trayId, "items.partId": partId },
         {
-          $push: {
+          $addToSet: {
             temp_array: partId,
           },
           $set: {
@@ -121,7 +120,6 @@ module.exports = {
         }
       );
       if (updateTheTray) {
-       
         resolve({ status: 1 });
       } else {
         resolve({ status: 0 });
@@ -202,7 +200,7 @@ module.exports = {
       }
     });
   },
-  rdlTwoDoneCloseSpTray: (trayId,actionUser) => {
+  rdlTwoDoneCloseSpTray: (trayId, actionUser) => {
     return new Promise(async (resolve, reject) => {
       const closeSpTray = await masters.updateOne(
         { code: trayId },
@@ -221,7 +219,7 @@ module.exports = {
           created_at: Date.now(),
           user_name_of_action: actionUser,
           user_type: "SP Warehouse",
-          tray_id:trayId,
+          tray_id: trayId,
           track_tray: "Tray",
           description: `RDL-2 Done Closed by SP Warehouse:${actionUser}`,
         });

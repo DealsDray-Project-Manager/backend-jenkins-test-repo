@@ -282,6 +282,7 @@ module.exports = {
   /*--------------------------------CHANGE PASSWORD-----------------------------------*/
 
   changePassword: (userData) => {
+    console.log(userData._id);
     return new Promise(async (resolve, reject) => {
       if(userData.user_type == "super-admin"){
         let findData=await admin.findOne({_id: userData._id})

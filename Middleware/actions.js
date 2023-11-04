@@ -7,10 +7,12 @@ const checkDatabaseMiddleware = async (req, res, next) => {
   // Database check logic here
   // Attach data to req object if needed
   try {
-    let checkUser;
+    let token = (checkUser = req.headers["x-access-token"]);
+    console.log(token == "null");
     if (
       (req.method === "POST" && req.path === "/login") ||
-      (req.method === "POST" && req.path === "/check-user-status")
+      (req.method === "POST" && req.path === "/check-user-status") ||
+      token == "null"
     ) {
       return next();
     } else {
