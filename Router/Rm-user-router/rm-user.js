@@ -155,8 +155,8 @@ router.post("/addIntoBox", async (req, res, next) => {
 /*----------------------------------CLOSED SP TRAY-----------------------------------------------------*/
 router.post("/rdlTwoDoneCloseSP", async (req, res, next) => {
   try {
-    const { spTrayId } = req.body;
-    let data = await rmuserController.rdlTwoDoneCloseSpTray(spTrayId);
+    const { spTrayId,actionUser} = req.body;
+    let data = await rmuserController.rdlTwoDoneCloseSpTray(spTrayId,actionUser);
     if (data.status == 1) {
       res.status(200).json({
         message: "Successfully Closed",

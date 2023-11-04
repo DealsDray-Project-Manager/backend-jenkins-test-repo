@@ -33,11 +33,14 @@ const { purchaseOrder } = require("../../Model/Purchase-order/purchase-order");
 const { tempOrdersReq } = require("../../Model/temp-req/temp-req");
 const { subMuic } = require("../../Model/sub-muic/sub-muic");
 const { unitsActionLog } = require("../../Model/units-log/units-action-log");
+const {
+  deletedMaster,
+} = require("../../Model/Deleted-masters/deleted-trays-bag");
 
-const IISDOMAIN = "https://prexo-v9-1-uat-api.dealsdray.com/user/profile/";
+const IISDOMAIN = "https://prexo-v9-2-dev-api.dealsdray.com/user/profile/";
 const IISDOMAINBUYERDOC =
-  "https://prexo-v9-1-uat-api.dealsdray.com/user/document/";
-const IISDOMAINPRDT = "https://prexo-v9-1-uat-api.dealsdray.com/product/image/";
+  "https://prexo-v9-2-dev-api.dealsdray.com/user/document/";
+const IISDOMAINPRDT = "https://prexo-v9-2-dev-api.dealsdray.com/product/image/";
 
 /************************************************************************************************** */
 
@@ -199,7 +202,33 @@ module.exports = {
         let data = await admin.findOne({ user_name: userName });
         if (data) {
           if (data.jwt_token == jwt) {
-            resolve({ data: data, status: 1 });
+            // Assuming checkUser.last_password_changed is a Date object
+            const lastPasswordChangedDate = new Date(
+              data.last_password_changed
+            );
+            // Set the time component to midnight (00:00:00)
+            lastPasswordChangedDate.setHours(0, 0, 0, 0);
+
+            // Calculate the current date
+            const currentDate = new Date();
+            // Set the time component to midnight (00:00:00)
+            currentDate.setHours(0, 0, 0, 0);
+
+            // Calculate the time difference in milliseconds
+            const timeDifference = currentDate - lastPasswordChangedDate;
+
+            // Define the duration for one week in milliseconds
+            const oneWeekInMilliseconds = 7 * 24 * 60 * 60 * 1000;
+
+            // Check if the time difference is greater than or equal to one week
+            if(data.last_password_changed == undefined ||
+              timeDifference >= oneWeekInMilliseconds){
+             
+                resolve({ status: 4 });
+              }
+              else{
+                resolve({ data: data, status: 1 });
+              }
           } else {
             resolve({ status: 2 });
           }
@@ -213,7 +242,33 @@ module.exports = {
         });
         if (data) {
           if (data.jwt_token == jwt) {
-            resolve({ data: data, status: 1 });
+              // Assuming checkUser.last_password_changed is a Date object
+            const lastPasswordChangedDate = new Date(
+              data.last_password_changed
+            );
+            // Set the time component to midnight (00:00:00)
+            lastPasswordChangedDate.setHours(0, 0, 0, 0);
+
+            // Calculate the current date
+            const currentDate = new Date();
+            // Set the time component to midnight (00:00:00)
+            currentDate.setHours(0, 0, 0, 0);
+
+            // Calculate the time difference in milliseconds
+            const timeDifference = currentDate - lastPasswordChangedDate;
+
+            // Define the duration for one week in milliseconds
+            const oneWeekInMilliseconds = 7 * 24 * 60 * 60 * 1000;
+
+            // Check if the time difference is greater than or equal to one week
+            if(data.last_password_changed == undefined ||
+              timeDifference >= oneWeekInMilliseconds){
+                console.log("w");
+                resolve({ status: 4 });
+              }
+              else{
+                resolve({ data: data, status: 1 });
+              }
           } else {
             resolve({ status: 2 });
           }
@@ -228,18 +283,50 @@ module.exports = {
 
   changePassword: (userData) => {
     return new Promise(async (resolve, reject) => {
-      let data = await user.updateOne(
-        { _id: userData._id, password: userData.old_password },
-        {
-          $set: {
-            password: userData.new_password,
-          },
+      if(userData.user_type == "super-admin"){
+        let findData=await admin.findOne({_id: userData._id})
+        if(findData.password == userData.new_password){
+           resolve({status:2})
         }
-      );
-      if (data.matchedCount != 0) {
-        resolve(data);
-      } else {
-        resolve();
+        else{
+          let data = await admin.updateOne(
+            { _id: userData._id, password: userData.old_password },
+            {
+              $set: {
+                password: userData.new_password,
+                last_password_changed:Date.now()
+              },
+            }
+          );
+          if (data.matchedCount != 0) {
+            resolve({status:1});
+          } else {
+            resolve({status:0});
+          }
+        }
+       
+      }
+      else{
+        let findData=await user.findOne({_id: userData._id})
+        if(findData.password == userData.new_password){
+           resolve({status:2})
+        }
+        else{
+          let data = await user.updateOne(
+            { _id: userData._id, password: userData.old_password },
+            {
+              $set: {
+                password: userData.new_password,
+                last_password_changed:Date.now()
+              },
+            }
+          );
+          if (data.matchedCount != 0) {
+            resolve({status:1});
+          } else {
+            resolve({status:0});
+          }
+        }
       }
     });
   },
@@ -819,6 +906,17 @@ module.exports = {
       let model = [];
       let jack_type = [];
       for (let i = 0; i < productsData.length; i++) {
+        let checkMuic = await products.findOne({ muic: productsData[i]?.muic });
+        if (checkMuic) {
+          resolve({ status: 0 });
+        } else if (
+          productsData[i]?.variant == "" ||
+          productsData[i]?.variant == undefined ||
+          productsData[i]?.vendor_name == "" ||
+          productsData[i]?.vendor_name == undefined
+        ) {
+          resolve({ status: 1 });
+        }
         if (
           productsData[i]?.jack_type !== "Micro USB" &&
           productsData[i]?.jack_type !== "Type C" &&
@@ -930,7 +1028,6 @@ module.exports = {
       resolve(allProducts);
     });
   },
-  
 
   /*--------------------------------FIND IMAGE FOR EDITING-----------------------------------*/
 
@@ -1668,15 +1765,77 @@ module.exports = {
 
   delteMaster: (masterId) => {
     return new Promise(async (resolve, reject) => {
-      let data = await masters.deleteOne({ code: masterId });
-      if (data.deletedCount != 0) {
+      let data = await masters.findOneAndDelete({ code: masterId });
+      if (data) {
+        await deletedMaster.create({
+          name: data.name,
+          code: data.code,
+          type_taxanomy: data.type_taxanomy,
+          display: data.display,
+          cpc: data.cpc,
+          warehouse: data.warehouse,
+          tray_grade: data.tray_grade,
+          brand: data.brand,
+          model: data.model,
+          created_at: data.created_at,
+          prefix:data.prefix,
+          limit:data.limit
+        });
         resolve({ status: true });
       } else {
         resolve({ status: false });
       }
     });
   },
-
+  /*----------------------------------GET DELETED TRAYS -------------------------------*/
+  getDeletedMasters:async(type)=>{
+    try {
+      console.log(type);
+        const findData=await deletedMaster.find({prefix:type,status:"Pending"})
+        console.log(findData);
+        return findData
+    } catch (error) {
+      return error
+    }
+  },
+  /*--------------------------------RESTORE THE DELETED MASTER----------------------*/
+  restoreDeletedMaster:async(id)=>{
+    try {
+        const findAndUpdateStatus=await deletedMaster.findOneAndUpdate({code:id,status:"Pending"},{
+          $set:{
+            status:"Restored"
+          }
+        })
+        if(findAndUpdateStatus){
+          let restore=await masters.create({
+            name: findAndUpdateStatus.name,
+            code: findAndUpdateStatus.code,
+            type_taxanomy: findAndUpdateStatus.type_taxanomy,
+            display: findAndUpdateStatus.display,
+            cpc: findAndUpdateStatus.cpc,
+            warehouse: findAndUpdateStatus.warehouse,
+            tray_grade: findAndUpdateStatus.tray_grade,
+            brand: findAndUpdateStatus.brand,
+            model: findAndUpdateStatus.model,
+            created_at: findAndUpdateStatus.created_at,
+            prefix:findAndUpdateStatus.prefix,
+            limit:findAndUpdateStatus.limit,
+            sort_id:"Open"
+          })
+          if(restore){
+             return {status:1}
+          }
+          else{
+            return {status:2}
+          }
+        }
+        else{
+          return {status:2}
+        }
+    } catch (error) {
+      return error
+    }
+  },
   /*--------------------------------ITEM TRACKING-----------------------------------*/
 
   itemTracking: (limit, skip) => {
@@ -1964,12 +2123,25 @@ module.exports = {
 
   getWhtTrayInuse: () => {
     return new Promise(async (resolve, reject) => {
-      let data = await masters.find({
-        type_taxanomy: "WHT",
-        prefix: "tray-master",
-        sort_id: "Inuse",
-        items: { $ne: [] },
-      });
+      let data = await masters.aggregate([
+        {
+          $match: {
+            type_taxanomy: "WHT",
+            prefix: "tray-master",
+            sort_id: "Inuse",
+            items: { $ne: [] },
+            items: { $ne: undefined },
+          },
+        },
+        {
+          $lookup: {
+            from: "trayracks",
+            localField: "rack_id",
+            foreignField: "rack_id",
+            as: "rackDetails",
+          },
+        },
+      ]);
       if (data) {
         resolve(data);
       }
@@ -2106,15 +2278,26 @@ module.exports = {
 
   chargeDoneTrayFourDayDiff: () => {
     return new Promise(async (resolve, reject) => {
-      let tray = await masters.find({
-        prefix: "tray-master",
-        sort_id: "Ready to BQC",
-      });
+      let tray = await masters.aggregate([
+        {
+          $match: {
+            prefix: "tray-master",
+            sort_id: "Ready to BQC",
+          },
+        },
+        {
+          $lookup: {
+            from: "trayracks",
+            localField: "rack_id",
+            foreignField: "rack_id",
+            as: "rackDetails",
+          },
+        },
+      ]);
       if (tray) {
         let arr = [];
         for (let x of tray) {
           var today = new Date(Date.now());
-
           if (
             new Date(x.closed_time_bot) <=
             new Date(today.setDate(today.getDate() - 4))
@@ -2720,21 +2903,99 @@ module.exports = {
       }
     });
   },
+  /*-----------------------------------------RACK REPORT -------------------------------------*/
+
+  trayRackReport:()=>{
+ return new Promise(async (resolve, reject) => {
+      try {
+        const aggregatePipeline = [
+          {
+            $lookup: {
+              from: "masters", // Replace with the actual collection name
+              localField: "rack_id",
+              foreignField: "rack_id",
+              as: "rack_counts",
+            },
+          },
+          {
+            $lookup: {
+              from: "masters", // Replace with the actual collection name
+              localField: "rack_id",
+              foreignField: "temp_rack",
+              as: "upcoming_tray_count",
+            },
+          },
+          {
+            $project: {
+              _id: 1,
+              rack_id: 1,
+              name: 1,
+              display: 1,
+              limit: 1,
+              warehouse: 1,
+              parent_id: 1,
+              // Other fields you want to include
+              rack_count: { $size: "$rack_counts" },
+              upcoming_tray_count: { $size: "$upcoming_tray_count" },
+            },
+          },
+          { $sort: { rack_id: 1 } },
+        ];
+        const rackCounts = await trayRack.aggregate(aggregatePipeline);
+         for(let x of rackCounts){
+          let getAllReport = await masters.aggregate([
+            {
+              $match: {
+                rack_id: x.rack_id,
+              }
+            },
+            {
+              $group: {
+                _id: "$type_taxanomy", // Group by the "type_taxanomy" field
+                count: { $sum: 1 } // Count the number of documents in each group
+              }
+            }
+          ])
+          let count_report={}
+          for(let y of getAllReport){
+            count_report[y._id]=y.count
+          }
+          x['count_report']=count_report
+          console.log(x);
+         }
+         resolve(rackCounts);
+      } catch (error) {
+        reject(error);
+      }
+    });
+  },
 
   /*--------------------GET RACK BASED ON THE LIMIT AND WAREHOUSE---------------------------*/
   getRackBasedOnTheWarehouse: (warehouse) => {
     return new Promise(async (resolve, reject) => {
       let arr = [];
       const rackIdData = await trayRack.find({ warehouse: warehouse });
+
       for (let x of rackIdData) {
-        const findRack = await masters.find(
-          {
-            $or: [{ rack_id: x.rack_id }, { temp_rack: x.rack_id }],
-          },
-          { rack_id: 1 }
-        );
-        if (x.limit > findRack.length) {
-          arr.push(x);
+        const countOfCurrent = await masters.count({
+          rack_id: x.rack_id,
+        });
+        const countOfUpComing = await masters.count({
+          temp_rack: x.rack_id,
+        });
+        // console.log("Upcoming",countOfUpComing,"current count",countOfCurrent);
+        if (x.limit > countOfCurrent + countOfUpComing) {
+          let obj = {
+            rack_id: x.rack_id,
+            display: x.display,
+            current_tray_count: countOfCurrent,
+            upcoming_tray_count: countOfUpComing,
+            avl_spc: x.limit - Number(countOfCurrent + countOfUpComing),
+          };
+          // x["current_tray_count"]=countOfCurrent
+          // x["upcoming_tray_count"]=countOfUpComing
+          // x['avl_spc']= x.limit - (Number(countOfCurrent + countOfUpComing))
+          arr.push(obj);
         }
       }
       resolve(arr);
@@ -3953,25 +4214,59 @@ module.exports = {
     return new Promise(async (resolve, reject) => {
       if (sort_id == "Ctx to Stx Send for Sorting") {
         const res = await masters
-          .find({
-            type_taxanomy: { $in: ["CT", "ST"] },
-            to_merge: { $ne: null },
-            sort_id: sort_id,
-          })
+          .aggregate([
+            {
+              $match: {
+                type_taxanomy: { $in: ["CT", "ST"] },
+                to_merge: { $ne: null },
+                sort_id: sort_id,
+              },
+            },
+            {
+              $lookup: {
+                from: "trayracks",
+                localField: "rack_id",
+                foreignField: "rack_id",
+                as: "rackDetails",
+              },
+            },
+          ])
           .catch((err) => reject(err));
         resolve(res);
       } else if (sort_id == "Pickup Request sent to Warehouse") {
         const res = await masters
-          .find({
-            prefix: "tray-master",
-            sort_id: sort_id,
-            to_tray_for_pickup: { $ne: null },
-          })
+          .aggregate([
+            {
+              $match: {
+                prefix: "tray-master",
+                sort_id: sort_id,
+                to_tray_for_pickup: { $ne: null },
+              },
+            },
+            {
+              $lookup: {
+                from: "trayracks",
+                localField: "rack_id",
+                foreignField: "rack_id",
+                as: "rackDetails",
+              },
+            },
+          ])
           .catch((err) => reject(err));
         resolve(res);
       } else {
         const res = await masters
-          .find({ type_taxanomy: trayType, sort_id: sort_id })
+          .aggregate([
+            { $match: { type_taxanomy: trayType, sort_id: sort_id } },
+            {
+              $lookup: {
+                from: "trayracks",
+                localField: "rack_id",
+                foreignField: "rack_id",
+                as: "rackDetails",
+              },
+            },
+          ])
           .catch((err) => reject(err));
         resolve(res);
       }
@@ -4264,30 +4559,42 @@ module.exports = {
   getAssignedTrayForMerging: () => {
     return new Promise(async (resolve, reject) => {
       const tray = await masters
-        .find({
-          $or: [
-            {
-              sort_id: "Merge Request Sent To Wharehouse",
-              to_merge: { $ne: null },
+        .aggregate([
+          {
+            $match: {
+              $or: [
+                {
+                  sort_id: "Merge Request Sent To Wharehouse",
+                  to_merge: { $ne: null },
+                },
+                {
+                  sort_id: "Audit Done Merge Request Sent To Wharehouse",
+                  to_merge: { $ne: null },
+                },
+                {
+                  sort_id: "Ready to BQC Merge Request Sent To Wharehouse",
+                  to_merge: { $ne: null },
+                },
+                {
+                  sort_id: "Ready to RDL-2 Merge Request Sent To Wharehouse",
+                  to_merge: { $ne: null },
+                },
+                {
+                  sort_id: "Ready to Audit Merge Request Sent To Wharehouse",
+                  to_merge: { $ne: null },
+                },
+              ],
             },
-            {
-              sort_id: "Audit Done Merge Request Sent To Wharehouse",
-              to_merge: { $ne: null },
+          },
+          {
+            $lookup: {
+              from: "trayracks",
+              localField: "rack_id",
+              foreignField: "rack_id",
+              as: "rackDetails",
             },
-            {
-              sort_id: "Ready to BQC Merge Request Sent To Wharehouse",
-              to_merge: { $ne: null },
-            },
-            {
-              sort_id: "Ready to RDL-2 Merge Request Sent To Wharehouse",
-              to_merge: { $ne: null },
-            },
-            {
-              sort_id: "Ready to Audit Merge Request Sent To Wharehouse",
-              to_merge: { $ne: null },
-            },
-          ],
-        })
+          },
+        ])
         .catch((err) => reject(err));
       resolve(tray);
     });
@@ -4348,6 +4655,80 @@ module.exports = {
       );
       resolve(dataFetch);
     });
+  },
+  /*-----------------------------------------GET TRAY FOR REMOVE DUPLICATE UNITS------------------------------*/
+  getTrayForRemoveDuplicateUnits: async (trayId) => {
+    try {
+      console.log(trayId);
+      const trayData = await masters.findOne({ code: trayId });
+      if (trayData) {
+        if (trayData.sort_id != "Open") {
+          return { trayData: trayData, status: 1 };
+        } else {
+          return { status: 2 };
+        }
+      } else {
+        return { status: 0 };
+      }
+    } catch (error) {
+      return error;
+    }
+  },
+  // REMOVE DUPLICATE UNITS
+  removeDuplicateFromTray: async (expectedSide, actualSide, trayId) => {
+    try {
+      let flag = true;
+      for (let x of expectedSide) {
+        const document = await masters.findOne({ code: trayId });
+        if (document) {
+          const items = document.items;
+          const indexToRemove = items.findIndex((item) => item.uic === x);
+          if (indexToRemove !== -1) {
+            items.splice(indexToRemove, 1);
+            removeFromItemsArray = await masters.updateOne(
+              { code: trayId },
+              {
+                $set: {
+                  items: items,
+                },
+              }
+            );
+          }
+        }
+
+        if (removeFromItemsArray.modifiedCount == 0) {
+          flag = false;
+        }
+      }
+      for (let y of actualSide) {
+        const document = await masters.findOne({ code: trayId });
+        if (document) {
+          const items = document.actual_items;
+          const indexToRemove = items.findIndex((item) => item.uic === y);
+          if (indexToRemove !== -1) {
+            items.splice(indexToRemove, 1);
+            removeFromActualArray = await masters.updateOne(
+              { code: trayId },
+              {
+                $set: {
+                  actual_items: items,
+                },
+              }
+            );
+          }
+        }
+        if (removeFromActualArray.modifiedCount == 0) {
+          flag = false;
+        }
+      }
+      if (flag) {
+        return { status: 1 };
+      } else {
+        return { status: 0 };
+      }
+    } catch (error) {
+      return error;
+    }
   },
   /*-----------------------------------------EXTRA------------------------------------------------------------*/
   addCpcType: () => {

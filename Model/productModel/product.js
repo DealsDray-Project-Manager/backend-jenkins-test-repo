@@ -23,12 +23,15 @@ const productSchema = mongoose.Schema({
   created_at: {
     type: Date,
   },
-  jack_type:{
+  jack_type: {
+    type: String,
+  },
+  variant:{
     type:String
   },
-  created_by:{
-    type:String
-  }
+  created_by: {
+    type: String,
+  },
 });
 
 const products = mongoose.model("product", productSchema);

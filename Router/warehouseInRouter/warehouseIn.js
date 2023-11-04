@@ -1493,6 +1493,7 @@ router.post("/viewTrayFromAndTo", async (req, res, next) => {
       type
     );
     if (data) {
+      console.log(data);
       let checkDup = data;
       if (type == "ctx-to-stx-sorting-page") {
         checkDup = await duplicateEntryCheck.onlyItemsArrayForSortingLevel(
@@ -2519,7 +2520,7 @@ router.post(
   async (req, res, next) => {
     try {
       let data = await warehouseInController.sortingDoneCtxStxClose(req.body);
-     if (data.status == 2) {
+      if (data.status == 2) {
         let logUpdate =
           await warehouseInController.sortingDonectxTostxCloseLogData(
             data.tray.items,

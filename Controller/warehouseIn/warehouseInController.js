@@ -1323,6 +1323,16 @@ module.exports = {
               }
             );
             if (data) {
+              await unitsActionLog.create({
+                action_type: "Received from RDL-2",
+                created_at: Date.now(),
+                user_name_of_action: trayData.actioUser,
+                user_type: "SP Warehouse",
+                agent_name: data.issued_user_name,
+                tray_id: trayData.trayId,
+                track_tray: "Tray",
+                description: `Received from RDL-2 to agent:${data.issued_user_name} by WH :${trayData.actioUser}`,
+              });
               resolve({ status: 1 });
             }
           }
@@ -2247,6 +2257,14 @@ module.exports = {
             },
           },
           {
+            $lookup: {
+              from: "trayracks",
+              localField: "rack_id",
+              foreignField: "rack_id",
+              as: "rackDetails",
+            },
+          },
+          {
             $project: {
               code: 1,
               rack_id: 1,
@@ -2254,6 +2272,7 @@ module.exports = {
               model: 1,
               sort_id: 1,
               created_at: 1,
+              rackDetails: 1,
               limit: 1,
               items_length: {
                 $cond: {
@@ -2272,7 +2291,7 @@ module.exports = {
             },
           },
         ]);
-
+        console.log(data);
         resolve(data);
       } else {
         let data = await masters.find({
@@ -2296,7 +2315,16 @@ module.exports = {
           },
         },
         {
+          $lookup: {
+            from: "trayracks",
+            localField: "rack_id",
+            foreignField: "rack_id",
+            as: "rackDetails",
+          },
+        },
+        {
           $project: {
+            rackDetails:1,
             code: 1,
             rack_id: 1,
             brand: 1,
@@ -2329,10 +2357,22 @@ module.exports = {
   getRptTrayBasedOnStatus: (location, type, status) => {
     return new Promise(async (resolve, reject) => {
       if (status == "All") {
-        let data = await masters.find({
-          cpc: location,
-          type_taxanomy: "RPT",
-        });
+        let data = await masters.aggregate([
+          {
+            $match: {
+              cpc: location,
+              type_taxanomy: "RPT",
+            },
+          },
+          {
+            $lookup: {
+              from: "trayracks",
+              localField: "rack_id",
+              foreignField: "rack_id",
+              as: "rackDetails",
+            },
+          },
+        ]);
         resolve(data);
       }
     });
@@ -2526,6 +2566,14 @@ module.exports = {
               as: "products",
             },
           },
+          {
+            $lookup: {
+              from: "trayracks",
+              localField: "rack_id",
+              foreignField: "rack_id",
+              as: "trayrack",
+            },
+          },
         ]);
       } else {
         data = await masters.aggregate([
@@ -2553,6 +2601,7 @@ module.exports = {
           x["jack_type"] = "";
           if (x?.products?.length !== 0) {
             x["jack_type"] = x?.products?.[0]?.jack_type;
+            x['variant']=x?.products?.[0]?.variant
           }
           var today = new Date(Date.now());
           if (status == "Ready to BQC") {
@@ -2890,6 +2939,16 @@ module.exports = {
             },
           }
         );
+        await unitsActionLog.create({
+          action_type: "Issued to RDL-2",
+          created_at: Date.now(),
+          agent_name: data.issued_user_name,
+          user_name_of_action: trayData.actionUser,
+          tray_id: trayData.trayId,
+          user_type: "SP Warehouse",
+          track_tray: "Tray",
+          description: `Issued to RDL-2 to agent :${data.issued_user_name} by WH :${trayData.actionUser}`,
+        });
       } else if (trayData.sortId == "Send for BQC") {
         data = await masters.findOneAndUpdate(
           { code: trayData.trayId },
@@ -5738,13 +5797,25 @@ module.exports = {
   ctxTray: (type, location) => {
     return new Promise(async (reslove, reject) => {
       if (type == "all") {
-        let tray = await masters.find({
-          prefix: "tray-master",
-          cpc: location,
-          type_taxanomy: {
-            $nin: ["BOT", "PMT", "MMT", "WHT", "ST", "SPT", "RPT"],
+        let tray = await masters.aggregate([
+          {
+            $match: {
+              prefix: "tray-master",
+              cpc: location,
+              type_taxanomy: {
+                $nin: ["BOT", "PMT", "MMT", "WHT", "ST", "SPT", "RPT"],
+              },
+            },
           },
-        });
+          {
+            $lookup: {
+              from: "trayracks",
+              localField: "rack_id",
+              foreignField: "rack_id",
+              as: "rackDetails",
+            },
+          },
+        ]);
         if (tray) {
           reslove({ status: 1, tray: tray });
         }
@@ -7181,11 +7252,23 @@ module.exports = {
   stxTray: (type, location) => {
     return new Promise(async (reslove, reject) => {
       if (type == "all") {
-        let tray = await masters.find({
-          prefix: "tray-master",
-          cpc: location,
-          type_taxanomy: "ST",
-        });
+        let tray = await masters.aggregate([
+          {
+            $match: {
+              prefix: "tray-master",
+              cpc: location,
+              type_taxanomy: "ST",
+            },
+          },
+          {
+            $lookup: {
+              from: "trayracks",
+              localField: "rack_id",
+              foreignField: "rack_id",
+              as: "rackDetails",
+            },
+          },
+        ]);
         if (tray) {
           reslove({ status: 1, tray: tray });
         }
@@ -7473,7 +7556,6 @@ module.exports = {
         partner_shop: location,
         "audit_report.stage": "Upgrade",
       });
-
       resolve({ upgaradeReport: findUpgardeUnits });
     });
   },

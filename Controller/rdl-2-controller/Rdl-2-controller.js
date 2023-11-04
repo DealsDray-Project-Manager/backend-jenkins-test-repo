@@ -366,6 +366,15 @@ module.exports = {
           );
           if (updateRpTray) {
             let state = "Tray";
+            await unitsActionLog.create({
+              action_type: "Closed by RDL-2",
+              created_at: Date.now(),
+              tray_id: trayData.sptrayId,
+              user_name_of_action: updateSpTray.issued_user_name,
+              track_tray: "Tray",
+              user_type: "PRC RDL-2",
+              description: `RDL Two done and sent to warehouse by agent:${updateSpTray.issued_user_name}`,
+            });
             for (let x of getRpTray.actual_items) {
               const addLogsofUnits = await unitsActionLog.create({
                 action_type: "Closed by RDL-2",

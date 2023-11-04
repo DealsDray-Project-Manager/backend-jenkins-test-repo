@@ -2408,6 +2408,7 @@ module.exports = {
   
           const findCurrentTray = await masters.findOne({
             "items.uic": data.uic,
+            type_taxanomy:"CT"
           },{code:1,type_taxanomy:1});
   
           if (findCurrentTray) {
