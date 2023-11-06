@@ -93,14 +93,14 @@ module.exports = {
       const updatePart = await masters.findOneAndUpdate(
         { code: trayId, "items.partId": partId },
         {
-          $push: {
+          $addToSet: {
             temp_array: partId,
           },
           $set: {
             "items.$.status": "Added",
           },
         }
-      );
+      );      
       if (updatePart) {
         resolve({ status: 1 });
       } else {

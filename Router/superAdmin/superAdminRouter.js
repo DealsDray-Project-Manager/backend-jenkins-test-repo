@@ -358,7 +358,6 @@ router.post(
   ]),
   async (req, res, next) => {
     try {
-      console.log("kk",req.body);
       let data = await superAdminController.editBuyerDetails(
         req.body,
         req.files
@@ -4073,7 +4072,6 @@ router.post("/extra/manageOldSpn", async (req, res, next) => {
 router.post("/extra/updateWithNewSpn", async (req, res, next) => {
   try {
     let data = await superAdminController.exUpdateWithNewSpn();
-    console.log(data);
     if (data.status == true) {
       res.status(200).json({
         message: "done",
@@ -4225,7 +4223,6 @@ router.post("/extra/pickupIssue", async (req, res, next) => {
 router.post("/extra/pickupIssueRollBack", async (req, res, next) => {
   try {
     let data = await superAdminController.pickupIssueRollBack();
-    console.log(data);
     if (data.status == 1) {
       res.status(200).json({
         message: "Successfully Update",
