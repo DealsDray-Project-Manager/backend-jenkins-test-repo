@@ -5555,7 +5555,7 @@ module.exports = {
         if(y=="SPN000734"){
           status="Motherboard Work"
         }
-        else{
+        else{z
            status="Software Installation"
         }
 
