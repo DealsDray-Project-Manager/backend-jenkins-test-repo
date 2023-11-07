@@ -372,7 +372,7 @@ router.post(
   ]),
   async (req, res, next) => {
     try {
-      console.log("kk",req.body);
+      console.log("kk", req.body);
       let data = await superAdminController.editBuyerDetails(
         req.body,
         req.files
@@ -1994,6 +1994,19 @@ router.post("/trayRacksReport", async (req, res, next) => {
     if (rackReport) {
       res.status(200).json({
         data: rackReport,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+/*----------------------------------------REPORT ----------------------------------------*/
+router.post("/upgrade-report", async (req, res, next) => {
+  try {
+    const getUpgradeReport = await superAdminController.getUpgradeReportData();
+    if (getUpgradeReport) {
+      res.status(200).json({
+        data: getUpgradeReport,
       });
     }
   } catch (error) {
@@ -3765,6 +3778,34 @@ router.post("/removeDuplicteFromTray", async (req, res, next) => {
     if (data.status == 1) {
       res.status(200).json({
         message: "Successfully Removed",
+      });
+    } else {
+      res.status(202).json({
+        message: "Failed please try again!",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+/*----------------------------------------------ONE STEP BACK ---------------------------------------------------------------*/
+// ONE STEP BACK ACTION API
+router.post("/one-step-back", async (req, res, next) => {
+  try {
+    const { trayIds, status, actionDoneBy, currentStatus } = req.body;
+    const data = await superAdminController.oneStepBackUtility(
+      trayIds,
+      status,
+      actionDoneBy,
+      currentStatus
+    );
+    if (data.status == 1) {
+      res.status(200).json({
+        message: "Successfully updated",
+      });
+    } else if (data.status == 2) {
+      res.status(202).json({
+        message: "Request failed,tray's are moved into next stage",
       });
     } else {
       res.status(202).json({

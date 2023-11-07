@@ -221,14 +221,14 @@ module.exports = {
             const oneWeekInMilliseconds = 7 * 24 * 60 * 60 * 1000;
 
             // Check if the time difference is greater than or equal to one week
-            if(data.last_password_changed == undefined ||
-              timeDifference >= oneWeekInMilliseconds){
-             
-                resolve({ status: 4 });
-              }
-              else{
-                resolve({ data: data, status: 1 });
-              }
+            if (
+              data.last_password_changed == undefined ||
+              timeDifference >= oneWeekInMilliseconds
+            ) {
+              resolve({ status: 4 });
+            } else {
+              resolve({ data: data, status: 1 });
+            }
           } else {
             resolve({ status: 2 });
           }
@@ -242,7 +242,7 @@ module.exports = {
         });
         if (data) {
           if (data.jwt_token == jwt) {
-              // Assuming checkUser.last_password_changed is a Date object
+            // Assuming checkUser.last_password_changed is a Date object
             const lastPasswordChangedDate = new Date(
               data.last_password_changed
             );
@@ -261,14 +261,15 @@ module.exports = {
             const oneWeekInMilliseconds = 7 * 24 * 60 * 60 * 1000;
 
             // Check if the time difference is greater than or equal to one week
-            if(data.last_password_changed == undefined ||
-              timeDifference >= oneWeekInMilliseconds){
-                console.log("w");
-                resolve({ status: 4 });
-              }
-              else{
-                resolve({ data: data, status: 1 });
-              }
+            if (
+              data.last_password_changed == undefined ||
+              timeDifference >= oneWeekInMilliseconds
+            ) {
+              console.log("w");
+              resolve({ status: 4 });
+            } else {
+              resolve({ data: data, status: 1 });
+            }
           } else {
             resolve({ status: 2 });
           }
@@ -284,48 +285,45 @@ module.exports = {
   changePassword: (userData) => {
     console.log(userData._id);
     return new Promise(async (resolve, reject) => {
-      if(userData.user_type == "super-admin"){
-        let findData=await admin.findOne({_id: userData._id})
-        if(findData.password == userData.new_password){
-           resolve({status:2})
-        }
-        else{
+      if (userData.user_type == "super-admin") {
+        let findData = await admin.findOne({ _id: userData._id });
+        if (findData.password == userData.new_password) {
+          resolve({ status: 2 });
+        } else {
           let data = await admin.updateOne(
             { _id: userData._id, password: userData.old_password },
             {
               $set: {
                 password: userData.new_password,
-                last_password_changed:Date.now()
+                last_password_changed: Date.now(),
               },
             }
           );
           if (data.matchedCount != 0) {
-            resolve({status:1});
+            resolve({ status: 1 });
           } else {
-            resolve({status:0});
+            resolve({ status: 0 });
           }
         }
-       
-      }
-      else{
-        let findData=await user.findOne({_id: userData._id})
-        if(findData.password == userData.new_password){
-           resolve({status:2})
-        }
-        else{
+      } else {
+        let findData = await user.findOne({ _id: userData._id });
+        if (findData.password == userData.new_password) {
+          resolve({ status: 2 });
+        } else {
+          console.log(findData.password);
           let data = await user.updateOne(
             { _id: userData._id, password: userData.old_password },
             {
               $set: {
                 password: userData.new_password,
-                last_password_changed:Date.now()
+                last_password_changed: Date.now(),
               },
             }
           );
           if (data.matchedCount != 0) {
-            resolve({status:1});
+            resolve({ status: 1 });
           } else {
-            resolve({status:0});
+            resolve({ status: 0 });
           }
         }
       }
@@ -358,38 +356,32 @@ module.exports = {
   /*--------------------------------CREATE BUYERS-----------------------------------*/
 
   createBuyer: (buyerData, docuemnts) => {
-    
-      if (docuemnts.profile && docuemnts?.profile[0]) {
-        buyerData.profile = IISDOMAINBUYERDOC + docuemnts.profile[0].filename;
-      }
-      else{
-        buyerData.profile=""
-      }
-      if (docuemnts.aadhar_proof && docuemnts?.aadhar_proof[0]) {
-        buyerData.aadhar_proof =
-          IISDOMAINBUYERDOC + docuemnts.aadhar_proof[0].filename;
-      }
-      else{
-        buyerData.aadhar_proof=""
-      }
-      if (docuemnts.pan_card_proof && docuemnts?.pan_card_proof[0]) {
-        buyerData.pan_card_proof =
-          IISDOMAINBUYERDOC + docuemnts.pan_card_proof[0].filename;
-      }
-      else{
-        buyerData.pan_card_proof=""
-      }
-      if (
-        docuemnts.business_address_proof &&
-        docuemnts?.business_address_proof[0]
-      ) {
-        buyerData.business_address_proof =
-          IISDOMAINBUYERDOC + docuemnts.business_address_proof[0].filename;
-      }
-      else{
-        buyerData.business_address_proof=""
-      }
-    
+    if (docuemnts.profile && docuemnts?.profile[0]) {
+      buyerData.profile = IISDOMAINBUYERDOC + docuemnts.profile[0].filename;
+    } else {
+      buyerData.profile = "";
+    }
+    if (docuemnts.aadhar_proof && docuemnts?.aadhar_proof[0]) {
+      buyerData.aadhar_proof =
+        IISDOMAINBUYERDOC + docuemnts.aadhar_proof[0].filename;
+    } else {
+      buyerData.aadhar_proof = "";
+    }
+    if (docuemnts.pan_card_proof && docuemnts?.pan_card_proof[0]) {
+      buyerData.pan_card_proof =
+        IISDOMAINBUYERDOC + docuemnts.pan_card_proof[0].filename;
+    } else {
+      buyerData.pan_card_proof = "";
+    }
+    if (
+      docuemnts.business_address_proof &&
+      docuemnts?.business_address_proof[0]
+    ) {
+      buyerData.business_address_proof =
+        IISDOMAINBUYERDOC + docuemnts.business_address_proof[0].filename;
+    } else {
+      buyerData.business_address_proof = "";
+    }
 
     buyerData.creation_date = Date.now();
     return new Promise(async (resolve, rejects) => {
@@ -587,7 +579,8 @@ module.exports = {
     console.log(docuemnts);
     if (Object.keys(docuemnts).length !== 0) {
       if (docuemnts.profile_file) {
-        buyerData.profile = IISDOMAINBUYERDOC + docuemnts.profile_file[0].filename;
+        buyerData.profile =
+          IISDOMAINBUYERDOC + docuemnts.profile_file[0].filename;
       }
       if (docuemnts.aadhar_proof_file) {
         buyerData.aadhar_proof =
@@ -597,9 +590,7 @@ module.exports = {
         buyerData.pan_card_proof =
           IISDOMAINBUYERDOC + docuemnts.pan_card_proof_file[0].filename;
       }
-      if (
-        docuemnts.business_address_proof_file 
-      ) {
+      if (docuemnts.business_address_proof_file) {
         buyerData.business_address_proof =
           IISDOMAINBUYERDOC + docuemnts.business_address_proof_file[0].filename;
       }
@@ -1779,8 +1770,8 @@ module.exports = {
           brand: data.brand,
           model: data.model,
           created_at: data.created_at,
-          prefix:data.prefix,
-          limit:data.limit
+          prefix: data.prefix,
+          limit: data.limit,
         });
         resolve({ status: true });
       } else {
@@ -1789,52 +1780,56 @@ module.exports = {
     });
   },
   /*----------------------------------GET DELETED TRAYS -------------------------------*/
-  getDeletedMasters:async(type)=>{
+  getDeletedMasters: async (type) => {
     try {
       console.log(type);
-        const findData=await deletedMaster.find({prefix:type,status:"Pending"})
-        console.log(findData);
-        return findData
+      const findData = await deletedMaster.find({
+        prefix: type,
+        status: "Pending",
+      });
+      console.log(findData);
+      return findData;
     } catch (error) {
-      return error
+      return error;
     }
   },
   /*--------------------------------RESTORE THE DELETED MASTER----------------------*/
-  restoreDeletedMaster:async(id)=>{
+  restoreDeletedMaster: async (id) => {
     try {
-        const findAndUpdateStatus=await deletedMaster.findOneAndUpdate({code:id,status:"Pending"},{
-          $set:{
-            status:"Restored"
-          }
-        })
-        if(findAndUpdateStatus){
-          let restore=await masters.create({
-            name: findAndUpdateStatus.name,
-            code: findAndUpdateStatus.code,
-            type_taxanomy: findAndUpdateStatus.type_taxanomy,
-            display: findAndUpdateStatus.display,
-            cpc: findAndUpdateStatus.cpc,
-            warehouse: findAndUpdateStatus.warehouse,
-            tray_grade: findAndUpdateStatus.tray_grade,
-            brand: findAndUpdateStatus.brand,
-            model: findAndUpdateStatus.model,
-            created_at: findAndUpdateStatus.created_at,
-            prefix:findAndUpdateStatus.prefix,
-            limit:findAndUpdateStatus.limit,
-            sort_id:"Open"
-          })
-          if(restore){
-             return {status:1}
-          }
-          else{
-            return {status:2}
-          }
+      const findAndUpdateStatus = await deletedMaster.findOneAndUpdate(
+        { code: id, status: "Pending" },
+        {
+          $set: {
+            status: "Restored",
+          },
         }
-        else{
-          return {status:2}
+      );
+      if (findAndUpdateStatus) {
+        let restore = await masters.create({
+          name: findAndUpdateStatus.name,
+          code: findAndUpdateStatus.code,
+          type_taxanomy: findAndUpdateStatus.type_taxanomy,
+          display: findAndUpdateStatus.display,
+          cpc: findAndUpdateStatus.cpc,
+          warehouse: findAndUpdateStatus.warehouse,
+          tray_grade: findAndUpdateStatus.tray_grade,
+          brand: findAndUpdateStatus.brand,
+          model: findAndUpdateStatus.model,
+          created_at: findAndUpdateStatus.created_at,
+          prefix: findAndUpdateStatus.prefix,
+          limit: findAndUpdateStatus.limit,
+          sort_id: "Open",
+        });
+        if (restore) {
+          return { status: 1 };
+        } else {
+          return { status: 2 };
         }
+      } else {
+        return { status: 2 };
+      }
     } catch (error) {
-      return error
+      return error;
     }
   },
   /*--------------------------------ITEM TRACKING-----------------------------------*/
@@ -2906,8 +2901,8 @@ module.exports = {
   },
   /*-----------------------------------------RACK REPORT -------------------------------------*/
 
-  trayRackReport:()=>{
- return new Promise(async (resolve, reject) => {
+  trayRackReport: () => {
+    return new Promise(async (resolve, reject) => {
       try {
         const aggregatePipeline = [
           {
@@ -2943,32 +2938,77 @@ module.exports = {
           { $sort: { rack_id: 1 } },
         ];
         const rackCounts = await trayRack.aggregate(aggregatePipeline);
-         for(let x of rackCounts){
+        for (let x of rackCounts) {
           let getAllReport = await masters.aggregate([
             {
               $match: {
                 rack_id: x.rack_id,
-              }
+              },
             },
             {
               $group: {
                 _id: "$type_taxanomy", // Group by the "type_taxanomy" field
-                count: { $sum: 1 } // Count the number of documents in each group
-              }
-            }
-          ])
-          let count_report={}
-          for(let y of getAllReport){
-            count_report[y._id]=y.count
+                count: { $sum: 1 }, // Count the number of documents in each group
+              },
+            },
+          ]);
+          let count_report = {};
+          for (let y of getAllReport) {
+            count_report[y._id] = y.count;
           }
-          x['count_report']=count_report
+          x["count_report"] = count_report;
           console.log(x);
-         }
-         resolve(rackCounts);
+        }
+        resolve(rackCounts);
       } catch (error) {
         reject(error);
       }
     });
+  },
+  /* -------------------------------------------------UPGRADE REPORT IN SUPER-ADMIN NEW FORMAT---------------------------------------*/
+  getUpgradeReportData: async () => {
+    try {
+      const upgradeReport = await delivery.aggregate([
+        {
+          $match: {
+            "audit_report.stage": "Upgrade",
+          },
+        },
+        {
+          $group: {
+            _id: {
+              item_id: "$item_id",
+              audit_recommended_grade: "$audit_report.grade",
+            },
+            count: { $sum: 1 }, // Count the occurrences of each grade within each item_id
+            old_item_details: { $first: "$old_item_details" }, // Include old_item_details in the result
+          },
+        },
+        {
+          $group: {
+            _id: "$_id.item_id",
+            grades: {
+              $push: {
+                grade: "$_id.audit_recommended_grade",
+                count: "$count",
+              },
+            },
+            total: { $sum: "$count" }, // Calculate the total count for each item_id
+            old_item_details: { $first: "$old_item_details" }, // Include old_item_details in the result
+          },
+        },
+      ]);
+
+      for (let main of upgradeReport) {
+        for (let sub of main.grades) {
+          main[sub.grade] = sub.count;
+        }
+        console.log(main);
+      }
+      return upgradeReport;
+    } catch (error) {
+      return error;
+    }
   },
 
   /*--------------------GET RACK BASED ON THE LIMIT AND WAREHOUSE---------------------------*/
@@ -4731,6 +4771,84 @@ module.exports = {
       return error;
     }
   },
+  /*-------------------------------------------ONE STEP BACK --------------------------------------------------*/
+  oneStepBackUtility: async (trayIds, status, actionDoneBy, currentStatus) => {
+    try {
+      let flag = 1;
+      for (let x of trayIds) {
+        let finalStatus = status;
+        if (x.tray_status == "Empty") {
+          finalStatus = "Open";
+        }
+        const updateTheTray = await masters.findOneAndUpdate(
+          { code: x.code, sort_id: currentStatus },
+          {
+            $set: {
+              sort_id: finalStatus,
+              actual_items: [],
+              to_tray_for_pickup: null,
+              issued_user_name: null,
+              temp_array: [],
+              wht_tray: [],
+              pickup_type: null,
+              to_tray_for_pickup: null,
+              from_merge: null,
+              to_merge: null,
+              "items.$.pickup_toTray": null,
+            },
+          }
+        );
+        if (updateTheTray) {
+          if (updateTheTray.items.length != 0) {
+            let state = "Tray";
+            for (let tray of updateTheTray.items) {
+              await unitsActionLog.create({
+                action_type: "One step back utility",
+                created_at: Date.now(),
+                tray_id: x.code,
+                user_name_of_action: actionDoneBy,
+                track_tray: state,
+                uic: tray.uic,
+                user_type: "Super-admin",
+                description: `One step back done by the super-admin :${actionDoneBy}`,
+              });
+              state = "Units";
+              await delivery.updateOne(
+                { "uic_code.code": tray.uic },
+                {
+                  $set: {
+                    tray_status: status,
+                  },
+                }
+              );
+            }
+            flag = 1;
+          } else {
+            await unitsActionLog.create({
+              action_type: "One step back utility",
+              created_at: Date.now(),
+              tray_id: x.code,
+              user_name_of_action: actionDoneBy,
+              track_tray: state,
+              uic: tray.uic,
+              user_type: "Super-admin",
+              description: `One step back done by the super-admin :${actionDoneBy}`,
+            });
+            flag = 1;
+          }
+        } else {
+          flag = 2;
+        }
+      }
+      if (flag == 1) {
+        return { status: 1 };
+      } else {
+        return { status: 2 };
+      }
+    } catch (error) {
+      return error;
+    }
+  },
   /*-----------------------------------------EXTRA------------------------------------------------------------*/
   addCpcType: () => {
     return new Promise(async (resolve, reject) => {
@@ -5936,17 +6054,13 @@ module.exports = {
       //     );
       //   }
       // }
-       let arrOfMotherBoardSW=[
-        "SPN000734",
-        "SPN000731"
-       ]
-       for(let y of arrOfMotherBoardSW){
-        let status
-        if(y=="SPN000734"){
-          status="Motherboard Work"
-        }
-        else{
-           status="Software Installation"
+      let arrOfMotherBoardSW = ["SPN000734", "SPN000731"];
+      for (let y of arrOfMotherBoardSW) {
+        let status;
+        if (y == "SPN000734") {
+          status = "Motherboard Work";
+        } else {
+          status = "Software Installation";
         }
 
         let main1 = await masters.updateMany(
@@ -5954,53 +6068,49 @@ module.exports = {
             "items.rdl_fls_report.partRequired.part_id": y,
           },
           {
-           
-            $set:{
-             "items.$.rdl_fls_report.selected_status":status
-            }
+            $set: {
+              "items.$.rdl_fls_report.selected_status": status,
+            },
           }
         );
-         let main2 = await masters.updateMany(
-                 {
-                   "items.rdl_fls_report.partRequired.part_id": y,
-                 },
-                 {
-                   $pull: {
-                     "items.$.rdl_fls_report.partRequired": { part_id: y },
-                   },
-                  
-                 }
-               );
-               console.log(main1);
+        let main2 = await masters.updateMany(
+          {
+            "items.rdl_fls_report.partRequired.part_id": y,
+          },
+          {
+            $pull: {
+              "items.$.rdl_fls_report.partRequired": { part_id: y },
+            },
+          }
+        );
+        console.log(main1);
 
-               
-               console.log(main2);
-                 // After removing the element, you can set the "selected_status" field:
-              let main3 = await delivery.updateMany(
-                {
-                  "rdl_fls_one_report.partRequired.part_id": y,
-                },
-                {
-                  $set: {
-                    "rdl_fls_one_report.partRequired.$.selected_status": status
-                  },
-                }
-              );
-               let main4 = await delivery.updateMany(
-                {
-                  "rdl_fls_one_report.partRequired.part_id": y,
-                },
-                {
-                  $pull: {
-                    "rdl_fls_one_report.partRequired": { part_id: y },
-                  },
-                }
-              );
-              console.log(main3);
+        console.log(main2);
+        // After removing the element, you can set the "selected_status" field:
+        let main3 = await delivery.updateMany(
+          {
+            "rdl_fls_one_report.partRequired.part_id": y,
+          },
+          {
+            $set: {
+              "rdl_fls_one_report.partRequired.$.selected_status": status,
+            },
+          }
+        );
+        let main4 = await delivery.updateMany(
+          {
+            "rdl_fls_one_report.partRequired.part_id": y,
+          },
+          {
+            $pull: {
+              "rdl_fls_one_report.partRequired": { part_id: y },
+            },
+          }
+        );
+        console.log(main3);
 
-            
-              console.log(main4);
-       }
+        console.log(main4);
+      }
       resolve({ status: true });
     });
   },
@@ -6363,7 +6473,6 @@ module.exports = {
             }
           );
         }
-        console.log(updateData);
         let update2 = await masters.updateOne(
           { code: y.to_tray_for_pickup },
           {
