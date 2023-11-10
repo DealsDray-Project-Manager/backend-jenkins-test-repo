@@ -941,6 +941,7 @@ router.post(
         req.params.user_type,
         req.params.location
       );
+    
       if (data) {
         res.status(200).json({
           data: data,

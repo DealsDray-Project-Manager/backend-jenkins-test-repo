@@ -19,6 +19,9 @@ const { stxUtility } = require("../../Model/Stx-utility/stx-utility");
 const { unitsActionLog } = require("../../Model/units-log/units-action-log");
 const { bagTransfer } = require("../../Model/bag-transfer/bag-transfer");
 let mongoose = require("mongoose");
+const {
+  partInventoryLedger,
+} = require("../../Model/part-inventory-ledger/part-inventory-ledger");
 /******************************************************************* */
 
 module.exports = {
@@ -244,7 +247,7 @@ module.exports = {
       count.ctxToStxSorting = await masters.count({
         prefix: "tray-master",
         type_taxanomy: {
-          $nin: ["BOT", "PMT", "MMT", "WHT", "ST", "SPT", "RPT"],
+          $in: ["CT"],
         },
         sort_id: "Ready to Transfer to STX",
         cpc: location,
@@ -256,7 +259,7 @@ module.exports = {
             cpc: location,
             sort_id: "Transferred to Sales",
             type_taxanomy: {
-              $nin: ["BOT", "PMT", "MMT", "WHT", "ST", "SPT", "RPT"],
+              $in: ["CT"],
             },
           },
           {
@@ -264,7 +267,7 @@ module.exports = {
             cpc: location,
             sort_id: "Transferred to Processing",
 
-            type_taxanomy: { $nin: ["BOT", "PMT", "MMT", "WHT", "SPT", "RPT"] },
+            type_taxanomy: { $in: ["CT"] },
           },
         ],
       });
@@ -273,7 +276,7 @@ module.exports = {
         cpc: location,
         sort_id: "Audit Done Closed By Warehouse",
         type_taxanomy: {
-          $nin: ["BOT", "PMT", "MMT", "WHT", "ST", "SPT", "RPT"],
+          $in: ["CT"],
         },
       });
       count.stxMerge = await masters.count({
@@ -293,14 +296,14 @@ module.exports = {
             cpc: location,
             sort_id: "Ready to Transfer to Sales",
             type_taxanomy: {
-              $nin: ["BOT", "PMT", "MMT", "WHT", "ST", "SPT", "RPT"],
+              $in: ["CT"],
             },
           },
           {
             prefix: "tray-master",
             cpc: location,
             sort_id: "Ready to Transfer to Processing",
-            type_taxanomy: { $nin: ["BOT", "PMT", "MMT", "WHT", "SPT", "RPT"] },
+            type_taxanomy: { $in: ["CT"] },
           },
         ],
       });
@@ -5091,8 +5094,7 @@ module.exports = {
             }
             whtTrayArr.push(updateItem.code);
           }
-        }
-        else{
+        } else {
           resolve({ status: 0 });
         }
       }
@@ -5137,6 +5139,16 @@ module.exports = {
                 }
               );
               if (updateParts.modifiedCount !== 0) {
+                await partInventoryLedger.create({
+                  department: "PRC MIS",
+                  action: "Part Assigning",
+                  action_done_user: actUser,
+                  description: `Part assigned by prc mis:${actUser},to SPWH agent:${spwhuser} for part issue`,
+                  part_code: x.partId,
+                  in_stock: x.balance_stock,
+                  out_stock: x.selected_qty,
+                  tray_id: spTray,
+                });
                 let limit = x.selected_qty;
                 for (let i = 1; i <= limit; i++) {
                   x.selected_qty = 1;
@@ -5874,7 +5886,7 @@ module.exports = {
             stx_tray_id: stXTrayId,
             ctx_tray_id: ctxTrayId,
             updated_at: Date.now(),
-            final_grade:grade
+            final_grade: grade,
           },
         }
       );

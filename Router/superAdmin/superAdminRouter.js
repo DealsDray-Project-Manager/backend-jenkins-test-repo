@@ -160,8 +160,7 @@ router.post("/check-user-status", async (req, res, next) => {
       jwt,
       user_type
     );
-    console.log("work");
-    console.log(data);
+   
     if (data.status == 1) {
       res.status(200).json({
         message: "Active user",
@@ -965,6 +964,11 @@ router.post("/trayIdGenrate", async (req, res, next) => {
               data: obj.RPT,
             });
           }
+          else if (type == "RBQC") {
+            res.status(200).json({
+              data: obj.RBQC,
+            });
+          }
           //  else if (type == "CTA") {
           //   res.status(200).json({
           //     data: obj.CTA,
@@ -1249,7 +1253,11 @@ router.post("/createMasters", async (req, res, next) => {
                 obj.SPT = obj.SPT + 1;
               } else if (type_taxanomy == "RPT") {
                 obj.RPT = obj.RPT + 1;
-              } else {
+              }
+              else if (type_taxanomy == "RBQC") {
+                obj.RBQC = obj.RBQC + 1;
+              }
+               else {
                 obj[type_taxanomy + tray_grade] =
                   obj[type_taxanomy + tray_grade] + 1;
               }
@@ -3215,7 +3223,11 @@ router.post("/partlist/manageStock/bulkValidation", async (req, res, next) => {
 // UPDATE STOCK
 router.post("/partlist/manageStock/update", async (req, res, next) => {
   try {
-    const data = await superAdminController.partlistManageStockUpdate(req.body);
+    const { username, partData } = req.body;
+    const data = await superAdminController.partlistManageStockUpdate(
+      username,
+      partData
+    );
     if (data.status == true) {
       res.status(200).json({
         message: "Successfully Updated",

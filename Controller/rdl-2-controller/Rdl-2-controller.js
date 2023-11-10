@@ -3,6 +3,9 @@ const { delivery } = require("../../Model/deliveryModel/delivery");
 const { products } = require("../../Model/productModel/product");
 const { orders } = require("../../Model/ordersModel/ordersModel");
 const { unitsActionLog } = require("../../Model/units-log/units-action-log");
+const {
+  partInventoryLedger,
+} = require("../../Model/part-inventory-ledger/part-inventory-ledger");
 
 module.exports = {
   dashboardCount: (username) => {
@@ -183,11 +186,44 @@ module.exports = {
   },
   repairDoneAction: async (trayItemData) => {
     try {
-      let checkTray = await masters.findOne(
-        { code: trayItemData.trayId },
-        { sort_id: 1 }
+      let checkAlreadyAdded = await masters.findOne(
+        {
+          code: trayItemData.trayId,
+          "items.uic": trayItemData.uic,
+        },
+        {
+          _id: 0,
+          items: {
+            $elemMatch: { uic: trayItemData.uic },
+          },
+          sort_id: 1,
+        }
       );
-      if (checkTray.sort_id == "Rdl-2 in-progress") {
+      if (checkAlreadyAdded.sort_id == "Rdl-2 in-progress") {
+        checkAlreadyAdded.items[0].rdl_repair_report =
+          trayItemData.rdl_repair_report;
+          let obj = {
+            rebqc_username: trayItemData.rebqc_username,
+            rbqc_tray: trayItemData.rbqc_tray,
+          };
+          checkAlreadyAdded.items[0]["rebqc_info"] = obj;
+          
+        if (trayItemData.rebqc_username !== "") {
+          let updateToRbqc = await masters.updateOne(
+            {
+              code: trayItemData.rbqc_tray,
+              sort_id: "Issued to REBQC",
+              issued_user_name: trayItemData.rebqc_username,
+            },
+            {
+              $addToSet: {
+                temp_array: checkAlreadyAdded.items[0],
+              },
+            }
+          );
+          if (updateToRbqc) {
+          }
+        }
         let dupEntry = await masters.findOne({
           code: trayItemData.trayId,
           "actual_items.uic": trayItemData.uic,
@@ -225,6 +261,14 @@ module.exports = {
               }
             );
           }
+          await partInventoryLedger.create({
+            department: "PRC RDL-2",
+            action: "Repair Done",
+            action_done_user: checkTray.issued_user_name,
+            description: `Repair done by agent:${checkTray.issued_user_name},finel status of this ${x.rdl_two_status}`,
+            tray_id: trayItemData.spTray,
+            part_code: x.part_id,
+          });
         }
 
         if (trayItemData.rdl_repair_report.more_part_required?.length !== 0) {
@@ -254,26 +298,27 @@ module.exports = {
             },
           }
         );
-        let checkAlreadyAdded = await masters.findOne(
-          {
-            code: trayItemData.trayId,
-            "items.uic": trayItemData.uic,
-          },
-          {
-            _id: 0,
-            items: {
-              $elemMatch: { uic: trayItemData.uic },
-            },
-          }
-        );
-        checkAlreadyAdded.items[0].rdl_repair_report =
-          trayItemData.rdl_repair_report;
+        // let checkAlreadyAdded = await masters.findOne(
+        //   {
+        //     code: trayItemData.trayId,
+        //     "items.uic": trayItemData.uic,
+        //   },
+        //   {
+        //     _id: 0,
+        //     items: {
+        //       $elemMatch: { uic: trayItemData.uic },
+        //     },
+        //   }
+        // );
+
+       
 
         let data = await masters.updateOne(
           { code: trayItemData.trayId },
           {
-            $push: {
+            $addToSet: {
               actual_items: checkAlreadyAdded.items[0],
+              temp_array: checkAlreadyAdded.items[0].uic,
             },
             $pull: {
               items: {
@@ -282,6 +327,7 @@ module.exports = {
             },
           }
         );
+
         if (data.matchedCount !== 0) {
           await unitsActionLog.create({
             action_type: "Repair Done",

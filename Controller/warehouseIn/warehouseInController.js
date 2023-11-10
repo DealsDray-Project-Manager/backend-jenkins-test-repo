@@ -236,13 +236,13 @@ module.exports = {
         cpc: location,
         sort_id: "Ctx to Stx Send for Sorting",
         to_merge: { $ne: null },
-        type_taxanomy: { $nin: ["BOT", "PMT", "MMT", "WHT", "SPT", "RPT"] },
+        type_taxanomy: { $in: ["CT"] },
       });
       count.ctxReceiveRequest = await masters.count({
         $or: [
           {
             prefix: "tray-master",
-            type_taxanomy: { $nin: ["BOT", "PMT", "MMT", "WHT", "SPT", "RPT"] },
+            type_taxanomy: { $in: ["CT"] },
             sort_id: "Accepted From Processing",
             cpc: location,
           },
@@ -250,19 +250,19 @@ module.exports = {
             prefix: "tray-master",
             cpc: location,
             sort_id: "Accepted From Sales",
-            type_taxanomy: { $nin: ["BOT", "PMT", "MMT", "WHT", "SPT", "RPT"] },
+            type_taxanomy: { $in: ["CT"] },
           },
           {
             prefix: "tray-master",
             cpc: location,
             sort_id: "Received From Processing",
-            type_taxanomy: { $nin: ["BOT", "PMT", "MMT", "WHT", "SPT", "RPT"] },
+            type_taxanomy: { $in: ["CT"] },
           },
           {
             prefix: "tray-master",
             cpc: location,
             sort_id: "Received From Sales",
-            type_taxanomy: { $nin: ["BOT", "PMT", "MMT", "WHT", "SPT", "RPT"] },
+            type_taxanomy: { $in: ["CT"] },
           },
         ],
       });
@@ -270,7 +270,7 @@ module.exports = {
         prefix: "tray-master",
         sort_id: "Transfer Request sent to Warehouse",
         type_taxanomy: {
-          $nin: ["BOT", "PMT", "MMT", "WHT", "ST", "SPT", "RPT"],
+          $in: ["CT"],
         },
         cpc: location,
       });
@@ -2324,7 +2324,7 @@ module.exports = {
         },
         {
           $project: {
-            rackDetails:1,
+            rackDetails: 1,
             code: 1,
             rack_id: 1,
             brand: 1,
@@ -2601,7 +2601,7 @@ module.exports = {
           x["jack_type"] = "";
           if (x?.products?.length !== 0) {
             x["jack_type"] = x?.products?.[0]?.jack_type;
-            x['variant']=x?.products?.[0]?.variant
+            x["variant"] = x?.products?.[0]?.variant;
           }
           var today = new Date(Date.now());
           if (status == "Ready to BQC") {
@@ -5827,7 +5827,7 @@ module.exports = {
               cpc: location,
               sort_id: "Audit Done Closed By Warehouse",
               type_taxanomy: {
-                $nin: ["BOT", "PMT", "MMT", "WHT", "ST", "SPT", "RPT"],
+                $in: ["CT"],
               },
             },
           ],
@@ -5841,7 +5841,7 @@ module.exports = {
           cpc: location,
           sort_id: type,
           to_merge: { $ne: null },
-          type_taxanomy: { $nin: ["BOT", "PMT", "MMT", "WHT", "SPT", "RPT"] },
+          type_taxanomy: { $in: ["CT", "ST"] },
         });
         if (tray) {
           reslove({ status: 1, tray: tray });
@@ -5855,7 +5855,7 @@ module.exports = {
               sort_id: "Transferred to Sales",
 
               type_taxanomy: {
-                $nin: ["BOT", "PMT", "MMT", "WHT", "SPT", "RPT"],
+                $in: ["CT", "ST"],
               },
             },
             {
@@ -5864,7 +5864,7 @@ module.exports = {
               sort_id: "Transferred to Processing",
 
               type_taxanomy: {
-                $nin: ["BOT", "PMT", "MMT", "WHT", "SPT", "RPT"],
+                $in: ["CT"],
               },
             },
           ],
@@ -5880,7 +5880,7 @@ module.exports = {
               cpc: location,
               sort_id: "Ready to Transfer to Sales",
               type_taxanomy: {
-                $nin: ["BOT", "PMT", "MMT", "WHT", "SPT", "RPT"],
+                $in: ["CT"],
               },
             },
             {
@@ -5888,7 +5888,7 @@ module.exports = {
               cpc: location,
               sort_id: "Ready to Transfer to Processing",
               type_taxanomy: {
-                $nin: ["BOT", "PMT", "MMT", "WHT", "SPT", "RPT"],
+                $in: ["CT"],
               },
             },
           ],
@@ -5902,7 +5902,7 @@ module.exports = {
             {
               prefix: "tray-master",
               type_taxanomy: {
-                $nin: ["BOT", "PMT", "MMT", "WHT", "SPT", "RPT"],
+                $in: ["CT"],
               },
               sort_id: "Accepted From Processing",
               cpc: location,
@@ -5912,7 +5912,7 @@ module.exports = {
               cpc: location,
               sort_id: "Accepted From Sales",
               type_taxanomy: {
-                $nin: ["BOT", "PMT", "MMT", "WHT", "SPT", "RPT"],
+                $in: ["CT"],
               },
             },
             {
@@ -5920,7 +5920,7 @@ module.exports = {
               cpc: location,
               sort_id: "Received From Processing",
               type_taxanomy: {
-                $nin: ["BOT", "PMT", "MMT", "WHT", "SPT", "RPT"],
+                $in: ["CT"],
               },
             },
             {
@@ -5928,7 +5928,7 @@ module.exports = {
               cpc: location,
               sort_id: "Received From Sales",
               type_taxanomy: {
-                $nin: ["BOT", "PMT", "MMT", "WHT", "SPT", "RPT"],
+                $in: ["CT"],
               },
             },
           ],
@@ -5941,7 +5941,7 @@ module.exports = {
           prefix: "tray-master",
           cpc: location,
           sort_id: type,
-          type_taxanomy: { $nin: ["BOT", "PMT", "MMT", "WHT", "SPT", "RPT"] },
+          type_taxanomy: { $nin: ["CT", "ST"] },
         });
         if (tray) {
           reslove({ status: 1, tray: tray });
@@ -7825,6 +7825,83 @@ module.exports = {
       }
     } catch (error) {
       return { status: 0 };
+    }
+  },
+  /*---------------------------------------RBQC TRAY FUNCTIONALITY---------------------------------------*/
+  // GET THE TRAY
+  getRbcTray: async (location) => {
+    try {
+      const data = await masters.find({ cpc: location, type_taxanomy: "RBQC" });
+      return data;
+    } catch (error) {
+      return error;
+    }
+  },
+  // CHECK THE TRAY BEFOR ISSUE TO REBQC USER AT A TIME ONE TRAY
+  checkTrayForIssueToReBqc: async (trayId, username) => {
+    try {
+      const checkUserFreeOrNot = await masters.findOne({
+        $or: [
+          { issued_user_name: username, sort_id: "Issued to REBQC" },
+          { issued_user_name: username, sort_id: "Closed By REBQC" },
+        ],
+      });
+      if (checkUserFreeOrNot) {
+        return { status: 5 };
+      } else {
+        let checkTheTray = await masters.findOne(
+          { code: trayId },
+          { type_taxanomy: 1, sort_id: 1 }
+        );
+        if (checkTheTray) {
+          if (checkTheTray.type_taxanomy == "RBQC") {
+            if (checkTheTray.sort_id == "Open") {
+              return { status: 1, trayStatus: checkTheTray.sort_id };
+            } else {
+              return { status: 2, trayStatus: checkTheTray.sort_id };
+            }
+          } else {
+            return { status: 3, trayStatus: checkTheTray.sort_id };
+          }
+        } else {
+          return { status: 4 };
+        }
+      }
+    } catch (error) {
+      return error;
+    }
+  },
+  // ISSUE THE TRAY TO AGENT REBQC
+  issueTheTrayToRebqc: async (dataofTray) => {
+    try {
+      const dataUpdate = await masters.findOneAndUpdate(
+        { code: dataofTray.tray_id, sort_id: "Open" },
+        {
+          $set: {
+            assigned_date: Date.now(),
+            issued_user_name: dataofTray.username,
+            sort_id: "Issued to REBQC",
+          },
+        }
+      );
+      if (dataUpdate) {
+        return { status: 1 };
+      } else {
+        return { status: 2 };
+      }
+    } catch (error) {
+      return error;
+    }
+  },
+  // RETURN FROM REBQC
+  returnFromReqbqc: async (location) => {
+    try {
+      const data = await masters.find({
+        $or: [{ cpc: location, sort_id: "Closed by REBQC" }],
+      });
+      return data;
+    } catch (error) {
+      return error;
     }
   },
 };

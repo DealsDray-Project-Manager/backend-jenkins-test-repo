@@ -26,8 +26,8 @@ const productSchema = mongoose.Schema({
   jack_type: {
     type: String,
   },
-  variant:{
-    type:String
+  variant: {
+    type: String,
   },
   created_by: {
     type: String,

@@ -3,6 +3,7 @@ const {
 } = require("../../Model/Part-list-and-color/part-list-and-color");
 const { box } = require("../../Model/boxModel/box");
 const { masters } = require("../../Model/mastersModel");
+const partInventoryLedger = require("../../Model/part-inventory-ledger/part-inventory-ledger");
 const { trayRack } = require("../../Model/tray-rack/tray-rack");
 /****************************************************************** */
 
@@ -156,45 +157,44 @@ module.exports = {
       resolve(data);
     });
   },
-  partAddIntoBox: (partDetails, spTrayId, boxName, uniqueid, objId) => {
+  partAddIntoBox: (partDetails, spTrayId, boxName, uniqueid, objId,username) => {
     return new Promise(async (resolve, reject) => {
-      const addIntoBot = await box.findOneAndUpdate(
-        { box_id: boxName },
+      const removeFromSpTray = await masters.findOneAndUpdate(
+        { code: spTrayId },
         {
-          $push: {
-            sp_items: partDetails,
-          },
-        }
-      );
-      if (addIntoBot) {
-        const removeFromSpTray = await masters.findOneAndUpdate(
-          { code: spTrayId },
-          {
-            $pull: {
-              temp_array: {
-                unique_id_gen: uniqueid,
-              },
+          $pull: {
+            temp_array: {
+              unique_id_gen: uniqueid,
             },
           },
+        },
+        {
+          returnOriginal: false,
+        }
+      );
+      if (objId == "Not used" || objId == "Not required") {
+        const updateStock = await partAndColor.findOneAndUpdate(
+          { part_code: partDetails },
           {
-            returnOriginal: false,
+            $inc: {
+              avl_stock: 1,
+            },
+          },{
+            new:true
           }
         );
-        if (objId == "Not used" || objId == "Not required") {
-          const updateStock = await partAndColor.findOneAndUpdate(
-            { part_code: partDetails },
-            {
-              $inc: {
-                avl_stock: 1,
-              },
-            }
-          );
-        }
-        if (removeFromSpTray) {
-          resolve({ status: 1 });
-        } else {
-          resolve({ status: 0 });
-        }
+        await partInventoryLedger.create({
+          department:"SPWH",
+          action:"Add Into Box",
+          action_done_user:username,
+          description:`Spare parts add into box after rdl-2 done by:${username}`,
+          part_code:partDetails,
+          in_stock:updateStock.avl_stock,
+          tray_id:spTrayId,
+        })
+      }
+      if (removeFromSpTray) {
+        resolve({ status: 1 });
       } else {
         resolve({ status: 0 });
       }

@@ -2960,5 +2960,86 @@ router.post("/receivedTrayAfterCopyGrade", async (req, res, next) => {
     next(error);
   }
 });
+/*-----------------------------------RBQC TRAY AND FUNCTIONALITY-------------------------------------------*/
+router.post("/get-all-rbqc-tray/:location", async (req, res, next) => {
+  try {
+    const { location } = req.params;
+    const getTheRbqcTray = await warehouseInController.getRbcTray(location);
+    if (getTheRbqcTray) {
+      res.status(200).json({
+        data: getTheRbqcTray,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
 
+// ASSIGN THE TRAY
+router.post("/check-rebqc-tray-for-issue", async (req, res, next) => {
+  try {
+    const { tray_id, username } = req.body;
+    const data = await warehouseInController.checkTrayForIssueToReBqc(
+      tray_id,
+      username
+    );
+    if (data.status == 1) {
+      res.status(200).json({
+        trayStatus: data.trayStatus,
+      });
+    } else if (data.status == 2) {
+      res.status(202).json({
+        message: "Tray have the items",
+        trayStatus: data.trayStatus,
+      });
+    } else if (data.status == 3) {
+      res.status(202).json({
+        message: "Not a RBQC tray",
+        trayStatus: data.trayStatus,
+      });
+    } else if (data.status == 4) {
+      res.status(202).json({
+        message: "invalid tray id",
+      });
+    } else if (data.status == 5) {
+      res.status(202).json({
+        message: "Agent have the lot",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
+// ISSUE THE  RBQC TRAY TO REBQC AGENT
+router.post("/issuethe-tray-rebqc", async (req, res, next) => {
+  try {
+    const data = await warehouseInController.issueTheTrayToRebqc(req.body);
+    if (data.status == 1) {
+      res.status(200).json({
+        message: "Successfully Issued",
+      });
+    } else {
+      res.status(202).json({
+        message: "Failed please try again!",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+// RETURN FROM REBQC TRAY
+router.post("/return-from-rebqc/:location",async(req,res,next)=>{
+  try {
+      const {location}=req.params
+      const data=await warehouseInController.returnFromReqbqc(location)
+      if(data){
+        res.status(200).json({
+          data:data
+        })
+      }
+  } catch (error) {
+    next(error)
+  }
+})
 module.exports = router;

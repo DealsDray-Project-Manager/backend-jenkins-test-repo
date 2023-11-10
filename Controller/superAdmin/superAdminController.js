@@ -36,6 +36,9 @@ const { unitsActionLog } = require("../../Model/units-log/units-action-log");
 const {
   deletedMaster,
 } = require("../../Model/Deleted-masters/deleted-trays-bag");
+const {
+  partInventoryLedger,
+} = require("../../Model/part-inventory-ledger/part-inventory-ledger");
 
 const IISDOMAIN = "https://prexo-v9-2-dev-api.dealsdray.com/user/profile/";
 const IISDOMAINBUYERDOC =
@@ -144,7 +147,7 @@ module.exports = {
         prefix: "tray-master",
         sort_id: "Audit Done Closed By Warehouse",
         type_taxanomy: {
-          $nin: ["BOT", "PMT", "MMT", "WHT", "ST", "SPT", "RPT"],
+          $in: ["CT"],
         },
       });
       count.readyForRdl = await masters.count({
@@ -337,6 +340,7 @@ module.exports = {
       userData.profile = IISDOMAIN + profile;
     }
     userData.creation_date = Date.now();
+    userData.last_password_changed = Date.now();
     return new Promise(async (resolve, rejects) => {
       let userExist = await user.findOne({ user_name: userData.user_name });
       if (userExist) {
@@ -1398,7 +1402,8 @@ module.exports = {
           trayData[i].tray_category !== "MMT" &&
           trayData[i].tray_category !== "WHT" &&
           trayData[i].tray_category !== "SPT" &&
-          trayData[i].tray_category !== "RPT"
+          trayData[i].tray_category !== "RPT" &&
+          trayData[i].tray_category !== "RBQC"
         ) {
           if (
             trayData[i].tray_category !== "CT" &&
@@ -1462,6 +1467,9 @@ module.exports = {
           tray_id.push(trayData[i].tray_id);
           err["tray_id"] = tray_id;
         } else if (trayID > 19999 && trayData[i].tray_category == "RPT") {
+          tray_id.push(trayData[i].tray_id);
+          err["tray_id"] = tray_id;
+        } else if (trayID > "00100" && trayData[i].tray_category == "RBQC") {
           tray_id.push(trayData[i].tray_id);
           err["tray_id"] = tray_id;
         } else {
@@ -1531,7 +1539,8 @@ module.exports = {
           trayData[i].tray_category !== "BOT" &&
           trayData[i].tray_category !== "PMT" &&
           trayData[i].tray_category !== "MMT" &&
-          trayData[i].tray_category !== "SPT"
+          trayData[i].tray_category !== "SPT" &&
+          trayData[i].tray_category !== "RBQC"
         ) {
           let brandModel = await brands.findOne({
             brand_name: {
@@ -2324,7 +2333,7 @@ module.exports = {
         prefix: "tray-master",
         sort_id: "Audit Done Closed By Warehouse",
         type_taxanomy: {
-          $nin: ["BOT", "PMT", "MMT", "WHT", "ST", "SPT", "RPT"],
+          $in: ["CT"],
         },
       });
       resolve(data);
@@ -2382,7 +2391,7 @@ module.exports = {
     return new Promise(async (resolve, reject) => {
       let ctxOld = await masters.find({
         type_taxanomy: {
-          $nin: ["BOT", "PMT", "MMT", "WHT", "ST", "CT", "SPT", "RPT"],
+          $in: ["CT"],
         },
         prefix: "tray-master",
       });
@@ -2438,7 +2447,7 @@ module.exports = {
       let Allwht = await masters.find({
         prefix: "tray-master",
         type_taxanomy: {
-          $nin: ["BOT", "PMT", "MMT", "WHT", "ST", "SPT", "RPT"],
+          $in: ["CT"],
         },
       });
       for (let x of Allwht) {
@@ -4210,30 +4219,41 @@ module.exports = {
       }
     });
   },
-  partlistManageStockUpdate: (partStockData) => {
+  partlistManageStockUpdate: (partStockData, username) => {
     return new Promise(async (resolve, reject) => {
       for (let x of partStockData) {
+        let updateStock;
         let number = parseInt(x.add_stock);
         if (number >= "0") {
-          const updateStock = await partAndColor.findOneAndUpdate(
+          updateStock = await partAndColor.findOneAndUpdate(
             { part_code: x.part_code },
             {
               $inc: {
                 avl_stock: parseInt(x.add_stock),
               },
-            }
+            },
+            { new: true }
           );
         } else {
-          let findStok = await partAndColor.findOne({ part_code: x.part_code });
-
-          const updateStock = await partAndColor.findOneAndUpdate(
+          updateStock = await partAndColor.findOneAndUpdate(
             { part_code: x.part_code },
             {
               $inc: {
                 avl_stock: parseInt(x.add_stock),
               },
-            }
+            },
+            { new: true }
           );
+        }
+        if (updateStock) {
+          await partInventoryLedger.create({
+            department: "Super-admin",
+            in_stock: updateStock.avl_stock,
+            action: "Stock Update",
+            action_done_user: username,
+            part_code: x.part_code,
+            description: `Stock updated by:${username}`,
+          });
         }
       }
       resolve({ status: true, count: partStockData.length });

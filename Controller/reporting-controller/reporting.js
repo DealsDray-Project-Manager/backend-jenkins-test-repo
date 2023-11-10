@@ -1,6 +1,15 @@
+const {
+  partAndColor,
+} = require("../../Model/Part-list-and-color/part-list-and-color");
+const {
+  rdl2OutputRequest,
+} = require("../../Model/Rdl-2-output/rdl-2-output-request");
 const { delivery } = require("../../Model/deliveryModel/delivery");
 const { masters } = require("../../Model/mastersModel");
 const { orders } = require("../../Model/ordersModel/ordersModel");
+const {
+  partInventoryLedger,
+} = require("../../Model/part-inventory-ledger/part-inventory-ledger");
 const { products } = require("../../Model/productModel/product");
 const { unitsActionLog } = require("../../Model/units-log/units-action-log");
 /*--------------------------------------------------------------*/
@@ -2361,12 +2370,11 @@ module.exports = {
         }
 
         if (findAllHistory) {
-      
           data[0]["uic_history"] = findAllHistory;
         } else {
           data[0]["uic_history"] = [];
         }
-        
+
         resolve({ status: 1, data: data });
       }
     });
@@ -2374,60 +2382,164 @@ module.exports = {
   trackTray: (location, trayId) => {
     return new Promise(async (resolve, reject) => {
       try {
-        const tray = await masters.findOne({ code: trayId, cpc: location },{actual_items:0,track_tray:0});
-        
+        const tray = await masters.findOne(
+          { code: trayId, cpc: location },
+          { actual_items: 0, track_tray: 0 }
+        );
+
         if (!tray) {
           resolve({ status: 0 });
           return;
         }
-  
+
         const findTrayJourney = await unitsActionLog
           .find({
             tray_id: tray.code,
             track_tray: "Tray",
           })
           .sort({ _id: 1 });
-  
+
         tray.actual_items = findTrayJourney;
-  
+
         const auditData = await unitsActionLog
           .find({ action_type: "Issued to Audit", tray_id: trayId })
           .sort({ _id: 1 })
           .limit(tray.limit);
-  
+
         let trayIdArr = [];
         let uicArr = [];
         let obj = {};
-  
-        await Promise.all(auditData.map(async (data) => {
-          if (uicArr.includes(data.uic)) {
-            return;
-          }
-  
-          uicArr.push(data.uic);
-  
-          const findCurrentTray = await masters.findOne({
-            "items.uic": data.uic,
-            type_taxanomy:"CT"
-          },{code:1,type_taxanomy:1});
-  
-          if (findCurrentTray) {
-            if(findCurrentTray.type_taxanomy !== "WHT"){
-              if (trayIdArr.includes(findCurrentTray.code)) {
-                obj[findCurrentTray.code] = (obj[findCurrentTray.code] || 0) + 1;
-              } else {
-                obj[findCurrentTray.code] = 1;
-              }
+
+        await Promise.all(
+          auditData.map(async (data) => {
+            if (uicArr.includes(data.uic)) {
+              return;
             }
-            trayIdArr.push(findCurrentTray.code);
-          }
-        }));
-       
-        resolve({ tray: tray, status: 1,otherDetails:obj });
+
+            uicArr.push(data.uic);
+
+            const findCurrentTray = await masters.findOne(
+              {
+                "items.uic": data.uic,
+                type_taxanomy: "CT",
+              },
+              { code: 1, type_taxanomy: 1 }
+            );
+
+            if (findCurrentTray) {
+              if (findCurrentTray.type_taxanomy !== "WHT") {
+                if (trayIdArr.includes(findCurrentTray.code)) {
+                  obj[findCurrentTray.code] =
+                    (obj[findCurrentTray.code] || 0) + 1;
+                } else {
+                  obj[findCurrentTray.code] = 1;
+                }
+              }
+              trayIdArr.push(findCurrentTray.code);
+            }
+          })
+        );
+
+        resolve({ tray: tray, status: 1, otherDetails: obj });
       } catch (error) {
         reject(error);
       }
     });
-  }
-  ,
+  },
+  /*------------------------------------RDL-2 OUT PUT ------------------------------------------------*/
+  rdl2OutputRequest: async () => {
+    try {
+      const rdl2OutputRequestsData = await rdl2OutputRequest.find();
+      return rdl2OutputRequestsData;
+    } catch (error) {
+      return error;
+    }
+  },
+  /*-----------------------------------------CREATE REQUEST FOR RDL-2 OUTPUT---------------------------*/
+  createdRequestForRdlTwoOutput: async (data) => {
+    try {
+      // Generate a unique ID starting with "RD"
+      const uniqueId = `RD${Date.now()}${Math.floor(Math.random() * 1000)}`;
+
+      // Add the generated unique ID to the data object
+      data.request_id = uniqueId;
+      const createRequest = await rdl2OutputRequest.create(data);
+      if (createRequest) {
+        return { status: 1 };
+      } else {
+        return { status: 0 };
+      }
+    } catch (error) {
+      return error;
+    }
+  },
+  generateRdlTwoOutputReport: async () => {
+    try {
+      let getPendingRequest = await rdl2OutputRequest.find({
+        status: "Pending",
+      });
+      for (let x of getPendingRequest) {
+        const fromDateTimestamp = Date.parse(x.from_date);
+        const toDateTimestamp = Date.parse(x.to_date);
+        const getReportBasisAuditFinelGrade = await delivery.aggregate([
+          {
+            $match: {
+              rdl_two_closed_date: {
+                $gte: new Date(fromDateTimestamp),
+                $lte: new Date(toDateTimestamp),
+              },
+            },
+          },
+          {
+            $group: {
+              _id: {
+                audit_report_grade: "$audit_report.grade",
+                item_id: "$item_id",
+              },
+              count: { $sum: 1 },
+            },
+          },
+          {
+            $group: {
+              _id: "$_id.audit_report_grade",
+              grades: {
+                $push: { grade: "$_id.audit_report_grade", count: "$count" },
+              },
+              total_count: { $sum: "$count" },
+            },
+          },
+        ]);
+        for (let y of getReportBasisAuditFinelGrade) {
+          console.log(y);
+        }
+      }
+    } catch (error) {
+      return error;
+    }
+  },
+  /* ---------------------------------------PART INVENTORY LEDGER------------------------------------------*/
+  getPartInventoryLedger: async (part_code) => {
+    try {
+      let findPartData = await partAndColor.findOne(
+        { part_code: part_code },
+        { name: 1, part_code: 1, sp_category: 1, created_at: 1, avl_stock: 1 }
+      );
+      if(findPartData){
+
+        const findPartInventoryLedger = await partInventoryLedger.find({
+          part_code: part_code,
+        });
+        return {
+          status:1,
+          data:findPartInventoryLedger,
+          partData:findPartData,
+        };
+      }
+      else{
+        return {status:2}
+      }
+    } catch (error) {
+      return error;
+    }
+  },
 };

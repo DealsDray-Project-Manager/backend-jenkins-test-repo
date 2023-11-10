@@ -9,6 +9,7 @@ const elasticSearch = require("../Elastic-search/elastic");
 const emailNotification = require("../Utils/email-notification");
 const BlancoAutoMation = require("./blancooAutomation");
 const superAdminController = require("../Controller/superAdmin/superAdminController");
+const reportingAgentRouter = require("../Controller/reporting-controller/reporting");
 /***************************************** */
 
 exports = module.exports = () => {
@@ -38,6 +39,14 @@ exports = module.exports = () => {
   } catch (error) {
     console.log(error);
   }
+  // RDL-2 OUTPUT GENERATE
+  // try {
+  //   corn.schedule("*/01 * * * *", () => {
+  //     reportingAgentRouter.generateRdlTwoOutputReport();
+  //   });
+  // } catch (error) {
+  //   console.log(error);
+  // }
   try {
     const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
     corn.schedule("*/30 * * * *", async () => {
