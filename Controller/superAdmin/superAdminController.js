@@ -3949,25 +3949,59 @@ module.exports = {
     return new Promise(async (resolve, reject) => {
       if (sort_id == "Ctx to Stx Send for Sorting") {
         const res = await masters
-          .find({
-            type_taxanomy: { $in: ["CT", "ST"] },
-            to_merge: { $ne: null },
-            sort_id: sort_id,
-          })
+          .aggregate([
+            {
+              $match: {
+                type_taxanomy: { $in: ["CT", "ST"] },
+                to_merge: { $ne: null },
+                sort_id: sort_id,
+              },
+            },
+            {
+              $lookup: {
+                from: "trayracks",
+                localField: "rack_id",
+                foreignField: "rack_id",
+                as: "rackDetails",
+              },
+            },
+          ])
           .catch((err) => reject(err));
         resolve(res);
       } else if (sort_id == "Pickup Request sent to Warehouse") {
         const res = await masters
-          .find({
-            prefix: "tray-master",
-            sort_id: sort_id,
-            to_tray_for_pickup: { $ne: null },
-          })
+          .aggregate([
+            {
+              $match: {
+                prefix: "tray-master",
+                sort_id: sort_id,
+                to_tray_for_pickup: { $ne: null },
+              },
+            },
+            {
+              $lookup: {
+                from: "trayracks",
+                localField: "rack_id",
+                foreignField: "rack_id",
+                as: "rackDetails",
+              },
+            },
+          ])
           .catch((err) => reject(err));
         resolve(res);
       } else {
         const res = await masters
-          .find({ type_taxanomy: trayType, sort_id: sort_id })
+          .aggregate([
+            { $match: { type_taxanomy: trayType, sort_id: sort_id } },
+            {
+              $lookup: {
+                from: "trayracks",
+                localField: "rack_id",
+                foreignField: "rack_id",
+                as: "rackDetails",
+              },
+            },
+          ])
           .catch((err) => reject(err));
         resolve(res);
       }
