@@ -210,6 +210,7 @@ module.exports = {
             actual_items: [],
             temp_array: [],
             items: [],
+            issued_user_name:null
           },
         }
       );

@@ -160,7 +160,7 @@ router.post("/check-user-status", async (req, res, next) => {
       jwt,
       user_type
     );
-   
+
     if (data.status == 1) {
       res.status(200).json({
         message: "Active user",
@@ -963,8 +963,7 @@ router.post("/trayIdGenrate", async (req, res, next) => {
             res.status(200).json({
               data: obj.RPT,
             });
-          }
-          else if (type == "RBQC") {
+          } else if (type == "RBQC") {
             res.status(200).json({
               data: obj.RBQC,
             });
@@ -1253,11 +1252,9 @@ router.post("/createMasters", async (req, res, next) => {
                 obj.SPT = obj.SPT + 1;
               } else if (type_taxanomy == "RPT") {
                 obj.RPT = obj.RPT + 1;
-              }
-              else if (type_taxanomy == "RBQC") {
+              } else if (type_taxanomy == "RBQC") {
                 obj.RBQC = obj.RBQC + 1;
-              }
-               else {
+              } else {
                 obj[type_taxanomy + tray_grade] =
                   obj[type_taxanomy + tray_grade] + 1;
               }
@@ -4403,6 +4400,24 @@ router.post("/extra/pickupIssueRollBack", async (req, res, next) => {
     if (data.status == 1) {
       res.status(200).json({
         message: "Successfully Update",
+      });
+    } else {
+      res.status(202).json({
+        message: "Failed",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+// ONE STEP BACK WHT TO RP
+router.post("/oneStepBackWhtToRp", async (req, res, next) => {
+  try {
+    const data = await superAdminController.oneStepBackWhtRp();
+    console.log(data);
+    if (data.status == 1) {
+      res.status(200).json({
+        message: "Done",
       });
     } else {
       res.status(202).json({

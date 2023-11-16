@@ -6509,4 +6509,82 @@ module.exports = {
       return error;
     }
   },
+  oneStepBackWhtRp: async () => {
+    try {
+      const dataOfRequest = await masters.find({
+        code: { $in: ["WHT1139", "WHT1128"] },
+        type_taxanomy: "WHT",
+      });
+      for (let x of dataOfRequest) {
+        let updateWht = await masters.updateOne(
+          {
+            code: x.code,
+          },
+          {
+            $set: {
+              sort_id: "Ready to RDL-2",
+              actual_items: [],
+              issued_user_name: null,
+            },
+          }
+        );
+        for (let y of x.items) {
+          let updateWht1 = await masters.updateOne(
+            {
+              "items.uic": y.uic,
+            },
+            {
+              $set: {
+                "items.$.rp_tray": null,
+              },
+            }
+          );
+        }
+        let updateRp = await masters.findOneAndUpdate(
+          {
+            code: x.rp_tray,
+          },
+          {
+            $set: {
+              sort_id: "Open",
+              temp_array: [],
+              wht_tray: [],
+              sp_tray: null,
+              issued_user_name: null,
+            },
+          }
+        );
+        let updateDataOfSp = await masters.findOneAndUpdate(
+          {
+            code: updateRp.sp_tray,
+          },
+          {
+            $set: {
+              sort_id: "Open",
+              actual_items: [],
+              items: [],
+              issued_user_name: null,
+            },
+          }
+        );
+        if (updateDataOfSp) {
+          for (let spn of updateDataOfSp.items) {
+            let updateSpn = await partAndColor.findOneAndUpdate(
+              {
+                part_code: spn.partId,
+              },
+              {
+                $inc: {
+                  avl_stock: parseInt(spn.selected_qty),
+                },
+              }
+            );
+          }
+        }
+      }
+      return { status: 1 };
+    } catch (error) {
+      return error;
+    }
+  },
 };

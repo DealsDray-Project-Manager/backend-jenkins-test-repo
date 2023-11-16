@@ -4224,11 +4224,22 @@ module.exports = {
   },
   getAuditDone: (location) => {
     return new Promise(async (resolve, reject) => {
-      let data = await masters.find({
-        sort_id: "Ready to RDL-1",
-        type_taxanomy: "WHT",
-        cpc: location,
-      });
+      let data = await masters.aggregate([{
+        $match:{
+          sort_id: "Ready to RDL-1",
+          type_taxanomy: "WHT",
+          cpc: location,
+        }
+      },
+      {
+        $lookup:{
+          from: "trayracks",
+            localField: "rack_id",
+            foreignField: "rack_id",
+            as: "rackData",
+        }
+      }
+    ]);
       if (data) {
         resolve(data);
       }
@@ -5969,7 +5980,16 @@ module.exports = {
           },
         },
         {
+          $lookup:{
+            from: "trayracks",
+              localField: "rack_id",
+              foreignField: "rack_id",
+              as: "rackData",
+          }
+        },
+        {
           $project: {
+            rackData:1,
             code: 1,
             rack_id: 1,
             brand: 1,

@@ -2390,12 +2390,24 @@ module.exports = {
         status == "Inuse" ||
         status == "Ready to RDL-1"
       ) {
-        data = await masters.find({
-          prefix: "tray-master",
-          type_taxanomy: "WHT",
-          sort_id: status,
-          cpc: location,
-        });
+        data = await masters.aggregate([
+          {
+            $match: {
+              prefix: "tray-master",
+              type_taxanomy: "WHT",
+              sort_id: status,
+              cpc: location,
+            },
+          },
+          {
+            $lookup: {
+              from: "trayracks",
+              localField: "rack_id",
+              foreignField: "rack_id",
+              as: "rackData",
+            },
+          },
+        ]);
       } else if (status == "Closed") {
         data = await masters.find({
           $or: [
@@ -2593,6 +2605,14 @@ module.exports = {
               as: "products",
             },
           },
+          {
+            $lookup: {
+              from: "trayracks",
+              localField: "rack_id",
+              foreignField: "rack_id",
+              as: "rackData",
+            },
+          },
         ]);
       }
       let trayData = [];
@@ -2772,34 +2792,58 @@ module.exports = {
   getChargingRequest: (status, location) => {
     if (status == "Send_for_charging") {
       return new Promise(async (resolve, reject) => {
-        let data = await masters.find({
-          $or: [
-            {
-              prefix: "tray-master",
-              type_taxanomy: "WHT",
-              sort_id: "Send for charging",
-              cpc: location,
+        let data = await masters.aggregate([
+          {
+            $match: {
+              $or: [
+                {
+                  prefix: "tray-master",
+                  type_taxanomy: "WHT",
+                  sort_id: "Send for charging",
+                  cpc: location,
+                },
+                {
+                  prefix: "tray-master",
+                  type_taxanomy: "WHT",
+                  sort_id: "Send for Recharging",
+                  cpc: location,
+                },
+              ],
             },
-            {
-              prefix: "tray-master",
-              type_taxanomy: "WHT",
-              sort_id: "Send for Recharging",
-              cpc: location,
+          },
+          {
+            $lookup: {
+              from: "trayracks",
+              localField: "rack_id",
+              foreignField: "rack_id",
+              as: "rackData",
             },
-          ],
-        });
+          },
+        ]);
         if (data) {
           resolve(data);
         }
       });
     } else if (status == "Send_for_audit") {
       return new Promise(async (resolve, reject) => {
-        let data = await masters.find({
-          prefix: "tray-master",
-          type_taxanomy: "WHT",
-          sort_id: "Send for Audit",
-          cpc: location,
-        });
+        let data = await masters.aggregate([
+          {
+            $match: {
+              prefix: "tray-master",
+              type_taxanomy: "WHT",
+              sort_id: "Send for Audit",
+              cpc: location,
+            },
+          },
+          {
+            $lookup: {
+              from: "trayracks",
+              localField: "rack_id",
+              foreignField: "rack_id",
+              as: "rackData",
+            },
+          },
+        ]);
 
         if (data) {
           resolve(data);
@@ -2807,11 +2851,23 @@ module.exports = {
       });
     } else {
       return new Promise(async (resolve, reject) => {
-        let data = await masters.find({
-          prefix: "tray-master",
-          type_taxanomy: "WHT",
-          sort_id: "Send for BQC",
-        });
+        let data = await masters.aggregate([
+          {
+            $match: {
+              prefix: "tray-master",
+              type_taxanomy: "WHT",
+              sort_id: "Send for BQC",
+            },
+          },
+          {
+            $lookup: {
+              from: "trayracks",
+              localField: "rack_id",
+              foreignField: "rack_id",
+              as: "rackData",
+            },
+          },
+        ]);
         if (data) {
           resolve(data);
         }
@@ -6413,16 +6469,28 @@ module.exports = {
           ],
         });
       } else {
-        data = await masters.find({
-          $or: [
-            {
-              prefix: "tray-master",
-              type_taxanomy: type,
-              sort_id: status,
-              cpc: location,
+        data = await masters.aggregate([
+          {
+            $match: {
+              $or: [
+                {
+                  prefix: "tray-master",
+                  type_taxanomy: type,
+                  sort_id: status,
+                  cpc: location,
+                },
+              ],
             },
-          ],
-        });
+          },
+          {
+            $lookup: {
+              from: "trayracks",
+              localField: "rack_id",
+              foreignField: "rack_id",
+              as: "rackData",
+            },
+          },
+        ]);
       }
       if (data) {
         resolve(data);
@@ -7405,9 +7473,19 @@ module.exports = {
     return new Promise(async (resolve, reject) => {
       let trayData = [];
       for (let tray of whtTray) {
-        const data = await masters.findOne({ cpc: location, code: tray });
+        const data = await masters.aggregate([
+          { $match: { cpc: location, code: tray } },
+          {
+            $lookup: {
+              from: "trayracks",
+              localField: "rack_id",
+              foreignField: "rack_id",
+              as: "rackData",
+            },
+          },
+        ]);
         if (data) {
-          trayData.push(data);
+          trayData.push(data[0]);
         }
       }
       resolve(trayData);
@@ -7670,11 +7748,23 @@ module.exports = {
     let data = [];
     return new Promise(async (resolve, reject) => {
       if (sortId == "MIS") {
-        data = await masters.find({
-          cpc: location,
-          sort_id: "Assigned to warehouae for rack change",
-          temp_rack: null,
-        });
+        data = await masters.aggregate([
+          {
+            $match: {
+              cpc: location,
+              sort_id: "Assigned to warehouae for rack change",
+              temp_rack: null,
+            },
+          },
+          {
+            $lookup: {
+              from: "trayracks",
+              localField: "rack_id",
+              foreignField: "rack_id",
+              as: "rackData",
+            },
+          },
+        ]);
       } else if (sortId == "Issued to scan in for rack change") {
         data = await masters.find({
           $or: [
