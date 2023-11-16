@@ -895,6 +895,7 @@ router.post("/ready-for-charging-wht", async (req, res, next) => {
 /* SORT TRAY BASED ON THE BRAND AND MODEL */
 router.post("/toWhtTrayForMerge", async (req, res, next) => {
   try {
+    console.log(req.body);
     const {
       location,
       brand,
@@ -1099,6 +1100,7 @@ router.post(
   "/toMmtTrayForMerge/:fromTray/:location/:itemsCount",
   async (req, res, next) => {
     try {
+      console.log(req.params);
       const { fromTray, location, itemsCount } = req.params;
       let mmtTray = await misUserController.getToTrayMmtMerge(
         fromTray,
@@ -1129,7 +1131,7 @@ router.post("/TrayMergeRequestSend", async (req, res, next) => {
       toTray,
       actionUser
     );
-  
+
     if (data.status === 1) {
       res.status(200).json({
         message: "Request Successfully Sent to Warehouse",
@@ -1654,6 +1656,7 @@ router.post("/ctx/transferRequestSend", async (req, res, next) => {
 // GET STX TRAY
 router.post("/sorting/ctxToStx/stxTray", async (req, res, next) => {
   try {
+    console.log(req.body);
     const { location, brand, model, fromTray, itemCount, status, type } =
       req.body;
     let data = await misUserController.sortingCtxToStxStxTrayGet(
@@ -1721,19 +1724,24 @@ router.post("/whToRp/muicList/repair/:location", async (req, res, next) => {
   }
 });
 // SCREEN LIST OF MUIC TO REPAIR WITHOUT SP
-router.post("/whToRp/muicList/repairWithoutSp/:location", async (req, res, next) => {
-  try {
-    const { location } = req.params;
-    let data = await misUserController.whtToRpMuicListToRepairWithoutSp(location);
-    if (data) {
-      res.status(200).json({
-        data: data,
-      });
+router.post(
+  "/whToRp/muicList/repairWithoutSp/:location",
+  async (req, res, next) => {
+    try {
+      const { location } = req.params;
+      let data = await misUserController.whtToRpMuicListToRepairWithoutSp(
+        location
+      );
+      if (data) {
+        res.status(200).json({
+          data: data,
+        });
+      }
+    } catch (error) {
+      next(error);
     }
-  } catch (error) {
-    next(error);
   }
-});
+);
 // PROCUREMENT SCREEN
 router.post("/procurmentRepair/:location", async (req, res, next) => {
   try {
@@ -1776,14 +1784,15 @@ router.post("/whToRpAssignForRepair", async (req, res, next) => {
 router.post("/whToRpAssignForRepairWithoutSp", async (req, res, next) => {
   try {
     const { location, brand, model } = req.body;
-    let data = await misUserController.whtToRpMuicListToRepairAssignForRepairWithoutSp(
-      location,
-      brand,
-      model
-    );
+    let data =
+      await misUserController.whtToRpMuicListToRepairAssignForRepairWithoutSp(
+        location,
+        brand,
+        model
+      );
     if (data) {
       res.status(200).json({
-       data:data
+        data: data,
       });
     } else {
       res.status(202).json({
@@ -1904,7 +1913,7 @@ router.post("/whtToRpSorting/assign", async (req, res, next) => {
       sortingUser,
       selectedUic,
       actUser,
-      screen
+      screen,
     } = req.body;
     let data = await misUserController.whtToRpSortingAssign(
       spDetails,
@@ -2005,8 +2014,17 @@ router.post("/stxUtilityGetStx", async (req, res, next) => {
 router.post("/stxUtilityAddToStx", async (req, res, next) => {
   try {
     // PARAMS
-    const { uic, stXTrayId, ctxTrayId, brand, model, muic, screen, actUser,grade } =
-      req.body;
+    const {
+      uic,
+      stXTrayId,
+      ctxTrayId,
+      brand,
+      model,
+      muic,
+      screen,
+      actUser,
+      grade,
+    } = req.body;
     // FUNCTION FROM CONTROLLER
     let data = await misUserController.stxUtilityAddItems(
       uic,

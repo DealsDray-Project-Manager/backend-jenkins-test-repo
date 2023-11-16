@@ -2752,15 +2752,26 @@ module.exports = {
   },
   getWhClosedBotTrayTillLastDay: (date, location) => {
     return new Promise(async (resolve, reject) => {
-      let data = await masters.find({
-        type_taxanomy: "BOT",
-        prefix: "tray-master",
-        sort_id: "Closed By Warehouse",
-        cpc: location,
-        closed_time_wharehouse_from_bot: new Date(
-          date.toISOString().split("T")[0]
-        ),
-      });
+      let data = await masters.aggregate([{
+        $match:{
+          type_taxanomy: "BOT",
+          prefix: "tray-master",
+          sort_id: "Closed By Warehouse",
+          cpc: location,
+          closed_time_wharehouse_from_bot: new Date(
+            date.toISOString().split("T")[0]
+          ),
+        }
+      },
+      {
+        $lookup: {
+          from: "trayracks",
+          localField: "rack_id",
+          foreignField: "rack_id",
+          as: "rackData",
+        },
+      },
+    ]);
       if (data) {
         resolve(data);
       }
@@ -2768,13 +2779,25 @@ module.exports = {
   },
   sortWhClosedBotTray: (date, location) => {
     return new Promise(async (resolve, reject) => {
-      let data = await masters.find({
-        type_taxanomy: "BOT",
-        prefix: "tray-master",
-        sort_id: "Closed By Warehouse",
-        cpc: location,
-        closed_time_wharehouse_from_bot: new Date(date),
-      });
+      let data = await masters.aggregate([{
+        $match:{
+
+          type_taxanomy: "BOT",
+          prefix: "tray-master",
+          sort_id: "Closed By Warehouse",
+          cpc: location,
+          closed_time_wharehouse_from_bot: new Date(date),
+        }
+      },
+      {
+        $lookup: {
+          from: "trayracks",
+          localField: "rack_id",
+          foreignField: "rack_id",
+          as: "rackData",
+        },
+      },
+    ]);
       resolve(data);
     });
   },
@@ -3121,12 +3144,23 @@ module.exports = {
   getClosedMmttray: (location) => {
     return new Promise(async (resolve, reject) => {
       let data = await masters
-        .find({
-          cpc: location,
-          type_taxanomy: "MMT",
-          prefix: "tray-master",
-          sort_id: "Closed By Warehouse",
-        })
+        .aggregate([{
+          $match:{
+            cpc: location,
+            type_taxanomy: "MMT",
+            prefix: "tray-master",
+            sort_id: "Closed By Warehouse",
+          }
+        },
+        {
+          $lookup: {
+            from: "trayracks",
+            localField: "rack_id",
+            foreignField: "rack_id",
+            as: "rackData",
+          },
+        },
+      ])
         .catch((err) => reject(err));
       if (data) {
         resolve(data);
@@ -4337,13 +4371,33 @@ module.exports = {
         },
         {
           $lookup: {
+            from: "trayracks",
+            localField: "rack_id",
+            foreignField: "rack_id",
+            as: "rackData",
+          },
+        },
+        {
+          $lookup: {
             from: "masters",
             localField: "sp_tray",
             foreignField: "code",
             as: "spTray",
           },
         },
+        {
+          $unwind: "$spTray",
+        },
+        {
+          $lookup: {
+            from: "trayracks",
+            localField: "spTray.rack_id",
+            foreignField: "rack_id",
+            as: "rackIdForSP",
+          },
+        },
       ]);
+      console.log(data);
       if (data) {
         resolve(data);
       }
@@ -5880,7 +5934,16 @@ module.exports = {
           },
         },
         {
+          $lookup: {
+            from: "trayracks",
+            localField: "rack_id",
+            foreignField: "rack_id",
+            as: "rackData",
+          },
+        },
+        {
           $project: {
+            rackData:1,
             code: 1,
             rack_id: 1,
             brand: 1,
