@@ -2526,6 +2526,14 @@ module.exports = {
               as: "products",
             },
           },
+          {
+            $lookup: {
+              from: "trayracks",
+              localField: "rack_id",
+              foreignField: "rack_id",
+              as: "trayrack",
+            },
+          },
         ]);
       } else {
         data = await masters.aggregate([
@@ -2545,6 +2553,14 @@ module.exports = {
               as: "products",
             },
           },
+          {
+            $lookup: {
+              from: "trayracks",
+              localField: "rack_id",
+              foreignField: "rack_id",
+              as: "rackData",
+            },
+          },
         ]);
       }
       let trayData = [];
@@ -2553,6 +2569,7 @@ module.exports = {
           x["jack_type"] = "";
           if (x?.products?.length !== 0) {
             x["jack_type"] = x?.products?.[0]?.jack_type;
+            x["variant"] = x?.products?.[0]?.variant;
           }
           var today = new Date(Date.now());
           if (status == "Ready to BQC") {
