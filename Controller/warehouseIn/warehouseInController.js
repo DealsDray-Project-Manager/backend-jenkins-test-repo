@@ -2350,12 +2350,24 @@ module.exports = {
         status == "Inuse" ||
         status == "Ready to RDL-1"
       ) {
-        data = await masters.find({
-          prefix: "tray-master",
-          type_taxanomy: "WHT",
-          sort_id: status,
-          cpc: location,
-        });
+        data = await masters.aggregate([
+          {
+            $match: {
+              prefix: "tray-master",
+              type_taxanomy: "WHT",
+              sort_id: status,
+              cpc: location,
+            },
+          },
+          {
+            $lookup: {
+              from: "trayracks",
+              localField: "rack_id",
+              foreignField: "rack_id",
+              as: "rackData",
+            },
+          },
+        ]);
       } else if (status == "Closed") {
         data = await masters.find({
           $or: [
