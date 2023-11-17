@@ -5179,6 +5179,7 @@ module.exports = {
             let obj = {
               code: otherTray,
               agent_name: spwhuser,
+              actUser:actUser,
               description: "Assigned to sp warehouse for parts issue to agent:",
             };
             let logCreationRes = await module.exports.trackSpAndRpAssignLevel(
@@ -5197,6 +5198,7 @@ module.exports = {
           let obj = {
             code: otherTray,
             agent_name: sortingUser,
+            actUser:actUser,
             description: "Assigned to sorting (Wht to rp) to agent",
           };
           let logCreationRes = await module.exports.trackSpAndRpAssignLevel(
@@ -5226,7 +5228,7 @@ module.exports = {
           user_type: "PRC MIS",
           tray_id: x,
           track_tray: "Tray",
-          description: `${obj.description} :${sortingUser} by mis :${actUser}`,
+          description: `${obj.description} :${obj.agent_name} by mis :${obj.actUser}`,
         });
         if (unitsLogCreation == null) {
           flag = false;
