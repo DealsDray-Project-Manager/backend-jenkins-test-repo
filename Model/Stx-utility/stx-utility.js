@@ -24,7 +24,10 @@ const StxUtilitySchema=mongoose.Schema({
     },
     type:{
         type:String
-    }
+    },
+    description:String,
+    old_grade:String,
+    system_status:String
 })
 const stxUtility=mongoose.model("stxUtility",StxUtilitySchema)
 

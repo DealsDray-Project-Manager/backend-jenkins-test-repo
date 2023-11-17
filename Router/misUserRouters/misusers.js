@@ -2024,6 +2024,7 @@ router.post("/stxUtilityAddToStx", async (req, res, next) => {
       screen,
       actUser,
       grade,
+      system_status
     } = req.body;
     // FUNCTION FROM CONTROLLER
     let data = await misUserController.stxUtilityAddItems(
@@ -2035,7 +2036,8 @@ router.post("/stxUtilityAddToStx", async (req, res, next) => {
       muic,
       screen,
       actUser,
-      grade
+      grade,
+      system_status
     );
     if (data.status == 1) {
       res.status(200).json({

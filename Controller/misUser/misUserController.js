@@ -5716,7 +5716,7 @@ module.exports = {
   /*--------------------------------------------STX UTILITY ---------------------------------------*/
   stxUtilityImportXlsx: () => {
     return new Promise(async (resolve, reject) => {
-      let arr = [];
+      let arr =[]
 
       for (let x of arr) {
         let obj = {
@@ -5725,7 +5725,9 @@ module.exports = {
           current_status: x.current_status,
           model_name: x.model_name,
           grade: x.grade,
+          old_grade:x.old_grade,
           type: "Stx-to-stx",
+          description:x.description
         };
         let createTo = await stxUtility.create(obj);
       }
@@ -5825,11 +5827,13 @@ module.exports = {
     muic,
     screen,
     actUser,
-    grade
+    grade,
+    system_status
   ) => {
+    console.log(system_status);
     return new Promise(async (resolve, reject) => {
       let obj = {};
-      if (screen == "Stx to Stx") {
+      if (system_status == "IN STX" || system_status == "IN CTX" ) {
         let removeFromCurrentTray = await masters.updateOne(
           { "items.uic": uic },
           {
@@ -5844,12 +5848,43 @@ module.exports = {
           resolve({ status: 2 });
         }
       }
+      else if(system_status == "IN SALES BIN"){
+        const removeSalesBing = await delivery.updateOne(
+          { "uic_code.code": uic },
+          {
+            $unset: {
+              sales_bin_date: 1,
+              sales_bin_status:1,
+              sales_bin_grade:1,
+              sales_bin_wh_agent_name:1,
+              sales_bin_desctiption:1,
+            },
+          }
+        );
+        if (removeSalesBing.modifiedCount == 0) {
+          resolve({ status: 2 });
+        }
+      }
+      else if(system_status == "IN BILLED BIN"){
+        const removeBilledsBing = await delivery.updateOne(
+          { "uic_code.code": uic },
+          {
+            $unset: {
+              item_moved_to_billed_bin: 1,
+              item_moved_to_billed_bin_date:1,
+              item_moved_to_billed_bin_done_username:1,
+            },
+          }
+        );
+        if (removeBilledsBing.modifiedCount == 0) {
+          resolve({ status: 2 });
+        }
+      }
       const getDelivery = await delivery.findOneAndUpdate(
         { "uic_code.code": uic },
         {
           $set: {
             stx_tray_id: stXTrayId,
-            ctx_tray_id: ctxTrayId,
             updated_at: Date.now(),
             final_grade:grade
           },
