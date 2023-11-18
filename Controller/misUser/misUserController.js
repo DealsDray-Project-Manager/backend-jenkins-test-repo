@@ -3675,7 +3675,6 @@ module.exports = {
         items = await masters.aggregate([
           {
             $match: {
-              "track_tray.rdl_1_done_close_by_wh": { $gte: threeDaysAgo },
               sort_id: type,
               cpc: location,
               type_taxanomy: "WHT",
@@ -3685,16 +3684,37 @@ module.exports = {
             $unwind: "$items",
           },
           {
+            $lookup: {
+              from: "deliveries",
+              localField: "items.uic",
+              foreignField: "uic_code.code",
+              as: "deliveryData",
+            },
+          },
+          {
+            $unwind: "$deliveryData",
+          },
+          {
+            $match: {
+              "deliveryData.rdl_fls_closed_date": { $gte: threeDaysAgo },
+            },
+          },
+          {
             $project: {
               items: 1,
+              "deliveryData.rdl_fls_closed_date": 1,
               brand: 1,
               model: 1,
               code: 1,
               closed_date_agent: 1,
             },
           },
+         
         ]);
+        
+        
       }
+      console.log(items);
       resolve({ items: items });
     });
   },
@@ -3787,6 +3807,7 @@ module.exports = {
               type_taxanomy: "WHT",
             },
           },
+          
           {
             $project: {
               items: {
@@ -3800,6 +3821,7 @@ module.exports = {
                   },
                 },
               },
+              "deliveryData.rdl_fls_closed_date":1,
               brand: 1,
               model: 1,
               code: 1,
@@ -3809,8 +3831,20 @@ module.exports = {
           {
             $unwind: "$items",
           },
+          {
+            $lookup:{
+              from:"deliveries",
+              localField:"items.uic",
+              foreignField:"uic_code.code",
+              as:"deliveryData"
+            }
+          },
+          {
+            $unwind: "$deliveryData", // Unwind the deliveryData array if it's an array
+          },
         ]);
       }
+      console.log(items);
       resolve({ items: items });
     });
   },
@@ -3882,7 +3916,19 @@ module.exports = {
             $unwind: "$items",
           },
           {
+            $lookup:{
+              from:"deliveries",
+              localField:"items.uic",
+              foreignField:"uic_code.code",
+              as:"deliveryData"
+            }
+          },
+          {
+            $unwind: "$deliveryData", // Unwind the deliveryData array if it's an array
+          },
+          {
             $project: {
+              "deliveryData.rdl_fls_closed_date":1,
               items: 1,
               brand: 1,
               model: 1,
@@ -3899,6 +3945,7 @@ module.exports = {
           },
           {
             $project: {
+          
               items: 1,
               brand: 1,
               model: 1,
@@ -3908,6 +3955,7 @@ module.exports = {
           },
         ]);
       }
+     
       resolve({ items: items });
     });
   },
@@ -4767,12 +4815,24 @@ module.exports = {
           $unwind: "$items",
         },
         {
+          $lookup:{
+            from:"deliveries",
+            localField:"items.uic",
+            foreignField:"uic_code.code",
+            as:"deliveryData"
+          }
+        },
+        {
           $match: {
             "items.rdl_fls_report.selected_status": "Repair Required",
           },
         },
         {
+          $unwind: "$deliveryData", // Unwind the deliveryData array if it's an array
+        },
+        {
           $project: {
+            "deliveryData.rdl_fls_closed_date":1,
             items: "$items",
             closed_date_agent: "$closed_date_agent",
             code: "$code",
@@ -4783,6 +4843,7 @@ module.exports = {
       let partsNotAvailable = [];
       let units = [];
       let temp = [];
+      console.log(findItem);
       if (findItem) {
         for (let x of findItem) {
           let flag = false;
@@ -4851,6 +4912,17 @@ module.exports = {
           $unwind: "$items",
         },
         {
+          $lookup:{
+            from:"deliveries",
+            localField:"items.uic",
+            foreignField:"uic_code.code",
+            as:"deliveryData"
+          }
+        },
+        {
+          $unwind: "$deliveryData", // Unwind the deliveryData array if it's an array
+        },
+        {
           $match: {
             $or: [
               {
@@ -4865,6 +4937,7 @@ module.exports = {
         {
           $project: {
             items: "$items",
+            "deliveryData.rdl_fls_closed_date":1,
             closed_date_agent: "$closed_date_agent",
             code: "$code",
           },
@@ -5727,7 +5800,8 @@ module.exports = {
           grade: x.grade,
           old_grade:x.old_grade,
           type: "Stx-to-stx",
-          description:x.description
+          description:x.description,
+          file_name:""
         };
         let createTo = await stxUtility.create(obj);
       }

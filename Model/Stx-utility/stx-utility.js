@@ -27,8 +27,13 @@ const StxUtilitySchema=mongoose.Schema({
     },
     description:String,
     old_grade:String,
-    system_status:String
-})
+    system_status:String,
+    file_name:String
+},
+{
+    timestamps:true
+}
+)
 const stxUtility=mongoose.model("stxUtility",StxUtilitySchema)
 
 module.exports={

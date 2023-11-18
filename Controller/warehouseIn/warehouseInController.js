@@ -7773,17 +7773,21 @@ module.exports = {
       const data = await stxUtility.find({
         uic: uic,
         added_status: { $ne: "Added" },
-      });
+      }).sort({_id:-1});
       if (data.length !== 0) {
         const checkIntrayOrnot = await masters.findOne({ "items.uic": uic });
         if (checkIntrayOrnot) {
           if (checkIntrayOrnot.type_taxanomy == "ST") {
-            data[0]["system_status"] = "IN STX";
-            data[0]["current_system_tray"] = checkIntrayOrnot.code;
+            for (let statusSet of data) {
+              statusSet["system_status"] = "IN STX";
+              statusSet["current_system_tray"] = checkIntrayOrnot.code;
+            }
             resolve({ status: 1, uicData: data });
           } else if (checkIntrayOrnot.type_taxanomy == "CT") {
-            data[0]["system_status"] = "IN CTX";
-            data[0]["current_system_tray"] = checkIntrayOrnot.code;
+            for (let statusSet of data) {
+              statusSet["system_status"] = "IN CTX";
+              statusSet["current_system_tray"] = checkIntrayOrnot.code;
+            }
             resolve({ status: 1, uicData: data });
           } else {
             resolve({ status: 2, trayId: checkIntrayOrnot.code });
@@ -7795,11 +7799,14 @@ module.exports = {
           );
           if (checkDelivery) {
             if (checkDelivery.sales_bin_status !== undefined) {
-              data[0]["system_status"] = "IN SALES BIN";
+              for (let statusSet of data) {
+                statusSet["system_status"] = "IN SALES BIN";
+              }
               resolve({ status: 1, uicData: data });
             } else if (checkDelivery.item_moved_to_billed_bin !== undefined) {
-              data[0]["system_status"] = "IN BILLED BIN";
-              console.log(data);
+              for (let statusSet of data) {
+                statusSet["system_status"] = "IN BILLED BIN";
+              }
               resolve({ status: 1, uicData: data });
             }
           } else {
