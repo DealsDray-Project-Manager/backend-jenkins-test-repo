@@ -4422,7 +4422,7 @@ module.exports = {
             from: "trayracks",
             localField: "rack_id",
             foreignField: "rack_id",
-            as: "rackData",
+            as: "rack",
           },
         },
         {

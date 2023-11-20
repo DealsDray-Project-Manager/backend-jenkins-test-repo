@@ -2871,7 +2871,7 @@ module.exports = {
               $set: {
                 sort_id: "BQC work inprogress",
               },
-              $push: {
+              $addToSet: {
                 items: trayItemData.item,
               },
             }
