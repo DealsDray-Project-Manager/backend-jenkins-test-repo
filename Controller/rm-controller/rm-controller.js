@@ -212,6 +212,8 @@ module.exports = {
             actual_items: [],
             temp_array: [],
             items: [],
+            rdl_2_user_temp:null,
+            issued_user_name:null
           },
         }
       );

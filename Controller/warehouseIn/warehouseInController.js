@@ -2350,12 +2350,24 @@ module.exports = {
         status == "Inuse" ||
         status == "Ready to RDL-1"
       ) {
-        data = await masters.find({
-          prefix: "tray-master",
-          type_taxanomy: "WHT",
-          sort_id: status,
-          cpc: location,
-        });
+        data = await masters.aggregate([
+          {
+            $match: {
+              prefix: "tray-master",
+              type_taxanomy: "WHT",
+              sort_id: status,
+              cpc: location,
+            },
+          },
+          {
+            $lookup: {
+              from: "trayracks",
+              localField: "rack_id",
+              foreignField: "rack_id",
+              as: "rackData",
+            },
+          },
+        ]);
       } else if (status == "Closed") {
         data = await masters.find({
           $or: [
@@ -2434,7 +2446,16 @@ module.exports = {
             },
           },
           {
+            $lookup: {
+              from: "trayracks",
+              localField: "rack_id",
+              foreignField: "rack_id",
+              as: "rackData",
+            },
+          },
+          {
             $project: {
+              rackData: 1,
               code: 1,
               rack_id: 1,
               brand: 1,
@@ -2526,6 +2547,14 @@ module.exports = {
               as: "products",
             },
           },
+          {
+            $lookup: {
+              from: "trayracks",
+              localField: "rack_id",
+              foreignField: "rack_id",
+              as: "trayrack",
+            },
+          },
         ]);
       } else {
         data = await masters.aggregate([
@@ -2545,6 +2574,14 @@ module.exports = {
               as: "products",
             },
           },
+          {
+            $lookup: {
+              from: "trayracks",
+              localField: "rack_id",
+              foreignField: "rack_id",
+              as: "rackData",
+            },
+          },
         ]);
       }
       let trayData = [];
@@ -2553,6 +2590,7 @@ module.exports = {
           x["jack_type"] = "";
           if (x?.products?.length !== 0) {
             x["jack_type"] = x?.products?.[0]?.jack_type;
+            x["variant"] = x?.products?.[0]?.variant;
           }
           var today = new Date(Date.now());
           if (status == "Ready to BQC") {
@@ -2833,7 +2871,7 @@ module.exports = {
               $set: {
                 sort_id: "BQC work inprogress",
               },
-              $push: {
+              $addToSet: {
                 items: trayItemData.item,
               },
             }
@@ -5749,18 +5787,30 @@ module.exports = {
           reslove({ status: 1, tray: tray });
         }
       } else if (type == "Audit Done Closed By Warehouse") {
-        let tray = await masters.find({
-          $or: [
-            {
-              prefix: "tray-master",
-              cpc: location,
-              sort_id: "Audit Done Closed By Warehouse",
-              type_taxanomy: {
-                $nin: ["BOT", "PMT", "MMT", "WHT", "ST", "SPT", "RPT"],
-              },
+        let tray = await masters.aggregate([
+          {
+            $match: {
+              $or: [
+                {
+                  prefix: "tray-master",
+                  cpc: location,
+                  sort_id: "Audit Done Closed By Warehouse",
+                  type_taxanomy: {
+                    $nin: ["BOT", "PMT", "MMT", "WHT", "ST", "SPT", "RPT"],
+                  },
+                },
+              ],
             },
-          ],
-        });
+          },
+          {
+            $lookup: {
+              from: "trayracks",
+              localField: "rack_id",
+              foreignField: "rack_id",
+              as: "rackData",
+            },
+          },
+        ]);
         if (tray) {
           reslove({ status: 1, tray: tray });
         }
@@ -5776,52 +5826,76 @@ module.exports = {
           reslove({ status: 1, tray: tray });
         }
       } else if (type === "Transferred to Sales") {
-        let tray = await masters.find({
-          $or: [
-            {
-              prefix: "tray-master",
-              cpc: location,
-              sort_id: "Transferred to Sales",
+        let tray = await masters.aggregate([
+          {
+            $match: {
+              $or: [
+                {
+                  prefix: "tray-master",
+                  cpc: location,
+                  sort_id: "Transferred to Sales",
 
-              type_taxanomy: {
-                $nin: ["BOT", "PMT", "MMT", "WHT", "SPT", "RPT"],
-              },
-            },
-            {
-              prefix: "tray-master",
-              cpc: location,
-              sort_id: "Transferred to Processing",
+                  type_taxanomy: {
+                    $nin: ["BOT", "PMT", "MMT", "WHT", "SPT", "RPT"],
+                  },
+                },
+                {
+                  prefix: "tray-master",
+                  cpc: location,
+                  sort_id: "Transferred to Processing",
 
-              type_taxanomy: {
-                $nin: ["BOT", "PMT", "MMT", "WHT", "SPT", "RPT"],
-              },
+                  type_taxanomy: {
+                    $nin: ["BOT", "PMT", "MMT", "WHT", "SPT", "RPT"],
+                  },
+                },
+              ],
             },
-          ],
-        });
+          },
+          {
+            $lookup: {
+              from: "trayracks",
+              localField: "rack_id",
+              foreignField: "rack_id",
+              as: "rackData",
+            },
+          },
+        ]);
         if (tray) {
           reslove({ status: 1, tray: tray });
         }
       } else if (type === "Ready to Transfer") {
-        let tray = await masters.find({
-          $or: [
-            {
-              prefix: "tray-master",
-              cpc: location,
-              sort_id: "Ready to Transfer to Sales",
-              type_taxanomy: {
-                $nin: ["BOT", "PMT", "MMT", "WHT", "SPT", "RPT"],
-              },
+        let tray = await masters.aggregate([
+          {
+            $match: {
+              $or: [
+                {
+                  prefix: "tray-master",
+                  cpc: location,
+                  sort_id: "Ready to Transfer to Sales",
+                  type_taxanomy: {
+                    $nin: ["BOT", "PMT", "MMT", "WHT", "SPT", "RPT"],
+                  },
+                },
+                {
+                  prefix: "tray-master",
+                  cpc: location,
+                  sort_id: "Ready to Transfer to Processing",
+                  type_taxanomy: {
+                    $nin: ["BOT", "PMT", "MMT", "WHT", "SPT", "RPT"],
+                  },
+                },
+              ],
             },
-            {
-              prefix: "tray-master",
-              cpc: location,
-              sort_id: "Ready to Transfer to Processing",
-              type_taxanomy: {
-                $nin: ["BOT", "PMT", "MMT", "WHT", "SPT", "RPT"],
-              },
+          },
+          {
+            $lookup: {
+              from: "trayracks",
+              localField: "rack_id",
+              foreignField: "rack_id",
+              as: "rackData",
             },
-          ],
-        });
+          },
+        ]);
         if (tray) {
           reslove({ status: 1, tray: tray });
         }
@@ -5866,12 +5940,26 @@ module.exports = {
           reslove({ status: 1, tray: tray });
         }
       } else {
-        let tray = await masters.find({
-          prefix: "tray-master",
-          cpc: location,
-          sort_id: type,
-          type_taxanomy: { $nin: ["BOT", "PMT", "MMT", "WHT", "SPT", "RPT"] },
-        });
+        let tray = await masters.aggregate([
+          {
+            $match: {
+              prefix: "tray-master",
+              cpc: location,
+              sort_id: type,
+              type_taxanomy: {
+                $nin: ["BOT", "PMT", "MMT", "WHT", "SPT", "RPT"],
+              },
+            },
+          },
+          {
+            $lookup: {
+              from: "trayracks",
+              localField: "rack_id",
+              foreignField: "rack_id",
+              as: "rackData",
+            },
+          },
+        ]);
         if (tray) {
           reslove({ status: 1, tray: tray });
         }
@@ -7204,16 +7292,28 @@ module.exports = {
           reslove({ status: 1, tray: tray });
         }
       } else {
-        let tray = await masters.find({
-          $or: [
-            {
-              prefix: "tray-master",
-              cpc: location,
-              sort_id: type,
-              type_taxanomy: "ST",
+        let tray = await masters.aggregate([
+          {
+            $match: {
+              $or: [
+                {
+                  prefix: "tray-master",
+                  cpc: location,
+                  sort_id: type,
+                  type_taxanomy: "ST",
+                },
+              ],
             },
-          ],
-        });
+          },
+          {
+            $lookup: {
+              from: "trayracks",
+              localField: "rack_id",
+              foreignField: "rack_id",
+              as: "rackData",
+            },
+          },
+        ]);
         if (tray) {
           reslove({ status: 1, tray: tray });
         }
@@ -7588,11 +7688,23 @@ module.exports = {
     let data = [];
     return new Promise(async (resolve, reject) => {
       if (sortId == "MIS") {
-        data = await masters.find({
-          cpc: location,
-          sort_id: "Assigned to warehouae for rack change",
-          temp_rack: null,
-        });
+        data = await masters.aggregate([
+          {
+            $match: {
+              cpc: location,
+              sort_id: "Assigned to warehouae for rack change",
+              temp_rack: null,
+            },
+          },
+          {
+            $lookup: {
+              from: "trayracks",
+              localField: "rack_id",
+              foreignField: "rack_id",
+              as: "rackData",
+            },
+          },
+        ]);
       } else if (sortId == "Issued to scan in for rack change") {
         data = await masters.find({
           $or: [
@@ -7660,13 +7772,22 @@ module.exports = {
     return new Promise(async (resolve, reject) => {
       const data = await stxUtility.find({
         uic: uic,
-        type: "Stx-to-stx",
         added_status: { $ne: "Added" },
-      });
+      }).sort({_id:-1});
       if (data.length !== 0) {
         const checkIntrayOrnot = await masters.findOne({ "items.uic": uic });
         if (checkIntrayOrnot) {
           if (checkIntrayOrnot.type_taxanomy == "ST") {
+            for (let statusSet of data) {
+              statusSet["system_status"] = "IN STX";
+              statusSet["current_system_tray"] = checkIntrayOrnot.code;
+            }
+            resolve({ status: 1, uicData: data });
+          } else if (checkIntrayOrnot.type_taxanomy == "CT") {
+            for (let statusSet of data) {
+              statusSet["system_status"] = "IN CTX";
+              statusSet["current_system_tray"] = checkIntrayOrnot.code;
+            }
             resolve({ status: 1, uicData: data });
           } else {
             resolve({ status: 2, trayId: checkIntrayOrnot.code });
@@ -7678,9 +7799,15 @@ module.exports = {
           );
           if (checkDelivery) {
             if (checkDelivery.sales_bin_status !== undefined) {
-              resolve({ status: 5 });
+              for (let statusSet of data) {
+                statusSet["system_status"] = "IN SALES BIN";
+              }
+              resolve({ status: 1, uicData: data });
             } else if (checkDelivery.item_moved_to_billed_bin !== undefined) {
-              resolve({ status: 6 });
+              for (let statusSet of data) {
+                statusSet["system_status"] = "IN BILLED BIN";
+              }
+              resolve({ status: 1, uicData: data });
             }
           } else {
             resolve({ status: 4 });

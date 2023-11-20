@@ -52,7 +52,10 @@ const deliverySchema = mongoose.Schema({
     default: "Pending",
   },
   uic_code: {
-    code: String,
+    code: {
+      type:String,
+      index:true
+    },
     user: String,
     created_at: {
       type: Date,

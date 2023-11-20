@@ -2752,15 +2752,26 @@ module.exports = {
   },
   getWhClosedBotTrayTillLastDay: (date, location) => {
     return new Promise(async (resolve, reject) => {
-      let data = await masters.find({
-        type_taxanomy: "BOT",
-        prefix: "tray-master",
-        sort_id: "Closed By Warehouse",
-        cpc: location,
-        closed_time_wharehouse_from_bot: new Date(
-          date.toISOString().split("T")[0]
-        ),
-      });
+      let data = await masters.aggregate([{
+        $match:{
+          type_taxanomy: "BOT",
+          prefix: "tray-master",
+          sort_id: "Closed By Warehouse",
+          cpc: location,
+          closed_time_wharehouse_from_bot: new Date(
+            date.toISOString().split("T")[0]
+          ),
+        }
+      },
+      {
+        $lookup: {
+          from: "trayracks",
+          localField: "rack_id",
+          foreignField: "rack_id",
+          as: "rackData",
+        },
+      },
+    ]);
       if (data) {
         resolve(data);
       }
@@ -2768,13 +2779,25 @@ module.exports = {
   },
   sortWhClosedBotTray: (date, location) => {
     return new Promise(async (resolve, reject) => {
-      let data = await masters.find({
-        type_taxanomy: "BOT",
-        prefix: "tray-master",
-        sort_id: "Closed By Warehouse",
-        cpc: location,
-        closed_time_wharehouse_from_bot: new Date(date),
-      });
+      let data = await masters.aggregate([{
+        $match:{
+
+          type_taxanomy: "BOT",
+          prefix: "tray-master",
+          sort_id: "Closed By Warehouse",
+          cpc: location,
+          closed_time_wharehouse_from_bot: new Date(date),
+        }
+      },
+      {
+        $lookup: {
+          from: "trayracks",
+          localField: "rack_id",
+          foreignField: "rack_id",
+          as: "rackData",
+        },
+      },
+    ]);
       resolve(data);
     });
   },
@@ -3121,12 +3144,23 @@ module.exports = {
   getClosedMmttray: (location) => {
     return new Promise(async (resolve, reject) => {
       let data = await masters
-        .find({
-          cpc: location,
-          type_taxanomy: "MMT",
-          prefix: "tray-master",
-          sort_id: "Closed By Warehouse",
-        })
+        .aggregate([{
+          $match:{
+            cpc: location,
+            type_taxanomy: "MMT",
+            prefix: "tray-master",
+            sort_id: "Closed By Warehouse",
+          }
+        },
+        {
+          $lookup: {
+            from: "trayracks",
+            localField: "rack_id",
+            foreignField: "rack_id",
+            as: "rackData",
+          },
+        },
+      ])
         .catch((err) => reject(err));
       if (data) {
         resolve(data);
@@ -3641,7 +3675,6 @@ module.exports = {
         items = await masters.aggregate([
           {
             $match: {
-              "track_tray.rdl_1_done_close_by_wh": { $gte: threeDaysAgo },
               sort_id: type,
               cpc: location,
               type_taxanomy: "WHT",
@@ -3651,16 +3684,37 @@ module.exports = {
             $unwind: "$items",
           },
           {
+            $lookup: {
+              from: "deliveries",
+              localField: "items.uic",
+              foreignField: "uic_code.code",
+              as: "deliveryData",
+            },
+          },
+          {
+            $unwind: "$deliveryData",
+          },
+          {
+            $match: {
+              "deliveryData.rdl_fls_closed_date": { $gte: threeDaysAgo },
+            },
+          },
+          {
             $project: {
               items: 1,
+              "deliveryData.rdl_fls_closed_date": 1,
               brand: 1,
               model: 1,
               code: 1,
               closed_date_agent: 1,
             },
           },
+         
         ]);
+        
+        
       }
+      console.log(items);
       resolve({ items: items });
     });
   },
@@ -3753,6 +3807,7 @@ module.exports = {
               type_taxanomy: "WHT",
             },
           },
+          
           {
             $project: {
               items: {
@@ -3766,6 +3821,7 @@ module.exports = {
                   },
                 },
               },
+              "deliveryData.rdl_fls_closed_date":1,
               brand: 1,
               model: 1,
               code: 1,
@@ -3775,8 +3831,20 @@ module.exports = {
           {
             $unwind: "$items",
           },
+          {
+            $lookup:{
+              from:"deliveries",
+              localField:"items.uic",
+              foreignField:"uic_code.code",
+              as:"deliveryData"
+            }
+          },
+          {
+            $unwind: "$deliveryData", // Unwind the deliveryData array if it's an array
+          },
         ]);
       }
+      console.log(items);
       resolve({ items: items });
     });
   },
@@ -3848,7 +3916,19 @@ module.exports = {
             $unwind: "$items",
           },
           {
+            $lookup:{
+              from:"deliveries",
+              localField:"items.uic",
+              foreignField:"uic_code.code",
+              as:"deliveryData"
+            }
+          },
+          {
+            $unwind: "$deliveryData", // Unwind the deliveryData array if it's an array
+          },
+          {
             $project: {
+              "deliveryData.rdl_fls_closed_date":1,
               items: 1,
               brand: 1,
               model: 1,
@@ -3865,6 +3945,7 @@ module.exports = {
           },
           {
             $project: {
+          
               items: 1,
               brand: 1,
               model: 1,
@@ -3874,6 +3955,7 @@ module.exports = {
           },
         ]);
       }
+     
       resolve({ items: items });
     });
   },
@@ -4218,11 +4300,22 @@ module.exports = {
   },
   getAuditDone: (location) => {
     return new Promise(async (resolve, reject) => {
-      let data = await masters.find({
-        sort_id: "Ready to RDL-1",
-        type_taxanomy: "WHT",
-        cpc: location,
-      });
+      let data = await masters.aggregate([{
+        $match:{
+          sort_id: "Ready to RDL-1",
+          type_taxanomy: "WHT",
+          cpc: location,
+        }
+      },
+      {
+        $lookup:{
+          from: "trayracks",
+            localField: "rack_id",
+            foreignField: "rack_id",
+            as: "rackData",
+        }
+      }
+    ]);
       if (data) {
         resolve(data);
       }
@@ -4326,13 +4419,33 @@ module.exports = {
         },
         {
           $lookup: {
+            from: "trayracks",
+            localField: "rack_id",
+            foreignField: "rack_id",
+            as: "rack",
+          },
+        },
+        {
+          $lookup: {
             from: "masters",
             localField: "sp_tray",
             foreignField: "code",
             as: "spTray",
           },
         },
+        {
+          $unwind: "$spTray",
+        },
+        {
+          $lookup: {
+            from: "trayracks",
+            localField: "spTray.rack_id",
+            foreignField: "rack_id",
+            as: "rackIdForSP",
+          },
+        },
       ]);
+      console.log(data);
       if (data) {
         resolve(data);
       }
@@ -4702,12 +4815,24 @@ module.exports = {
           $unwind: "$items",
         },
         {
+          $lookup:{
+            from:"deliveries",
+            localField:"items.uic",
+            foreignField:"uic_code.code",
+            as:"deliveryData"
+          }
+        },
+        {
           $match: {
             "items.rdl_fls_report.selected_status": "Repair Required",
           },
         },
         {
+          $unwind: "$deliveryData", // Unwind the deliveryData array if it's an array
+        },
+        {
           $project: {
+            "deliveryData.rdl_fls_closed_date":1,
             items: "$items",
             closed_date_agent: "$closed_date_agent",
             code: "$code",
@@ -4718,6 +4843,7 @@ module.exports = {
       let partsNotAvailable = [];
       let units = [];
       let temp = [];
+      console.log(findItem);
       if (findItem) {
         for (let x of findItem) {
           let flag = false;
@@ -4786,6 +4912,17 @@ module.exports = {
           $unwind: "$items",
         },
         {
+          $lookup:{
+            from:"deliveries",
+            localField:"items.uic",
+            foreignField:"uic_code.code",
+            as:"deliveryData"
+          }
+        },
+        {
+          $unwind: "$deliveryData", // Unwind the deliveryData array if it's an array
+        },
+        {
           $match: {
             $or: [
               {
@@ -4800,6 +4937,7 @@ module.exports = {
         {
           $project: {
             items: "$items",
+            "deliveryData.rdl_fls_closed_date":1,
             closed_date_agent: "$closed_date_agent",
             code: "$code",
           },
@@ -5651,7 +5789,7 @@ module.exports = {
   /*--------------------------------------------STX UTILITY ---------------------------------------*/
   stxUtilityImportXlsx: () => {
     return new Promise(async (resolve, reject) => {
-      let arr = [];
+      let arr =[]
 
       for (let x of arr) {
         let obj = {
@@ -5660,7 +5798,10 @@ module.exports = {
           current_status: x.current_status,
           model_name: x.model_name,
           grade: x.grade,
+          old_grade:x.old_grade,
           type: "Stx-to-stx",
+          description:x.description,
+          file_name:""
         };
         let createTo = await stxUtility.create(obj);
       }
@@ -5760,11 +5901,13 @@ module.exports = {
     muic,
     screen,
     actUser,
-    grade
+    grade,
+    system_status
   ) => {
+    console.log(system_status);
     return new Promise(async (resolve, reject) => {
       let obj = {};
-      if (screen == "Stx to Stx") {
+      if (system_status == "IN STX" || system_status == "IN CTX" ) {
         let removeFromCurrentTray = await masters.updateOne(
           { "items.uic": uic },
           {
@@ -5779,12 +5922,43 @@ module.exports = {
           resolve({ status: 2 });
         }
       }
+      else if(system_status == "IN SALES BIN"){
+        const removeSalesBing = await delivery.updateOne(
+          { "uic_code.code": uic },
+          {
+            $unset: {
+              sales_bin_date: 1,
+              sales_bin_status:1,
+              sales_bin_grade:1,
+              sales_bin_wh_agent_name:1,
+              sales_bin_desctiption:1,
+            },
+          }
+        );
+        if (removeSalesBing.modifiedCount == 0) {
+          resolve({ status: 2 });
+        }
+      }
+      else if(system_status == "IN BILLED BIN"){
+        const removeBilledsBing = await delivery.updateOne(
+          { "uic_code.code": uic },
+          {
+            $unset: {
+              item_moved_to_billed_bin: 1,
+              item_moved_to_billed_bin_date:1,
+              item_moved_to_billed_bin_done_username:1,
+            },
+          }
+        );
+        if (removeBilledsBing.modifiedCount == 0) {
+          resolve({ status: 2 });
+        }
+      }
       const getDelivery = await delivery.findOneAndUpdate(
         { "uic_code.code": uic },
         {
           $set: {
             stx_tray_id: stXTrayId,
-            ctx_tray_id: ctxTrayId,
             updated_at: Date.now(),
             final_grade:grade
           },
@@ -5869,7 +6043,16 @@ module.exports = {
           },
         },
         {
+          $lookup: {
+            from: "trayracks",
+            localField: "rack_id",
+            foreignField: "rack_id",
+            as: "rackData",
+          },
+        },
+        {
           $project: {
+            rackData:1,
             code: 1,
             rack_id: 1,
             brand: 1,

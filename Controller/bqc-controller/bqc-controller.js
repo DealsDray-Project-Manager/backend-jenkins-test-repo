@@ -83,7 +83,7 @@ module.exports = {
           let data = await masters.updateOne(
             { code: itemData.trayId },
             {
-              $push: {
+              $addToSet: {
                 actual_items: itemData.item,
               },
               $pull: {
@@ -111,7 +111,7 @@ module.exports = {
           let data = await masters.updateOne(
             { code: itemData.trayId },
             {
-              $push: {
+              $addToSet: {
                 temp_array: itemData.item,
               },
               $pull: {
