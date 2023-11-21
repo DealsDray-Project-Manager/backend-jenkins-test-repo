@@ -6120,6 +6120,14 @@ module.exports = {
                 model: brandAndModel.model_name,
               },
               {
+                sort_id: "Inuse",
+                type_taxanomy: "ST",
+                cpc: location,
+                tray_grade: grade,
+                brand: brandAndModel.brand_name,
+                model: brandAndModel.model_name,
+              },
+              {
                 sort_id: "STX-Utility In-progress",
                 type_taxanomy: "ST",
                 cpc: location,
