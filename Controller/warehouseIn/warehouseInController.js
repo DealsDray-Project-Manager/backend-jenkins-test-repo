@@ -1745,7 +1745,6 @@ module.exports = {
           {
             $set: {
               sort_id: "Closed By Warehouse",
-              rack_id: trayData.rackId,
               closed_time_wharehouse_from_bot: new Date(
                 new Date().toISOString().split("T")[0]
               ),
@@ -2367,6 +2366,12 @@ module.exports = {
               as: "rackData",
             },
           },
+          {
+            $unwind: {
+              path: "$rackData",
+              preserveNullAndEmptyArrays: true, // This option preserves documents that do not have a matching element in the array
+            },
+          },
         ]);
       } else if (status == "Closed") {
         data = await masters.find({
@@ -2552,7 +2557,13 @@ module.exports = {
               from: "trayracks",
               localField: "rack_id",
               foreignField: "rack_id",
-              as: "trayrack",
+              as: "rackData",
+            },
+          },
+          {
+            $unwind: {
+              path: "$rackData",
+              preserveNullAndEmptyArrays: true, // This option preserves documents that do not have a matching element in the array
             },
           },
         ]);
@@ -2582,11 +2593,18 @@ module.exports = {
               as: "rackData",
             },
           },
+          {
+            $unwind: {
+              path: "$rackData",
+              preserveNullAndEmptyArrays: true, // This option preserves documents that do not have a matching element in the array
+            },
+          },
         ]);
       }
       let trayData = [];
       if (data.length !== 0) {
         for (let x of data) {
+          x["rack_display"] = x?.rackData?.display;
           x["jack_type"] = "";
           if (x?.products?.length !== 0) {
             x["jack_type"] = x?.products?.[0]?.jack_type;
@@ -7573,7 +7591,6 @@ module.exports = {
         partner_shop: location,
         "audit_report.stage": "Upgrade",
       });
-
       resolve({ upgaradeReport: findUpgardeUnits });
     });
   },
@@ -7770,10 +7787,12 @@ module.exports = {
   },
   stxToStxUtilityScanUic: (uic) => {
     return new Promise(async (resolve, reject) => {
-      const data = await stxUtility.find({
-        uic: uic,
-        added_status: { $ne: "Added" },
-      }).sort({_id:-1});
+      const data = await stxUtility
+        .find({
+          uic: uic,
+          added_status: { $ne: "Added" },
+        })
+        .sort({ _id: -1 });
       if (data.length !== 0) {
         const checkIntrayOrnot = await masters.findOne({ "items.uic": uic });
         if (checkIntrayOrnot) {
