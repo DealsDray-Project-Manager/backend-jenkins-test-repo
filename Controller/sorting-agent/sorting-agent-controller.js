@@ -428,6 +428,8 @@ module.exports = {
                     tray_location: "Merging",
                     wht_tray: mmtTrayData.toTray,
                     updated_at: Date.now(),
+                    merge_done_date:Date.now(),
+                    merge_done_tray:mmtTrayData.fromTray
                   },
                 },
                 {
@@ -444,6 +446,8 @@ module.exports = {
                     stx_tray_id: mmtTrayData.toTray,
                     tray_type: "ST",
                     updated_at: Date.now(),
+                    merge_done_date:Date.now(),
+                    merge_done_tray:mmtTrayData.fromTray
                   },
                 },
                 {
@@ -459,6 +463,8 @@ module.exports = {
                     tray_location: "Merging",
                     ctx_tray_id: mmtTrayData.toTray,
                     updated_at: Date.now(),
+                    merge_done_date:Date.now(),
+                    merge_done_tray:mmtTrayData.fromTray
                   },
                 },
                 {
@@ -474,6 +480,8 @@ module.exports = {
                     tray_location: "Merging",
                     tray_id: mmtTrayData.toTray,
                     updated_at: Date.now(),
+                    merge_done_date:Date.now(),
+                    merge_done_tray:mmtTrayData.fromTray
                   },
                 },
                 {
@@ -872,6 +880,8 @@ module.exports = {
               $set: {
                 wht_tray: itemData.toTray,
                 updated_at: Date.now(),
+                pickup_done_tray:itemData.fromTray,
+                pickup_done_date:Date.now()
               },
             },
             {

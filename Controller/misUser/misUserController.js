@@ -2752,26 +2752,27 @@ module.exports = {
   },
   getWhClosedBotTrayTillLastDay: (date, location) => {
     return new Promise(async (resolve, reject) => {
-      let data = await masters.aggregate([{
-        $match:{
-          type_taxanomy: "BOT",
-          prefix: "tray-master",
-          sort_id: "Closed By Warehouse",
-          cpc: location,
-          closed_time_wharehouse_from_bot: new Date(
-            date.toISOString().split("T")[0]
-          ),
-        }
-      },
-      {
-        $lookup: {
-          from: "trayracks",
-          localField: "rack_id",
-          foreignField: "rack_id",
-          as: "rackData",
+      let data = await masters.aggregate([
+        {
+          $match: {
+            type_taxanomy: "BOT",
+            prefix: "tray-master",
+            sort_id: "Closed By Warehouse",
+            cpc: location,
+            closed_time_wharehouse_from_bot: new Date(
+              date.toISOString().split("T")[0]
+            ),
+          },
         },
-      },
-    ]);
+        {
+          $lookup: {
+            from: "trayracks",
+            localField: "rack_id",
+            foreignField: "rack_id",
+            as: "rackData",
+          },
+        },
+      ]);
       if (data) {
         resolve(data);
       }
@@ -2779,25 +2780,25 @@ module.exports = {
   },
   sortWhClosedBotTray: (date, location) => {
     return new Promise(async (resolve, reject) => {
-      let data = await masters.aggregate([{
-        $match:{
-
-          type_taxanomy: "BOT",
-          prefix: "tray-master",
-          sort_id: "Closed By Warehouse",
-          cpc: location,
-          closed_time_wharehouse_from_bot: new Date(date),
-        }
-      },
-      {
-        $lookup: {
-          from: "trayracks",
-          localField: "rack_id",
-          foreignField: "rack_id",
-          as: "rackData",
+      let data = await masters.aggregate([
+        {
+          $match: {
+            type_taxanomy: "BOT",
+            prefix: "tray-master",
+            sort_id: "Closed By Warehouse",
+            cpc: location,
+            closed_time_wharehouse_from_bot: new Date(date),
+          },
         },
-      },
-    ]);
+        {
+          $lookup: {
+            from: "trayracks",
+            localField: "rack_id",
+            foreignField: "rack_id",
+            as: "rackData",
+          },
+        },
+      ]);
       resolve(data);
     });
   },
@@ -3144,23 +3145,24 @@ module.exports = {
   getClosedMmttray: (location) => {
     return new Promise(async (resolve, reject) => {
       let data = await masters
-        .aggregate([{
-          $match:{
-            cpc: location,
-            type_taxanomy: "MMT",
-            prefix: "tray-master",
-            sort_id: "Closed By Warehouse",
-          }
-        },
-        {
-          $lookup: {
-            from: "trayracks",
-            localField: "rack_id",
-            foreignField: "rack_id",
-            as: "rackData",
+        .aggregate([
+          {
+            $match: {
+              cpc: location,
+              type_taxanomy: "MMT",
+              prefix: "tray-master",
+              sort_id: "Closed By Warehouse",
+            },
           },
-        },
-      ])
+          {
+            $lookup: {
+              from: "trayracks",
+              localField: "rack_id",
+              foreignField: "rack_id",
+              as: "rackData",
+            },
+          },
+        ])
         .catch((err) => reject(err));
       if (data) {
         resolve(data);
@@ -3596,7 +3598,22 @@ module.exports = {
             $unwind: "$items",
           },
           {
+            $lookup: {
+              from: "trayracks",
+              localField: "rack_id",
+              foreignField: "rack_id",
+              as: "rackData",
+            },
+          },
+          {
+            $unwind: {
+              path: "$rackData",
+              preserveNullAndEmptyArrays: true, // This option preserves documents that do not have a matching element in the array
+            },
+          },
+          {
             $project: {
+              rackData: 1,
               items: 1,
               brand: 1,
               model: 1,
@@ -3618,11 +3635,26 @@ module.exports = {
             $unwind: "$items",
           },
           {
+            $lookup: {
+              from: "trayracks",
+              localField: "rack_id",
+              foreignField: "rack_id",
+              as: "rackData",
+            },
+          },
+          {
+            $unwind: {
+              path: "$rackData",
+              preserveNullAndEmptyArrays: true, // This option preserves documents that do not have a matching element in the array
+            },
+          },
+          {
             $project: {
               items: 1,
               brand: 1,
               model: 1,
               code: 1,
+              rackData: 1,
               closed_date_agent: 1,
             },
           },
@@ -3640,10 +3672,25 @@ module.exports = {
             $unwind: "$items",
           },
           {
+            $lookup: {
+              from: "trayracks",
+              localField: "rack_id",
+              foreignField: "rack_id",
+              as: "rackData",
+            },
+          },
+          {
+            $unwind: {
+              path: "$rackData",
+              preserveNullAndEmptyArrays: true, // This option preserves documents that do not have a matching element in the array
+            },
+          },
+          {
             $project: {
               items: 1,
               brand: 1,
               model: 1,
+              rackData: 1,
               code: 1,
               closed_date_agent: 1,
             },
@@ -3662,10 +3709,25 @@ module.exports = {
             $unwind: "$items",
           },
           {
+            $lookup: {
+              from: "trayracks",
+              localField: "rack_id",
+              foreignField: "rack_id",
+              as: "rackData",
+            },
+          },
+          {
+            $unwind: {
+              path: "$rackData",
+              preserveNullAndEmptyArrays: true, // This option preserves documents that do not have a matching element in the array
+            },
+          },
+          {
             $project: {
               items: 1,
               brand: 1,
               model: 1,
+              rackData: 1,
               code: 1,
               "track_tray.rdl_two_done_closed_by_agent": 1,
             },
@@ -3682,6 +3744,20 @@ module.exports = {
           },
           {
             $unwind: "$items",
+          },
+          {
+            $lookup: {
+              from: "trayracks",
+              localField: "rack_id",
+              foreignField: "rack_id",
+              as: "rackData",
+            },
+          },
+          {
+            $unwind: {
+              path: "$rackData",
+              preserveNullAndEmptyArrays: true, // This option preserves documents that do not have a matching element in the array
+            },
           },
           {
             $lookup: {
@@ -3702,17 +3778,17 @@ module.exports = {
           {
             $project: {
               items: 1,
+              rackData: 1,
               "deliveryData.rdl_fls_closed_date": 1,
+              "deliveryData.merge_done_date": 1,
+              "deliveryData.merge_done_tray": 1,
               brand: 1,
               model: 1,
               code: 1,
               closed_date_agent: 1,
             },
           },
-         
         ]);
-        
-        
       }
       console.log(items);
       resolve({ items: items });
@@ -3734,10 +3810,25 @@ module.exports = {
             $unwind: "$items",
           },
           {
+            $lookup: {
+              from: "trayracks",
+              localField: "rack_id",
+              foreignField: "rack_id",
+              as: "rackData",
+            },
+          },
+          {
+            $unwind: {
+              path: "$rackData",
+              preserveNullAndEmptyArrays: true, // This option preserves documents that do not have a matching element in the array
+            },
+          },
+          {
             $project: {
               items: 1,
               brand: 1,
               model: 1,
+              rackData: 1,
               code: 1,
               closed_date_agent: 1,
             },
@@ -3759,11 +3850,26 @@ module.exports = {
             $unwind: "$items",
           },
           {
+            $lookup: {
+              from: "trayracks",
+              localField: "rack_id",
+              foreignField: "rack_id",
+              as: "rackData",
+            },
+          },
+          {
+            $unwind: {
+              path: "$rackData",
+              preserveNullAndEmptyArrays: true, // This option preserves documents that do not have a matching element in the array
+            },
+          },
+          {
             $project: {
               items: 1,
               brand: 1,
               model: 1,
               code: 1,
+              rackData: 1,
               closed_date_agent: 1,
             },
           },
@@ -3775,6 +3881,20 @@ module.exports = {
               "items.audit_report.stage": { $in: selectedStatus },
               sort_id: "Ready to RDL-1",
               cpc: location,
+            },
+          },
+          {
+            $lookup: {
+              from: "trayracks",
+              localField: "rack_id",
+              foreignField: "rack_id",
+              as: "rackData",
+            },
+          },
+          {
+            $unwind: {
+              path: "$rackData",
+              preserveNullAndEmptyArrays: true, // This option preserves documents that do not have a matching element in the array
             },
           },
           {
@@ -3790,6 +3910,7 @@ module.exports = {
               brand: 1,
               model: 1,
               code: 1,
+              rackData: 1,
               closed_date_agent: 1,
             },
           },
@@ -3807,7 +3928,20 @@ module.exports = {
               type_taxanomy: "WHT",
             },
           },
-          
+          {
+            $lookup: {
+              from: "trayracks",
+              localField: "rack_id",
+              foreignField: "rack_id",
+              as: "rackData",
+            },
+          },
+          {
+            $unwind: {
+              path: "$rackData",
+              preserveNullAndEmptyArrays: true, // This option preserves documents that do not have a matching element in the array
+            },
+          },
           {
             $project: {
               items: {
@@ -3821,10 +3955,13 @@ module.exports = {
                   },
                 },
               },
-              "deliveryData.rdl_fls_closed_date":1,
+              "deliveryData.rdl_fls_closed_date": 1,
+              "deliveryData.merge_done_date": 1,
+              "deliveryData.merge_done_tray": 1,
               brand: 1,
               model: 1,
               code: 1,
+              rackData: 1,
               closed_date_agent: 1,
             },
           },
@@ -3832,12 +3969,12 @@ module.exports = {
             $unwind: "$items",
           },
           {
-            $lookup:{
-              from:"deliveries",
-              localField:"items.uic",
-              foreignField:"uic_code.code",
-              as:"deliveryData"
-            }
+            $lookup: {
+              from: "deliveries",
+              localField: "items.uic",
+              foreignField: "uic_code.code",
+              as: "deliveryData",
+            },
           },
           {
             $unwind: "$deliveryData", // Unwind the deliveryData array if it's an array
@@ -3858,8 +3995,26 @@ module.exports = {
       if (type == "Charge Done") {
         items = await masters.aggregate([
           { $match: { sort_id: "Ready to BQC", cpc: location } },
+
           {
-            $unwind: "$items",
+            $lookup: {
+              from: "trayracks",
+              localField: "rack_id",
+              foreignField: "rack_id",
+              as: "rackData",
+            },
+          },
+          {
+            $unwind: {
+              path: "$rackData",
+              preserveNullAndEmptyArrays: true, // This option preserves documents that do not have a matching element in the array
+            },
+          },
+          {
+            $unwind: {
+              path: "$items",
+              preserveNullAndEmptyArrays: true,
+            },
           },
           {
             $project: {
@@ -3867,6 +4022,7 @@ module.exports = {
               brand: 1,
               model: 1,
               code: 1,
+              rackData: 1,
               closed_date_agent: 1,
             },
           },
@@ -3875,10 +4031,28 @@ module.exports = {
         items = await masters.aggregate([
           { $match: { sort_id: "Ready to Audit", cpc: location } },
           {
-            $unwind: "$items",
+            $lookup: {
+              from: "trayracks",
+              localField: "rack_id",
+              foreignField: "rack_id",
+              as: "rackData",
+            },
+          },
+          {
+            $unwind: {
+              path: "$rackData",
+              preserveNullAndEmptyArrays: true, // This option preserves documents that do not have a matching element in the array
+            },
+          },
+          {
+            $unwind: {
+              path: "$items",
+              preserveNullAndEmptyArrays: true,
+            },
           },
           {
             $project: {
+              rackData: 1,
               items: 1,
               brand: 1,
               model: 1,
@@ -3891,10 +4065,28 @@ module.exports = {
         items = await masters.aggregate([
           { $match: { sort_id: "Ready to RDL", cpc: location } },
           {
-            $unwind: "$items",
+            $lookup: {
+              from: "trayracks",
+              localField: "rack_id",
+              foreignField: "rack_id",
+              as: "rackData",
+            },
+          },
+          {
+            $unwind: {
+              path: "$rackData",
+              preserveNullAndEmptyArrays: true, // This option preserves documents that do not have a matching element in the array
+            },
+          },
+          {
+            $unwind: {
+              path: "$items",
+              preserveNullAndEmptyArrays: true,
+            },
           },
           {
             $project: {
+              rackData: 1,
               items: 1,
               brand: 1,
               model: 1,
@@ -3913,24 +4105,44 @@ module.exports = {
             },
           },
           {
-            $unwind: "$items",
+            $lookup: {
+              from: "trayracks",
+              localField: "rack_id",
+              foreignField: "rack_id",
+              as: "rackData",
+            },
           },
           {
-            $lookup:{
-              from:"deliveries",
-              localField:"items.uic",
-              foreignField:"uic_code.code",
-              as:"deliveryData"
-            }
+            $unwind: {
+              path: "$rackData",
+              preserveNullAndEmptyArrays: true, // This option preserves documents that do not have a matching element in the array
+            },
+          },
+          {
+            $unwind: {
+              path: "$items",
+              preserveNullAndEmptyArrays: true,
+            },
+          },
+          {
+            $lookup: {
+              from: "deliveries",
+              localField: "items.uic",
+              foreignField: "uic_code.code",
+              as: "deliveryData",
+            },
           },
           {
             $unwind: "$deliveryData", // Unwind the deliveryData array if it's an array
           },
           {
             $project: {
-              "deliveryData.rdl_fls_closed_date":1,
+              "deliveryData.rdl_fls_closed_date": 1,
+              "deliveryData.merge_done_date": 1,
+              "deliveryData.merge_done_tray": 1,
               items: 1,
               brand: 1,
+              rackData: 1,
               model: 1,
               code: 1,
               closed_date_agent: 1,
@@ -3941,11 +4153,28 @@ module.exports = {
         items = await masters.aggregate([
           { $match: { sort_id: type, cpc: location } },
           {
-            $unwind: "$items",
+            $lookup: {
+              from: "trayracks",
+              localField: "rack_id",
+              foreignField: "rack_id",
+              as: "rackData",
+            },
+          },
+          {
+            $unwind: {
+              path: "$rackData",
+              preserveNullAndEmptyArrays: true, // This option preserves documents that do not have a matching element in the array
+            },
+          },
+          {
+            $unwind: {
+              path: "$items",
+              preserveNullAndEmptyArrays: true,
+            },
           },
           {
             $project: {
-          
+              rackData: 1,
               items: 1,
               brand: 1,
               model: 1,
@@ -3955,7 +4184,7 @@ module.exports = {
           },
         ]);
       }
-     
+
       resolve({ items: items });
     });
   },
@@ -4300,22 +4529,23 @@ module.exports = {
   },
   getAuditDone: (location) => {
     return new Promise(async (resolve, reject) => {
-      let data = await masters.aggregate([{
-        $match:{
-          sort_id: "Ready to RDL-1",
-          type_taxanomy: "WHT",
-          cpc: location,
-        }
-      },
-      {
-        $lookup:{
-          from: "trayracks",
+      let data = await masters.aggregate([
+        {
+          $match: {
+            sort_id: "Ready to RDL-1",
+            type_taxanomy: "WHT",
+            cpc: location,
+          },
+        },
+        {
+          $lookup: {
+            from: "trayracks",
             localField: "rack_id",
             foreignField: "rack_id",
             as: "rackData",
-        }
-      }
-    ]);
+          },
+        },
+      ]);
       if (data) {
         resolve(data);
       }
@@ -4434,7 +4664,10 @@ module.exports = {
           },
         },
         {
-          $unwind: "$spTray",
+          $unwind: {
+            path: "$spTray",
+            preserveNullAndEmptyArrays: true,
+          },
         },
         {
           $lookup: {
@@ -4815,12 +5048,23 @@ module.exports = {
           $unwind: "$items",
         },
         {
-          $lookup:{
-            from:"deliveries",
-            localField:"items.uic",
-            foreignField:"uic_code.code",
-            as:"deliveryData"
-          }
+          $lookup: {
+            from: "deliveries",
+            localField: "items.uic",
+            foreignField: "uic_code.code",
+            as: "deliveryData",
+          },
+        },
+        {
+          $lookup: {
+            from: "trayracks",
+            localField: "rack_id",
+            foreignField: "rack_id",
+            as: "rackData",
+          },
+        },
+        {
+          $unwind: "$rackData",
         },
         {
           $match: {
@@ -4832,7 +5076,8 @@ module.exports = {
         },
         {
           $project: {
-            "deliveryData.rdl_fls_closed_date":1,
+            rackData: 1,
+            "deliveryData.rdl_fls_closed_date": 1,
             items: "$items",
             closed_date_agent: "$closed_date_agent",
             code: "$code",
@@ -4908,16 +5153,28 @@ module.exports = {
             ],
           },
         },
+
         {
           $unwind: "$items",
         },
         {
-          $lookup:{
-            from:"deliveries",
-            localField:"items.uic",
-            foreignField:"uic_code.code",
-            as:"deliveryData"
-          }
+          $lookup: {
+            from: "deliveries",
+            localField: "items.uic",
+            foreignField: "uic_code.code",
+            as: "deliveryData",
+          },
+        },
+        {
+          $lookup: {
+            from: "trayracks",
+            localField: "rack_id",
+            foreignField: "rack_id",
+            as: "rackData",
+          },
+        },
+        {
+          $unwind: "$rackData", // Unwind the deliveryData array if it's an array
         },
         {
           $unwind: "$deliveryData", // Unwind the deliveryData array if it's an array
@@ -4936,8 +5193,9 @@ module.exports = {
         },
         {
           $project: {
+            rackData: 1,
             items: "$items",
-            "deliveryData.rdl_fls_closed_date":1,
+            "deliveryData.rdl_fls_closed_date": 1,
             closed_date_agent: "$closed_date_agent",
             code: "$code",
           },
@@ -5789,7 +6047,7 @@ module.exports = {
   /*--------------------------------------------STX UTILITY ---------------------------------------*/
   stxUtilityImportXlsx: () => {
     return new Promise(async (resolve, reject) => {
-      let arr =[]
+      let arr = [];
 
       for (let x of arr) {
         let obj = {
@@ -5798,10 +6056,10 @@ module.exports = {
           current_status: x.current_status,
           model_name: x.model_name,
           grade: x.grade,
-          old_grade:x.old_grade,
+          old_grade: x.old_grade,
           type: "Stx-to-stx",
-          description:x.description,
-          file_name:""
+          description: x.description,
+          file_name: "",
         };
         let createTo = await stxUtility.create(obj);
       }
@@ -5907,7 +6165,7 @@ module.exports = {
     console.log(system_status);
     return new Promise(async (resolve, reject) => {
       let obj = {};
-      if (system_status == "IN STX" || system_status == "IN CTX" ) {
+      if (system_status == "IN STX" || system_status == "IN CTX") {
         let removeFromCurrentTray = await masters.updateOne(
           { "items.uic": uic },
           {
@@ -5921,32 +6179,30 @@ module.exports = {
         if (removeFromCurrentTray.modifiedCount == 0) {
           resolve({ status: 2 });
         }
-      }
-      else if(system_status == "IN SALES BIN"){
+      } else if (system_status == "IN SALES BIN") {
         const removeSalesBing = await delivery.updateOne(
           { "uic_code.code": uic },
           {
             $unset: {
               sales_bin_date: 1,
-              sales_bin_status:1,
-              sales_bin_grade:1,
-              sales_bin_wh_agent_name:1,
-              sales_bin_desctiption:1,
+              sales_bin_status: 1,
+              sales_bin_grade: 1,
+              sales_bin_wh_agent_name: 1,
+              sales_bin_desctiption: 1,
             },
           }
         );
         if (removeSalesBing.modifiedCount == 0) {
           resolve({ status: 2 });
         }
-      }
-      else if(system_status == "IN BILLED BIN"){
+      } else if (system_status == "IN BILLED BIN") {
         const removeBilledsBing = await delivery.updateOne(
           { "uic_code.code": uic },
           {
             $unset: {
               item_moved_to_billed_bin: 1,
-              item_moved_to_billed_bin_date:1,
-              item_moved_to_billed_bin_done_username:1,
+              item_moved_to_billed_bin_date: 1,
+              item_moved_to_billed_bin_done_username: 1,
             },
           }
         );
@@ -5960,7 +6216,7 @@ module.exports = {
           $set: {
             stx_tray_id: stXTrayId,
             updated_at: Date.now(),
-            final_grade:grade
+            final_grade: grade,
           },
         }
       );
@@ -6052,7 +6308,7 @@ module.exports = {
         },
         {
           $project: {
-            rackData:1,
+            rackData: 1,
             code: 1,
             rack_id: 1,
             brand: 1,

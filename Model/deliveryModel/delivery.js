@@ -320,7 +320,12 @@ const deliverySchema = mongoose.Schema({
   final_grade:String,
   price_updation_date:Date,
   price_creation_date:Date,
-  temp_flag:String
+  temp_flag:String,
+  pickup_done_tray:String,
+  merge_done_tray:String,
+  pickup_done_date:Date,
+  merge_done_date:Date,
+  rack_id:String
 });
 
 const delivery = mongoose.model("delivery", deliverySchema);
