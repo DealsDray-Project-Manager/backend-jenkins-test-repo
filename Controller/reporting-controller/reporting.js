@@ -2481,34 +2481,39 @@ module.exports = {
       for (let x of getPendingRequest) {
         const fromDateTimestamp = Date.parse(x.from_date);
         const toDateTimestamp = Date.parse(x.to_date);
-        const getReportBasisAuditFinelGrade = await delivery.aggregate([
-          {
-            $match: {
-              rdl_two_closed_date: {
-                $gte: new Date(fromDateTimestamp),
-                $lte: new Date(toDateTimestamp),
-              },
-            },
-          },
-          {
-            $group: {
-              _id: {
-                audit_report_grade: "$audit_report.grade",
-                item_id: "$item_id",
-              },
-              count: { $sum: 1 },
-            },
-          },
-          {
-            $group: {
-              _id: "$_id.audit_report_grade",
-              grades: {
-                $push: { grade: "$_id.audit_report_grade", count: "$count" },
-              },
-              total_count: { $sum: "$count" },
-            },
-          },
-        ]);
+     const getReportBasisAuditFinelGrade = await delivery.aggregate([
+  {
+    $match: {
+      rdl_two_closed_date: {
+        $gte: new Date(fromDateTimestamp),
+        $lte: new Date(toDateTimestamp),
+      },
+    },
+  },
+  {
+    $group: {
+      _id: {
+        audit_report_grade: "$audit_report.grade",
+        item_id: "$item_id",
+      },
+      count: { $sum: 1 },
+    },
+  },
+  {
+    $group: {
+      _id: "$_id.item_id",
+      grades: {
+        $push: {
+          audit_report_grade: "$_id.audit_report_grade",
+          item_id: "$_id.item_id",
+          count: "$count",
+        },
+      },
+      total_count: { $sum: "$count" },
+    },
+  },
+]);
+
         for (let y of getReportBasisAuditFinelGrade) {
           console.log(y);
         }

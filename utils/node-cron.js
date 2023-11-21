@@ -40,13 +40,13 @@ exports = module.exports = () => {
     console.log(error);
   }
   // RDL-2 OUTPUT GENERATE
-  // try {
-  //   corn.schedule("*/01 * * * *", () => {
-  //     reportingAgentRouter.generateRdlTwoOutputReport();
-  //   });
-  // } catch (error) {
-  //   console.log(error);
-  // }
+  try {
+    corn.schedule("*/01 * * * *", () => {
+      reportingAgentRouter.generateRdlTwoOutputReport();
+    });
+  } catch (error) {
+    console.log(error);
+  }
   try {
     const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
     corn.schedule("*/30 * * * *", async () => {
