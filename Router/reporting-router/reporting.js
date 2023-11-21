@@ -620,7 +620,30 @@ router.post("/get-report-for-rdl-two-output", async (req, res, next) => {
     next(error);
   }
 });
-
+// DOWNLOAD THE DATA
+router.post(
+  "/get-data-for-rdl-2-downalod/:requestId",
+  async (req, res, next) => {
+    try {
+      const { requestId } = req.params;
+      const getData = await reportingAgentRouter.getRdl2OutputDataDwonload(
+        requestId
+      );
+      if (getData.status == 1) {
+        res.status(200).json({
+          data: getData.dataOfOut,
+        });
+      }
+      else{
+       res.status(202).json({
+        message:"No records available for this"
+       })
+      }
+    } catch (error) {
+      next(error);
+    }
+  }
+);
 /*-----------------------------------PART INVENTORY LEDGER---------------------------------------------*/
 router.post("/get-partinventory-ledger/:part_code", async (req, res, next) => {
   try {

@@ -1,6 +1,7 @@
 const {
   partAndColor,
 } = require("../../Model/Part-list-and-color/part-list-and-color");
+const {rdl2OutputReport} = require("../../Model/Rdl-2-output/rdl-2-out-report");
 const {
   rdl2OutputRequest,
 } = require("../../Model/Rdl-2-output/rdl-2-output-request");
@@ -2473,52 +2474,234 @@ module.exports = {
       return error;
     }
   },
+  // GET DATA FOR DWONLOAD RDL-2 OUTPUT DATA
+  getRdl2OutputDataDwonload:async(request_id)=>{
+    try {
+      const data=await rdl2OutputReport.find({request_id:request_id})
+      if(data){
+       return {status:1,dataOfOut:data}
+      }
+      else{
+        return {status:1,dataOfOut:data}
+      }
+    } catch (error) {
+      return error
+    }
+  },
   generateRdlTwoOutputReport: async () => {
     try {
       let getPendingRequest = await rdl2OutputRequest.find({
         status: "Pending",
       });
+
       for (let x of getPendingRequest) {
         const fromDateTimestamp = Date.parse(x.from_date);
         const toDateTimestamp = Date.parse(x.to_date);
-     const getReportBasisAuditFinelGrade = await delivery.aggregate([
-  {
-    $match: {
-      rdl_two_closed_date: {
-        $gte: new Date(fromDateTimestamp),
-        $lte: new Date(toDateTimestamp),
-      },
-    },
-  },
-  {
-    $group: {
-      _id: {
-        audit_report_grade: "$audit_report.grade",
-        item_id: "$item_id",
-      },
-      count: { $sum: 1 },
-    },
-  },
-  {
-    $group: {
-      _id: "$_id.item_id",
-      grades: {
-        $push: {
-          audit_report_grade: "$_id.audit_report_grade",
-          item_id: "$_id.item_id",
-          count: "$count",
-        },
-      },
-      total_count: { $sum: "$count" },
-    },
-  },
-]);
-
+        const getReportBasisAuditFinelGrade = await delivery.aggregate([
+          {
+            $match: {
+              rdl_two_closed_date: {
+                $gte: new Date(fromDateTimestamp),
+                $lte: new Date(toDateTimestamp),
+              },
+            },
+          },
+          {
+            $group: {
+              _id: {
+                item_id: "$item_id",
+              },
+              count: { $sum: 1 },
+              auditorGradeA: {
+                $sum: { $cond: [{ $eq: ["$audit_report.grade", "A"] }, 1, 0] },
+              },
+              auditorGradeB: {
+                $sum: { $cond: [{ $eq: ["$audit_report.grade", "B"] }, 1, 0] },
+              },
+              auditorGradeC: {
+                $sum: { $cond: [{ $eq: ["$audit_report.grade", "C"] }, 1, 0] },
+              },
+              auditorGradeD: {
+                $sum: { $cond: [{ $eq: ["$audit_report.grade", "D"] }, 1, 0] },
+              },
+              auditorGradeB2: {
+                $sum: { $cond: [{ $eq: ["$audit_report.grade", "B2"] }, 1, 0] },
+              },
+              auditorGradeRB: {
+                $sum: { $cond: [{ $eq: ["$audit_report.grade", "RB"] }, 1, 0] },
+              },
+              upgradeCount: {
+                $sum: {
+                  $cond: [{ $eq: ["$audit_report.stage", "Upgrade"] }, 1, 0],
+                },
+              },
+              issuedToRdl2OrInprocess: {
+                $sum: {
+                  $cond: [{ $eq: ["$tray_status", "Issued to RDL-2"] }, 1, 0],
+                },
+              },
+              repairDoneCount: {
+                $sum: {
+                  $cond: [
+                    { $eq: ["$rdl_two_report.status", "Repair Done"] },
+                    1,
+                    0,
+                  ],
+                },
+              },
+              repairDoneWithIssue: {
+                $sum: {
+                  $cond: [
+                    {
+                      $and: [
+                        { $eq: ["$rdl_two_report.status", "Repair Done"] },
+                        {
+                          $eq: [
+                            "$audit_report",
+                            "BQC Not Done / Unverified imei",
+                          ],
+                        },
+                      ],
+                    },
+                    1,
+                    0,
+                  ],
+                },
+              },
+              repairNotDoneWithIssue: {
+                $sum: {
+                  $cond: [
+                    {
+                      $and: [
+                        { $eq: ["$rdl_two_report.status", "Repair Not Done"] },
+                        {
+                          $eq: [
+                            "$audit_report",
+                            "BQC Not Done / Unverified imei",
+                          ],
+                        },
+                      ],
+                    },
+                    1,
+                    0,
+                  ],
+                },
+              },
+              deviceNotRepairable: {
+                $sum: {
+                  $cond: [
+                    {
+                      $eq: ["$rdl_two_report.reason", "Device not repairable"],
+                    },
+                    1,
+                    0,
+                  ],
+                },
+              },
+              morePartRequired: {
+                $sum: {
+                  $cond: [
+                    { $eq: ["$rdl_two_report.reason", "More part required"] },
+                    1,
+                    0,
+                  ],
+                },
+              },
+              sparePartFaulty: {
+                $sum: {
+                  $cond: [
+                    { $eq: ["$rdl_two_report.reason", "Spare part faulty"] },
+                    1,
+                    0,
+                  ],
+                },
+              },
+              partNotAvailable: {
+                $sum: {
+                  $cond: [
+                    { $eq: ["$rdl_two_report.reason", "Part not available"] },
+                    1,
+                    0,
+                  ],
+                },
+              },
+              rdlTwoDoneClosedByWh: {
+                $sum: {
+                  $cond: [
+                    { $eq: ["$tray_status", "RDL-2 done closed by warehouse"] },
+                    1,
+                    0,
+                  ],
+                },
+              },
+              readyToAudit: {
+                $sum: {
+                  $cond: [{ $eq: ["$tray_status", "Ready to Audit"] }, 1, 0],
+                },
+              },
+              readyToBqc: {
+                $sum: {
+                  $cond: [{ $eq: ["$tray_status", "Ready to BQC"] }, 1, 0],
+                },
+              },
+            },
+          },
+          {
+            $group: {
+              _id: "$_id.item_id",
+              grades: {
+                $push: {
+                  audit_report_grade: "$_id.audit_report_grade",
+                  item_id: "$_id.item_id",
+                  count: "$count",
+                  total_upgrade_count: { $sum: "$upgradeCount" },
+                  issuedToRdl2OrInprocess: { $sum: "$issuedToRdl2OrInprocess" },
+                  repairDoneCount: { $sum: "$repairDoneCount" },
+                  repairDoneWithIssue: { $sum: "$repairDoneWithIssue" },
+                  deviceNotRepairable: { $sum: "$deviceNotRepairable" },
+                  repairNotDoneWithIssue: { $sum: "$repairNotDoneWithIssue" },
+                  morePartRequired: { $sum: "$morePartRequired" },
+                  sparePartFaulty: { $sum: "$sparePartFaulty" },
+                  partNotAvailable: { $sum: "$partNotAvailable" },
+                  rdlTwoDoneClosedByWh: { $sum: "$rdlTwoDoneClosedByWh" },
+                  readyToAudit: { $sum: "$readyToAudit" },
+                  readyToBqc: { $sum: "$readyToBqc" },
+                  auditorGradeA: { $sum: "$auditorGradeA" },
+                  auditorGradeB: { $sum: "$auditorGradeB" },
+                  auditorGradeC: { $sum: "$auditorGradeC" },
+                  auditorGradeD: { $sum: "$auditorGradeD" },
+                  auditorGradeB2: { $sum: "$auditorGradeB2" },
+                  auditorGradeRB: { $sum: "$auditorGradeRB" },
+                },
+              },
+              total_count: { $sum: "$count" },
+            },
+          },
+        ]);
         for (let y of getReportBasisAuditFinelGrade) {
-          console.log(y);
+          let findTheProduct = await products.findOne({ vendor_sku_id: y._id });
+          if (findTheProduct && y?.grades?.length !== 0) {
+            let addToReport = await rdl2OutputReport.create({
+              brand_and_model_name: `${findTheProduct.brand_name}:${findTheProduct.model_name}`,
+              all_data: y.grades[0],
+              request_id: x.request_id,
+            });
+            if (addToReport) {
+              let updateRequestStatus = await rdl2OutputRequest.updateOne(
+                { request_id: x.request_id },
+                {
+                  $set: {
+                    status: "Created",
+                  },
+                }
+              );
+              console.log(updateRequestStatus);
+            }
+          }
         }
       }
     } catch (error) {
+      console.log(error);
       return error;
     }
   },
@@ -2529,19 +2712,17 @@ module.exports = {
         { part_code: part_code },
         { name: 1, part_code: 1, sp_category: 1, created_at: 1, avl_stock: 1 }
       );
-      if(findPartData){
-
+      if (findPartData) {
         const findPartInventoryLedger = await partInventoryLedger.find({
           part_code: part_code,
         });
         return {
-          status:1,
-          data:findPartInventoryLedger,
-          partData:findPartData,
+          status: 1,
+          data: findPartInventoryLedger,
+          partData: findPartData,
         };
-      }
-      else{
-        return {status:2}
+      } else {
+        return { status: 2 };
       }
     } catch (error) {
       return error;
