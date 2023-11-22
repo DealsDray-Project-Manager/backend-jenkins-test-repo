@@ -34,10 +34,10 @@ const { tempOrdersReq } = require("../../Model/temp-req/temp-req");
 const { subMuic } = require("../../Model/sub-muic/sub-muic");
 const { unitsActionLog } = require("../../Model/units-log/units-action-log");
 
-const IISDOMAIN = "https://prexo-v9-1-1-dev-api.dealsdray.com/user/profile/";
+const IISDOMAIN = "https://prexo-v9-1-1-uat-api.dealsdray.com/user/profile/";
 const IISDOMAINBUYERDOC =
-  "https://prexo-v9-1-1-dev-api.dealsdray.com/user/document/";
-const IISDOMAINPRDT = "https://prexo-v9-1-1-dev-api.dealsdray.com/product/image/";
+  "https://prexo-v9-1-1-uat-api.dealsdray.com/user/document/";
+const IISDOMAINPRDT = "https://prexo-v9-1-1-uat-api.dealsdray.com/product/image/";
 
 /************************************************************************************************** */
 
