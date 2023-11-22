@@ -3789,22 +3789,24 @@ module.exports = {
       resolve(data);
     });
   },
-  viewOneData: (id, type) => {
+  viewOneData: (id, type,actionType) => {
     return new Promise(async (resolve, reject) => {
       let findData = await partAndColor.findOne({ _id: id });
       if (findData) {
         if (type == "part-list") {
           let checkUsed = await delivery.findOne({
-            $or: [
-              { "rdl_fls_one_report.part_list_1": findData.name },
-              { "rdl_fls_one_report.part_list_2": findData.name },
-              { "rdl_fls_one_report.part_list_3": findData.name },
-              { "rdl_fls_one_report.part_list_4": findData.name },
-              { "rdl_fls_one_report.part_list_5": findData.name },
-            ],
+            "rdl_fls_one_report.partRequired": {
+              $elemMatch: { part_name: findData.name },
+            },
           });
           if (checkUsed) {
-            resolve({ status: 3 });
+            if(actionType == "Edit"){
+              resolve({ status: 4, masterData: findData });
+            }
+            else{
+
+              resolve({ status: 3 });
+            }
           } else {
             resolve({ status: 1, masterData: findData });
           }
@@ -4147,7 +4149,7 @@ module.exports = {
 
   editPartOrColor: (dataOfPartorColor) => {
     return new Promise(async (resolve, reject) => {
-      let updateData = await partAndColor.updateOne(
+      let updateData = await partAndColor.findOneAndUpdate(
         { _id: dataOfPartorColor._id },
         {
           $set: {
@@ -4161,7 +4163,16 @@ module.exports = {
           },
         }
       );
-      if (updateData.modifiedCount !== 0) {
+      if (updateData) {
+        if(updateData.box_id !== dataOfPartorColor.box_id){
+          await partInventoryLedger.create({
+            department: "Super-admin",
+            action: "Edit",
+            action_done_user: dataOfPartorColor.actionUser,
+            description: `Box Id Edited by:${dataOfPartorColor.actionUser}`,
+            part_code: dataOfPartorColor.part_code,
+          });
+        }
         resolve({ status: 1 });
       } else {
         resolve({ status: 0 });

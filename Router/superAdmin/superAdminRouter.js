@@ -3090,13 +3090,19 @@ router.post("/partlist/muic", async (req, res, next) => {
   }
 });
 // get one data only for edit or delete
-router.post("/partAndColor/oneData/:id/:type", async (req, res, next) => {
+router.post("/partAndColor/oneData", async (req, res, next) => {
   try {
-    const { id, type } = req.params;
-    const data = await superAdminController.viewOneData(id, type);
+    const { id, type, actionType } = req.body;
+    const data = await superAdminController.viewOneData(id, type, actionType);
     if (data.status == 1) {
       res.status(200).json({
         data: data.masterData,
+        flag: false,
+      });
+    } else if (data.status == 4) {
+      res.status(200).json({
+        data: data.masterData,
+        flag: true,
       });
     } else if (data.status == 3 && type == "part-list") {
       res.status(202).json({

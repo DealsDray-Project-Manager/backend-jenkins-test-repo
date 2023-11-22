@@ -8,14 +8,17 @@ const PartInventoryLedgerSchema = mongoose.Schema(
     out_stock: Number,
     action: String,
     action_done_user: String,
-    part_code: String,
+    part_code: {
+      type:String,
+      ref:"partandcolors"
+    },
+    box_id:String,
     tray_id:String,
   },
   {
     timestamps: true, // This option adds created_at and updated_at timestamps to your documents
   }
 );
-
 const partInventoryLedger = mongoose.model(
   "partInventoryLedgers",
   PartInventoryLedgerSchema
