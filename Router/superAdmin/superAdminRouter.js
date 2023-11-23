@@ -2773,6 +2773,21 @@ router.post("/partAndColor/view/:type", async (req, res, next) => {
     next(error);
   }
 });
+// VIEW SPARE-PART BASED ON THE CATEGORY
+router.post("/sparePart-view-basedOnCategory",async(req,res,next)=>{
+  try {
+    const {category}=req.params
+     const data=await superAdminController.getSparePartViewBasedOnCategory()
+     if(data){
+      res.status(200).json({
+        tools:data.tools,
+        consumables:data.consumables
+      })
+     }
+  } catch (error) {
+    next(error)
+  }
+})
 
 /*-------------------------------------------MASTER FOR STORAGE--------------------------------------------*/
 //create

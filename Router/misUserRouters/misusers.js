@@ -937,6 +937,7 @@ router.post(
   "/get-charging-users/:user_type/:location",
   async (req, res, next) => {
     try {
+      console.log(req.params);
       let data = await misUserController.getChargingUsers(
         req.params.user_type,
         req.params.location

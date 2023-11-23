@@ -7,7 +7,7 @@ const partAndcolorSchema = mongoose.Schema({
   muic: {
     type: String,
   },
-  part_code: {
+  d: {
     type: String,
   },
   type: {

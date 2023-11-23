@@ -3465,6 +3465,16 @@ module.exports = {
       }
     });
   },
+  // VIEW SPARE PART BASED ON THE CATEGORY
+  getSparePartViewBasedOnCategory: async () => {
+    try {
+      const tools = await partAndColor.find({ sp_category: "Tools" });
+      const consumables=await partAndColor.find({sp_category:"Consumables"})
+      return {tools:tools,consumables:consumables};
+    } catch (error) {
+      return error;
+    }
+  },
   createStorage: (dataOfStorage) => {
     return new Promise(async (resolve, reject) => {
       let checkDup = await storagemodel.findOne({
@@ -3789,7 +3799,7 @@ module.exports = {
       resolve(data);
     });
   },
-  viewOneData: (id, type,actionType) => {
+  viewOneData: (id, type, actionType) => {
     return new Promise(async (resolve, reject) => {
       let findData = await partAndColor.findOne({ _id: id });
       if (findData) {
@@ -3800,11 +3810,9 @@ module.exports = {
             },
           });
           if (checkUsed) {
-            if(actionType == "Edit"){
+            if (actionType == "Edit") {
               resolve({ status: 4, masterData: findData });
-            }
-            else{
-
+            } else {
               resolve({ status: 3 });
             }
           } else {
@@ -4164,7 +4172,7 @@ module.exports = {
         }
       );
       if (updateData) {
-        if(updateData.box_id !== dataOfPartorColor.box_id){
+        if (updateData.box_id !== dataOfPartorColor.box_id) {
           await partInventoryLedger.create({
             department: "Super-admin",
             action: "Edit",

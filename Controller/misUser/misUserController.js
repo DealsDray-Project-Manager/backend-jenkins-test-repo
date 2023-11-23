@@ -3626,6 +3626,7 @@ module.exports = {
           {
             $match: {
               "track_tray.rdl_two_done_closed_by_agent": { $gte: threeDaysAgo },
+              "items.rdl_repair_report.reason":{$ne:"Device not repairable"},
               sort_id: type,
               cpc: location,
             },
@@ -3863,7 +3864,26 @@ module.exports = {
             },
           },
         ]);
-      } else {
+      }
+      else if(type == "RDL-2 done closed by warehouse"){
+        items = await masters.aggregate([
+          { $match: { sort_id: type, cpc: location ,"items.rdl_repair_report.reason":{$ne:"Device not repairable"},} },
+          {
+            $unwind: "$items",
+          },
+          {
+            $project: {
+              items: 1,
+              brand: 1,
+              model: 1,
+              code: 1,
+              closed_date_agent: 1,
+            },
+          },
+        ]);
+      }
+       else {
+        console.log(type);
         items = await masters.aggregate([
           { $match: { sort_id: type, cpc: location } },
           {
