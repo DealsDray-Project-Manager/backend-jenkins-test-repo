@@ -572,15 +572,92 @@ router.post("/track-tray", async (req, res, next) => {
   try {
     const { location, trayId } = req.body;
     const trayData = await reportingAgentRouter.trackTray(location, trayId);
-   
+
     if (trayData.status == 1) {
       res.status(200).json({
         data: trayData.tray,
-        otherDetails:trayData.otherDetails
+        otherDetails: trayData.otherDetails,
       });
     } else {
       res.status(202).json({
         message: "Sorry no records",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+/*----------------------------------------RDL-2 OUT PUT ----------------------------------------------*/
+router.post("/rdl-2-output-requests", async (req, res, next) => {
+  try {
+    const data = await reportingAgentRouter.rdl2OutputRequest();
+    if (data) {
+      res.status(200).json({
+        data: data,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+// CREATE THE REQUEST FOR RDL-2 OUTPUT REPORT
+router.post("/get-report-for-rdl-two-output", async (req, res, next) => {
+  try {
+    const data = await reportingAgentRouter.createdRequestForRdlTwoOutput(
+      req.body
+    );
+    if (data.status === 1) {
+      res.status(200).json({
+        message:
+          "Your request is created successfully you will get the report within 10 minutes",
+      });
+    } else {
+      res.status(202).json({
+        message: "Failed please try again!",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+// DOWNLOAD THE DATA
+router.post(
+  "/get-data-for-rdl-2-downalod/:requestId",
+  async (req, res, next) => {
+    try {
+      const { requestId } = req.params;
+      const getData = await reportingAgentRouter.getRdl2OutputDataDwonload(
+        requestId
+      );
+      if (getData.status == 1) {
+        res.status(200).json({
+          data: getData.dataOfOut,
+        });
+      }
+      else{
+       res.status(202).json({
+        message:"No records available for this"
+       })
+      }
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+/*-----------------------------------PART INVENTORY LEDGER---------------------------------------------*/
+router.post("/get-partinventory-ledger/:part_code", async (req, res, next) => {
+  try {
+    const { part_code } = req.body;
+    const getPartInventoryLedger =
+      await reportingAgentRouter.getPartInventoryLedger(part_code);
+    if (getPartInventoryLedger.status == 1) {
+      res.status(200).json({
+        data: getPartInventoryLedger.data,
+        partData: getPartInventoryLedger.partData,
+      });
+    } else {
+      res.status(202).json({
+        message: "Sorry no records found",
       });
     }
   } catch (error) {

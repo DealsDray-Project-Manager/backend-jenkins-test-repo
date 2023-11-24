@@ -37,6 +37,24 @@ module.exports = {
       }
       tempFindUic.push(tempUic.uic);
     }
+    return data;
+  },
+  itemsArrayAndActualArray: (data) => {
+    let dupFindUic = [];
+    let actFindUic = [];
+    for (let actUic of data.actual_items) {
+      if (dupFindUic.includes(actUic.uic)) {
+        actUic["dup_uic_status"] = "Duplicate";
+      }
+      dupFindUic.push(actUic.uic);
+    }
+    for (let tempUic of data.items) {
+      if (actFindUic.includes(tempUic.uic)) {
+        console.log("s");
+        tempUic["dup_uic_status"] = "Duplicate";
+      }
+      actFindUic.push(tempUic.uic);
+    }
 
     return data;
   },

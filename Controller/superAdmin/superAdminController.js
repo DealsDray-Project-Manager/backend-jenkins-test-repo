@@ -33,11 +33,17 @@ const { purchaseOrder } = require("../../Model/Purchase-order/purchase-order");
 const { tempOrdersReq } = require("../../Model/temp-req/temp-req");
 const { subMuic } = require("../../Model/sub-muic/sub-muic");
 const { unitsActionLog } = require("../../Model/units-log/units-action-log");
+const {
+  deletedMaster,
+} = require("../../Model/Deleted-masters/deleted-trays-bag");
+const {
+  partInventoryLedger,
+} = require("../../Model/part-inventory-ledger/part-inventory-ledger");
 
-const IISDOMAIN = "https://prexo-v9-1-1-dev-api.dealsdray.com/user/profile/";
+const IISDOMAIN = "https://prexo-v9-2-dev-api.dealsdray.com/user/profile/";
 const IISDOMAINBUYERDOC =
-  "https://prexo-v9-1-1-dev-api.dealsdray.com/user/document/";
-const IISDOMAINPRDT = "https://prexo-v9-1-1-dev-api.dealsdray.com/product/image/";
+  "https://prexo-v9-2-dev-api.dealsdray.com/user/document/";
+const IISDOMAINPRDT = "https://prexo-v9-2-dev-api.dealsdray.com/product/image/";
 
 /************************************************************************************************** */
 
@@ -141,7 +147,7 @@ module.exports = {
         prefix: "tray-master",
         sort_id: "Audit Done Closed By Warehouse",
         type_taxanomy: {
-          $nin: ["BOT", "PMT", "MMT", "WHT", "ST", "SPT", "RPT"],
+          $in: ["CT"],
         },
       });
       count.readyForRdl = await masters.count({
@@ -199,7 +205,33 @@ module.exports = {
         let data = await admin.findOne({ user_name: userName });
         if (data) {
           if (data.jwt_token == jwt) {
-            resolve({ data: data, status: 1 });
+            // Assuming checkUser.last_password_changed is a Date object
+            const lastPasswordChangedDate = new Date(
+              data.last_password_changed
+            );
+            // Set the time component to midnight (00:00:00)
+            lastPasswordChangedDate.setHours(0, 0, 0, 0);
+
+            // Calculate the current date
+            const currentDate = new Date();
+            // Set the time component to midnight (00:00:00)
+            currentDate.setHours(0, 0, 0, 0);
+
+            // Calculate the time difference in milliseconds
+            const timeDifference = currentDate - lastPasswordChangedDate;
+
+            // Define the duration for one week in milliseconds
+            const oneWeekInMilliseconds = 7 * 24 * 60 * 60 * 1000;
+
+            // Check if the time difference is greater than or equal to one week
+            if (
+              data.last_password_changed == undefined ||
+              timeDifference >= oneWeekInMilliseconds
+            ) {
+              resolve({ status: 4 });
+            } else {
+              resolve({ data: data, status: 1 });
+            }
           } else {
             resolve({ status: 2 });
           }
@@ -213,7 +245,34 @@ module.exports = {
         });
         if (data) {
           if (data.jwt_token == jwt) {
-            resolve({ data: data, status: 1 });
+            // Assuming checkUser.last_password_changed is a Date object
+            const lastPasswordChangedDate = new Date(
+              data.last_password_changed
+            );
+            // Set the time component to midnight (00:00:00)
+            lastPasswordChangedDate.setHours(0, 0, 0, 0);
+
+            // Calculate the current date
+            const currentDate = new Date();
+            // Set the time component to midnight (00:00:00)
+            currentDate.setHours(0, 0, 0, 0);
+
+            // Calculate the time difference in milliseconds
+            const timeDifference = currentDate - lastPasswordChangedDate;
+
+            // Define the duration for one week in milliseconds
+            const oneWeekInMilliseconds = 7 * 24 * 60 * 60 * 1000;
+
+            // Check if the time difference is greater than or equal to one week
+            if (
+              data.last_password_changed == undefined ||
+              timeDifference >= oneWeekInMilliseconds
+            ) {
+              console.log("w");
+              resolve({ status: 4 });
+            } else {
+              resolve({ data: data, status: 1 });
+            }
           } else {
             resolve({ status: 2 });
           }
@@ -227,19 +286,49 @@ module.exports = {
   /*--------------------------------CHANGE PASSWORD-----------------------------------*/
 
   changePassword: (userData) => {
+    console.log(userData._id);
     return new Promise(async (resolve, reject) => {
-      let data = await user.updateOne(
-        { _id: userData._id, password: userData.old_password },
-        {
-          $set: {
-            password: userData.new_password,
-          },
+      if (userData.user_type == "super-admin") {
+        let findData = await admin.findOne({ _id: userData._id });
+        if (findData.password == userData.new_password) {
+          resolve({ status: 2 });
+        } else {
+          let data = await admin.updateOne(
+            { _id: userData._id, password: userData.old_password },
+            {
+              $set: {
+                password: userData.new_password,
+                last_password_changed: Date.now(),
+              },
+            }
+          );
+          if (data.matchedCount != 0) {
+            resolve({ status: 1 });
+          } else {
+            resolve({ status: 0 });
+          }
         }
-      );
-      if (data.matchedCount != 0) {
-        resolve(data);
       } else {
-        resolve();
+        let findData = await user.findOne({ _id: userData._id });
+        if (findData.password == userData.new_password) {
+          resolve({ status: 2 });
+        } else {
+          console.log(findData.password);
+          let data = await user.updateOne(
+            { _id: userData._id, password: userData.old_password },
+            {
+              $set: {
+                password: userData.new_password,
+                last_password_changed: Date.now(),
+              },
+            }
+          );
+          if (data.matchedCount != 0) {
+            resolve({ status: 1 });
+          } else {
+            resolve({ status: 0 });
+          }
+        }
       }
     });
   },
@@ -251,6 +340,7 @@ module.exports = {
       userData.profile = IISDOMAIN + profile;
     }
     userData.creation_date = Date.now();
+    userData.last_password_changed = Date.now();
     return new Promise(async (resolve, rejects) => {
       let userExist = await user.findOne({ user_name: userData.user_name });
       if (userExist) {
@@ -270,38 +360,32 @@ module.exports = {
   /*--------------------------------CREATE BUYERS-----------------------------------*/
 
   createBuyer: (buyerData, docuemnts) => {
-    
-      if (docuemnts.profile && docuemnts?.profile[0]) {
-        buyerData.profile = IISDOMAINBUYERDOC + docuemnts.profile[0].filename;
-      }
-      else{
-        buyerData.profile=""
-      }
-      if (docuemnts.aadhar_proof && docuemnts?.aadhar_proof[0]) {
-        buyerData.aadhar_proof =
-          IISDOMAINBUYERDOC + docuemnts.aadhar_proof[0].filename;
-      }
-      else{
-        buyerData.aadhar_proof=""
-      }
-      if (docuemnts.pan_card_proof && docuemnts?.pan_card_proof[0]) {
-        buyerData.pan_card_proof =
-          IISDOMAINBUYERDOC + docuemnts.pan_card_proof[0].filename;
-      }
-      else{
-        buyerData.pan_card_proof=""
-      }
-      if (
-        docuemnts.business_address_proof &&
-        docuemnts?.business_address_proof[0]
-      ) {
-        buyerData.business_address_proof =
-          IISDOMAINBUYERDOC + docuemnts.business_address_proof[0].filename;
-      }
-      else{
-        buyerData.business_address_proof=""
-      }
-    
+    if (docuemnts.profile && docuemnts?.profile[0]) {
+      buyerData.profile = IISDOMAINBUYERDOC + docuemnts.profile[0].filename;
+    } else {
+      buyerData.profile = "";
+    }
+    if (docuemnts.aadhar_proof && docuemnts?.aadhar_proof[0]) {
+      buyerData.aadhar_proof =
+        IISDOMAINBUYERDOC + docuemnts.aadhar_proof[0].filename;
+    } else {
+      buyerData.aadhar_proof = "";
+    }
+    if (docuemnts.pan_card_proof && docuemnts?.pan_card_proof[0]) {
+      buyerData.pan_card_proof =
+        IISDOMAINBUYERDOC + docuemnts.pan_card_proof[0].filename;
+    } else {
+      buyerData.pan_card_proof = "";
+    }
+    if (
+      docuemnts.business_address_proof &&
+      docuemnts?.business_address_proof[0]
+    ) {
+      buyerData.business_address_proof =
+        IISDOMAINBUYERDOC + docuemnts.business_address_proof[0].filename;
+    } else {
+      buyerData.business_address_proof = "";
+    }
 
     buyerData.creation_date = Date.now();
     return new Promise(async (resolve, rejects) => {
@@ -497,7 +581,8 @@ module.exports = {
   editBuyerDetails: (buyerData, docuemnts) => {
     if (Object.keys(docuemnts).length !== 0) {
       if (docuemnts.profile_file) {
-        buyerData.profile = IISDOMAINBUYERDOC + docuemnts.profile_file[0].filename;
+        buyerData.profile =
+          IISDOMAINBUYERDOC + docuemnts.profile_file[0].filename;
       }
       if (docuemnts.aadhar_proof_file) {
         buyerData.aadhar_proof =
@@ -507,9 +592,7 @@ module.exports = {
         buyerData.pan_card_proof =
           IISDOMAINBUYERDOC + docuemnts.pan_card_proof_file[0].filename;
       }
-      if (
-        docuemnts.business_address_proof_file 
-      ) {
+      if (docuemnts.business_address_proof_file) {
         buyerData.business_address_proof =
           IISDOMAINBUYERDOC + docuemnts.business_address_proof_file[0].filename;
       }
@@ -815,6 +898,17 @@ module.exports = {
       let model = [];
       let jack_type = [];
       for (let i = 0; i < productsData.length; i++) {
+        let checkMuic = await products.findOne({ muic: productsData[i]?.muic });
+        if (checkMuic) {
+          resolve({ status: 0 });
+        } else if (
+          productsData[i]?.variant == "" ||
+          productsData[i]?.variant == undefined ||
+          productsData[i]?.vendor_name == "" ||
+          productsData[i]?.vendor_name == undefined
+        ) {
+          resolve({ status: 1 });
+        }
         if (
           productsData[i]?.jack_type !== "Micro USB" &&
           productsData[i]?.jack_type !== "Type C" &&
@@ -926,7 +1020,6 @@ module.exports = {
       resolve(allProducts);
     });
   },
-  
 
   /*--------------------------------FIND IMAGE FOR EDITING-----------------------------------*/
 
@@ -1305,7 +1398,8 @@ module.exports = {
           trayData[i].tray_category !== "MMT" &&
           trayData[i].tray_category !== "WHT" &&
           trayData[i].tray_category !== "SPT" &&
-          trayData[i].tray_category !== "RPT"
+          trayData[i].tray_category !== "RPT" &&
+          trayData[i].tray_category !== "RBQC"
         ) {
           if (
             trayData[i].tray_category !== "CT" &&
@@ -1369,6 +1463,9 @@ module.exports = {
           tray_id.push(trayData[i].tray_id);
           err["tray_id"] = tray_id;
         } else if (trayID > 19999 && trayData[i].tray_category == "RPT") {
+          tray_id.push(trayData[i].tray_id);
+          err["tray_id"] = tray_id;
+        } else if (trayID > "00100" && trayData[i].tray_category == "RBQC") {
           tray_id.push(trayData[i].tray_id);
           err["tray_id"] = tray_id;
         } else {
@@ -1438,7 +1535,8 @@ module.exports = {
           trayData[i].tray_category !== "BOT" &&
           trayData[i].tray_category !== "PMT" &&
           trayData[i].tray_category !== "MMT" &&
-          trayData[i].tray_category !== "SPT"
+          trayData[i].tray_category !== "SPT" &&
+          trayData[i].tray_category !== "RBQC"
         ) {
           let brandModel = await brands.findOne({
             brand_name: {
@@ -1664,15 +1762,81 @@ module.exports = {
 
   delteMaster: (masterId) => {
     return new Promise(async (resolve, reject) => {
-      let data = await masters.deleteOne({ code: masterId });
-      if (data.deletedCount != 0) {
+      let data = await masters.findOneAndDelete({ code: masterId });
+      if (data) {
+        await deletedMaster.create({
+          name: data.name,
+          code: data.code,
+          type_taxanomy: data.type_taxanomy,
+          display: data.display,
+          cpc: data.cpc,
+          warehouse: data.warehouse,
+          tray_grade: data.tray_grade,
+          brand: data.brand,
+          model: data.model,
+          created_at: data.created_at,
+          prefix: data.prefix,
+          limit: data.limit,
+        });
         resolve({ status: true });
       } else {
         resolve({ status: false });
       }
     });
   },
-
+  /*----------------------------------GET DELETED TRAYS -------------------------------*/
+  getDeletedMasters: async (type) => {
+    try {
+      console.log(type);
+      const findData = await deletedMaster.find({
+        prefix: type,
+        status: "Pending",
+      });
+      console.log(findData);
+      return findData;
+    } catch (error) {
+      return error;
+    }
+  },
+  /*--------------------------------RESTORE THE DELETED MASTER----------------------*/
+  restoreDeletedMaster: async (id) => {
+    try {
+      const findAndUpdateStatus = await deletedMaster.findOneAndUpdate(
+        { code: id, status: "Pending" },
+        {
+          $set: {
+            status: "Restored",
+          },
+        }
+      );
+      if (findAndUpdateStatus) {
+        let restore = await masters.create({
+          name: findAndUpdateStatus.name,
+          code: findAndUpdateStatus.code,
+          type_taxanomy: findAndUpdateStatus.type_taxanomy,
+          display: findAndUpdateStatus.display,
+          cpc: findAndUpdateStatus.cpc,
+          warehouse: findAndUpdateStatus.warehouse,
+          tray_grade: findAndUpdateStatus.tray_grade,
+          brand: findAndUpdateStatus.brand,
+          model: findAndUpdateStatus.model,
+          created_at: findAndUpdateStatus.created_at,
+          prefix: findAndUpdateStatus.prefix,
+          limit: findAndUpdateStatus.limit,
+          sort_id: "Open",
+        });
+        if (restore) {
+          return { status: 1 };
+        } else {
+          return { status: 2 };
+        }
+      } else {
+        return { status: 2 };
+      }
+    } catch (error) {
+      return error;
+    }
+  },
   /*--------------------------------ITEM TRACKING-----------------------------------*/
 
   itemTracking: (limit, skip) => {
@@ -1960,12 +2124,25 @@ module.exports = {
 
   getWhtTrayInuse: () => {
     return new Promise(async (resolve, reject) => {
-      let data = await masters.find({
-        type_taxanomy: "WHT",
-        prefix: "tray-master",
-        sort_id: "Inuse",
-        items: { $ne: [] },
-      });
+      let data = await masters.aggregate([
+        {
+          $match: {
+            type_taxanomy: "WHT",
+            prefix: "tray-master",
+            sort_id: "Inuse",
+            items: { $ne: [] },
+            items: { $ne: undefined },
+          },
+        },
+        {
+          $lookup: {
+            from: "trayracks",
+            localField: "rack_id",
+            foreignField: "rack_id",
+            as: "rackDetails",
+          },
+        },
+      ]);
       if (data) {
         resolve(data);
       }
@@ -2102,15 +2279,26 @@ module.exports = {
 
   chargeDoneTrayFourDayDiff: () => {
     return new Promise(async (resolve, reject) => {
-      let tray = await masters.find({
-        prefix: "tray-master",
-        sort_id: "Ready to BQC",
-      });
+      let tray = await masters.aggregate([
+        {
+          $match: {
+            prefix: "tray-master",
+            sort_id: "Ready to BQC",
+          },
+        },
+        {
+          $lookup: {
+            from: "trayracks",
+            localField: "rack_id",
+            foreignField: "rack_id",
+            as: "rackDetails",
+          },
+        },
+      ]);
       if (tray) {
         let arr = [];
         for (let x of tray) {
           var today = new Date(Date.now());
-
           if (
             new Date(x.closed_time_bot) <=
             new Date(today.setDate(today.getDate() - 4))
@@ -2141,7 +2329,7 @@ module.exports = {
         prefix: "tray-master",
         sort_id: "Audit Done Closed By Warehouse",
         type_taxanomy: {
-          $nin: ["BOT", "PMT", "MMT", "WHT", "ST", "SPT", "RPT"],
+          $in: ["CT"],
         },
       });
       resolve(data);
@@ -2199,7 +2387,7 @@ module.exports = {
     return new Promise(async (resolve, reject) => {
       let ctxOld = await masters.find({
         type_taxanomy: {
-          $nin: ["BOT", "PMT", "MMT", "WHT", "ST", "CT", "SPT", "RPT"],
+          $in: ["CT"],
         },
         prefix: "tray-master",
       });
@@ -2255,7 +2443,7 @@ module.exports = {
       let Allwht = await masters.find({
         prefix: "tray-master",
         type_taxanomy: {
-          $nin: ["BOT", "PMT", "MMT", "WHT", "ST", "SPT", "RPT"],
+          $in: ["CT"],
         },
       });
       for (let x of Allwht) {
@@ -2716,21 +2904,144 @@ module.exports = {
       }
     });
   },
+  /*-----------------------------------------RACK REPORT -------------------------------------*/
+
+  trayRackReport: () => {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const aggregatePipeline = [
+          {
+            $lookup: {
+              from: "masters", // Replace with the actual collection name
+              localField: "rack_id",
+              foreignField: "rack_id",
+              as: "rack_counts",
+            },
+          },
+          {
+            $lookup: {
+              from: "masters", // Replace with the actual collection name
+              localField: "rack_id",
+              foreignField: "temp_rack",
+              as: "upcoming_tray_count",
+            },
+          },
+          {
+            $project: {
+              _id: 1,
+              rack_id: 1,
+              name: 1,
+              display: 1,
+              limit: 1,
+              warehouse: 1,
+              parent_id: 1,
+              // Other fields you want to include
+              rack_count: { $size: "$rack_counts" },
+              upcoming_tray_count: { $size: "$upcoming_tray_count" },
+            },
+          },
+          { $sort: { rack_id: 1 } },
+        ];
+        const rackCounts = await trayRack.aggregate(aggregatePipeline);
+        for (let x of rackCounts) {
+          let getAllReport = await masters.aggregate([
+            {
+              $match: {
+                rack_id: x.rack_id,
+              },
+            },
+            {
+              $group: {
+                _id: "$type_taxanomy", // Group by the "type_taxanomy" field
+                count: { $sum: 1 }, // Count the number of documents in each group
+              },
+            },
+          ]);
+          let count_report = {};
+          for (let y of getAllReport) {
+            count_report[y._id] = y.count;
+          }
+          x["count_report"] = count_report;
+          console.log(x);
+        }
+        resolve(rackCounts);
+      } catch (error) {
+        reject(error);
+      }
+    });
+  },
+  /* -------------------------------------------------UPGRADE REPORT IN SUPER-ADMIN NEW FORMAT---------------------------------------*/
+  getUpgradeReportData: async () => {
+    try {
+      const upgradeReport = await delivery.aggregate([
+        {
+          $match: {
+            "audit_report.stage": "Upgrade",
+          },
+        },
+        {
+          $group: {
+            _id: {
+              item_id: "$item_id",
+              audit_recommended_grade: "$audit_report.grade",
+            },
+            count: { $sum: 1 }, // Count the occurrences of each grade within each item_id
+            old_item_details: { $first: "$old_item_details" }, // Include old_item_details in the result
+          },
+        },
+        {
+          $group: {
+            _id: "$_id.item_id",
+            grades: {
+              $push: {
+                grade: "$_id.audit_recommended_grade",
+                count: "$count",
+              },
+            },
+            total: { $sum: "$count" }, // Calculate the total count for each item_id
+            old_item_details: { $first: "$old_item_details" }, // Include old_item_details in the result
+          },
+        },
+      ]);
+
+      for (let main of upgradeReport) {
+        for (let sub of main.grades) {
+          main[sub.grade] = sub.count;
+        }
+        console.log(main);
+      }
+      return upgradeReport;
+    } catch (error) {
+      return error;
+    }
+  },
 
   /*--------------------GET RACK BASED ON THE LIMIT AND WAREHOUSE---------------------------*/
   getRackBasedOnTheWarehouse: (warehouse) => {
     return new Promise(async (resolve, reject) => {
       let arr = [];
       const rackIdData = await trayRack.find({ warehouse: warehouse });
+
       for (let x of rackIdData) {
-        const findRack = await masters.find(
-          {
-            $or: [{ rack_id: x.rack_id }, { temp_rack: x.rack_id }],
-          },
-          { rack_id: 1 }
-        );
-        if (x.limit > findRack.length) {
-          arr.push(x);
+        const countOfCurrent = await masters.count({
+          rack_id: x.rack_id,
+        });
+        const countOfUpComing = await masters.count({
+          temp_rack: x.rack_id,
+        });
+        // console.log("Upcoming",countOfUpComing,"current count",countOfCurrent);
+        if (x.limit > countOfCurrent + countOfUpComing) {
+          let obj = {
+            rack_id: x.rack_id,
+            display: x.display,
+            current_tray_count: countOfCurrent,
+            upcoming_tray_count: countOfUpComing,
+            avl_spc: x.limit - Number(countOfCurrent + countOfUpComing),
+          };
+          // x["current_tray_count"]=countOfCurrent
+          // x["upcoming_tray_count"]=countOfUpComing
+          // x['avl_spc']= x.limit - (Number(countOfCurrent + countOfUpComing))
+          arr.push(obj);
         }
       }
       resolve(arr);
@@ -3150,6 +3461,16 @@ module.exports = {
       }
     });
   },
+  // VIEW SPARE PART BASED ON THE CATEGORY
+  getSparePartViewBasedOnCategory: async () => {
+    try {
+      const tools = await partAndColor.find({ sp_category: "Tools" });
+      const consumables=await partAndColor.find({sp_category:"Consumables"})
+      return {tools:tools,consumables:consumables};
+    } catch (error) {
+      return error;
+    }
+  },
   createStorage: (dataOfStorage) => {
     return new Promise(async (resolve, reject) => {
       let checkDup = await storagemodel.findOne({
@@ -3474,22 +3795,22 @@ module.exports = {
       resolve(data);
     });
   },
-  viewOneData: (id, type) => {
+  viewOneData: (id, type, actionType) => {
     return new Promise(async (resolve, reject) => {
       let findData = await partAndColor.findOne({ _id: id });
       if (findData) {
         if (type == "part-list") {
           let checkUsed = await delivery.findOne({
-            $or: [
-              { "rdl_fls_one_report.part_list_1": findData.name },
-              { "rdl_fls_one_report.part_list_2": findData.name },
-              { "rdl_fls_one_report.part_list_3": findData.name },
-              { "rdl_fls_one_report.part_list_4": findData.name },
-              { "rdl_fls_one_report.part_list_5": findData.name },
-            ],
+            "rdl_fls_one_report.partRequired": {
+              $elemMatch: { part_name: findData.name },
+            },
           });
           if (checkUsed) {
-            resolve({ status: 3 });
+            if (actionType == "Edit") {
+              resolve({ status: 4, masterData: findData });
+            } else {
+              resolve({ status: 3 });
+            }
           } else {
             resolve({ status: 1, masterData: findData });
           }
@@ -3832,7 +4153,7 @@ module.exports = {
 
   editPartOrColor: (dataOfPartorColor) => {
     return new Promise(async (resolve, reject) => {
-      let updateData = await partAndColor.updateOne(
+      let updateData = await partAndColor.findOneAndUpdate(
         { _id: dataOfPartorColor._id },
         {
           $set: {
@@ -3846,7 +4167,16 @@ module.exports = {
           },
         }
       );
-      if (updateData.modifiedCount !== 0) {
+      if (updateData) {
+        if (updateData.box_id !== dataOfPartorColor.box_id) {
+          await partInventoryLedger.create({
+            department: "Super-admin",
+            action: "Edit",
+            action_done_user: dataOfPartorColor.actionUser,
+            description: `Box Id Edited by:${dataOfPartorColor.actionUser}`,
+            part_code: dataOfPartorColor.part_code,
+          });
+        }
         resolve({ status: 1 });
       } else {
         resolve({ status: 0 });
@@ -3904,30 +4234,41 @@ module.exports = {
       }
     });
   },
-  partlistManageStockUpdate: (partStockData) => {
+  partlistManageStockUpdate: (partStockData, username) => {
     return new Promise(async (resolve, reject) => {
       for (let x of partStockData) {
+        let updateStock;
         let number = parseInt(x.add_stock);
         if (number >= "0") {
-          const updateStock = await partAndColor.findOneAndUpdate(
+          updateStock = await partAndColor.findOneAndUpdate(
             { part_code: x.part_code },
             {
               $inc: {
                 avl_stock: parseInt(x.add_stock),
               },
-            }
+            },
+            { new: true }
           );
         } else {
-          let findStok = await partAndColor.findOne({ part_code: x.part_code });
-
-          const updateStock = await partAndColor.findOneAndUpdate(
+          updateStock = await partAndColor.findOneAndUpdate(
             { part_code: x.part_code },
             {
               $inc: {
                 avl_stock: parseInt(x.add_stock),
               },
-            }
+            },
+            { new: true }
           );
+        }
+        if (updateStock) {
+          await partInventoryLedger.create({
+            department: "Super-admin",
+            in_stock: updateStock.avl_stock,
+            action: "Stock Update",
+            action_done_user: username,
+            part_code: x.part_code,
+            description: `Stock updated by:${username}`,
+          });
         }
       }
       resolve({ status: true, count: partStockData.length });
@@ -4294,30 +4635,42 @@ module.exports = {
   getAssignedTrayForMerging: () => {
     return new Promise(async (resolve, reject) => {
       const tray = await masters
-        .find({
-          $or: [
-            {
-              sort_id: "Merge Request Sent To Wharehouse",
-              to_merge: { $ne: null },
+        .aggregate([
+          {
+            $match: {
+              $or: [
+                {
+                  sort_id: "Merge Request Sent To Wharehouse",
+                  to_merge: { $ne: null },
+                },
+                {
+                  sort_id: "Audit Done Merge Request Sent To Wharehouse",
+                  to_merge: { $ne: null },
+                },
+                {
+                  sort_id: "Ready to BQC Merge Request Sent To Wharehouse",
+                  to_merge: { $ne: null },
+                },
+                {
+                  sort_id: "Ready to RDL-2 Merge Request Sent To Wharehouse",
+                  to_merge: { $ne: null },
+                },
+                {
+                  sort_id: "Ready to Audit Merge Request Sent To Wharehouse",
+                  to_merge: { $ne: null },
+                },
+              ],
             },
-            {
-              sort_id: "Audit Done Merge Request Sent To Wharehouse",
-              to_merge: { $ne: null },
+          },
+          {
+            $lookup: {
+              from: "trayracks",
+              localField: "rack_id",
+              foreignField: "rack_id",
+              as: "rackDetails",
             },
-            {
-              sort_id: "Ready to BQC Merge Request Sent To Wharehouse",
-              to_merge: { $ne: null },
-            },
-            {
-              sort_id: "Ready to RDL-2 Merge Request Sent To Wharehouse",
-              to_merge: { $ne: null },
-            },
-            {
-              sort_id: "Ready to Audit Merge Request Sent To Wharehouse",
-              to_merge: { $ne: null },
-            },
-          ],
-        })
+          },
+        ])
         .catch((err) => reject(err));
       resolve(tray);
     });
@@ -4378,6 +4731,158 @@ module.exports = {
       );
       resolve(dataFetch);
     });
+  },
+  /*-----------------------------------------GET TRAY FOR REMOVE DUPLICATE UNITS------------------------------*/
+  getTrayForRemoveDuplicateUnits: async (trayId) => {
+    try {
+      console.log(trayId);
+      const trayData = await masters.findOne({ code: trayId });
+      if (trayData) {
+        if (trayData.sort_id != "Open") {
+          return { trayData: trayData, status: 1 };
+        } else {
+          return { status: 2 };
+        }
+      } else {
+        return { status: 0 };
+      }
+    } catch (error) {
+      return error;
+    }
+  },
+  // REMOVE DUPLICATE UNITS
+  removeDuplicateFromTray: async (expectedSide, actualSide, trayId) => {
+    try {
+      let flag = true;
+      for (let x of expectedSide) {
+        const document = await masters.findOne({ code: trayId });
+        if (document) {
+          const items = document.items;
+          const indexToRemove = items.findIndex((item) => item.uic === x);
+          if (indexToRemove !== -1) {
+            items.splice(indexToRemove, 1);
+            removeFromItemsArray = await masters.updateOne(
+              { code: trayId },
+              {
+                $set: {
+                  items: items,
+                },
+              }
+            );
+          }
+        }
+
+        if (removeFromItemsArray.modifiedCount == 0) {
+          flag = false;
+        }
+      }
+      for (let y of actualSide) {
+        const document = await masters.findOne({ code: trayId });
+        if (document) {
+          const items = document.actual_items;
+          const indexToRemove = items.findIndex((item) => item.uic === y);
+          if (indexToRemove !== -1) {
+            items.splice(indexToRemove, 1);
+            removeFromActualArray = await masters.updateOne(
+              { code: trayId },
+              {
+                $set: {
+                  actual_items: items,
+                },
+              }
+            );
+          }
+        }
+        if (removeFromActualArray.modifiedCount == 0) {
+          flag = false;
+        }
+      }
+      if (flag) {
+        return { status: 1 };
+      } else {
+        return { status: 0 };
+      }
+    } catch (error) {
+      return error;
+    }
+  },
+  /*-------------------------------------------ONE STEP BACK --------------------------------------------------*/
+  oneStepBackUtility: async (trayIds, status, actionDoneBy, currentStatus) => {
+    try {
+      let flag = 1;
+      for (let x of trayIds) {
+        let finalStatus = status;
+        if (x.tray_status == "Empty") {
+          finalStatus = "Open";
+        }
+        const updateTheTray = await masters.findOneAndUpdate(
+          { code: x.code, sort_id: currentStatus },
+          {
+            $set: {
+              sort_id: finalStatus,
+              actual_items: [],
+              to_tray_for_pickup: null,
+              issued_user_name: null,
+              temp_array: [],
+              wht_tray: [],
+              pickup_type: null,
+              to_tray_for_pickup: null,
+              from_merge: null,
+              to_merge: null,
+              "items.$.pickup_toTray": null,
+            },
+          }
+        );
+        if (updateTheTray) {
+          if (updateTheTray.items.length != 0) {
+            let state = "Tray";
+            for (let tray of updateTheTray.items) {
+              await unitsActionLog.create({
+                action_type: "One step back utility",
+                created_at: Date.now(),
+                tray_id: x.code,
+                user_name_of_action: actionDoneBy,
+                track_tray: state,
+                uic: tray.uic,
+                user_type: "Super-admin",
+                description: `One step back done by the super-admin :${actionDoneBy}`,
+              });
+              state = "Units";
+              await delivery.updateOne(
+                { "uic_code.code": tray.uic },
+                {
+                  $set: {
+                    tray_status: status,
+                  },
+                }
+              );
+            }
+            flag = 1;
+          } else {
+            await unitsActionLog.create({
+              action_type: "One step back utility",
+              created_at: Date.now(),
+              tray_id: x.code,
+              user_name_of_action: actionDoneBy,
+              track_tray: state,
+              uic: tray.uic,
+              user_type: "Super-admin",
+              description: `One step back done by the super-admin :${actionDoneBy}`,
+            });
+            flag = 1;
+          }
+        } else {
+          flag = 2;
+        }
+      }
+      if (flag == 1) {
+        return { status: 1 };
+      } else {
+        return { status: 2 };
+      }
+    } catch (error) {
+      return error;
+    }
   },
   /*-----------------------------------------EXTRA------------------------------------------------------------*/
   addCpcType: () => {
@@ -5598,10 +6103,9 @@ module.exports = {
             "items.rdl_fls_report.partRequired.part_id": y,
           },
           {
-           
-            $set:{
-             "items.$.rdl_fls_report.selected_status":status
-            }
+            $set: {
+              "items.$.rdl_fls_report.selected_status": status,
+            },
           }
         );
          let main2 = await masters.updateMany(
@@ -6004,7 +6508,6 @@ module.exports = {
             }
           );
         }
-        console.log(updateData);
         let update2 = await masters.updateOne(
           { code: y.to_tray_for_pickup },
           {
@@ -6017,6 +6520,84 @@ module.exports = {
         );
       }
       return { status: true };
+    } catch (error) {
+      return error;
+    }
+  },
+  oneStepBackWhtRp: async () => {
+    try {
+      const dataOfRequest = await masters.find({
+        code: { $in: ["WHT1139", "WHT1128"] },
+        type_taxanomy: "WHT",
+      });
+      for (let x of dataOfRequest) {
+        let updateWht = await masters.updateOne(
+          {
+            code: x.code,
+          },
+          {
+            $set: {
+              sort_id: "Ready to RDL-2",
+              actual_items: [],
+              issued_user_name: null,
+            },
+          }
+        );
+        for (let y of x.items) {
+          let updateWht1 = await masters.updateOne(
+            {
+              "items.uic": y.uic,
+            },
+            {
+              $set: {
+                "items.$.rp_tray": null,
+              },
+            }
+          );
+        }
+        let updateRp = await masters.findOneAndUpdate(
+          {
+            code: x.rp_tray,
+          },
+          {
+            $set: {
+              sort_id: "Open",
+              temp_array: [],
+              wht_tray: [],
+              sp_tray: null,
+              issued_user_name: null,
+            },
+          }
+        );
+        let updateDataOfSp = await masters.findOneAndUpdate(
+          {
+            code: updateRp.sp_tray,
+          },
+          {
+            $set: {
+              sort_id: "Open",
+              actual_items: [],
+              items: [],
+              issued_user_name: null,
+            },
+          }
+        );
+        if (updateDataOfSp) {
+          for (let spn of updateDataOfSp.items) {
+            let updateSpn = await partAndColor.findOneAndUpdate(
+              {
+                part_code: spn.partId,
+              },
+              {
+                $inc: {
+                  avl_stock: parseInt(spn.selected_qty),
+                },
+              }
+            );
+          }
+        }
+      }
+      return { status: 1 };
     } catch (error) {
       return error;
     }

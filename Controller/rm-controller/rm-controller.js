@@ -3,6 +3,7 @@ const {
 } = require("../../Model/Part-list-and-color/part-list-and-color");
 const { box } = require("../../Model/boxModel/box");
 const { masters } = require("../../Model/mastersModel");
+const partInventoryLedger = require("../../Model/part-inventory-ledger/part-inventory-ledger");
 const { trayRack } = require("../../Model/tray-rack/tray-rack");
 /****************************************************************** */
 
@@ -64,15 +65,14 @@ module.exports = {
         if (getTheTray.sort_id == "Assigned to sp warehouse") {
           if (getTheTray.issued_user_name == userName) {
             for (let x of getTheTray?.items) {
-                let checkBoxId = await partAndColor.findOne({
-                  part_code: x?.partId,
-                });
-                if (checkBoxId) {
-                  x["avl_qty_box"] = checkBoxId?.avl_stock;
-                } else {
-                  x["avl_qty_box"] = "";
-                }
-              
+              let checkBoxId = await partAndColor.findOne({
+                part_code: x?.partId,
+              });
+              if (checkBoxId) {
+                x["avl_qty_box"] = checkBoxId?.avl_stock;
+              } else {
+                x["avl_qty_box"] = "";
+              }
             }
             resolve({ status: 2, tray: getTheTray });
           } else {
@@ -121,7 +121,6 @@ module.exports = {
         }
       );
       if (updateTheTray) {
-       
         resolve({ status: 1 });
       } else {
         resolve({ status: 0 });
@@ -158,51 +157,50 @@ module.exports = {
       resolve(data);
     });
   },
-  partAddIntoBox: (partDetails, spTrayId, boxName, uniqueid, objId) => {
+  partAddIntoBox: (partDetails, spTrayId, boxName, uniqueid, objId,username) => {
     return new Promise(async (resolve, reject) => {
-      const addIntoBot = await box.findOneAndUpdate(
-        { box_id: boxName },
+      const removeFromSpTray = await masters.findOneAndUpdate(
+        { code: spTrayId },
         {
-          $push: {
-            sp_items: partDetails,
-          },
-        }
-      );
-      if (addIntoBot) {
-        const removeFromSpTray = await masters.findOneAndUpdate(
-          { code: spTrayId },
-          {
-            $pull: {
-              temp_array: {
-                unique_id_gen: uniqueid,
-              },
+          $pull: {
+            temp_array: {
+              unique_id_gen: uniqueid,
             },
           },
+        },
+        {
+          returnOriginal: false,
+        }
+      );
+      if (objId == "Not used" || objId == "Not required") {
+        const updateStock = await partAndColor.findOneAndUpdate(
+          { part_code: partDetails },
           {
-            returnOriginal: false,
+            $inc: {
+              avl_stock: 1,
+            },
+          },{
+            new:true
           }
         );
-        if (objId == "Not used" || objId == "Not required") {
-          const updateStock = await partAndColor.findOneAndUpdate(
-            { part_code: partDetails },
-            {
-              $inc: {
-                avl_stock: 1,
-              },
-            }
-          );
-        }
-        if (removeFromSpTray) {
-          resolve({ status: 1 });
-        } else {
-          resolve({ status: 0 });
-        }
+        await partInventoryLedger.create({
+          department:"SPWH",
+          action:"Add Into Box",
+          action_done_user:username,
+          description:`Spare parts add into box after rdl-2 done by:${username}`,
+          part_code:partDetails,
+          in_stock:updateStock.avl_stock,
+          tray_id:spTrayId,
+        })
+      }
+      if (removeFromSpTray) {
+        resolve({ status: 1 });
       } else {
         resolve({ status: 0 });
       }
     });
   },
-  rdlTwoDoneCloseSpTray: (trayId) => {
+  rdlTwoDoneCloseSpTray: (trayId, actionUser) => {
     return new Promise(async (resolve, reject) => {
       const closeSpTray = await masters.updateOne(
         { code: trayId },
@@ -218,6 +216,15 @@ module.exports = {
         }
       );
       if (closeSpTray.modifiedCount !== 0) {
+        await unitsActionLog.create({
+          action_type: "RDL-2 Done Closed by SP Warehouse",
+          created_at: Date.now(),
+          user_name_of_action: actionUser,
+          user_type: "SP Warehouse",
+          tray_id: trayId,
+          track_tray: "Tray",
+          description: `RDL-2 Done Closed by SP Warehouse:${actionUser}`,
+        });
         resolve({ status: 1 });
       } else {
         resolve({ status: 0 });

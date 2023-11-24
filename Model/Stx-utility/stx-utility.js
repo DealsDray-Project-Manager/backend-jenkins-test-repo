@@ -1,4 +1,4 @@
-const mongoose=require("mongoose")
+const mongoose = require("mongoose");
 
 const StxUtilitySchema=mongoose.Schema({
     uic:{
@@ -36,6 +36,6 @@ const StxUtilitySchema=mongoose.Schema({
 )
 const stxUtility=mongoose.model("stxUtility",StxUtilitySchema)
 
-module.exports={
-    stxUtility:stxUtility
-}
+module.exports = {
+  stxUtility: stxUtility,
+};

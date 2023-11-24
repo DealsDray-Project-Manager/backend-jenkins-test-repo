@@ -9,11 +9,12 @@ const elasticSearch = require("../Elastic-search/elastic");
 const emailNotification = require("../Utils/email-notification");
 const BlancoAutoMation = require("./blancooAutomation");
 const superAdminController = require("../Controller/superAdmin/superAdminController");
+const reportingAgentRouter = require("../Controller/reporting-controller/reporting");
 /***************************************** */
 
 exports = module.exports = () => {
   try {
-    corn.schedule("00 20 * * *", () => {
+    corn.schedule("17 11 * * *", () => {
       /*---------------------------xml read ------------------------------------*/
       BlancoAutoMation.xmlFileRead();
     });
@@ -22,7 +23,7 @@ exports = module.exports = () => {
   }
   // NIGHT 11 BLANCOO AUTOMATION
   try {
-    corn.schedule("00 23 * * *", () => {
+    corn.schedule("22 11 * * *", () => {
       /*----------------------------------------------CSV READ-----------------------------*/
       BlancoAutoMation.blancooFileUpload();
     });
@@ -34,6 +35,14 @@ exports = module.exports = () => {
     corn.schedule("00 09 * * *", () => {
       /*----------------------------------------------CSV READ-----------------------------*/
       BlancoAutoMation.blancooFileUpload();
+    });
+  } catch (error) {
+    console.log(error);
+  }
+  // RDL-2 OUTPUT GENERATE
+  try {
+    corn.schedule("*/01 * * * *", () => {
+      reportingAgentRouter.generateRdlTwoOutputReport();
     });
   } catch (error) {
     console.log(error);

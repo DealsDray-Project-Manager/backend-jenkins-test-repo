@@ -14,6 +14,7 @@ const jwt = require("../../Utils/jwt_token");
 const fs = require("fs");
 /* ELASTIC SEARCH */
 const elasticsearch = require("../../Elastic-search/elastic");
+const duplicateEntryCheck = require("../../Controller/Duplicate-entry-check/duplicate-entry-check");
 /**************************************************************************************************/
 
 /*
@@ -159,16 +160,24 @@ router.post("/check-user-status", async (req, res, next) => {
       jwt,
       user_type
     );
+
     if (data.status == 1) {
       res.status(200).json({
         message: "Active user",
       });
     } else if (data.status == 3) {
       res.status(202).json({
+        status: 1,
         message: "Admin deactivated",
+      });
+    } else if (data.status == 4) {
+      res.status(202).json({
+        status: 0,
+        message: "You need to change your password.",
       });
     } else {
       res.status(202).json({
+        status: 1,
         message:
           "Another user has logged in with the same username and password. Please log in again.",
       });
@@ -196,9 +205,13 @@ router.post("/getUsersHistoy/:username", async (req, res, next) => {
 router.post("/changePassword", async (req, res, next) => {
   try {
     let data = await superAdminController.changePassword(req.body);
-    if (data) {
+    if (data.status == 1) {
       res.status(200).json({
         message: "Successfully Changed",
+      });
+    } else if (data.status == 2) {
+      res.status(202).json({
+        message: "Old and new passwords should not be the same.",
       });
     } else {
       res.status(202).json({
@@ -365,12 +378,10 @@ router.post(
       if (data.status == 1) {
         res.status(200).json({ data: data });
       } else if (data.status == 2) {
-        res
-          .status(202)
-          .json({
-            message:
-              "Buyer exist, Please check your username or Email or Mobile Number",
-          });
+        res.status(202).json({
+          message:
+            "Buyer exist, Please check your username or Email or Mobile Number",
+        });
       } else {
         res.status(202).json({ message: "Failed please tray again." });
       }
@@ -582,6 +593,16 @@ router.post("/bulkValidationProduct", async (req, res, next) => {
     if (data.status == true) {
       res.status(200).json({
         message: "Successfully Validated",
+      });
+    } else if (data.status == 0) {
+      res.status(202).json({
+        status: "1",
+        message: "Error please import file again",
+      });
+    } else if (data.status == 1) {
+      res.status(202).json({
+        status: "1",
+        message: "Error some fileds are empty please check",
       });
     } else {
       res.status(202).json({
@@ -941,6 +962,10 @@ router.post("/trayIdGenrate", async (req, res, next) => {
             res.status(200).json({
               data: obj.RPT,
             });
+          } else if (type == "RBQC") {
+            res.status(200).json({
+              data: obj.RBQC,
+            });
           }
           //  else if (type == "CTA") {
           //   res.status(200).json({
@@ -1083,6 +1108,7 @@ router.post("/createBulkTray", async (req, res, next) => {
           } else {
             obj = JSON.parse(datafile);
             for (let key in allCount) {
+              console.log(key, allCount[key]);
               obj[key] = allCount[key];
             }
 
@@ -1225,6 +1251,8 @@ router.post("/createMasters", async (req, res, next) => {
                 obj.SPT = obj.SPT + 1;
               } else if (type_taxanomy == "RPT") {
                 obj.RPT = obj.RPT + 1;
+              } else if (type_taxanomy == "RBQC") {
+                obj.RBQC = obj.RBQC + 1;
               } else {
                 obj[type_taxanomy + tray_grade] =
                   obj[type_taxanomy + tray_grade] + 1;
@@ -1349,7 +1377,38 @@ router.post("/deleteMaster/:masterId", async (req, res, next) => {
     next(error);
   }
 });
-
+// GET DLETED MASTER
+router.post("/getDeletedMaster/:type", async (req, res, next) => {
+  try {
+    const { type } = req.params;
+    const data = await superAdminController.getDeletedMasters(type);
+    if (data) {
+      res.status(200).json({
+        data: data,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+// RESTORE DELETED MASTER
+router.post("/restoreDeletedMaster/:id", async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const dataOfRestore = await superAdminController.restoreDeletedMaster(id);
+    if (dataOfRestore.status === 1) {
+      res.status(200).json({
+        message: "Successfully Restored",
+      });
+    } else {
+      res.status(202).json({
+        message: "Request failed please try agin",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
 /*-----------------------------ITEM TRACKING--------------------------------------*/
 router.post("/itemTracking/:page/:size", async (req, res, next) => {
   try {
@@ -1932,6 +1991,33 @@ router.post("/trayracks/view", async (req, res, next) => {
   }
 });
 
+// RACK REPORT
+router.post("/trayRacksReport", async (req, res, next) => {
+  try {
+    const rackReport = await superAdminController.trayRackReport();
+    if (rackReport) {
+      res.status(200).json({
+        data: rackReport,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+/*----------------------------------------REPORT ----------------------------------------*/
+router.post("/upgrade-report", async (req, res, next) => {
+  try {
+    const getUpgradeReport = await superAdminController.getUpgradeReportData();
+    if (getUpgradeReport) {
+      res.status(200).json({
+        data: getUpgradeReport,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
 /* ---------------------------GET RACK BASED ON THE WAREHOUSE ------------------*/
 router.post("/trayracks/view/:warehouse", async (req, res, next) => {
   try {
@@ -1939,6 +2025,7 @@ router.post("/trayracks/view/:warehouse", async (req, res, next) => {
     const trayracksData = await superAdminController.getRackBasedOnTheWarehouse(
       warehouse
     );
+    console.log(trayracksData);
     if (trayracksData) {
       res.status(200).json({
         data: trayracksData,
@@ -2685,6 +2772,21 @@ router.post("/partAndColor/view/:type", async (req, res, next) => {
     next(error);
   }
 });
+// VIEW SPARE-PART BASED ON THE CATEGORY
+router.post("/sparePart-view-basedOnCategory",async(req,res,next)=>{
+  try {
+    const {category}=req.params
+     const data=await superAdminController.getSparePartViewBasedOnCategory()
+     if(data){
+      res.status(200).json({
+        tools:data.tools,
+        consumables:data.consumables
+      })
+     }
+  } catch (error) {
+    next(error)
+  }
+})
 
 /*-------------------------------------------MASTER FOR STORAGE--------------------------------------------*/
 //create
@@ -3002,13 +3104,19 @@ router.post("/partlist/muic", async (req, res, next) => {
   }
 });
 // get one data only for edit or delete
-router.post("/partAndColor/oneData/:id/:type", async (req, res, next) => {
+router.post("/partAndColor/oneData", async (req, res, next) => {
   try {
-    const { id, type } = req.params;
-    const data = await superAdminController.viewOneData(id, type);
+    const { id, type, actionType } = req.body;
+    const data = await superAdminController.viewOneData(id, type, actionType);
     if (data.status == 1) {
       res.status(200).json({
         data: data.masterData,
+        flag: false,
+      });
+    } else if (data.status == 4) {
+      res.status(200).json({
+        data: data.masterData,
+        flag: true,
       });
     } else if (data.status == 3 && type == "part-list") {
       res.status(202).json({
@@ -3132,7 +3240,11 @@ router.post("/partlist/manageStock/bulkValidation", async (req, res, next) => {
 // UPDATE STOCK
 router.post("/partlist/manageStock/update", async (req, res, next) => {
   try {
-    const data = await superAdminController.partlistManageStockUpdate(req.body);
+    const { username, partData } = req.body;
+    const data = await superAdminController.partlistManageStockUpdate(
+      username,
+      partData
+    );
     if (data.status == true) {
       res.status(200).json({
         message: "Successfully Updated",
@@ -3647,6 +3759,86 @@ router.post("/bqcSynAction/:type", async (req, res, next) => {
       let update = BqcSynAction.blancooFileUpload();
       res.status(200).json({
         message: "Successfully Updated please check your mail!",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+/*----------------------------------------------REMOVE DUPLICATE UNITS FROM TRAY ---------------------------------------------*/
+router.post("/getTrayForRemoveDuplicate/:trayId", async (req, res, next) => {
+  try {
+    const { trayId } = req.params;
+    const tray = await superAdminController.getTrayForRemoveDuplicateUnits(
+      trayId
+    );
+    if (tray.status == 1) {
+      let checkDup = await duplicateEntryCheck.itemsArrayAndActualArray(
+        tray.trayData
+      );
+      res.status(200).json({
+        data: checkDup,
+      });
+    } else if (tray.status == 2) {
+      res.status(202).json({
+        message: "No items were found in this tray",
+      });
+    } else {
+      res.status(202).json({
+        message: "Invalid tray please enter valid tray",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
+// REMOVE DUPLICATE ITEMS
+router.post("/removeDuplicteFromTray", async (req, res, next) => {
+  try {
+    console.log(req.body);
+    const { expectedSide, actualSide, trayId } = req.body;
+    const data = await superAdminController.removeDuplicateFromTray(
+      expectedSide,
+      actualSide,
+      trayId
+    );
+    console.log(data);
+    if (data.status == 1) {
+      res.status(200).json({
+        message: "Successfully Removed",
+      });
+    } else {
+      res.status(202).json({
+        message: "Failed please try again!",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+/*----------------------------------------------ONE STEP BACK ---------------------------------------------------------------*/
+// ONE STEP BACK ACTION API
+router.post("/one-step-back", async (req, res, next) => {
+  try {
+    const { trayIds, status, actionDoneBy, currentStatus } = req.body;
+    const data = await superAdminController.oneStepBackUtility(
+      trayIds,
+      status,
+      actionDoneBy,
+      currentStatus
+    );
+    if (data.status == 1) {
+      res.status(200).json({
+        message: "Successfully updated",
+      });
+    } else if (data.status == 2) {
+      res.status(202).json({
+        message: "Request failed,tray's are moved into next stage",
+      });
+    } else {
+      res.status(202).json({
+        message: "Failed please try again!",
       });
     }
   } catch (error) {
@@ -4200,6 +4392,7 @@ router.post("/extra/tempReq", async (req, res, next) => {
         message: "Failed",
       });
     }
+    // throw new Error('This is a test for sentry');
   } catch (error) {
     next(error);
   }
@@ -4226,6 +4419,24 @@ router.post("/extra/pickupIssueRollBack", async (req, res, next) => {
     if (data.status == 1) {
       res.status(200).json({
         message: "Successfully Update",
+      });
+    } else {
+      res.status(202).json({
+        message: "Failed",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+// ONE STEP BACK WHT TO RP
+router.post("/oneStepBackWhtToRp", async (req, res, next) => {
+  try {
+    const data = await superAdminController.oneStepBackWhtRp();
+    console.log(data);
+    if (data.status == 1) {
+      res.status(200).json({
+        message: "Done",
       });
     } else {
       res.status(202).json({

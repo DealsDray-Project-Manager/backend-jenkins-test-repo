@@ -131,13 +131,14 @@ router.post("/spTrayReturnFromRdlTwo/:location", async (req, res, next) => {
 /*------------------------------------------------------SP TRAY ---------------------------------------------*/
 router.post("/addIntoBox", async (req, res, next) => {
   try {
-    const { partDetails, spTrayId, boxName, uniqueid, objId } = req.body;
+    const { partDetails, spTrayId, boxName, uniqueid, objId,username } = req.body;
     let data = await rmuserController.partAddIntoBox(
       partDetails,
       spTrayId,
       boxName,
       uniqueid,
-      objId
+      objId,
+      username
     );
     if (data.status == 1) {
       res.status(200).json({
@@ -155,8 +156,8 @@ router.post("/addIntoBox", async (req, res, next) => {
 /*----------------------------------CLOSED SP TRAY-----------------------------------------------------*/
 router.post("/rdlTwoDoneCloseSP", async (req, res, next) => {
   try {
-    const { spTrayId } = req.body;
-    let data = await rmuserController.rdlTwoDoneCloseSpTray(spTrayId);
+    const { spTrayId,actionUser} = req.body;
+    let data = await rmuserController.rdlTwoDoneCloseSpTray(spTrayId,actionUser);
     if (data.status == 1) {
       res.status(200).json({
         message: "Successfully Closed",

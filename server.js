@@ -13,6 +13,12 @@ const cors = require("cors");
 connectDb();
 /* NODE CRON */
 const corn = require("./Utils/node-cron")();
+/* SENTRY.IO */
+const Sentry = require("@sentry/node");
+Sentry.init({
+  dsn: process.env.SENTRYDSN,
+});
+app.use(Sentry.Handlers.requestHandler());
 // Routers
 const superAdmin = require("./Router/superAdmin/superAdminRouter");
 const mobileUserRouter = require("./Router/MobileRouters/Users/user");
@@ -31,7 +37,9 @@ const Rdl2Panel = require("./Router/Rdl-2-router/rdl-2-router");
 const RmUserPanel = require("./Router/Rm-user-router/rm-user");
 const SpMispanel = require("./Router/sp-mis/sp-mis-router");
 const SpPurchasePanel = require("./Router/purchase-router/purchase-router");
-
+const RebqcPanel = require("./Router/rebqc-router/rebqc-router");
+// AUTH MIDDLEWARE
+const AuthMiddleWare = require("./Middleware/actions");
 app.use(logger("dev"));
 app.use(express.json({ limit: "25mb" }));
 app.use(cors());
@@ -39,37 +47,39 @@ app.use(express.urlencoded({ limit: "25mb", extended: false }));
 // API for web
 app.use("/api/v7/superAdmin", superAdmin);
 //API for Mobile
-app.use("/api/mobile/v8/user", mobileUserRouter);
+app.use("/api/mobile/v8/user", AuthMiddleWare, mobileUserRouter);
 /* Api for Mis Users */
-app.use("/api/v7/mis", misUser);
+app.use("/api/v7/mis", AuthMiddleWare, misUser);
 /* API for WarehouseIn */
-app.use("/api/v7/warehouseIn", warehouseIn);
+app.use("/api/v7/warehouseIn", AuthMiddleWare, warehouseIn);
 /* API for Bot Out */
-app.use("/api/v7/bot", bot);
+app.use("/api/v7/bot", AuthMiddleWare, bot);
 /* API for Charging panel */
-app.use("/api/v7/charging", chargingPanel);
+app.use("/api/v7/charging", AuthMiddleWare, chargingPanel);
 /* API for BQC panel */
-app.use("/api/v7/bqc", bqc);
+app.use("/api/v7/bqc", AuthMiddleWare, bqc);
 /* API for SORTING AGNET panel */
-app.use("/api/v7/sorting-agnet", sortingAgent);
+app.use("/api/v7/sorting-agnet", AuthMiddleWare, sortingAgent);
 /* API for AUDIT AGNET panel */
-app.use("/api/v7/audit-agent", auditPanel);
+app.use("/api/v7/audit-agent", AuthMiddleWare, auditPanel);
 /* API for RDL_one AGNET panel */
-app.use("/api/v7/RDL_onePanel", RDL_onePanel);
+app.use("/api/v7/RDL_onePanel", AuthMiddleWare, RDL_onePanel);
 /*API for Reporting panle */
-app.use("/api/v7/sales-agent", salesPanel);
+app.use("/api/v7/sales-agent", AuthMiddleWare, salesPanel);
 /* API for sales AGNET panel */
-app.use("/api/v7/reporting-agent", ReportingPanel);
+app.use("/api/v7/reporting-agent", AuthMiddleWare, ReportingPanel);
 /* API for pricing AGNET panel */
-app.use("/api/v7/pricing-agent", pricingpanel);
+app.use("/api/v7/pricing-agent", AuthMiddleWare, pricingpanel);
 /* API FOR RDL 2 PANEL */
-app.use("/api/v7/rdl-2", Rdl2Panel);
+app.use("/api/v7/rdl-2", AuthMiddleWare, Rdl2Panel);
 /* API FOR RM USER PANEL */
-app.use("/api/v7/rm-user", RmUserPanel);
+app.use("/api/v7/rm-user", AuthMiddleWare, RmUserPanel);
 /* API FOR RM PANEL */
-app.use("/api/v7/sp-mis", SpMispanel);
+app.use("/api/v7/sp-mis", AuthMiddleWare, SpMispanel);
 /* API FOR RM PANEL */
-app.use("/api/v7/purchase-user", SpPurchasePanel);
+app.use("/api/v7/purchase-user", AuthMiddleWare, SpPurchasePanel);
+/* API FOR REBQC PANEL */
+app.use("/api/v7/rebqc-user", AuthMiddleWare,RebqcPanel);
 /* User-profile */
 app.use("/user/profile", express.static(__dirname + "/public/user-profile"));
 
@@ -86,6 +96,7 @@ app.use((err, req, res, next) => {
     },
   });
 });
+app.use(Sentry.Handlers.errorHandler());
 // Server Running at port 8000
 const PORT = process.env.PORT || 8001;
 app.listen(

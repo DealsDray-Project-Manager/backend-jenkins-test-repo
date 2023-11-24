@@ -907,7 +907,7 @@ router.post("/toWhtTrayForMerge", async (req, res, next) => {
       sortId,
       grade,
     } = req.body;
-
+  
     let data = await misUserController.toWhtTrayForMerging(
       location,
       brand,
@@ -938,10 +938,12 @@ router.post(
   "/get-charging-users/:user_type/:location",
   async (req, res, next) => {
     try {
+      console.log(req.params);
       let data = await misUserController.getChargingUsers(
         req.params.user_type,
         req.params.location
       );
+    
       if (data) {
         res.status(200).json({
           data: data,
@@ -1925,6 +1927,7 @@ router.post("/whtToRpSorting/assign", async (req, res, next) => {
       actUser,
       screen
     );
+    console.log(data);
     if (data.status == 1) {
       res.status(200).json({
         message: "Successfully Assigned",
@@ -2147,6 +2150,7 @@ router.post("/rackChangeByMis", async (req, res, next) => {
 });
 /*------------------------------------------BAG TRANSFER -----------------------------------------------*/
 // BAG TRANSFER PAGE / BAG RECEIVE PAGE
+
 router.post("/bagTransferAndReceive", async (req, res, next) => {
   try {
     const { location, status } = req.body;
@@ -2164,14 +2168,37 @@ router.post("/bagTransferAndReceive", async (req, res, next) => {
     next(error);
   }
 });
+
 // SEND THE BAG VIA COURIER OR HAND DELIVERY
 router.post("/bagTransferSend", async (req, res, next) => {
   try {
+    console.log(req.body);
     let data = await misUserController.sendTheBagViaCourierOrHand(req.body);
-    if (data) {
+    if (data.status == 1) {
       res.status(200).json({
-        data: data,
-        message: "Success",
+        message: "Successfully Transferred",
+      });
+    } else {
+      res.status(202).json({
+        message: "Failed please try again...",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+router.post("/bagTransferReceive", async (req, res, next) => {
+  try {
+    console.log(req.body);
+    let data = await misUserController.bagTransferReceive(req.body);
+    console.log(data);
+    if (data.status == 1) {
+      res.status(200).json({
+        message: "Successfully Received",
+      });
+    } else {
+      res.status(202).json({
+        message: "Failed please try again...",
       });
     }
   } catch (error) {
