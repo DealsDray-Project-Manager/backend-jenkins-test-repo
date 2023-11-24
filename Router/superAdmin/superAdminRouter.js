@@ -2714,6 +2714,7 @@ router.post("/warranty/one/:id", async (req, res, next) => {
 router.post("/partAndColor/create", async (req, res, next) => {
   try {
     const { type } = req.body;
+    console.log(req.body);
     const data = await superAdminController.createPartOrColor(req.body);
     if (data.status == 1) {
       if (type == "part-list") {

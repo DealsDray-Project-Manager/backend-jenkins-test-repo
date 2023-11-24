@@ -3449,7 +3449,7 @@ module.exports = {
     return new Promise(async (resolve, reject) => {
       if (type == "part-list") {
         const data = await partAndColor
-          .find({ type: type })
+          .find({ type: type },{muic_association:0})
           .sort({ part_code: 1 });
         resolve(data);
       } else {
