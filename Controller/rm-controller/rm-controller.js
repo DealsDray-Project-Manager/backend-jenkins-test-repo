@@ -4,6 +4,9 @@ const {
 const { box } = require("../../Model/boxModel/box");
 const { masters } = require("../../Model/mastersModel");
 const partInventoryLedger = require("../../Model/part-inventory-ledger/part-inventory-ledger");
+const {
+  toolsAndConsumablesIssueRequests,
+} = require("../../Model/toolsAndConsumables-requests/toolsAndConsumablesIssue");
 const { trayRack } = require("../../Model/tray-rack/tray-rack");
 /****************************************************************** */
 
@@ -100,7 +103,7 @@ module.exports = {
             "items.$.status": "Added",
           },
         }
-      );      
+      );
       if (updatePart) {
         resolve({ status: 1 });
       } else {
@@ -157,7 +160,14 @@ module.exports = {
       resolve(data);
     });
   },
-  partAddIntoBox: (partDetails, spTrayId, boxName, uniqueid, objId,username) => {
+  partAddIntoBox: (
+    partDetails,
+    spTrayId,
+    boxName,
+    uniqueid,
+    objId,
+    username
+  ) => {
     return new Promise(async (resolve, reject) => {
       const removeFromSpTray = await masters.findOneAndUpdate(
         { code: spTrayId },
@@ -179,19 +189,20 @@ module.exports = {
             $inc: {
               avl_stock: 1,
             },
-          },{
-            new:true
+          },
+          {
+            new: true,
           }
         );
         await partInventoryLedger.create({
-          department:"SPWH",
-          action:"Add Into Box",
-          action_done_user:username,
-          description:`Spare parts add into box after rdl-2 done by:${username}`,
-          part_code:partDetails,
-          in_stock:updateStock.avl_stock,
-          tray_id:spTrayId,
-        })
+          department: "SPWH",
+          action: "Add Into Box",
+          action_done_user: username,
+          description: `Spare parts add into box after rdl-2 done by:${username}`,
+          part_code: partDetails,
+          in_stock: updateStock.avl_stock,
+          tray_id: spTrayId,
+        });
       }
       if (removeFromSpTray) {
         resolve({ status: 1 });
@@ -210,8 +221,8 @@ module.exports = {
             actual_items: [],
             temp_array: [],
             items: [],
-            rdl_2_user_temp:null,
-            issued_user_name:null
+            rdl_2_user_temp: null,
+            issued_user_name: null,
           },
         }
       );
@@ -242,4 +253,42 @@ module.exports = {
       }
     });
   },
+  /*-------------------------------TOOLS AND CONSUMABLES-----------------------------------------*/
+  getRequestsOfToolsAndConsumablesIssue: async () => {
+    try {
+      const data = await toolsAndConsumablesIssueRequests.find({
+        status: "Assigned",
+      });
+      return data;
+    } catch (error) {
+      return error;
+    }
+  },
+  // GET ONLY ON REQUEST FROM TOOLS AND CONSUMABLES 
+  getOneRequestOfToolsAndConsumables:async(requestId)=>{
+    try {
+       const data=await toolsAndConsumablesIssueRequests.findOne({request_id:requestId})
+       if(data){
+        if(data.status == "Assigned"){
+          return {status:1,requestData:data}
+        }
+        else{
+          return {status:2}
+        }
+       }
+       else{
+        return {status:3}
+       }
+    } catch (error) {
+      return error
+    }
+  },
+  // APPROVE THE REQUEST OF TOOLS AND CONSUMABLES
+  approveRequestForToolsAndConsumablesIssue:()=>{
+    try {
+         
+    } catch (error) {
+     return error 
+    }
+  }
 };

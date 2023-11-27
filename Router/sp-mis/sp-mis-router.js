@@ -66,6 +66,39 @@ router.post("/procurment/request", async (req, res, next) => {
     next(error);
   }
 });
-// ---
+/* ------------------------------------ISSUE TOOLS & CONSUMABLES-------------------------------------*/
+// ISSUE
+router.post("/assignToAgentToolsAndConsumables", async (req, res, next) => {
+  try {
+    console.log(req.body);
+    const data = await SpMisController.assignToAgentToolsAndConsumables(
+      req.body
+    );
+    console.log(data);
+    if (data.status === 1) {
+      res.status(200).json({
+        message: "Successfully Assigned",
+      });
+    } else if (data.status === 2) {
+      res.status(200).json({
+        message: `Successfully Assigned with Warnings,out of stock: ${data.notPassedArray.join(
+          ", "
+        )}`,
+      });
+    } else if (data.status === 3) {
+      res.status(202).json({
+        message: `Unable to process request. All items are out of stock.: ${data.notPassedArray.join(
+          ", "
+        )}`,
+      });
+    } else {
+      res.status(202).json({
+        message: "Error please try again!",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
 
 module.exports = router;

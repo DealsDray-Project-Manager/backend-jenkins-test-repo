@@ -1,9 +1,16 @@
 const { delivery } = require("../../Model/deliveryModel/delivery");
 const { masters } = require("../../Model/mastersModel");
 const {
+  partInventoryLedger,
+} = require("../../Model/part-inventory-ledger/part-inventory-ledger");
+const {
   partAndColor,
 } = require("../../Model/Part-list-and-color/part-list-and-color");
 const { purchaseOrder } = require("../../Model/Purchase-order/purchase-order");
+const {
+  toolsAndConsumablesIssueRequests,
+} = require("../../Model/toolsAndConsumables-requests/toolsAndConsumablesIssue");
+const uuid = require("uuid");
 
 module.exports = {
   dashboardData: (location, username) => {
@@ -97,7 +104,7 @@ module.exports = {
 
       // Step 6: Calculate the count and resolve the final result
       const count = { precourmentCount: resolvedArr.length };
-     
+
       resolve(count);
     });
   },
@@ -268,5 +275,64 @@ module.exports = {
         resolve({ status: 0 });
       }
     });
+  },
+  /*--------------------------------PROCUREMENT TOOL AND CONSUMABLES ----------------------------*/
+  assignToAgentToolsAndConsumables: async (dataFromBody) => {
+    try {
+      let passedArray = [];
+      let notPassedArray = [];
+      for (let x of dataFromBody.selectedToolsAndConsumables) {
+        let checkStock = await partAndColor.findOneAndUpdate(
+          {
+            part_code: x.part_code,
+            avl_stock: { $gte: Number(x.selected_quantity) },
+          },
+          {
+            $inc: {
+              avl_stock: Number(-x.selected_quantity),
+            },
+          },
+          {
+            new: true,
+          }
+        );
+        if (checkStock) {
+          passedArray.push(x);
+          await partInventoryLedger.create({
+            department: "SP MIS",
+            action: "Tools And Consumables Assign",
+            action_done_user: dataFromBody.actionUser,
+            description: `Tools and consumables assigned to :${dataFromBody.issued_user_name}.approve request sent to sp warehouse`,
+            part_code: x.part_code,
+            in_stock: Number(checkStock.avl_stock),
+            out_stock: x.selected_quantity,
+          });
+        } else {
+          notPassedArray.push(x.part_code);
+        }
+      }
+      if (passedArray.length !== 0) {
+        const shortUuid = uuid.v4().slice(0, 8);
+        let createTheRequest = await toolsAndConsumablesIssueRequests.create({
+          issued_user_name: dataFromBody.issued_user_name,
+          tools_and_consumables_list: passedArray,
+          assigned_date: Date.now(),
+          mis_description: dataFromBody.description,
+          status: "Assigned",
+          request_id: `TC${shortUuid}`,
+        });
+        if (createTheRequest) {
+          if (notPassedArray.length == 0) {
+            return { status: 1, notPassedArray: notPassedArray };
+          } else {
+            return { status: 2, notPassedArray: notPassedArray };
+          }
+        }
+      } else if (notPassedArray.length !== 0) {
+        return { status: 3, notPassedArray: notPassedArray };
+      }
+    } catch (error) {
+      return error;
+    }
   },
 };

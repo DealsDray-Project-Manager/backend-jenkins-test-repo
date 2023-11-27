@@ -3449,7 +3449,7 @@ module.exports = {
     return new Promise(async (resolve, reject) => {
       if (type == "part-list") {
         const data = await partAndColor
-          .find({ type: type },{muic_association:0})
+          .find({ type: type }, { muic_association: 0 })
           .sort({ part_code: 1 });
         resolve(data);
       } else {
@@ -3464,9 +3464,21 @@ module.exports = {
   // VIEW SPARE PART BASED ON THE CATEGORY
   getSparePartViewBasedOnCategory: async () => {
     try {
-      const tools = await partAndColor.find({ sp_category: "Tools" });
-      const consumables=await partAndColor.find({sp_category:"Consumables"})
-      return {tools:tools,consumables:consumables};
+      const tools = await partAndColor
+        .find(
+          { sp_category: "Tools", avl_stock: { $gt: Number(0) } },
+          { muic_association: 0 }
+        )
+        .sort({ name: 1 })
+        .collation({ locale: "en_US", numericOrdering: true });
+      const consumables = await partAndColor
+        .find(
+          { sp_category: "Consumables", avl_stock: { $gt: Number(0) } },
+          { muic_association: 0 }
+        )
+        .sort({ name: 1 })
+        .collation({ locale: "en_US", numericOrdering: true });
+      return { tools: tools, consumables: consumables };
     } catch (error) {
       return error;
     }
@@ -5876,12 +5888,11 @@ module.exports = {
           originalDate.getDate() - 1, // Adjust for the day (subtract 1)
           originalDate.getMonth() + 1 // Month remains the same
         );
-       
+
         if (
           new Date(findOrderdata.order_date) ==
           new Date("2023-07-08T18:30:00.000Z")
         ) {
-       
           // let orderDate1 = await orders.updateMany(
           //   { order_date: new Date("2023-07-08T18:30:00.000Z") },
           //   {
@@ -6085,17 +6096,14 @@ module.exports = {
       //     );
       //   }
       // }
-       let arrOfMotherBoardSW=[
-        "SPN000734",
-        "SPN000731"
-       ]
-       for(let y of arrOfMotherBoardSW){
-        let status
-        if(y=="SPN000734"){
-          status="Motherboard Work"
-        }
-        else{z
-           status="Software Installation"
+      let arrOfMotherBoardSW = ["SPN000734", "SPN000731"];
+      for (let y of arrOfMotherBoardSW) {
+        let status;
+        if (y == "SPN000734") {
+          status = "Motherboard Work";
+        } else {
+          z;
+          status = "Software Installation";
         }
 
         let main1 = await masters.updateMany(
@@ -6108,44 +6116,42 @@ module.exports = {
             },
           }
         );
-         let main2 = await masters.updateMany(
-                 {
-                   "items.rdl_fls_report.partRequired.part_id": y,
-                 },
-                 {
-                   $pull: {
-                     "items.$.rdl_fls_report.partRequired": { part_id: y },
-                   },
-                  
-                 }
-               );
-               
-                 // After removing the element, you can set the "selected_status" field:
-              let main3 = await delivery.updateMany(
-                {
-                  "rdl_fls_one_report.partRequired.part_id": y,
-                },
-                {
-                  $set: {
-                    "rdl_fls_one_report.partRequired.$.selected_status": status
-                  },
-                }
-              );
-               let main4 = await delivery.updateMany(
-                {
-                  "rdl_fls_one_report.partRequired.part_id": y,
-                },
-                {
-                  $pull: {
-                    "rdl_fls_one_report.partRequired": { part_id: y },
-                  },
-                }
-              );
-              console.log(main3);
+        let main2 = await masters.updateMany(
+          {
+            "items.rdl_fls_report.partRequired.part_id": y,
+          },
+          {
+            $pull: {
+              "items.$.rdl_fls_report.partRequired": { part_id: y },
+            },
+          }
+        );
 
-            
-              console.log(main4);
-       }
+        // After removing the element, you can set the "selected_status" field:
+        let main3 = await delivery.updateMany(
+          {
+            "rdl_fls_one_report.partRequired.part_id": y,
+          },
+          {
+            $set: {
+              "rdl_fls_one_report.partRequired.$.selected_status": status,
+            },
+          }
+        );
+        let main4 = await delivery.updateMany(
+          {
+            "rdl_fls_one_report.partRequired.part_id": y,
+          },
+          {
+            $pull: {
+              "rdl_fls_one_report.partRequired": { part_id: y },
+            },
+          }
+        );
+        console.log(main3);
+
+        console.log(main4);
+      }
       resolve({ status: true });
     });
   },

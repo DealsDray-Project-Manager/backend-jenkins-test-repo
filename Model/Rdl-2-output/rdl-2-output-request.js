@@ -25,5 +25,5 @@ const rdl2OutputRequest = mongoose.model(
 );
 
 module.exports = {
-    rdl2OutputRequest: rdl2OutputRequest,
+  rdl2OutputRequest: rdl2OutputRequest,
 };
