@@ -2976,10 +2976,10 @@ router.post("/get-all-rbqc-tray/:location", async (req, res, next) => {
 });
 
 // ASSIGN THE TRAY
-router.post("/check-rebqc-tray-for-issue", async (req, res, next) => {
+router.post("/check-rpbqc-tray-for-issue", async (req, res, next) => {
   try {
     const { tray_id, username } = req.body;
-    const data = await warehouseInController.checkTrayForIssueToReBqc(
+    const data = await warehouseInController.checkTrayForIssueToRpBqc(
       tray_id,
       username
     );
@@ -3011,10 +3011,10 @@ router.post("/check-rebqc-tray-for-issue", async (req, res, next) => {
   }
 });
 
-// ISSUE THE  RBQC TRAY TO REBQC AGENT
-router.post("/issuethe-tray-rebqc", async (req, res, next) => {
+// ISSUE THE  RBQC TRAY TO RPBQC AGENT
+router.post("/issuethe-tray-rpbqc", async (req, res, next) => {
   try {
-    const data = await warehouseInController.issueTheTrayToRebqc(req.body);
+    const data = await warehouseInController.issueTheTrayToRpbqc(req.body);
     if (data.status == 1) {
       res.status(200).json({
         message: "Successfully Issued",
@@ -3028,8 +3028,8 @@ router.post("/issuethe-tray-rebqc", async (req, res, next) => {
     next(error);
   }
 });
-// RETURN FROM REBQC TRAY
-router.post("/return-from-rebqc/:location",async(req,res,next)=>{
+// RETURN FROM RPBQC TRAY
+router.post("/return-from-rpbqc/:location",async(req,res,next)=>{
   try {
       const {location}=req.params
       const data=await warehouseInController.returnFromReqbqc(location)

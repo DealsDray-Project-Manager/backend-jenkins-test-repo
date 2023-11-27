@@ -8033,13 +8033,13 @@ module.exports = {
       return error;
     }
   },
-  // CHECK THE TRAY BEFOR ISSUE TO REBQC USER AT A TIME ONE TRAY
-  checkTrayForIssueToReBqc: async (trayId, username) => {
+  // CHECK THE TRAY BEFOR ISSUE TO RPBQC USER AT A TIME ONE TRAY
+  checkTrayForIssueToRpBqc: async (trayId, username) => {
     try {
       const checkUserFreeOrNot = await masters.findOne({
         $or: [
-          { issued_user_name: username, sort_id: "Issued to REBQC" },
-          { issued_user_name: username, sort_id: "Closed By REBQC" },
+          { issued_user_name: username, sort_id: "Issued to RP-BQC" },
+          { issued_user_name: username, sort_id: "Closed By RP-BQC" },
         ],
       });
       if (checkUserFreeOrNot) {
@@ -8067,8 +8067,8 @@ module.exports = {
       return error;
     }
   },
-  // ISSUE THE TRAY TO AGENT REBQC
-  issueTheTrayToRebqc: async (dataofTray) => {
+  // ISSUE THE TRAY TO AGENT RPBQC
+  issueTheTrayToRpbqc: async (dataofTray) => {
     try {
       const dataUpdate = await masters.findOneAndUpdate(
         { code: dataofTray.tray_id, sort_id: "Open" },
@@ -8076,7 +8076,7 @@ module.exports = {
           $set: {
             assigned_date: Date.now(),
             issued_user_name: dataofTray.username,
-            sort_id: "Issued to REBQC",
+            sort_id: "Issued to RP-BQC",
           },
         }
       );
@@ -8089,11 +8089,11 @@ module.exports = {
       return error;
     }
   },
-  // RETURN FROM REBQC
+  // RETURN FROM RPBQC
   returnFromReqbqc: async (location) => {
     try {
       const data = await masters.find({
-        $or: [{ cpc: location, sort_id: "Closed by REBQC" }],
+        $or: [{ cpc: location, sort_id: "Closed by RP-BQC" }],
       });
       return data;
     } catch (error) {

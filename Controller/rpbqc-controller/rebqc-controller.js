@@ -8,11 +8,11 @@ module.exports = {
     try {
       let obj = {
         issuedTray: 0,
-        reBqcPending: 0,
-        reBqcDone: 0,
+        rpBqcPending: 0,
+        rpBqcDone: 0,
       };
       obj.issuedTray = await masters.count({
-        sort_id: "Issued to REBQC",
+        sort_id: "Issued to RP-BQC",
         issued_user_name: username,
       });
       return obj;
@@ -24,7 +24,7 @@ module.exports = {
   getIssuedTrays: async (username) => {
     try {
       const data = await masters.find({
-        sort_id: "Issued to REBQC",
+        sort_id: "Issued to RP-BQC",
         issued_user_name: username,
       });
       return data;
@@ -39,7 +39,7 @@ module.exports = {
       const data = await masters.findOne({
         code: trayId,
         issued_user_name: username,
-        sort_id: "Issued to REBQC",
+        sort_id: "Issued to RP-BQC",
       });
       console.log(data);
       if (data) {
@@ -56,7 +56,7 @@ module.exports = {
     try {
       const getTray = await masters.findOne({
         issued_user_name: username,
-        sort_id: "Issued to REBQC",
+        sort_id: "Issued to RP-BQC",
         "temp_array.uic": uic,
       });
       if (getTray) {
@@ -77,19 +77,19 @@ module.exports = {
       return error;
     }
   },
-  // ITEM ADD INTO TRAY AFTER REBQC
-  addReBqcData: async (dataOfReBqc) => {
+  // ITEM ADD INTO TRAY AFTER RPBQC
+  addRpBqcData: async (dataOfRpBqc) => {
     try {
       let itemData = await masters.findOne(
         {
-          sort_id: "Issued to REBQC",
-          issued_user_name: dataOfReBqc.username,
-          "temp_array.uic": dataOfReBqc.uic,
+          sort_id: "Issued to RP-BQC",
+          issued_user_name: dataOfRpBqc.username,
+          "temp_array.uic": dataOfRpBqc.uic,
         },
         {
           _id: 0,
           temp_array: {
-            $elemMatch: { uic: dataOfReBqc.uic },
+            $elemMatch: { uic: dataOfRpBqc.uic },
           },
           code: 1,
         }
@@ -97,12 +97,12 @@ module.exports = {
       console.log(itemData);
       if (itemData) {
         let obj = {
-          status: dataOfReBqc.status,
-          username_of_rebqc: dataOfReBqc.username,
+          status: dataOfRpBqc.status,
+          username_of_rpbqc: dataOfRpBqc.username,
         };
         let addIntoTray1, addIntoTray2;
         itemData.temp_array[0]["re_bqc_status"] = obj;
-        if (dataOfReBqc.status == "REBQC Fail") {
+        if (dataOfRpBqc.status == "RP-BQC Fail") {
           addIntoTray1 = await masters.updateOne(
             {
               code: itemData.temp_array[0]?.rdl_repair_report.rp_tray,
@@ -112,7 +112,7 @@ module.exports = {
                 items: itemData.temp_array[0],
               },
               $pull: {
-                temp_array: dataOfReBqc.uic,
+                temp_array: dataOfRpBqc.uic,
               },
             }
           );
@@ -123,7 +123,7 @@ module.exports = {
             {
               $pull: {
                 temp_array: {
-                  uic: dataOfReBqc.uic,
+                  uic: dataOfRpBqc.uic,
                 },
               },
             }
@@ -139,7 +139,7 @@ module.exports = {
               },
               $pull: {
                 temp_array: {
-                  uic: dataOfReBqc.uic,
+                  uic: dataOfRpBqc.uic,
                 },
               },
             }
@@ -150,35 +150,35 @@ module.exports = {
             },
             {
               $pull: {
-                temp_array: dataOfReBqc.uic,
+                temp_array: dataOfRpBqc.uic,
               },
             }
           );
         }
         if (addIntoTray1.modifiedCount !== 0) {
           await unitsActionLog.create({
-            action_type: "REBQC Done",
+            action_type: "RP-BQC Done",
             created_at: Date.now(),
             tray_id: itemData.code,
-            user_name_of_action: dataOfReBqc.username,
+            user_name_of_action: dataOfRpBqc.username,
             track_tray: "Units",
-            uic: dataOfReBqc.uic,
-            user_type: "PRC REBQC",
-            report: dataOfReBqc,
-            description: `REBQC done by the agent :${dataOfReBqc.username}. status:${dataOfReBqc.status}`,
+            uic: dataOfRpBqc.uic,
+            user_type: "PRC RP-BQC",
+            report: dataOfRpBqc,
+            description: `RP-BQC done by the agent :${dataOfRpBqc.username}. status:${dataOfRpBqc.status}`,
           });
           await delivery.updateOne(
-            { "uic_code.code": dataOfReBqc.uic },
+            { "uic_code.code": dataOfRpBqc.uic },
             {
               $set: {
-                re_bqc_report: dataOfReBqc,
+                re_bqc_report: dataOfRpBqc,
                 re_bqc_done_date: Date.now(),
               },
             }
           );
         }
         if (addIntoTray1.modifiedCount !== 0) {
-          if (dataOfReBqc.status == "REBQC Fail") {
+          if (dataOfRpBqc.status == "RP-BQC Fail") {
             return { status: 2, trayId: itemData.temp_array[0]?.rp_tray };
           } else {
             return { status: 1, trayId: itemData.code };
@@ -193,14 +193,14 @@ module.exports = {
       return error;
     }
   },
-  // CLOSE THE REBQC TRAY
-  closeRebqcTray: async (trayData) => {
+  // CLOSE THE RPBQC TRAY
+  closeRpbqcTray: async (trayData) => {
     try {
       const data = await masters.findOneAndUpdate(
-        { code: trayData.trayId, sort_id: "Issued to REBQC" },
+        { code: trayData.trayId, sort_id: "Issued to RP-BQC" },
         {
           $set: {
-            sort_id: "Closed by REBQC",
+            sort_id: "Closed by RP-BQC",
             actual_items: [],
             closed_date_agent: Date.now(),
             description: trayData.description,
@@ -211,14 +211,14 @@ module.exports = {
         let state = "Tray";
         for (let x of data.items) {
           await unitsActionLog.create({
-            action_type: "REBQC Done and Closed",
+            action_type: "RP-BQC Done and Closed",
             created_at: Date.now(),
             tray_id: itemData.code,
             user_name_of_action: data.issued_user_name,
             track_tray: state,
-            user_type: "PRC REBQC",
+            user_type: "PRC RP-BQC",
             uic: x.uic,
-            description: `REBQC done by the agent :${data.issued_user_name} and closed the tray.`,
+            description: `RP-BQC done by the agent :${data.issued_user_name} and closed the tray.`,
           });
           state = "Units";
         }

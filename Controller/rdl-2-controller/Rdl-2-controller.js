@@ -202,18 +202,18 @@ module.exports = {
       if (checkAlreadyAdded.sort_id == "Rdl-2 in-progress") {
         checkAlreadyAdded.items[0].rdl_repair_report =
           trayItemData.rdl_repair_report;
-          let obj = {
-            rebqc_username: trayItemData.rebqc_username,
-            rbqc_tray: trayItemData.rbqc_tray,
-          };
-          checkAlreadyAdded.items[0]["rebqc_info"] = obj;
-          
-        if (trayItemData.rebqc_username !== "") {
+        let obj = {
+          rpbqc_username: trayItemData.rpbqc_username,
+          rbqc_tray: trayItemData.rbqc_tray,
+        };
+        checkAlreadyAdded.items[0]["rpbqc_info"] = obj;
+
+        if (trayItemData.rpbqc_username !== "") {
           let updateToRbqc = await masters.updateOne(
             {
               code: trayItemData.rbqc_tray,
-              sort_id: "Issued to REBQC",
-              issued_user_name: trayItemData.rebqc_username,
+              sort_id: "Issued to RP-BQC",
+              issued_user_name: trayItemData.rpbqc_username,
             },
             {
               $addToSet: {
@@ -310,8 +310,6 @@ module.exports = {
         //     },
         //   }
         // );
-
-       
 
         let data = await masters.updateOne(
           { code: trayItemData.trayId },

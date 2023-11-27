@@ -79,7 +79,7 @@ app.use("/api/v7/sp-mis", AuthMiddleWare, SpMispanel);
 /* API FOR RM PANEL */
 app.use("/api/v7/purchase-user", AuthMiddleWare, SpPurchasePanel);
 /* API FOR REBQC PANEL */
-app.use("/api/v7/rebqc-user", AuthMiddleWare,RebqcPanel);
+app.use("/api/v7/rp-bqc-user", AuthMiddleWare,RebqcPanel);
 /* User-profile */
 app.use("/user/profile", express.static(__dirname + "/public/user-profile"));
 

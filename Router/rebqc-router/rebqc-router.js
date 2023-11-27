@@ -3,14 +3,14 @@ const express = require("express");
 // ROUTER
 const router = express.Router();
 // CONTROLLER
-const rebqcController = require("../../Controller/rebqc-controller/rebqc-controller");
+const rpbqcController = require("../../Controller/rpbqc-controller/rebqc-controller");
 
 /*-------------------------------------------------------------------------*/
 // DASHBOARD
 router.post("/dashboard/:username", async (req, res, next) => {
   try {
     const { username } = req.params;
-    const data = await rebqcController.dashboard(username);
+    const data = await rpbqcController.dashboard(username);
     if (data) {
       console.log(data);
       res.status(200).json({
@@ -25,7 +25,7 @@ router.post("/dashboard/:username", async (req, res, next) => {
 router.post("/issued-trays/:username", async (req, res, next) => {
   try {
     const { username } = req.params;
-    const data = await rebqcController.getIssuedTrays(username);
+    const data = await rpbqcController.getIssuedTrays(username);
     if (data) {
       res.status(200).json({
         data: data,
@@ -40,7 +40,7 @@ router.post("/close-page/:username/:trayId", async (req, res, next) => {
   try {
     console.log(req.params);
     const { username, trayId } = req.params;
-    const data = await rebqcController.getTrayForClosepage(username, trayId);
+    const data = await rpbqcController.getTrayForClosepage(username, trayId);
     if (data.status == 1) {
       res.status(200).json({
         data: data.trayData,
@@ -58,7 +58,7 @@ router.post("/close-page/:username/:trayId", async (req, res, next) => {
 router.post("/pedning-item", async (req, res, next) => {
   const { uic, username } = req.body;
   console.log(req.body);
-  const data = await rebqcController.getDataofPendingItems(username, uic);
+  const data = await rpbqcController.getDataofPendingItems(username, uic);
   console.log(data);
   if (data.status == 1) {
     res.status(200).json({
@@ -70,11 +70,11 @@ router.post("/pedning-item", async (req, res, next) => {
     });
   }
 });
-// ADD REBQC DATA
-router.post("/add-rebqc-data", async (req, res, next) => {
+// ADD RPBQC DATA
+router.post("/add-rpbqc-data", async (req, res, next) => {
   try {
     console.log(req.body);
-    const data = await rebqcController.addReBqcData(req.body);
+    const data = await rpbqcController.addRpBqcData(req.body);
     console.log(data);
     if (data.status === 1) {
       res.status(200).json({
@@ -93,10 +93,10 @@ router.post("/add-rebqc-data", async (req, res, next) => {
     next(error);
   }
 });
-// CLOSE REBQC TRAY
-router.post("/close-rebqc-tray", async (req, res, next) => {
+// CLOSE RPBQC TRAY
+router.post("/close-rpbqc-tray", async (req, res, next) => {
   try {
-    const data = await rebqcController.closeRebqcTray(req.body);
+    const data = await rpbqcController.closeRpbqcTray(req.body);
     if (data.status == 1) {
       res.status(200).json({
         message: "Successfully closed",
