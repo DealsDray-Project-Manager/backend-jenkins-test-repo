@@ -3,7 +3,7 @@ const express = require("express");
 // ROUTER
 const router = express.Router();
 // CONTROLLER
-const rpbqcController = require("../../Controller/rpbqc-controller/rebqc-controller");
+const rpbqcController = require("../../Controller/rpbqc-controller/rpbqc-controller");
 
 /*-------------------------------------------------------------------------*/
 // DASHBOARD

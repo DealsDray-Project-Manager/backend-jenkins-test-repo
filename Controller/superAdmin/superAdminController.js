@@ -1399,7 +1399,8 @@ module.exports = {
           trayData[i].tray_category !== "WHT" &&
           trayData[i].tray_category !== "SPT" &&
           trayData[i].tray_category !== "RPT" &&
-          trayData[i].tray_category !== "RBQC"
+          trayData[i].tray_category !== "RPB" &&
+          trayData[i].tray_category !== "RPA"
         ) {
           if (
             trayData[i].tray_category !== "CT" &&
@@ -1465,7 +1466,10 @@ module.exports = {
         } else if (trayID > 19999 && trayData[i].tray_category == "RPT") {
           tray_id.push(trayData[i].tray_id);
           err["tray_id"] = tray_id;
-        } else if (trayID > "00100" && trayData[i].tray_category == "RBQC") {
+        } else if (trayID > "00100" && trayData[i].tray_category == "RPA") {
+          tray_id.push(trayData[i].tray_id);
+          err["tray_id"] = tray_id;
+        } else if (trayID > "00100" && trayData[i].tray_category == "RPB") {
           tray_id.push(trayData[i].tray_id);
           err["tray_id"] = tray_id;
         } else {

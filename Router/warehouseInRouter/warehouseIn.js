@@ -2713,12 +2713,12 @@ router.post("/returnFromWhtToRpSorting/:location", async (req, res, next) => {
 router.post("/recieved-from-sortingWhtToRp", async (req, res, next) => {
   try {
     let data = await warehouseInController.receivedFromWhtToRpSorting(req.body);
+    console.log(data);
     if (data.status == 1) {
       res.status(200).json({
         message: "Successfully Received",
       });
-    }
-    if (data.status == 3) {
+    } else if (data.status == 3) {
       res.status(202).json({
         message: "Please Enter Valid Count",
       });
@@ -2978,10 +2978,11 @@ router.post("/get-all-rbqc-tray/:location", async (req, res, next) => {
 // ASSIGN THE TRAY
 router.post("/check-rpbqc-tray-for-issue", async (req, res, next) => {
   try {
-    const { tray_id, username } = req.body;
+    const { tray_id, username,user_type} = req.body;
     const data = await warehouseInController.checkTrayForIssueToRpBqc(
       tray_id,
-      username
+      username,
+      user_type
     );
     if (data.status == 1) {
       res.status(200).json({
@@ -2994,7 +2995,7 @@ router.post("/check-rpbqc-tray-for-issue", async (req, res, next) => {
       });
     } else if (data.status == 3) {
       res.status(202).json({
-        message: "Not a RBQC tray",
+        message:data.message,
         trayStatus: data.trayStatus,
       });
     } else if (data.status == 4) {
@@ -3029,17 +3030,17 @@ router.post("/issuethe-tray-rpbqc", async (req, res, next) => {
   }
 });
 // RETURN FROM RPBQC TRAY
-router.post("/return-from-rpbqc/:location",async(req,res,next)=>{
+router.post("/return-from-rpbqc/:location", async (req, res, next) => {
   try {
-      const {location}=req.params
-      const data=await warehouseInController.returnFromReqbqc(location)
-      if(data){
-        res.status(200).json({
-          data:data
-        })
-      }
+    const { location } = req.params;
+    const data = await warehouseInController.returnFromReqbqc(location);
+    if (data) {
+      res.status(200).json({
+        data: data,
+      });
+    }
   } catch (error) {
-    next(error)
+    next(error);
   }
-})
+});
 module.exports = router;

@@ -37,7 +37,8 @@ const Rdl2Panel = require("./Router/Rdl-2-router/rdl-2-router");
 const RmUserPanel = require("./Router/Rm-user-router/rm-user");
 const SpMispanel = require("./Router/sp-mis/sp-mis-router");
 const SpPurchasePanel = require("./Router/purchase-router/purchase-router");
-const RebqcPanel = require("./Router/rebqc-router/rebqc-router");
+const RpbqcPanel = require("./Router/rpbqc-router/rpbqc-router");
+const RpAuditPanel =require("./Router/rp-audit/rp-audit")
 // AUTH MIDDLEWARE
 const AuthMiddleWare = require("./Middleware/actions");
 app.use(logger("dev"));
@@ -78,8 +79,10 @@ app.use("/api/v7/rm-user", AuthMiddleWare, RmUserPanel);
 app.use("/api/v7/sp-mis", AuthMiddleWare, SpMispanel);
 /* API FOR RM PANEL */
 app.use("/api/v7/purchase-user", AuthMiddleWare, SpPurchasePanel);
-/* API FOR REBQC PANEL */
-app.use("/api/v7/rp-bqc-user", AuthMiddleWare,RebqcPanel);
+/* API FOR RP-BQC PANEL */
+app.use("/api/v7/rp-bqc-user", AuthMiddleWare,RpbqcPanel);
+/* API FOR RP-AUDIT PANEL */
+app.use("/api/v7/rp-audit-user", AuthMiddleWare,RpAuditPanel)
 /* User-profile */
 app.use("/user/profile", express.static(__dirname + "/public/user-profile"));
 

@@ -8034,14 +8034,30 @@ module.exports = {
     }
   },
   // CHECK THE TRAY BEFOR ISSUE TO RPBQC USER AT A TIME ONE TRAY
-  checkTrayForIssueToRpBqc: async (trayId, username) => {
+  checkTrayForIssueToRpBqc: async (trayId, username, user_type) => {
+    console.log(user_type);
     try {
-      const checkUserFreeOrNot = await masters.findOne({
-        $or: [
-          { issued_user_name: username, sort_id: "Issued to RP-BQC" },
-          { issued_user_name: username, sort_id: "Closed By RP-BQC" },
-        ],
-      });
+      let trayType = "";
+      let checkUserFreeOrNot;
+      if (user_type == "RP-Audit") {
+        trayType = "RPA";
+        checkUserFreeOrNot = await masters.findOne({
+          $or: [
+            { issued_user_name: username, sort_id: "Issued to RP-Audit" },
+            { issued_user_name: username, sort_id: "Closed By RP-Audit" },
+          ],
+        });
+      } else {
+        trayType = "RPB";
+
+        checkUserFreeOrNot = await masters.findOne({
+          $or: [
+            { issued_user_name: username, sort_id: "Issued to RP-BQC" },
+            { issued_user_name: username, sort_id: "Closed By RP-BQC" },
+          ],
+        });
+      }
+
       if (checkUserFreeOrNot) {
         return { status: 5 };
       } else {
@@ -8050,14 +8066,18 @@ module.exports = {
           { type_taxanomy: 1, sort_id: 1 }
         );
         if (checkTheTray) {
-          if (checkTheTray.type_taxanomy == "RBQC") {
+          if (checkTheTray.type_taxanomy == trayType) {
             if (checkTheTray.sort_id == "Open") {
               return { status: 1, trayStatus: checkTheTray.sort_id };
             } else {
               return { status: 2, trayStatus: checkTheTray.sort_id };
             }
           } else {
-            return { status: 3, trayStatus: checkTheTray.sort_id };
+            return {
+              status: 3,
+              trayStatus: checkTheTray.sort_id,
+              message: `Not a ${trayType} tray`,
+            };
           }
         } else {
           return { status: 4 };
@@ -8070,13 +8090,18 @@ module.exports = {
   // ISSUE THE TRAY TO AGENT RPBQC
   issueTheTrayToRpbqc: async (dataofTray) => {
     try {
+      console.log(dataofTray);
+      let status = "Issued to RP-BQC";
+      if (dataofTray.user_type == "RP-Audit") {
+        status = "Issued to RP-Audit";
+      }
       const dataUpdate = await masters.findOneAndUpdate(
         { code: dataofTray.tray_id, sort_id: "Open" },
         {
           $set: {
             assigned_date: Date.now(),
             issued_user_name: dataofTray.username,
-            sort_id: "Issued to RP-BQC",
+            sort_id: status,
           },
         }
       );

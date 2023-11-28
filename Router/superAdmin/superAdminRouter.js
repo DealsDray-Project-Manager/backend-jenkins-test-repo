@@ -962,9 +962,13 @@ router.post("/trayIdGenrate", async (req, res, next) => {
             res.status(200).json({
               data: obj.RPT,
             });
-          } else if (type == "RBQC") {
+          } else if (type == "RPA") {
             res.status(200).json({
-              data: obj.RBQC,
+              data: obj.RPA,
+            });
+          } else if (type == "RPB") {
+            res.status(200).json({
+              data: obj.RPB,
             });
           }
           //  else if (type == "CTA") {
@@ -1251,8 +1255,14 @@ router.post("/createMasters", async (req, res, next) => {
                 obj.SPT = obj.SPT + 1;
               } else if (type_taxanomy == "RPT") {
                 obj.RPT = obj.RPT + 1;
-              } else if (type_taxanomy == "RBQC") {
-                obj.RBQC = obj.RBQC + 1;
+              } else if (type_taxanomy == "RPA") {
+                obj.RPA = (parseInt(obj.RPA, 10) + 1)
+                  .toString()
+                  .padStart(4, "0");
+              } else if (type_taxanomy == "RPB") {
+                obj.RPB = (parseInt(obj.RPB, 10) + 1)
+                  .toString()
+                  .padStart(4, "0");
               } else {
                 obj[type_taxanomy + tray_grade] =
                   obj[type_taxanomy + tray_grade] + 1;
@@ -2774,20 +2784,20 @@ router.post("/partAndColor/view/:type", async (req, res, next) => {
   }
 });
 // VIEW SPARE-PART BASED ON THE CATEGORY
-router.post("/sparePart-view-basedOnCategory",async(req,res,next)=>{
+router.post("/sparePart-view-basedOnCategory", async (req, res, next) => {
   try {
-    const {category}=req.params
-     const data=await superAdminController.getSparePartViewBasedOnCategory()
-     if(data){
+    const { category } = req.params;
+    const data = await superAdminController.getSparePartViewBasedOnCategory();
+    if (data) {
       res.status(200).json({
-        tools:data.tools,
-        consumables:data.consumables
-      })
-     }
+        tools: data.tools,
+        consumables: data.consumables,
+      });
+    }
   } catch (error) {
-    next(error)
+    next(error);
   }
-})
+});
 
 /*-------------------------------------------MASTER FOR STORAGE--------------------------------------------*/
 //create
