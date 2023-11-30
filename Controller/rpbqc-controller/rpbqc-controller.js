@@ -52,11 +52,11 @@ module.exports = {
     }
   },
   // GET PENDING ITEMS
-  getDataofPendingItems: async (username, uic) => {
+  getDataofPendingItems: async (username, uic, type) => {
     try {
       const getTray = await masters.findOne({
         issued_user_name: username,
-        sort_id: "Issued to RP-BQC",
+        sort_id: type,
         "temp_array.uic": uic,
       });
       if (getTray) {
@@ -94,18 +94,17 @@ module.exports = {
           code: 1,
         }
       );
-      console.log(itemData);
       if (itemData) {
         let obj = {
           status: dataOfRpBqc.status,
           username_of_rpbqc: dataOfRpBqc.username,
         };
         let addIntoTray1, addIntoTray2;
-        itemData.temp_array[0]["re_bqc_status"] = obj;
-        if (dataOfRpBqc.status == "RP-BQC Fail") {
+        itemData.temp_array[0]["rpb-qc_status"] = obj;
+        if (dataOfRpBqc.status == "RP-BQC Failed") {
           addIntoTray1 = await masters.updateOne(
             {
-              code: itemData.temp_array[0]?.rdl_repair_report.rp_tray,
+              code: itemData.temp_array[0]?.rdl_repair_report.rdl_two_tray,
             },
             {
               $addToSet: {
@@ -131,26 +130,23 @@ module.exports = {
         } else {
           addIntoTray1 = await masters.updateOne(
             {
-              code: itemData.code,
+              code: dataOfRpBqc.rpa_tray,
             },
             {
               $addToSet: {
-                items: itemData.temp_array[0],
-              },
-              $pull: {
-                temp_array: {
-                  uic: dataOfRpBqc.uic,
-                },
+                temp_array: itemData.temp_array[0],
               },
             }
           );
           addIntoTray2 = await masters.updateOne(
             {
-              code: itemData.temp_array[0]?.rdl_repair_report.rp_tray,
+              code: itemData.code,
             },
             {
               $pull: {
-                temp_array: dataOfRpBqc.uic,
+                temp_array: {
+                  uic: dataOfRpBqc.uic,
+                },
               },
             }
           );
@@ -165,23 +161,24 @@ module.exports = {
             uic: dataOfRpBqc.uic,
             user_type: "PRC RP-BQC",
             report: dataOfRpBqc,
+            tray_id: itemData.code,
             description: `RP-BQC done by the agent :${dataOfRpBqc.username}. status:${dataOfRpBqc.status}`,
           });
           await delivery.updateOne(
             { "uic_code.code": dataOfRpBqc.uic },
             {
               $set: {
-                re_bqc_report: dataOfRpBqc,
-                re_bqc_done_date: Date.now(),
+                rp_bqc_report: dataOfRpBqc,
+                rp_bqc_done_date: Date.now(),
               },
             }
           );
         }
         if (addIntoTray1.modifiedCount !== 0) {
-          if (dataOfRpBqc.status == "RP-BQC Fail") {
+          if (dataOfRpBqc.status == "RP-BQC Failed") {
             return { status: 2, trayId: itemData.temp_array[0]?.rp_tray };
           } else {
-            return { status: 1, trayId: itemData.code };
+            return { status: 1, trayId: dataOfRpBqc.rpa_tray };
           }
         } else {
           return { status: 0 };
@@ -203,25 +200,19 @@ module.exports = {
             sort_id: "Closed by RP-BQC",
             actual_items: [],
             closed_date_agent: Date.now(),
-            description: trayData.description,
           },
         }
       );
       if (data) {
-        let state = "Tray";
-        for (let x of data.items) {
-          await unitsActionLog.create({
-            action_type: "RP-BQC Done and Closed",
-            created_at: Date.now(),
-            tray_id: itemData.code,
-            user_name_of_action: data.issued_user_name,
-            track_tray: state,
-            user_type: "PRC RP-BQC",
-            uic: x.uic,
-            description: `RP-BQC done by the agent :${data.issued_user_name} and closed the tray.`,
-          });
-          state = "Units";
-        }
+        await unitsActionLog.create({
+          action_type: "RP-BQC Done and Closed",
+          created_at: Date.now(),
+          tray_id: trayData.trayId,
+          user_name_of_action: data.issued_user_name,
+          track_tray: "Tray",
+          user_type: "PRC RP-BQC",
+          description: `RP-BQC done by the agent :${data.issued_user_name} and closed the tray.`,
+        });
         return { status: 1 };
       } else {
         return { status: 0 };

@@ -2205,5 +2205,49 @@ router.post("/bagTransferReceive", async (req, res, next) => {
     next(error);
   }
 });
-
+/*------------------------------------------------RPA TO STX SORTING ---------------------------------------------------*/
+router.post(
+  "/getTrayForRpaToStx/:trayType/:location/:status",
+  async (req, res, next) => {
+    try {
+      const { trayType, location,status } = req.params;
+      const data = await misUserController.getTrayForRpaToStxSorting(
+        trayType,
+        location,
+        status
+      );
+      if (data) {
+        res.status(200).json({
+          data: data,
+        });
+      }
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+// ASSIGN TO WAREHOUSE 
+router.post("/assignToWarehouseForRpaToStx", async (req, res, next) => {
+  try {
+    const { tray, user_name, sortId, actUser } = req.body;
+    let data = await misUserController.assignToWarehouseRpaToStx(
+      tray,
+      user_name,
+      sortId,
+      actUser
+    );
+    console.log(data);
+    if (data.status == 1) {
+      res.status(200).json({
+        message: "Successfully Assigned to Warehouse",
+      });
+    } else {
+      res.status(202).json({
+        message: "Request failed please try again...",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
 module.exports = router;

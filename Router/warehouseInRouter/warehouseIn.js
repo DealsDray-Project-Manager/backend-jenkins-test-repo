@@ -2961,10 +2961,13 @@ router.post("/receivedTrayAfterCopyGrade", async (req, res, next) => {
   }
 });
 /*-----------------------------------RBQC TRAY AND FUNCTIONALITY-------------------------------------------*/
-router.post("/get-all-rbqc-tray/:location", async (req, res, next) => {
+router.post("/get-all-rbqc-tray/:location/:type", async (req, res, next) => {
   try {
-    const { location } = req.params;
-    const getTheRbqcTray = await warehouseInController.getRbcTray(location);
+    const { location, type } = req.params;
+    const getTheRbqcTray = await warehouseInController.getRbcTray(
+      location,
+      type
+    );
     if (getTheRbqcTray) {
       res.status(200).json({
         data: getTheRbqcTray,
@@ -2978,7 +2981,7 @@ router.post("/get-all-rbqc-tray/:location", async (req, res, next) => {
 // ASSIGN THE TRAY
 router.post("/check-rpbqc-tray-for-issue", async (req, res, next) => {
   try {
-    const { tray_id, username,user_type} = req.body;
+    const { tray_id, username, user_type } = req.body;
     const data = await warehouseInController.checkTrayForIssueToRpBqc(
       tray_id,
       username,
@@ -2995,7 +2998,7 @@ router.post("/check-rpbqc-tray-for-issue", async (req, res, next) => {
       });
     } else if (data.status == 3) {
       res.status(202).json({
-        message:data.message,
+        message: data.message,
         trayStatus: data.trayStatus,
       });
     } else if (data.status == 4) {
@@ -3043,4 +3046,181 @@ router.post("/return-from-rpbqc/:location", async (req, res, next) => {
     next(error);
   }
 });
+// RECEIVE FROM RP-AUDIT / RP-BQC
+router.post("/receiveFromRpaOrRpb", async (req, res, next) => {
+  try {
+    let data = await warehouseInController.trayReceiveFromRpaOrRpb(req.body);
+    console.log(data);
+    if (data.status == 1) {
+      res.status(200).json({
+        message: "Successfully Received",
+      });
+    } else if (data.status == 2) {
+      res.status(202).json({
+        message: "Please Enter Valid Count",
+      });
+    } else {
+      res.status(202).json({
+        message: "Failed",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+// CLOSE THE TRAY AFTER RP-AUDIT / RP-BQC
+router.post("/rpaOrRpbDoneClose", async (req, res, next) => {
+  try {
+    let data = await warehouseInController.trayCloseAfterRpaRpb(req.body);
+    if (data) {
+      res.status(200).json({
+        message: "Tray Closed Succcessfully",
+      });
+    } else {
+      res.status(202).json({
+        message: "Failed",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+/*------------------------------------RPA TO STX SORTING -------------------------------------*/
+router.post(
+  "/getTrayForRpaToStxWh/:trayType/:location/:status/:username",
+  async (req, res, next) => {
+    try {
+      const { trayType, location, status, username } = req.params;
+      const data = await warehouseInController.getTrayForRpaToStxSorting(
+        trayType,
+        location,
+        status,
+        username
+      );
+      if (data) {
+        res.status(200).json({
+          data: data,
+        });
+      }
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+// START RPA TO STX SORTING
+router.post(
+  "/startRpaToStxPage/:trayId/:status/:username",
+  async (req, res, next) => {
+    try {
+      const { trayId, status, username } = req.params;
+      const data = await warehouseInController.startRpaToStxGetData(
+        trayId,
+        status,
+        username
+      );
+      console.log(data);
+      if (data.status == 1) {
+        res.status(200).json({
+          data: data.tray,
+        });
+      } else {
+        res.status(202).json({
+          message: "You can't access this data",
+        });
+      }
+    } catch (error) {
+      return error;
+    }
+  }
+);
+// GET STX TRAY FOR RPA TO STX
+router.post("/getStxTrayForRpaToStx", async (req, res, next) => {
+  try {
+    console.log(req.body);
+    const { brand, model, location, uic } = req.body;
+    const data = await warehouseInController.getStxTrayForRpaToStxSort(
+      brand,
+      model,
+      location,
+      uic
+    );
+    console.log(data);
+    if (data.status === 1) {
+      res.status(200).json({
+        data: data.tray,
+      });
+    } else if (data.status == 2) {
+      res.status(202).json({
+        message: "Stx tray not available for this brand and model",
+      });
+    } else if (data.status === 3) {
+      res.status(202).json({
+        message: "Bqc software data not available",
+      });
+    } else {
+      res.status(202).json({
+        message: "Error please try again!",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
+// ITEM ADD TO NEW TRAY VIA RPA TO STX SORTING
+router.post("/addItemToStxFromRpa", async (req, res, next) => {
+  try {
+    const data = await warehouseInController.addItemToStxFromRpa(req.body);
+    console.log(data);
+    if (data.status === 1) {
+      res.status(200).json({
+        message: "Successfully Added",
+      });
+    } else {
+      res.status(202).json({
+        message: "Error please try again!",
+      });
+    }
+  } catch (error) {
+    return error;
+  }
+});
+// WORK IS DONE EMPTY RPA TRAY CLOSE
+router.post("/closeRpaAfterRpaToStx", async (req, res, next) => {
+  try {
+    const data = await warehouseInController.closeRpaTrayAfterRpaToStx(
+      req.body
+    );
+    if (data.status === 1) {
+      res.status(200).json({
+        message: "Successfully Closed",
+      });
+    } else {
+      res.status(202).json({
+        message: "Error please try again!",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+// GET RPA TO STX WORK IN PROGRESS STX TRAYS
+router.post(
+  "/getRpaToStxWorkInProgressTray/:location",
+  async (req, res, next) => {
+    try {
+      const { location } = req.params;
+      const data = await warehouseInController.getRpaToStxWorkInProgressTray(
+        location
+      );
+      if (data) {
+        res.status(200).json({
+          data: data,
+        });
+      }
+    } catch (error) {
+      next(error);
+    }
+  }
+);
 module.exports = router;

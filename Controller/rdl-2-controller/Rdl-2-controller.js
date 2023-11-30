@@ -186,6 +186,7 @@ module.exports = {
   },
   repairDoneAction: async (trayItemData) => {
     try {
+      let trayType = "RPT";
       let checkAlreadyAdded = await masters.findOne(
         {
           code: trayItemData.trayId,
@@ -200,6 +201,14 @@ module.exports = {
         }
       );
       if (checkAlreadyAdded.sort_id == "Rdl-2 in-progress") {
+        let dupEntry = await masters.findOne({
+          code: trayItemData.trayId,
+          "actual_items.uic": trayItemData.uic,
+        });
+        if (dupEntry) {
+          return { status: 3 };
+        }
+
         checkAlreadyAdded.items[0].rdl_repair_report =
           trayItemData.rdl_repair_report;
         let obj = {
@@ -221,16 +230,13 @@ module.exports = {
               },
             }
           );
-          if (updateToRbqc) {
+          if (updateToRbqc.modifiedCount !== 0) {
+            trayType = "RPB";
+          } else {
+            return { status: 6 };
           }
         }
-        let dupEntry = await masters.findOne({
-          code: trayItemData.trayId,
-          "actual_items.uic": trayItemData.uic,
-        });
-        if (dupEntry) {
-          return { status: 3 };
-        }
+
         for (let x of trayItemData.rdl_repair_report.rdl_two_part_status) {
           if (x.rdl_two_status !== "Used") {
             await masters.updateOne(
@@ -238,7 +244,7 @@ module.exports = {
                 code: trayItemData.spTray,
               },
               {
-                $push: {
+                $addToSet: {
                   temp_array: x,
                 },
               }
@@ -264,8 +270,8 @@ module.exports = {
           await partInventoryLedger.create({
             department: "PRC RDL-2",
             action: "Repair Done",
-            action_done_user: checkTray.issued_user_name,
-            description: `Repair done by agent:${checkTray.issued_user_name},finel status of this ${x.rdl_two_status}`,
+            action_done_user: checkAlreadyAdded.issued_user_name,
+            description: `Repair done by agent:${checkAlreadyAdded.issued_user_name},finel status of this ${x.rdl_two_status}`,
             tray_id: trayItemData.spTray,
             part_code: x.part_id,
           });
@@ -278,7 +284,7 @@ module.exports = {
               "items.uic": trayItemData.uic,
             },
             {
-              $push: {
+              $addToSet: {
                 "items.$.rdl_fls_report.partRequired": {
                   $each: trayItemData.rdl_repair_report.more_part_required,
                 },
@@ -291,25 +297,13 @@ module.exports = {
             code: trayItemData.spTray,
           },
           {
-            $push: {
+            $addToSet: {
               actual_items: {
                 $each: trayItemData.rdl_repair_report.rdl_two_part_status,
               },
             },
           }
         );
-        // let checkAlreadyAdded = await masters.findOne(
-        //   {
-        //     code: trayItemData.trayId,
-        //     "items.uic": trayItemData.uic,
-        //   },
-        //   {
-        //     _id: 0,
-        //     items: {
-        //       $elemMatch: { uic: trayItemData.uic },
-        //     },
-        //   }
-        // );
 
         let data = await masters.updateOne(
           { code: trayItemData.trayId },
@@ -327,6 +321,17 @@ module.exports = {
         );
 
         if (data.matchedCount !== 0) {
+          let updateDelivery = await delivery.findOneAndUpdate(
+            { "uic_code.code": trayItemData.uic },
+            {
+              $set: {
+                rdl_two_report: trayItemData.rdl_repair_report,
+                tray_type: trayType,
+                updated_at: Date.now(),
+                rdl_two_closed_date_units: Date.now(),
+              },
+            }
+          );
           await unitsActionLog.create({
             action_type: "Repair Done",
             created_at: Date.now(),

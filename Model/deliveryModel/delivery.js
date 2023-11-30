@@ -53,8 +53,8 @@ const deliverySchema = mongoose.Schema({
   },
   uic_code: {
     code: {
-      type:String,
-      index:true
+      type: String,
+      index: true,
     },
     user: String,
     created_at: {
@@ -295,6 +295,7 @@ const deliverySchema = mongoose.Schema({
   issued_to_rdl_two_date: {
     type: Date,
   },
+  rdl_two_closed_date_units: Date,
   rdl_two_closed_date: {
     type: Date,
   },
@@ -310,22 +311,30 @@ const deliverySchema = mongoose.Schema({
   price_from_pricing_agent: {
     type: String,
   },
-  copy_grading_issued_to_agent:Date,
-  copy_grading_report:Object,
-  copy_grading_done_date:Date,
-  for_copy_grade_username:String,
-  copy_grading_done_received:Date,
-  mrp_price:Number,
-  sp_price:Number,
-  final_grade:String,
-  price_updation_date:Date,
-  price_creation_date:Date,
-  temp_flag:String,
-  pickup_done_tray:String,
-  merge_done_tray:String,
-  pickup_done_date:Date,
-  merge_done_date:Date,
-  rack_id:String
+  copy_grading_issued_to_agent: Date,
+  copy_grading_report: Object,
+  copy_grading_done_date: Date,
+  for_copy_grade_username: String,
+  copy_grading_done_received: Date,
+  mrp_price: Number,
+  sp_price: Number,
+  final_grade: String,
+  price_updation_date: Date,
+  price_creation_date: Date,
+  temp_flag: String,
+  pickup_done_tray: String,
+  merge_done_tray: String,
+  pickup_done_date: Date,
+  merge_done_date: Date,
+  rack_id: String,
+  rp_bqc_report: Object,
+  rp_bqc_done_date: Date,
+  rp_audit_report: Object,
+  rp_audit_done_date: Date,
+  rpa_done_received_by_wh: Date,
+  rpa_to_stx_sorting_assigment_date:Date,
+  rpa_to_stx_transferred_date:Date
+  
 });
 
 const delivery = mongoose.model("delivery", deliverySchema);

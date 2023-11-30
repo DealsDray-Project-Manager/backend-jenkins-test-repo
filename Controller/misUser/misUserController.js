@@ -3704,7 +3704,9 @@ module.exports = {
           {
             $match: {
               "track_tray.rdl_two_done_closed_by_agent": { $gte: threeDaysAgo },
-              "items.rdl_repair_report.reason":{$ne:"Device not repairable"},
+              "items.rdl_repair_report.reason": {
+                $ne: "Device not repairable",
+              },
               sort_id: type,
               cpc: location,
             },
@@ -4153,10 +4155,17 @@ module.exports = {
             },
           },
         ]);
-      }
-      else if(type == "RDL-2 done closed by warehouse"){
+      } else if (type == "RDL-2 done closed by warehouse") {
         items = await masters.aggregate([
-          { $match: { sort_id: type, cpc: location ,"items.rdl_repair_report.reason":{$ne:"Device not repairable"},} },
+          {
+            $match: {
+              sort_id: type,
+              cpc: location,
+              "items.rdl_repair_report.reason": {
+                $ne: "Device not repairable",
+              },
+            },
+          },
           {
             $lookup: {
               from: "trayracks",
@@ -5591,7 +5600,7 @@ module.exports = {
             let obj = {
               code: otherTray,
               agent_name: spwhuser,
-              actUser:actUser,
+              actUser: actUser,
               description: "Assigned to sp warehouse for parts issue to agent:",
             };
             let logCreationRes = await module.exports.trackSpAndRpAssignLevel(
@@ -5610,7 +5619,7 @@ module.exports = {
           let obj = {
             code: otherTray,
             agent_name: sortingUser,
-            actUser:actUser,
+            actUser: actUser,
             description: "Assigned to sorting (Wht to rp) to agent",
           };
           let logCreationRes = await module.exports.trackSpAndRpAssignLevel(
@@ -6683,6 +6692,85 @@ module.exports = {
                 }
               );
             }
+          }
+        }
+      }
+      return { status: 1 };
+    } catch (error) {
+      return error;
+    }
+  },
+  /*---------------------------------------------RPA TO STX SORTING -----------------------------------------------*/
+  getTrayForRpaToStxSorting: async (trayType, location, status) => {
+    try {
+      const data = await masters.aggregate([
+        {
+          $match: {
+            sort_id: status,
+            type_taxanomy: trayType,
+            cpc: location,
+          },
+        },
+        {
+          $lookup: {
+            from: "trayracks",
+            localField: "rack_id",
+            foreignField: "rack_id",
+            as: "rackData",
+          },
+        },
+      ]);
+      return data;
+    } catch (error) {
+      return error;
+    }
+  },
+  /* TRAY ASSIGNMENT TO WAREHOUSE FOR RPA TO STX */
+  assignToWarehouseRpaToStx: async (tray, user_name, sortId, actUser) => {
+    try {
+      for (let x of tray) {
+        let updateTray = await masters.findOneAndUpdate(
+          {
+            code: x,
+            sort_id: "Ready to Transfer to STX",
+          },
+          {
+            $set: {
+              sort_id: "Assigned to Warehouse for Stx Sorting",
+              actual_items: [],
+              assigned_date: Date.now(),
+              issued_user_name: user_name,
+            },
+          }
+        );
+        if (updateTray) {
+          let state = "Tray";
+          for (let y of updateTray.items) {
+            await unitsActionLog.create({
+              action_type: "Assigned to Warehouse for Stx Sorting",
+              created_at: Date.now(),
+              user_name_of_action: actUser,
+              agent_name: user_name,
+              user_type: "Sales MIS",
+              uic: y.uic,
+              tray_id: x,
+              track_tray: state,
+              description: `Assigned to Warehouse for Stx Sorting.Warehouse :${user_name} by mis :${actUser}`,
+            });
+            state = "Units";
+            let updateDeliery = await delivery.updateOne(
+              {
+                "uic_code.code": y.uic,
+              },
+              {
+                $set: {
+                  rpa_to_stx_sorting_assigment_date: Date.now(),
+                  updated_at: Date.now(),
+                  tray_location: "Sales Warehouse",
+                  tray_status: "Assigned to Warehouse for Stx Sorting",
+                },
+              }
+            );
           }
         }
       }

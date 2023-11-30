@@ -2686,6 +2686,18 @@ module.exports = {
         } else {
           resolve({ data: data, status: 2 });
         }
+      } else if (sortId == "Received From RP-Audit") {
+        let data = await masters.findOne({
+          $or: [
+            { code: trayId, sort_id: "Received From RP-Audit" },
+            { code: trayId, sort_id: "Received From RP-BQC" },
+          ],
+        });
+        if (data) {
+          resolve({ data: data, status: 1 });
+        } else {
+          resolve({ data: data, status: 2 });
+        }
       } else if (sortId === "Send for charging") {
         let data = await masters.findOne({ code: trayId, cpc: location });
         if (data) {
@@ -3425,7 +3437,23 @@ module.exports = {
         } else {
           resolve({ data: data, status: 2 });
         }
-      } else {
+      }
+      else if(sortId == "STX-Utility In-progress"){
+        let data = await masters.findOne({ code: trayId });
+        if (data) {
+          if (
+            data.sort_id == "STX-Utility In-progress" ||
+            data.sort_id == "RPA to STX Work In Progress"
+          ) {
+            resolve({ data: data, status: 1 });
+          } else {
+            resolve({ data: data, status: 3 });
+          }
+        } else {
+          resolve({ data: data, status: 2 });
+        }
+      }
+       else {
         let data = await masters.findOne({ code: trayId });
         if (data) {
           if (data.sort_id == sortId) {
@@ -5886,7 +5914,7 @@ module.exports = {
               prefix: "tray-master",
               cpc: location,
               type_taxanomy: {
-                $nin: ["BOT", "PMT", "MMT", "WHT", "ST", "SPT", "RPT"],
+                $in: ["ST", "CT"],
               },
             },
           },
@@ -5912,7 +5940,7 @@ module.exports = {
                   cpc: location,
                   sort_id: "Audit Done Closed By Warehouse",
                   type_taxanomy: {
-                    $nin: ["BOT", "PMT", "MMT", "WHT", "ST", "SPT", "RPT"],
+                    $in: ["ST", "CT"],
                   },
                 },
               ],
@@ -5952,7 +5980,7 @@ module.exports = {
                   sort_id: "Transferred to Sales",
 
                   type_taxanomy: {
-                    $nin: ["BOT", "PMT", "MMT", "WHT", "SPT", "RPT"],
+                    $in: ["CT", "RPA"],
                   },
                 },
                 {
@@ -5961,7 +5989,7 @@ module.exports = {
                   sort_id: "Transferred to Processing",
 
                   type_taxanomy: {
-                    $nin: ["BOT", "PMT", "MMT", "WHT", "SPT", "RPT"],
+                    $in: ["CT", "RPA"],
                   },
                 },
               ],
@@ -5989,7 +6017,7 @@ module.exports = {
                   cpc: location,
                   sort_id: "Ready to Transfer to Sales",
                   type_taxanomy: {
-                    $nin: ["BOT", "PMT", "MMT", "WHT", "SPT", "RPT"],
+                    $in: ["CT", "RPA"],
                   },
                 },
                 {
@@ -5997,7 +6025,7 @@ module.exports = {
                   cpc: location,
                   sort_id: "Ready to Transfer to Processing",
                   type_taxanomy: {
-                    $nin: ["BOT", "PMT", "MMT", "WHT", "SPT", "RPT"],
+                    $in: ["CT","RPA"],
                   },
                 },
               ],
@@ -6021,7 +6049,7 @@ module.exports = {
             {
               prefix: "tray-master",
               type_taxanomy: {
-                $in: ["CT"],
+                $in: ["CT", "RPA"],
               },
               sort_id: "Accepted From Processing",
               cpc: location,
@@ -6031,7 +6059,7 @@ module.exports = {
               cpc: location,
               sort_id: "Accepted From Sales",
               type_taxanomy: {
-                $in: ["CT"],
+                $in: ["CT", "RPA"],
               },
             },
             {
@@ -6039,7 +6067,7 @@ module.exports = {
               cpc: location,
               sort_id: "Received From Processing",
               type_taxanomy: {
-                $in: ["CT"],
+                $in: ["CT", "RPA"],
               },
             },
             {
@@ -6047,11 +6075,35 @@ module.exports = {
               cpc: location,
               sort_id: "Received From Sales",
               type_taxanomy: {
-                $in: ["CT"],
+                $in: ["CT", "RPA"],
               },
             },
           ],
         });
+        if (tray) {
+          reslove({ status: 1, tray: tray });
+        }
+      } else if (type == "Ready to Transfer to STX") {
+        let tray = await masters.aggregate([
+          {
+            $match: {
+              prefix: "tray-master",
+              cpc: location,
+              sort_id: type,
+              type_taxanomy: {
+                $in: ["CT"],
+              },
+            },
+          },
+          {
+            $lookup: {
+              from: "trayracks",
+              localField: "rack_id",
+              foreignField: "rack_id",
+              as: "rackData",
+            },
+          },
+        ]);
         if (tray) {
           reslove({ status: 1, tray: tray });
         }
@@ -6063,7 +6115,7 @@ module.exports = {
               cpc: location,
               sort_id: type,
               type_taxanomy: {
-                $nin: ["BOT", "PMT", "MMT", "WHT", "SPT", "RPT"],
+                $in: ["CT", "ST", "RPA"],
               },
             },
           },
@@ -7112,7 +7164,6 @@ module.exports = {
                 $set: {
                   ctx_tray_transferTo_sales_date: Date.now(),
                   tray_Id: x.tray_id,
-                  ctx_tray_id: trayData.trayId,
                   updated_at: Date.now(),
                 },
               },
@@ -8025,9 +8076,19 @@ module.exports = {
   },
   /*---------------------------------------RBQC TRAY FUNCTIONALITY---------------------------------------*/
   // GET THE TRAY
-  getRbcTray: async (location) => {
+  getRbcTray: async (location, type) => {
     try {
-      const data = await masters.find({ cpc: location, type_taxanomy: "RBQC" });
+      const data = await masters.aggregate([
+        { $match: { cpc: location, type_taxanomy: type } },
+        {
+          $lookup: {
+            from: "trayracks",
+            localField: "rack_id",
+            foreignField: "rack_id",
+            as: "rackDetails",
+          },
+        },
+      ]);
       return data;
     } catch (error) {
       return error;
@@ -8118,7 +8179,391 @@ module.exports = {
   returnFromReqbqc: async (location) => {
     try {
       const data = await masters.find({
-        $or: [{ cpc: location, sort_id: "Closed by RP-BQC" }],
+        $or: [
+          { cpc: location, sort_id: "Closed by RP-BQC" },
+          { cpc: location, sort_id: "Closed by RP-Audit" },
+          { cpc: location, sort_id: "Received From RP-Audit" },
+          { cpc: location, sort_id: "Received From RP-BQC" },
+        ],
+      });
+      return data;
+    } catch (error) {
+      return error;
+    }
+  },
+  // RECEIVE TRAY FROM RPA / RPB
+  trayReceiveFromRpaOrRpb: async (trayData) => {
+    try {
+      const tray = await masters.findOne({ code: trayData.trayId });
+      if (tray.items?.length == trayData.counts) {
+        let status = "";
+        if (tray.sort_id === "Closed by RP-BQC") {
+          status = "Received From RP-BQC";
+        } else if (tray.sort_id === "Closed by RP-Audit") {
+          status = "Received From RP-Audit";
+        }
+        let updateTray = await masters.updateOne(
+          {
+            code: trayData.trayId,
+          },
+          {
+            $set: {
+              sort_id: status,
+            },
+          }
+        );
+        if (updateTray.modifiedCount !== 0) {
+          if (tray.sort_id === "Closed by RP-BQC") {
+            await unitsActionLog.create({
+              action_type: "Received From RP-BQC",
+              created_at: Date.now(),
+              user_name_of_action: trayData.actioUser,
+              user_type: "PRC Warehouse",
+              agent_name: tray.issued_user_name,
+              tray_id: trayData.trayId,
+              track_tray: "Tray",
+              description: `Received From RP-BQC agent :${tray.issued_user_name} by Wh: ${trayData.actioUser}`,
+            });
+            return { status: 1 };
+          } else {
+            let state = "Tray";
+            for (let x of tray?.items) {
+              await unitsActionLog.create({
+                action_type: "Received From RP-Audit",
+                created_at: Date.now(),
+                user_name_of_action: trayData.actioUser,
+                user_type: "PRC Warehouse",
+                uic: x.uic,
+                agent_name: tray.issued_user_name,
+                tray_id: trayData.trayId,
+                track_tray: state,
+                description: `Received From RP-Audit agent :${tray.issued_user_name} by Wh: ${trayData.actioUser}`,
+              });
+              state = "Units";
+              let updateDelivery = await delivery.updateOne(
+                { uic_code: x.uic },
+                {
+                  $set: {
+                    updated_at: Date.now(),
+                    rpa_done_received_by_wh: Date.now(),
+                    tray_location: "Warehouse",
+                  },
+                }
+              );
+            }
+            return { status: 1 };
+          }
+        } else {
+          return { status: 3 };
+        }
+      } else {
+        return { status: 2 };
+      }
+    } catch (error) {
+      return error;
+    }
+  },
+  // TRAY CLOSE AFTER RPA / RPB
+  trayCloseAfterRpaRpb: async (trayData) => {
+    try {
+      let updateTray;
+      if (trayData.tray_type == "RPB") {
+        updateTray = await masters.findOneAndUpdate(
+          { code: trayData.trayId, sort_id: "Received From RP-BQC" },
+
+          {
+            $set: {
+              rack_id: trayData.rackId,
+              actual_items: [],
+              description: trayData.description,
+              temp_array: [],
+              sort_id: "Open",
+              items: [],
+              closed_time_wharehouse: Date.now(),
+              issued_user_name: null,
+            },
+          }
+        );
+        if (updateTray) {
+          await unitsActionLog.create({
+            action_type: "RP-BQC Done Closed By Warehouse",
+            created_at: Date.now(),
+            user_name_of_action: trayData.actioUser,
+            user_type: "PRC Warehouse",
+            tray_id: trayData.trayId,
+            track_tray: state,
+            description: `RP-BQC Done Closed By Warehouse by Wh: ${trayData.actioUser}`,
+          });
+          return { status: 1 };
+        } else {
+          return { status: 2 };
+        }
+      } else {
+        updateTray = await masters.findOneAndUpdate(
+          { code: trayData.trayId, sort_id: "Received From RP-Audit" },
+
+          {
+            $set: {
+              rack_id: trayData.rackId,
+              actual_items: [],
+              description: trayData.description,
+              temp_array: [],
+              sort_id: "Ready to Transfer to Sales",
+              closed_time_wharehouse: Date.now(),
+              issued_user_name: null,
+            },
+          }
+        );
+        if (updateTray) {
+          for (let x of updateTray.items) {
+            await unitsActionLog.create({
+              action_type: "RP-Audit Done Closed By Warehouse",
+              created_at: Date.now(),
+              user_name_of_action: trayData.actioUser,
+              user_type: "PRC Warehouse",
+              uic: x.uic,
+              tray_id: trayData.trayId,
+              track_tray: state,
+              description: `RP-Audit Done Closed By Warehouse by Wh: ${trayData.actioUser} . Ready to Transfer to Sales`,
+            });
+          }
+          return { status: 1 };
+        } else {
+          return { status: 2 };
+        }
+      }
+    } catch (error) {
+      return error;
+    }
+  },
+  // RPA TO STX SORTING GET ASSIGNED TRAYS
+  getTrayForRpaToStxSorting: async (trayType, location, status, username) => {
+    try {
+      const data = await masters.aggregate([
+        {
+          $match: {
+            sort_id: status,
+            type_taxanomy: trayType,
+            cpc: location,
+            issued_user_name: username,
+          },
+        },
+        {
+          $lookup: {
+            from: "trayracks",
+            localField: "rack_id",
+            foreignField: "rack_id",
+            as: "rackData",
+          },
+        },
+      ]);
+      return data;
+    } catch (error) {
+      return error;
+    }
+  },
+  // START RPA TO STX SORTING START PAGE
+  startRpaToStxGetData: async (trayId, status, username) => {
+    try {
+      const data = await masters.findOne({
+        code: trayId,
+        sort_id: status,
+        issued_user_name: username,
+      });
+      if (data) {
+        return { status: 1, tray: data };
+      } else {
+        return { status: 2 };
+      }
+    } catch (error) {
+      return error;
+    }
+  },
+  // GET STX TRAY FOR RPA TO STX
+  getStxTrayForRpaToStxSort: async (brand, model, location, uic) => {
+    try {
+      let checkUic = await delivery.findOne(
+        { "uic_code.code": uic },
+        { "bqc_software_report.final_grade": 1 }
+      );
+      if (checkUic?.bqc_software_report?.final_grade) {
+        const data = await masters.find(
+          {
+            $or: [
+              {
+                sort_id: "Open",
+                type_taxanomy: "ST",
+                cpc: location,
+                tray_grade: checkUic.bqc_software_report.final_grade,
+                brand: brand,
+                model: model,
+              },
+              {
+                sort_id: "Inuse",
+                type_taxanomy: "ST",
+                cpc: location,
+                tray_grade: checkUic.bqc_software_report.final_grade,
+                brand: brand,
+                model: model,
+              },
+              {
+                sort_id: "RPA to STX Work In Progress",
+                type_taxanomy: "ST",
+                cpc: location,
+                tray_grade: checkUic.bqc_software_report.final_grade,
+                brand: brand,
+                model: model,
+              },
+            ],
+          },
+          {
+            code: 1,
+            items: 1,
+            limit: 1,
+          }
+        );
+        let spArr = [];
+        console.log(data);
+        if (data.length !== 0) {
+          for (let spt of data) {
+            if (parseInt(spt.limit) > parseInt(spt.items.length)) {
+              spArr.push(spt);
+            }
+          }
+          return { status: 1, tray: spArr };
+        } else {
+          return { status: 2 };
+        }
+      } else {
+        return { status: 3 };
+      }
+    } catch (error) {
+      return error;
+    }
+  },
+  addItemToStxFromRpa: async (dataOfUic) => {
+    try {
+      const item = await masters.findOne(
+        {
+          code: dataOfUic.rpaTray,
+          "items.uic": dataOfUic.uic,
+        },
+        {
+          _id: 0,
+          items: {
+            $elemMatch: { uic: dataOfUic.uic },
+          },
+        }
+      );
+      console.log(item);
+      if (item) {
+        const addToStx = await masters.updateOne(
+          { code: dataOfUic.stxTray },
+
+          {
+            $set: {
+              sort_id: "RPA to STX Work In Progress",
+            },
+            $addToSet: {
+              items: item.items[0],
+            },
+          }
+        );
+        if (addToStx.modifiedCount !== 0) {
+          let removeItemFromRp = await masters.updateOne(
+            {
+              code: dataOfUic.rpaTray,
+              "items.uic": dataOfUic.uic,
+            },
+            {
+              $pull: {
+                items: {
+                  uic: dataOfUic.uic,
+                },
+              },
+            }
+          );
+          if (removeItemFromRp.modifiedCount !== 0) {
+            await unitsActionLog.create({
+              action_type: "Item Transferred to Stx",
+              created_at: Date.now(),
+              user_name_of_action: dataOfUic.actionUser,
+              user_type: "Sales Warehouse",
+              uic: dataOfUic.uic,
+              tray_id: dataOfUic.stxTray,
+              track_tray: "Units",
+              description: `Items Transferred to Stx done by Warehouse :${dataOfUic.actionUser}`,
+            });
+            const updateDelivery = await delivery.updateOne(
+              {
+                "uic_code.code": dataOfUic.uic,
+              },
+              {
+                $set: {
+                  stx_tray_id: dataOfUic.stxTray,
+                  rpa_to_stx_transferred_date: Date.now(),
+                },
+              }
+            );
+            if (updateDelivery) {
+              return { status: 1 };
+            } else {
+              return { status: 2 };
+            }
+          }
+        } else {
+          return { status: 2 };
+        }
+      } else {
+        return { status: 2 };
+      }
+    } catch (error) {
+      return error;
+    }
+  },
+  // CLOSE RPA TRAY AFTER RPA TO STX
+  closeRpaTrayAfterRpaToStx: async (dataOfAction) => {
+    try {
+      const data = await masters.updateOne(
+        {
+          code: dataOfAction.code,
+          sort_id: "Assigned to Warehouse for Stx Sorting",
+        },
+        {
+          $set: {
+            sort_id: "Ready to Transfer to Processing",
+            temp_array: [],
+            actual_items: [],
+            rack_id: dataOfAction.rack_id,
+            issued_user_name: null,
+          },
+        }
+      );
+      if (data.modifiedCount !== 0) {
+        await unitsActionLog.create({
+          action_type: "RPA to STX Sorting Done",
+          created_at: Date.now(),
+          tray_id: dataOfAction.code,
+          user_name_of_action: dataOfAction.actionUser,
+          track_tray: "Tray",
+          user_type: "Sales Warehouse",
+          description: `RPA to STX Sorting Done and Ready to Transfer to Processing :${data.actionUser}`,
+        });
+        return { status: 1 };
+      } else {
+        return { status: 2 };
+      }
+    } catch (error) {
+      return error;
+    }
+  },
+  // GET RPA to STX Work In Progress
+  getRpaToStxWorkInProgressTray: async (location) => {
+    try {
+      const data = await masters.find({
+        cpc: location,
+        sort_id: "RPA to STX Work In Progress",
+        type_taxanomy: "ST",
       });
       return data;
     } catch (error) {

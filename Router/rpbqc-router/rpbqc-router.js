@@ -56,10 +56,8 @@ router.post("/close-page/:username/:trayId", async (req, res, next) => {
 });
 // GET PENDING ITEMS
 router.post("/pedning-item", async (req, res, next) => {
-  const { uic, username } = req.body;
-  console.log(req.body);
-  const data = await rpbqcController.getDataofPendingItems(username, uic);
-  console.log(data);
+  const { uic, username ,type} = req.body;
+  const data = await rpbqcController.getDataofPendingItems(username, uic,type);
   if (data.status == 1) {
     res.status(200).json({
       data: data.findData,
@@ -97,6 +95,7 @@ router.post("/add-rpbqc-data", async (req, res, next) => {
 router.post("/close-rpbqc-tray", async (req, res, next) => {
   try {
     const data = await rpbqcController.closeRpbqcTray(req.body);
+    console.log(data);
     if (data.status == 1) {
       res.status(200).json({
         message: "Successfully closed",

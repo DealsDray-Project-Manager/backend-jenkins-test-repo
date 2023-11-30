@@ -4,8 +4,8 @@ const PartInventoryLedgerSchema = mongoose.Schema(
   {
     description: String,
     department: String,
-    in_stock: Number,
-    out_stock: Number,
+    in_stock: String,
+    out_stock: String,
     action: String,
     action_done_user: String,
     part_code: {
