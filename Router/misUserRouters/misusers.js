@@ -2174,6 +2174,7 @@ router.post("/bagTransferSend", async (req, res, next) => {
   try {
     console.log(req.body);
     let data = await misUserController.sendTheBagViaCourierOrHand(req.body);
+    console.log(data);
     if (data.status == 1) {
       res.status(200).json({
         message: "Successfully Transferred",

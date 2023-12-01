@@ -2389,6 +2389,7 @@ module.exports = {
         status == "Inuse" ||
         status == "Ready to RDL-1"
       ) {
+        console.log("working");
         data = await masters.aggregate([
           {
             $match: {
@@ -2413,6 +2414,7 @@ module.exports = {
             },
           },
         ]);
+        console.log(data);
       } else if (status == "Closed") {
         data = await masters.find({
           $or: [
@@ -3437,8 +3439,7 @@ module.exports = {
         } else {
           resolve({ data: data, status: 2 });
         }
-      }
-      else if(sortId == "STX-Utility In-progress"){
+      } else if (sortId == "STX-Utility In-progress") {
         let data = await masters.findOne({ code: trayId });
         if (data) {
           if (
@@ -3452,8 +3453,7 @@ module.exports = {
         } else {
           resolve({ data: data, status: 2 });
         }
-      }
-       else {
+      } else {
         let data = await masters.findOne({ code: trayId });
         if (data) {
           if (data.sort_id == sortId) {
@@ -6025,7 +6025,7 @@ module.exports = {
                   cpc: location,
                   sort_id: "Ready to Transfer to Processing",
                   type_taxanomy: {
-                    $in: ["CT","RPA"],
+                    $in: ["CT", "RPA"],
                   },
                 },
               ],
@@ -6581,22 +6581,34 @@ module.exports = {
     return new Promise(async (resolve, reject) => {
       let data;
       if (status == "Display Grading Done Closed By Sorting") {
-        data = await masters.find({
-          $or: [
-            {
-              prefix: "tray-master",
-              type_taxanomy: type,
-              sort_id: status,
-              cpc: location,
+        data = await masters.aggregate([
+          {
+            $match: {
+              $or: [
+                {
+                  prefix: "tray-master",
+                  type_taxanomy: type,
+                  sort_id: status,
+                  cpc: location,
+                },
+                {
+                  prefix: "tray-master",
+                  type_taxanomy: type,
+                  sort_id: "Received From Sorting After Display Grading",
+                  cpc: location,
+                },
+              ],
             },
-            {
-              prefix: "tray-master",
-              type_taxanomy: type,
-              sort_id: "Received From Sorting After Display Grading",
-              cpc: location,
+          },
+          {
+            $lookup: {
+              from: "trayracks",
+              localField: "rack_id",
+              foreignField: "rack_id",
+              as: "rackData",
             },
-          ],
-        });
+          },
+        ]);
       } else {
         data = await masters.aggregate([
           {
@@ -7886,6 +7898,7 @@ module.exports = {
   },
   getRackChangeRequest: (username, sortId, location) => {
     let data = [];
+    console.log(sortId);
     return new Promise(async (resolve, reject) => {
       if (sortId == "MIS") {
         data = await masters.aggregate([
@@ -7906,24 +7919,48 @@ module.exports = {
           },
         ]);
       } else if (sortId == "Issued to scan in for rack change") {
-        data = await masters.find({
-          $or: [
-            {
+        data = await masters.aggregate([
+          {
+            $match: {
+              $or: [
+                {
+                  issued_user_name: username,
+                  sort_id: sortId,
+                },
+                {
+                  issued_user_name: username,
+                  sort_id: "Received for rack change",
+                },
+              ],
+            },
+          },
+          {
+            $lookup: {
+              from: "trayracks",
+              localField: "rack_id",
+              foreignField: "rack_id",
+              as: "rackData",
+            },
+          },
+        ]);
+      } else {
+        data = await masters.aggregate([
+          {
+            $match: {
               issued_user_name: username,
               sort_id: sortId,
+              temp_rack: { $ne: null },
             },
-            {
-              issued_user_name: username,
-              sort_id: "Received for rack change",
+          },
+          {
+            $lookup: {
+              from: "trayracks",
+              localField: "rack_id",
+              foreignField: "rack_id",
+              as: "rackData",
             },
-          ],
-        });
-      } else {
-        data = await masters.find({
-          issued_user_name: username,
-          sort_id: sortId,
-          temp_rack: { $ne: null },
-        });
+          },
+        ]);
       }
       if (data) {
         resolve(data);

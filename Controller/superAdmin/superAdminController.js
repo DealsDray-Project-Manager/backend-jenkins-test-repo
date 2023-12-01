@@ -437,6 +437,16 @@ module.exports = {
       resolve(cpc);
     });
   },
+  getCpcBagTransfer: (type) => {
+    return new Promise(async (resolve, rejects) => {
+      let cpc = await infra.find({
+        type_taxanomy: "CPC",
+        location_type: { $nin: [type, "Sales"] },
+      });
+      console.log(cpc.length);
+      resolve(cpc);
+    });
+  },
 
   /*--------------------------------Find Sales Location-----------------------------------*/
 
@@ -4191,6 +4201,7 @@ module.exports = {
             action_done_user: dataOfPartorColor.actionUser,
             description: `Box Id Edited by:${dataOfPartorColor.actionUser}`,
             part_code: dataOfPartorColor.part_code,
+            box_id:dataOfPartorColor.box_id
           });
         }
         resolve({ status: 1 });
@@ -4253,6 +4264,7 @@ module.exports = {
   partlistManageStockUpdate: (partStockData, username) => {
     return new Promise(async (resolve, reject) => {
       for (let x of partStockData) {
+        console.log(x.add_stock);
         let updateStock;
         let number = parseInt(x.add_stock);
         if (number >= "0") {

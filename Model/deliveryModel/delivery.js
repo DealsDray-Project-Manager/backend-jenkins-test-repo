@@ -332,9 +332,8 @@ const deliverySchema = mongoose.Schema({
   rp_audit_report: Object,
   rp_audit_done_date: Date,
   rpa_done_received_by_wh: Date,
-  rpa_to_stx_sorting_assigment_date:Date,
-  rpa_to_stx_transferred_date:Date
-  
+  rpa_to_stx_sorting_assigment_date: Date,
+  rpa_to_stx_transferred_date: Date,
 });
 
 const delivery = mongoose.model("delivery", deliverySchema);

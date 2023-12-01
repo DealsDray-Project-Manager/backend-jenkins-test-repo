@@ -6,6 +6,9 @@ const {
 const {
   partAndColor,
 } = require("../../Model/Part-list-and-color/part-list-and-color");
+const {
+  procurmentToolsAndConsumables,
+} = require("../../Model/procurement-order-place/procurement-order-place");
 const { purchaseOrder } = require("../../Model/Purchase-order/purchase-order");
 const {
   toolsAndConsumablesIssueRequests,
@@ -334,5 +337,58 @@ module.exports = {
     } catch (error) {
       return error;
     }
+  },
+  getProcurmentOfToolsAndConsumables: async () => {
+    try {
+      let arr = [];
+      const data = await partAndColor.find({
+        avl_stock: Number(0),
+        sp_category: { $in: ["Tools", "Consumables"] },
+      });
+      for (let x of data) {
+        let obj = {
+          part_code: x.part_code,
+          color: x.color,
+          sp_category: x.sp_category,
+          avl_stock: x.avl_stock,
+          required_qty: 1,
+          name: x.name,
+        };
+        arr.push(obj);
+      }
+      return arr;
+    } catch (error) {
+      return error;
+    }
+  },
+  // PROCURMENT TOOLS AND CONSUMABLES REQUEST CREATION
+  ProcurementRequestCreationForToolsAndConsumables: async (spData) => {
+    return new Promise(async (resolve, reject) => {
+      let updateData;
+      function generateUniqueID() {
+        const prefix = "PTC";
+        const randomDigits = Math.floor(Math.random() * 90000) + 10000; // Generates a random 5-digit number
+        const timestamp = Date.now().toString().slice(-5); // Uses the last 5 digits of the current timestamp
+        return prefix + timestamp + randomDigits;
+      }
+      for (let x of spData) {
+        if (Number(x.required_qty) > 0) {
+          const uniqueID = generateUniqueID();
+          updateData = await procurmentToolsAndConsumables.create({
+            part_number: x.part_code,
+            request_id: uniqueID,
+            request_date: Date.now(),
+            part_name: x.name,
+            requred_qty: x.required_qty,
+            category:x.sp_category
+          });
+        }
+      }
+      if (updateData) {
+        resolve({ status: 1 });
+      } else {
+        resolve({ status: 0 });
+      }
+    });
   },
 };

@@ -5601,12 +5601,20 @@ module.exports = {
               code: otherTray,
               agent_name: spwhuser,
               actUser: actUser,
-              description: "Assigned to sp warehouse for parts issue to agent:",
+              description: "Assigned to sorting (Wht to rp) to agent",
             };
+            let unitsLogCreation = await unitsActionLog.create({
+              action_type: "Assigned to sp warehouse for parts issue to agent",
+              created_at: Date.now(),
+              agent_name: agent_name,
+              user_type: "PRC MIS",
+              tray_id: spTray,
+              track_tray: "Tray",
+              description: `Assigned to sp warehouse for parts issue to agent: :${spwhuser} by mis :${actUser}`,
+            });
             let logCreationRes = await module.exports.trackSpAndRpAssignLevel(
               obj
             );
-            console.log(logCreationRes);
             if (logCreationRes.status == 1) {
               resolve({ status: 1 });
             } else {

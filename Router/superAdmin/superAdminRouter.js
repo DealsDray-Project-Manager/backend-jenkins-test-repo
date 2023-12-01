@@ -243,6 +243,14 @@ router.get("/getCpc", async (req, res) => {
     response.status(501).json({ status: 0, data: { message: "worng" } });
   }
 });
+router.get("/getCpcBagTransfer/:type", async (req, res) => {
+  const {type}=req.params
+  let data = await superAdminController.getCpcBagTransfer(type);
+
+  if (data) {
+    res.status(200).json({ status: 1, data: { data } });
+  }
+});
 
 /*-------------------------------------WAREHOUSE DATA------------------------------*/
 router.post("/getWarehouseByLocation", async (req, res) => {
@@ -3253,8 +3261,8 @@ router.post("/partlist/manageStock/update", async (req, res, next) => {
   try {
     const { username, partData } = req.body;
     const data = await superAdminController.partlistManageStockUpdate(
-      username,
-      partData
+      partData,
+      username
     );
     if (data.status == true) {
       res.status(200).json({

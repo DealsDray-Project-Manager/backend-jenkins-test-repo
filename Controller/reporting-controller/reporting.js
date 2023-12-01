@@ -2708,9 +2708,10 @@ module.exports = {
   /* ---------------------------------------PART INVENTORY LEDGER------------------------------------------*/
   getPartInventoryLedger: async (part_code) => {
     try {
+      console.log(part_code);
       let findPartData = await partAndColor.findOne(
         { part_code: part_code },
-        { name: 1, part_code: 1, sp_category: 1, created_at: 1, avl_stock: 1 }
+        { name: 1,part_code: 1, sp_category: 1, created_at: 1, avl_stock: 1 }
       );
       if (findPartData) {
         const findPartInventoryLedger = await partInventoryLedger.find({

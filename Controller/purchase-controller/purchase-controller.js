@@ -6,6 +6,9 @@ const { payment } = require("../../Model/paymentModel/payment");
 const {
   purchaseOrderPlaced,
 } = require("../../Model/procurement-order-place/pr-order-place");
+const {
+  procurmentToolsAndConsumables,
+} = require("../../Model/procurement-order-place/procurement-order-place");
 const { vendorMaster } = require("../../Model/vendorModel/vendorModel");
 const { warranty } = require("../../Model/warrantyModel/warranty");
 /****************************************************************** */
@@ -39,7 +42,6 @@ module.exports = {
             },
           },
         ]);
-      
       } else {
         data = await purchaseOrder.find({ status: { $ne: "Order Placed" } });
       }
@@ -207,10 +209,9 @@ module.exports = {
         resolve({ filterData: dataofOrderRm, totalAmount: totalAmount });
       } else {
         for (let x of dataofOrderRm) {
-      
           totalAmount = totalAmount + Number(x.total_price);
         }
-       
+
         resolve({ filterData: dataofOrderRm, totalAmount: totalAmount });
       }
     });
@@ -250,6 +251,74 @@ module.exports = {
         }
       }
       resolve(arr);
+    });
+  },
+  // VIEW TOOLS AND CONSUMABLES PROCUREMNET
+  procurementToolsAndConsumablesRequestView: async (status) => {
+    try {
+      let data = await procurmentToolsAndConsumables.find({
+        status: { $ne: "Order Placed" },
+      });
+      return data;
+    } catch (error) {
+      return error;
+    }
+  },
+  // PLACE ORDER PAGE TOOLS AND CONSUMABLES
+  placeOrderScreenDataFetchToolsAndConsuamables: (request_id) => {
+    return new Promise(async (resolve, reject) => {
+      let obj = {
+        findTheSpnDetails: null,
+        vendor: [],
+        purchaseHistory: [],
+        purchaseRequest: {},
+      };
+      obj.purchaseRequest = await procurmentToolsAndConsumables.findOne({
+        request_id: request_id,
+        status: { $ne: "Order Placed" },
+      });
+      if (obj.purchaseRequest) {
+        obj.findTheSpnDetails = await partAndColor.findOne({
+          part_code: obj.purchaseRequest.part_number,
+        });
+        obj.vendor = await vendorMaster.find({
+          deals: { $in: obj.findTheSpnDetails.sp_category },
+          status: "Active",
+        });
+        obj.purchaseHistory = await purchaseOrderPlaced.find({
+          spn_number: obj.purchaseRequest.part_number,
+        });
+        resolve({ status: 1, pageData: obj });
+      } else {
+        resolve({ status: 0 });
+      }
+    });
+  },
+  // PLACE THE ORDER TOOLS AND CONSUMABLES
+  placeOrderToolsAndConsumables: (dataOfOrder) => {
+    return new Promise(async (resolve, reject) => {
+      const prefix = "POI";
+      const randomDigits = Math.floor(Math.random() * 90000) + 10000; // Generates a random 5-digit number
+      const timestamp = Date.now().toString().slice(-5); // Uses the last 5 digits of the current timestamp
+      dataOfOrder.dataOfOrder.poid = prefix + timestamp + randomDigits;
+      const data = await purchaseOrderPlaced.create(dataOfOrder.dataOfOrder);
+      if (data) {
+        const updateRequest =
+          await procurmentToolsAndConsumables.findOneAndUpdate(
+            {
+              part_number: dataOfOrder.spnNumber,
+              status: { $ne: "Order Placed" },
+            },
+            {
+              $set: {
+                status: "Order Placed",
+              },
+            }
+          );
+        resolve({ status: 1 });
+      } else {
+        resolve({ status: 0 });
+      }
     });
   },
 };

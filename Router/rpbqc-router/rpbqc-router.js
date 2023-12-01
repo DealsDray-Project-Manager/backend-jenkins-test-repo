@@ -36,6 +36,7 @@ router.post("/issued-trays/:username", async (req, res, next) => {
   }
 });
 // GET THE TRAY FOR CLOSE
+
 router.post("/close-page/:username/:trayId", async (req, res, next) => {
   try {
     console.log(req.params);
@@ -56,8 +57,8 @@ router.post("/close-page/:username/:trayId", async (req, res, next) => {
 });
 // GET PENDING ITEMS
 router.post("/pedning-item", async (req, res, next) => {
-  const { uic, username ,type} = req.body;
-  const data = await rpbqcController.getDataofPendingItems(username, uic,type);
+  const { uic, username, type } = req.body;
+  const data = await rpbqcController.getDataofPendingItems(username, uic, type);
   if (data.status == 1) {
     res.status(200).json({
       data: data.findData,

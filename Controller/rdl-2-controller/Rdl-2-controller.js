@@ -198,6 +198,7 @@ module.exports = {
             $elemMatch: { uic: trayItemData.uic },
           },
           sort_id: 1,
+          issued_user_name: 1,
         }
       );
       if (checkAlreadyAdded.sort_id == "Rdl-2 in-progress") {
@@ -419,10 +420,10 @@ module.exports = {
               action_type: "Closed by RDL-2",
               created_at: Date.now(),
               tray_id: trayData.sptrayId,
-              user_name_of_action: updateSpTray.issued_user_name,
+              user_name_of_action: getRpTray.issued_user_name,
               track_tray: "Tray",
               user_type: "PRC RDL-2",
-              description: `RDL Two done and sent to warehouse by agent:${updateSpTray.issued_user_name}`,
+              description: `RDL-2 done and sent to warehouse by agent:${updateSpTray.issued_user_name}`,
             });
             for (let x of getRpTray.actual_items) {
               const addLogsofUnits = await unitsActionLog.create({
@@ -434,7 +435,7 @@ module.exports = {
                 report: x.rdl_repair_report,
                 track_tray: state,
                 user_type: "PRC RDL-2",
-                description: `RDL Two done and sent to warehouse by agent:${updateRpTray.issued_user_name}`,
+                description: `RDL-2 done and sent to warehouse by agent:${updateRpTray.issued_user_name}`,
               });
               state = "Units";
               let updateDelivery = await delivery.findOneAndUpdate(

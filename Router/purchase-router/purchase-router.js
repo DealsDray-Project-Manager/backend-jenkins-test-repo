@@ -23,7 +23,7 @@ router.post("/dashboard/:location", async (req, res, next) => {
 // PROCUREMENT VIEW
 router.post("/procurment/view/:status", async (req, res, next) => {
   try {
-    const {status}=req.params
+    const { status } = req.params;
     let data = await purchaseController.procurementRequestView(status);
     if (data) {
       res.status(200).json({
@@ -41,12 +41,12 @@ router.post("/procurment/view/:status", async (req, res, next) => {
 // ORDER SUMMARY
 router.post("/procurementOrderSummary", async (req, res, next) => {
   try {
-    const {status}=req.params
+    const { status } = req.params;
     let data = await purchaseController.getProcurementOrderSummary();
     if (data) {
       res.status(200).json({
         data: data.data,
-        totalAmount:data.totalAmount
+        totalAmount: data.totalAmount,
       });
     } else {
       res.status(202).json({
@@ -97,14 +97,17 @@ router.post("/placeOrder", async (req, res, next) => {
 });
 router.post("/placeOrderDateFilter", async (req, res, next) => {
   try {
-   
-    const {toDate,fromDate,type,vendors}=req.body
-    let data = await purchaseController.placeOrderDateFilter(fromDate,toDate,type,vendors);
+    const { toDate, fromDate, type, vendors } = req.body;
+    let data = await purchaseController.placeOrderDateFilter(
+      fromDate,
+      toDate,
+      type,
+      vendors
+    );
     if (data) {
-
       res.status(200).json({
         data: data.filterData,
-        totalPrice:data.totalAmount
+        totalPrice: data.totalAmount,
       });
     }
   } catch (error) {
@@ -128,11 +131,14 @@ router.post("/getWarrantyAndTerms", async (req, res, next) => {
     next(error);
   }
 });
-// GET VENDOR FOR FILTER 
+// GET VENDOR FOR FILTER
 router.post("/vendorMasterforDrp/view", async (req, res, next) => {
   try {
-    const {toDate,fromDate}=req.body
-    const vendorData = await purchaseController.getVendorsForDrop(fromDate,toDate);
+    const { toDate, fromDate } = req.body;
+    const vendorData = await purchaseController.getVendorsForDrop(
+      fromDate,
+      toDate
+    );
     if (vendorData) {
       res.status(200).json({
         data: vendorData,
@@ -142,4 +148,68 @@ router.post("/vendorMasterforDrp/view", async (req, res, next) => {
     next(error);
   }
 });
+/*-------------------------------------PURCHASE TOOLS AND CONSUMABLES------------------------------------------------------*/
+router.post(
+  "/procurmentToolsAndConsumables/view/:status",
+  async (req, res, next) => {
+    try {
+      const { status } = req.params;
+      let data =
+        await purchaseController.procurementToolsAndConsumablesRequestView(
+          status
+        );
+      if (data) {
+        res.status(200).json({
+          data: data,
+        });
+      } else {
+        res.status(202).json({
+          message: "Failed please try again...",
+        });
+      }
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
+// PLACE ORDER PAGE
+router.post(
+  "/placeOrderScreenToolsAndConsumables/:requestId",
+  async (req, res, next) => {
+    try {
+      let { requestId } = req.params;
+      let data = await purchaseController.placeOrderScreenDataFetchToolsAndConsuamables(requestId);
+      if (data.status == 1) {
+        res.status(200).json({
+          data: data.pageData,
+        });
+      } else {
+        res.status(202).json({
+          message: "No data found",
+        });
+      }
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+// PLACE ORDER TOOL AND CONSUMABLES
+router.post("/placeOrder", async (req, res, next) => {
+  try {
+    let data = await purchaseController.placeOrderToolsAndConsumables(req.body);
+    if (data.status == 1) {
+      res.status(200).json({
+        message: "successfully order placed",
+      });
+    } else {
+      res.status(202).json({
+        message: "Failed please try again..",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
 module.exports = router;

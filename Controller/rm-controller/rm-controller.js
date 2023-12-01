@@ -3,7 +3,9 @@ const {
 } = require("../../Model/Part-list-and-color/part-list-and-color");
 const { box } = require("../../Model/boxModel/box");
 const { masters } = require("../../Model/mastersModel");
-const partInventoryLedger = require("../../Model/part-inventory-ledger/part-inventory-ledger");
+const {
+  partInventoryLedger,
+} = require("../../Model/part-inventory-ledger/part-inventory-ledger");
 const {
   toolsAndConsumablesIssueRequests,
 } = require("../../Model/toolsAndConsumables-requests/toolsAndConsumablesIssue");
@@ -254,41 +256,75 @@ module.exports = {
     });
   },
   /*-------------------------------TOOLS AND CONSUMABLES-----------------------------------------*/
-  getRequestsOfToolsAndConsumablesIssue: async () => {
+  getRequestsOfToolsAndConsumablesIssue: async (type) => {
     try {
-      const data = await toolsAndConsumablesIssueRequests.find({
-        status: "Assigned",
-      });
+      let data = [];
+      if (type == "Assigned") {
+        data = await toolsAndConsumablesIssueRequests.find({
+          status: "Assigned",
+        });
+      } else {
+        data = await toolsAndConsumablesIssueRequests.find();
+      }
       return data;
     } catch (error) {
       return error;
     }
   },
-  // GET ONLY ON REQUEST FROM TOOLS AND CONSUMABLES 
-  getOneRequestOfToolsAndConsumables:async(requestId)=>{
+  // GET ONLY ON REQUEST FROM TOOLS AND CONSUMABLES
+  getOneRequestOfToolsAndConsumables: async (requestId,type) => {
     try {
-       const data=await toolsAndConsumablesIssueRequests.findOne({request_id:requestId})
-       if(data){
-        if(data.status == "Assigned"){
-          return {status:1,requestData:data}
+      const data = await toolsAndConsumablesIssueRequests.findOne({
+        request_id: requestId,
+      });
+      if (data) {
+        if (data.status == type) {
+          return { status: 1, requestData: data };
         }
-        else{
-          return {status:2}
+        else if(type == "All"){
+          return { status: 1, requestData: data };
         }
-       }
-       else{
-        return {status:3}
-       }
+         else {
+          return { status: 2 };
+        }
+      } else {
+        return { status: 3 };
+      }
     } catch (error) {
-      return error
+      return error;
     }
   },
   // APPROVE THE REQUEST OF TOOLS AND CONSUMABLES
-  approveRequestForToolsAndConsumablesIssue:()=>{
+  approveRequestForToolsAndConsumablesIssue: async (dataFromBody) => {
     try {
-         
+      const updateState =
+        await toolsAndConsumablesIssueRequests.findOneAndUpdate(
+          {
+            request_id: dataFromBody.requestId,
+          },
+          {
+            $set: {
+              status: "Issued To Agent",
+              issued_date: Date.now(),
+            },
+          }
+        );
+      if (updateState) {
+        for (let x of updateState.tools_and_consumables_list) {
+          await partInventoryLedger.create({
+            department: "SP Warehouse",
+            action: "Tools And Consumables Issued",
+            action_done_user: dataFromBody.actionUser,
+            description: `Tools and consumables Issued to :${updateState.issued_user_name}`,
+            part_code: x.part_code,
+          });
+        }
+        return { status: 1 };
+      } else {
+        return { status: 2 };
+      }
     } catch (error) {
-     return error 
+      return error;
     }
-  }
+  },
 };

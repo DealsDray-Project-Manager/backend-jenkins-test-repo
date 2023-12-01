@@ -192,9 +192,10 @@ router.post("/boxesView/:partId", async (req, res, next) => {
   }
 });
 /* ---------------------------------TOOLS AND CONSUMABLES--------------------------------------------*/
-router.post("/getRequestOfToolsAndConsumables", async (req, res, next) => {
+router.post("/getRequestOfToolsAndConsumables/:type", async (req, res, next) => {
   try {
-    const data = await rmuserController.getRequestsOfToolsAndConsumablesIssue();
+    const {type}=req.params
+    const data = await rmuserController.getRequestsOfToolsAndConsumablesIssue(type);
     if (data) {
       res.status(200).json({
         data: data,
@@ -206,12 +207,13 @@ router.post("/getRequestOfToolsAndConsumables", async (req, res, next) => {
 });
 // GET ONLY ONE REQUEST
 router.post(
-  "/getOneRequestOfToolsAndConsumables/:requestId",
+  "/getOneRequestOfToolsAndConsumables/:requestId/:type",
   async (req, res, next) => {
     try {
-      const { requestId } = req.params;
+      const { requestId,type } = req.params;
       const data = await rmuserController.getOneRequestOfToolsAndConsumables(
-        requestId
+        requestId,
+        type
       );
       if (data.status === 1) {
         res.status(200).json({

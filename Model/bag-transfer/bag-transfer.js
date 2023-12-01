@@ -5,7 +5,7 @@ const bagTransferSchema = mongoose.Schema(
     req_id:String,
     name_of_courier: String,
     date_of_courier: Date,
-    tracking_url: { type: String},
+    tracking_url:  String,
     hand_name_of_the_person: String,
     date_of_delivery: String,
     received_by: String,
