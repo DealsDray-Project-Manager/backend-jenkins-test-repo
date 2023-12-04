@@ -65,6 +65,9 @@ module.exports = {
         rackChangeStockOut: 0,
         displayGradingRequest: 0,
         returnFromDisplayGrading: 0,
+        allRpaTray:0,
+        allRpbTray:0,
+        returnFromRpaOrRpb:0
       };
       count.rackChangeStockin = await masters.count({
         $or: [
@@ -231,6 +234,24 @@ module.exports = {
         sort_id: "Ready to Audit",
         cpc: location,
       });
+      count.allRpaTray = await masters.count({
+        prefix: "tray-master",
+        type_taxanomy: "RPA",
+        cpc: location,
+      })
+      count.allRpbTray = await masters.count({
+        prefix: "tray-master",
+        type_taxanomy: "RPB",
+        cpc: location,
+      })
+      count.returnFromRpaOrRpb = await masters.count({
+        $or: [
+          { cpc: location, sort_id: "Closed by RP-BQC" },
+          { cpc: location, sort_id: "Closed by RP-Audit" },
+          { cpc: location, sort_id: "Received From RP-Audit" },
+          { cpc: location, sort_id: "Received From RP-BQC" },
+        ],
+      })
       count.ctxToStxSortRequest = await masters.count({
         prefix: "tray-master",
         cpc: location,
@@ -242,7 +263,7 @@ module.exports = {
         $or: [
           {
             prefix: "tray-master",
-            type_taxanomy: { $in: ["CT"] },
+            type_taxanomy: { $in: ["CT","RPA"] },
             sort_id: "Accepted From Processing",
             cpc: location,
           },
@@ -250,19 +271,19 @@ module.exports = {
             prefix: "tray-master",
             cpc: location,
             sort_id: "Accepted From Sales",
-            type_taxanomy: { $in: ["CT"] },
+            type_taxanomy: { $in: ["CT","RPA"] },
           },
           {
             prefix: "tray-master",
             cpc: location,
             sort_id: "Received From Processing",
-            type_taxanomy: { $in: ["CT"] },
+            type_taxanomy: { $in: ["CT","RPA"] },
           },
           {
             prefix: "tray-master",
             cpc: location,
             sort_id: "Received From Sales",
-            type_taxanomy: { $in: ["CT"] },
+            type_taxanomy: { $in: ["CT","RPA"] },
           },
         ],
       });
@@ -270,7 +291,7 @@ module.exports = {
         prefix: "tray-master",
         sort_id: "Transfer Request sent to Warehouse",
         type_taxanomy: {
-          $in: ["CT"],
+          $in: ["CT","RPA"],
         },
         cpc: location,
       });
@@ -3034,6 +3055,9 @@ module.exports = {
               assigned_date: Date.now(),
               "track_tray.issued_to_rdl_two": Date.now(),
             },
+          },
+          {
+            new: true,
           }
         );
         await unitsActionLog.create({
@@ -7047,7 +7071,7 @@ module.exports = {
             for (let x of data.items) {
               const addLogsofUnits = await unitsActionLog.create({
                 action_type:
-                  "CTX Received from processing and closed by sales warehouse",
+                  "Tray Received from processing and closed by sales warehouse",
                 created_at: Date.now(),
                 uic: x.uic,
                 tray_id: trayData.trayId,
@@ -7151,7 +7175,7 @@ module.exports = {
           let state = "Tray";
           if (data.items.length == 0) {
             const addLogsofUnits = await unitsActionLog.create({
-              action_type: "CTX Transffer",
+              action_type: "Tray Transffer",
               created_at: Date.now(),
               tray_id: trayData.trayId,
               description: `${trayData.sortId} by agent :${trayData.actUser}`,
@@ -7161,7 +7185,7 @@ module.exports = {
           }
           for (let x of data.items) {
             const addLogsofUnits = await unitsActionLog.create({
-              action_type: "CTX Transffer",
+              action_type: "Tray Transffer",
               created_at: Date.now(),
               uic: x.uic,
               tray_id: trayData.trayId,
@@ -8352,6 +8376,7 @@ module.exports = {
           }
         );
         if (updateTray) {
+          let state = "Tray";
           for (let x of updateTray.items) {
             await unitsActionLog.create({
               action_type: "RP-Audit Done Closed By Warehouse",
@@ -8363,6 +8388,7 @@ module.exports = {
               track_tray: state,
               description: `RP-Audit Done Closed By Warehouse by Wh: ${trayData.actioUser} . Ready to Transfer to Sales`,
             });
+            state = "Units";
           }
           return { status: 1 };
         } else {

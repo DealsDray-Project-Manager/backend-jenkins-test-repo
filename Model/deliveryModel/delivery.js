@@ -327,6 +327,7 @@ const deliverySchema = mongoose.Schema({
   pickup_done_date: Date,
   merge_done_date: Date,
   rack_id: String,
+  rp_bqc_tray: String,
   rp_bqc_report: Object,
   rp_bqc_done_date: Date,
   rp_audit_report: Object,

@@ -2251,4 +2251,19 @@ router.post("/assignToWarehouseForRpaToStx", async (req, res, next) => {
     next(error);
   }
 });
+/*---------------------------------------DEVICE NOT REPAIRABLE UNITS REPORT ----------------------------------------------------*/
+router.post("/deviceNotRepairableUnits/:location", async (req, res, next) => {
+  try {
+    let { location } = req.params;
+
+    let data = await misUserController.deviceNotRepairableUnits(location);
+    if (data) {
+      res.status(200).json({
+        data: data,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
 module.exports = router;

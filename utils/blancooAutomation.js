@@ -44,6 +44,13 @@ module.exports = {
           }
         );
         console.log("done");
+        let curDate = new Date();
+        let check = emailNotification.xmlUpdationMail(
+          new Date().toISOString().split("T")[0] + "T00:00:00+0000",
+          new Date(curDate.setDate(curDate.getDate() + 1))
+            .toISOString()
+            .split("T")[0] + "T00:00:00+0000"
+        );
       });
     });
   },

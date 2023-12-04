@@ -110,5 +110,32 @@ router.post("/close-rpbqc-tray", async (req, res, next) => {
     next(error);
   }
 });
-
+// GET RPBQC TRAY FOR RDL-2 SELECTION
+router.post("/getRpbqcTrayRdlTwoSelection/:username", async (req, res, next) => {
+  try {
+    const { username } = req.params;
+    const data = await rpbqcController.getRpbqcTrayForRdlSelection(username);
+    if (data) {
+      res.status(200).json({
+        data: data,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+// GET RPBQC TRAY FOR RDL-2 SELECTION
+router.post("/getRpAuditTrayRpBqcSelection/:username", async (req, res, next) => {
+  try {
+    const { username } = req.params;
+    const data = await rpbqcController.getRpAuditTrayForRpBqcelection(username);
+    if (data) {
+      res.status(200).json({
+        data: data,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
 module.exports = router;

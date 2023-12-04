@@ -114,25 +114,28 @@ router.post("/toolsAndConsumablesProcurment", async (req, res, next) => {
   }
 });
 // CREATE PROCURMENT FOR TOOLS AND CONSUMABLES
-router.post("/procurmentToolsAndConsumables/request", async (req, res, next) => {
-  try {
-    const { spList} = req.body;
-    let data = await SpMisController.ProcurementRequestCreationForToolsAndConsumables(
-      spList,
-    
-    );
-    if (data.status == 1) {
-      res.status(200).json({
-        message: "Successfully created",
-      });
-    } else {
-      res.status(202).json({
-        message: "Failed please try again...",
-      });
+router.post(
+  "/procurmentToolsAndConsumables/request",
+  async (req, res, next) => {
+    try {
+      const { spList } = req.body;
+      let data =
+        await SpMisController.ProcurementRequestCreationForToolsAndConsumables(
+          spList
+        );
+      if (data.status == 1) {
+        res.status(200).json({
+          message: "Successfully created",
+        });
+      } else {
+        res.status(202).json({
+          message: "Failed please try again...",
+        });
+      }
+    } catch (error) {
+      next(error);
     }
-  } catch (error) {
-    next(error);
   }
-});
+);
 
 module.exports = router;

@@ -256,7 +256,7 @@ module.exports = {
             cpc: location,
             sort_id: "Transferred to Sales",
             type_taxanomy: {
-              $in: ["CT"],
+              $in: ["CT","RPA"],
             },
           },
           {
@@ -264,7 +264,7 @@ module.exports = {
             cpc: location,
             sort_id: "Transferred to Processing",
 
-            type_taxanomy: { $in: ["CT"] },
+            type_taxanomy: { $in: ["CT","RPA"] },
           },
         ],
       });
@@ -4775,7 +4775,7 @@ module.exports = {
             action_type: "Transfer Request sent to Warehouse",
             created_at: Date.now(),
             user_name_of_action: trayData.actioUser,
-            user_type: `${trayData?.cpc_type} Warehouse`,
+            user_type: `${trayData?.cpc_type} Mis`,
             agent_name: trayData.actionUser,
             tray_id: x,
             track_tray: "Tray",
@@ -4788,7 +4788,7 @@ module.exports = {
               action_type: "Transfer Request sent to Warehouse",
               created_at: Date.now(),
               user_name_of_action: trayData.actioUser,
-              user_type: `${trayData?.cpc_type} Warehouse`,
+              user_type: `${trayData?.cpc_type} MIS`,
               agent_name: trayData.actionUser,
               tray_id: x,
               uic: y.uic,
@@ -6783,6 +6783,31 @@ module.exports = {
         }
       }
       return { status: 1 };
+    } catch (error) {
+      return error;
+    }
+  },
+  // REPORT OF DEVICE NOT REPAIRABLE UNITS
+  deviceNotRepairableUnits: async (location) => {
+    try {
+      const findUpgardeUnits = await delivery.aggregate([
+        {
+          $match: {
+            partner_shop: location,
+            "rdl_two_report.reason": "Device not repairable",
+          },
+        },
+        {
+          $lookup: {
+            from: "products",
+            localField: `item_id`,
+            foreignField: "vendor_sku_id",
+            as: "products",
+          },
+        },
+      ]);
+
+      return findUpgardeUnits;
     } catch (error) {
       return error;
     }

@@ -303,6 +303,11 @@ module.exports = {
             }
           );
           if (data.matchedCount != 0) {
+            let createLog = await usersHistory.create({
+              user_name: findData.user_name,
+              password: userData.new_password,
+              last_update_date: Date.now(),
+            });
             resolve({ status: 1 });
           } else {
             resolve({ status: 0 });
@@ -687,6 +692,7 @@ module.exports = {
 
       if (userDetails) {
         let obj = {
+          last_update_date: Date.now(),
           name: userDetails.name,
           email: userDetails.email,
           contact: userDetails.contact,
@@ -699,7 +705,7 @@ module.exports = {
           user_type: userDetails.user_type,
           status: userDetails.status,
           creation_date: userDetails.creation_date,
-          last_update_date: userDetails.last_update_date,
+
           profile: userDetails.profile,
         };
         let historyTab = await usersHistory.create(obj);
@@ -4201,7 +4207,7 @@ module.exports = {
             action_done_user: dataOfPartorColor.actionUser,
             description: `Box Id Edited by:${dataOfPartorColor.actionUser}`,
             part_code: dataOfPartorColor.part_code,
-            box_id:dataOfPartorColor.box_id
+            box_id: dataOfPartorColor.box_id,
           });
         }
         resolve({ status: 1 });
@@ -6617,6 +6623,62 @@ module.exports = {
               }
             );
           }
+        }
+      }
+      return { status: 1 };
+    } catch (error) {
+      return error;
+    }
+  },
+  // GET ALL DATA OF SPN
+  getDataOfAllSpnWithUic: async () => {
+    try {
+      const data = await delivery.find({
+        "rdl_fls_one_report.partRequired": { $exists: true },
+      });
+      for (let x of data) {
+        for (let y of x.rdl_fls_one_report.partRequired) {
+          let obj = {
+            uic: x.uic_code.code,
+            spn_number: y.part_id,
+            tracking_id: x.tracking_id,
+            order_id: x.order_id,
+            item_id: x.item_id,
+            partner_purchase_price: x.partner_purchase_price,
+            base_discount: x.base_discount,
+            diagnostics_discount: x.diagnostics_discount,
+            storage_discount: x.storage_discount,
+            buyback_category: x.buyback_category,
+            doorstep_diagnostics: x.doorstep_diagnostics,
+            bag_id: x.bag_id,
+            agent_name: x.agent_name,
+            agent_name_charging: x.agent_name_charging,
+            agent_name_bqc: x.agent_name_bqc,
+            tray_id: x.tray_id,
+            assign_to_agent: x.assign_to_agent,
+            tray_status: x.tray_status,
+            charging: x.charging,
+            charging_done_close: x.charging_done_close,
+            bqc_report: x.bqc_report,
+            bqc_done_close: x.bqc_done_close,
+            audit_user_name: x.audit_user_name,
+            audit_report: x.audit_report,
+            audit_done_close: x.audit_done_close,
+            rdl_fls_one_user_name: x.rdl_fls_one_user_name,
+            rdl_fls_one_report: x.rdl_fls_one_report,
+            rdl_fls_closed_date: x.rdl_fls_closed_date,
+            stx_tray_id: x.stx_tray_id,
+            rp_tray: x.rp_tray,
+            rdl_two_user_name: x.rdl_two_user_name,
+            rdl_two_closed_date: x.rdl_two_closed_date,
+            rdl_two_report: x.rdl_two_report,
+            imei: x.imei,
+            wht_tray: x.wht_tray,
+            ctx_tray_id: x.ctx_tray_id,
+            partner_shop: x.partner_shop,
+          };
+          let createData = await tempOrdersReq.create(obj);
+          console.log(createData);
         }
       }
       return { status: 1 };

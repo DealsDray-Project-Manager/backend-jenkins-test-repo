@@ -18,6 +18,11 @@ const uuid = require("uuid");
 module.exports = {
   dashboardData: (location, username) => {
     return new Promise(async (resolve, reject) => {
+      const count = { precourmentCount: 0, toolsAndConsumableProcurement: 0 };
+      count.toolsAndConsumableProcurement = await partAndColor.count({
+        avl_stock: Number(0),
+        sp_category: { $in: ["Tools", "Consumables"] },
+      });
       // Step 1: Create the pipeline for aggregation
       const pipeline = [
         {
@@ -106,7 +111,7 @@ module.exports = {
       }, []);
 
       // Step 6: Calculate the count and resolve the final result
-      const count = { precourmentCount: resolvedArr.length };
+      count.precourmentCount = resolvedArr.length;
 
       resolve(count);
     });
@@ -380,7 +385,7 @@ module.exports = {
             request_date: Date.now(),
             part_name: x.name,
             requred_qty: x.required_qty,
-            category:x.sp_category
+            category: x.sp_category,
           });
         }
       }

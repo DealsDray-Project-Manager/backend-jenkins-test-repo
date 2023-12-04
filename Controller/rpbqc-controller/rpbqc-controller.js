@@ -15,6 +15,14 @@ module.exports = {
         sort_id: "Issued to RP-BQC",
         issued_user_name: username,
       });
+      let dataOfTray = await masters.findOne({
+        sort_id: "Issued to RP-BQC",
+        issued_user_name: username,
+      });
+      console.log(dataOfTray);
+      if (dataOfTray) {
+        obj.rpBqcPending = dataOfTray?.temp_array?.length;
+      }
       return obj;
     } catch (error) {
       return error;
@@ -99,8 +107,8 @@ module.exports = {
           status: dataOfRpBqc.status,
           username_of_rpbqc: dataOfRpBqc.username,
         };
-        let addIntoTray1, addIntoTray2;
-        itemData.temp_array[0]["rpb-qc_status"] = obj;
+        let addIntoTray1, addIntoTray2, addIntoTray3;
+        itemData.temp_array[0]["rp_bqc_report"] = obj;
         if (dataOfRpBqc.status == "RP-BQC Failed") {
           addIntoTray1 = await masters.updateOne(
             {
@@ -112,6 +120,18 @@ module.exports = {
               },
               $pull: {
                 temp_array: dataOfRpBqc.uic,
+              },
+            }
+          );
+          addIntoTray3 = await masters.updateOne(
+            {
+              code: itemData.temp_array[0]?.rdl_repair_report.rdl_two_tray,
+            },
+            {
+              $pull: {
+                actual_items: {
+                  uic: dataOfRpBqc.uic,
+                },
               },
             }
           );
@@ -176,7 +196,7 @@ module.exports = {
         }
         if (addIntoTray1.modifiedCount !== 0) {
           if (dataOfRpBqc.status == "RP-BQC Failed") {
-            return { status: 2, trayId: itemData.temp_array[0]?.rp_tray };
+            return { status: 2, trayId: itemData.temp_array[0]?.rpt_tray };
           } else {
             return { status: 1, trayId: dataOfRpBqc.rpa_tray };
           }
@@ -220,5 +240,38 @@ module.exports = {
     } catch (error) {
       return error;
     }
+  },
+  // GET RPB TRAY FOR RDL-2 SELECTION
+  getRpbqcTrayForRdlSelection: async (username) => {
+    try {
+      const data = await masters.find({
+        sort_id: "Issued to RP-BQC",
+        issued_user_name: username,
+      });
+      let arr = [];
+      for (let x of data) {
+        let count = x.limit - x.items.length;
+        if (count >= 1) {
+          arr.push(x);
+        }
+      }
+      return arr;
+    } catch (error) {
+      return error;
+    }
+  },
+  getRpAuditTrayForRpBqcelection: async () => {
+    const data = await masters.find({
+      sort_id: "Issued to RP-Audit",
+      issued_user_name: username,
+    });
+    let arr = [];
+    for (let x of data) {
+      let count = x.limit - x.items.length;
+      if (count >= 1) {
+        arr.push(x);
+      }
+    }
+    return arr;
   },
 };

@@ -1,7 +1,9 @@
 const {
   partAndColor,
 } = require("../../Model/Part-list-and-color/part-list-and-color");
-const {rdl2OutputReport} = require("../../Model/Rdl-2-output/rdl-2-out-report");
+const {
+  rdl2OutputReport,
+} = require("../../Model/Rdl-2-output/rdl-2-out-report");
 const {
   rdl2OutputRequest,
 } = require("../../Model/Rdl-2-output/rdl-2-output-request");
@@ -2475,17 +2477,16 @@ module.exports = {
     }
   },
   // GET DATA FOR DWONLOAD RDL-2 OUTPUT DATA
-  getRdl2OutputDataDwonload:async(request_id)=>{
+  getRdl2OutputDataDwonload: async (request_id) => {
     try {
-      const data=await rdl2OutputReport.find({request_id:request_id})
-      if(data){
-       return {status:1,dataOfOut:data}
-      }
-      else{
-        return {status:1,dataOfOut:data}
+      const data = await rdl2OutputReport.find({ request_id: request_id });
+      if (data) {
+        return { status: 1, dataOfOut: data };
+      } else {
+        return { status: 1, dataOfOut: data };
       }
     } catch (error) {
-      return error
+      return error;
     }
   },
   generateRdlTwoOutputReport: async () => {
@@ -2496,14 +2497,28 @@ module.exports = {
 
       for (let x of getPendingRequest) {
         const fromDateTimestamp = Date.parse(x.from_date);
-        const toDateTimestamp = Date.parse(x.to_date);
+        const oneDayInMilliseconds = 24 * 60 * 60 * 1000;
+
+        // Calculate toDateTimestamp by adding one day to fromDateTimestamp
+        const toDateTimestamp = fromDateTimestamp + oneDayInMilliseconds;
+        console.log(new Date(fromDateTimestamp), new Date(toDateTimestamp));
         const getReportBasisAuditFinelGrade = await delivery.aggregate([
           {
             $match: {
-              rdl_two_closed_date: {
-                $gte: new Date(fromDateTimestamp),
-                $lte: new Date(toDateTimestamp),
-              },
+              $or: [
+                {
+                  rdl_two_closed_date: {
+                    $gte: new Date(fromDateTimestamp),
+                    $lte: new Date(toDateTimestamp),
+                  },
+                },
+                {
+                  rdl_two_closed_date_units: {
+                    $gte: new Date(fromDateTimestamp),
+                    $lte: new Date(toDateTimestamp),
+                  },
+                },
+              ],
             },
           },
           {
@@ -2512,27 +2527,34 @@ module.exports = {
                 item_id: "$item_id",
               },
               count: { $sum: 1 },
-              auditorGradeA: {
-                $sum: { $cond: [{ $eq: ["$audit_report.grade", "A"] }, 1, 0] },
-              },
-              auditorGradeB: {
-                $sum: { $cond: [{ $eq: ["$audit_report.grade", "B"] }, 1, 0] },
-              },
-              auditorGradeC: {
-                $sum: { $cond: [{ $eq: ["$audit_report.grade", "C"] }, 1, 0] },
-              },
-              auditorGradeD: {
-                $sum: { $cond: [{ $eq: ["$audit_report.grade", "D"] }, 1, 0] },
-              },
-              auditorGradeB2: {
-                $sum: { $cond: [{ $eq: ["$audit_report.grade", "B2"] }, 1, 0] },
-              },
-              auditorGradeRB: {
-                $sum: { $cond: [{ $eq: ["$audit_report.grade", "RB"] }, 1, 0] },
-              },
-              upgradeCount: {
+              rpaAuditorGradeA: {
                 $sum: {
-                  $cond: [{ $eq: ["$audit_report.stage", "Upgrade"] }, 1, 0],
+                  $cond: [{ $eq: ["$rp_audit_report.grade", "A"] }, 1, 0],
+                },
+              },
+              rpaAuditorGradeB: {
+                $sum: {
+                  $cond: [{ $eq: ["$rp_audit_report.grade", "B"] }, 1, 0],
+                },
+              },
+              rpaAuditorGradeC: {
+                $sum: {
+                  $cond: [{ $eq: ["$rp_audit_report.grade", "C"] }, 1, 0],
+                },
+              },
+              rpaAuditorGradeD: {
+                $sum: {
+                  $cond: [{ $eq: ["$rp_audit_report.grade", "D"] }, 1, 0],
+                },
+              },
+              rpaAuditorGradeB2: {
+                $sum: {
+                  $cond: [{ $eq: ["$rp_audit_report.grade", "B2"] }, 1, 0],
+                },
+              },
+              rpaAuditorGradeRB: {
+                $sum: {
+                  $cond: [{ $eq: ["$rp_audit_report.grade", "RB"] }, 1, 0],
                 },
               },
               issuedToRdl2OrInprocess: {
@@ -2544,6 +2566,42 @@ module.exports = {
                 $sum: {
                   $cond: [
                     { $eq: ["$rdl_two_report.status", "Repair Done"] },
+                    1,
+                    0,
+                  ],
+                },
+              },
+              rpAuditPassed: {
+                $sum: {
+                  $cond: [
+                    { $eq: ["$rp_audit_report.status", "RP-Audit Passed"] },
+                    1,
+                    0,
+                  ],
+                },
+              },
+              rpAuditFailed: {
+                $sum: {
+                  $cond: [
+                    { $eq: ["$rp_audit_report.status", "RP-Audit Failed"] },
+                    1,
+                    0,
+                  ],
+                },
+              },
+              rpBqcFailed: {
+                $sum: {
+                  $cond: [
+                    { $eq: ["$rp_bqc_report.status", "RP-BQC Failed"] },
+                    1,
+                    0,
+                  ],
+                },
+              },
+              rpBqcPassed: {
+                $sum: {
+                  $cond: [
+                    { $eq: ["$rp_bqc_report.status", "RP-BQC Passed"] },
                     1,
                     0,
                   ],
@@ -2634,16 +2692,6 @@ module.exports = {
                   ],
                 },
               },
-              readyToAudit: {
-                $sum: {
-                  $cond: [{ $eq: ["$tray_status", "Ready to Audit"] }, 1, 0],
-                },
-              },
-              readyToBqc: {
-                $sum: {
-                  $cond: [{ $eq: ["$tray_status", "Ready to BQC"] }, 1, 0],
-                },
-              },
             },
           },
           {
@@ -2654,7 +2702,6 @@ module.exports = {
                   audit_report_grade: "$_id.audit_report_grade",
                   item_id: "$_id.item_id",
                   count: "$count",
-                  total_upgrade_count: { $sum: "$upgradeCount" },
                   issuedToRdl2OrInprocess: { $sum: "$issuedToRdl2OrInprocess" },
                   repairDoneCount: { $sum: "$repairDoneCount" },
                   repairDoneWithIssue: { $sum: "$repairDoneWithIssue" },
@@ -2664,14 +2711,12 @@ module.exports = {
                   sparePartFaulty: { $sum: "$sparePartFaulty" },
                   partNotAvailable: { $sum: "$partNotAvailable" },
                   rdlTwoDoneClosedByWh: { $sum: "$rdlTwoDoneClosedByWh" },
-                  readyToAudit: { $sum: "$readyToAudit" },
-                  readyToBqc: { $sum: "$readyToBqc" },
-                  auditorGradeA: { $sum: "$auditorGradeA" },
-                  auditorGradeB: { $sum: "$auditorGradeB" },
-                  auditorGradeC: { $sum: "$auditorGradeC" },
-                  auditorGradeD: { $sum: "$auditorGradeD" },
-                  auditorGradeB2: { $sum: "$auditorGradeB2" },
-                  auditorGradeRB: { $sum: "$auditorGradeRB" },
+                  rpaAuditorGradeA: { $sum: "$rpaAuditorGradeA" },
+                  rpaAuditorGradeB: { $sum: "$rpaAuditorGradeB" },
+                  rpaAuditorGradeC: { $sum: "$rpaAuditorGradeC" },
+                  rpaAuditorGradeD: { $sum: "$rpaAuditorGradeD" },
+                  rpaAuditorGradeB2: { $sum: "$rpaAuditorGradeB2" },
+                  rpaAuditorGradeRB: { $sum: "$rpaAuditorGradeRB" },
                 },
               },
               total_count: { $sum: "$count" },
@@ -2711,7 +2756,7 @@ module.exports = {
       console.log(part_code);
       let findPartData = await partAndColor.findOne(
         { part_code: part_code },
-        { name: 1,part_code: 1, sp_category: 1, created_at: 1, avl_stock: 1 }
+        { name: 1, part_code: 1, sp_category: 1, created_at: 1, avl_stock: 1 }
       );
       if (findPartData) {
         const findPartInventoryLedger = await partInventoryLedger.find({

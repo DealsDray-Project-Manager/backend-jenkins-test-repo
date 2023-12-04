@@ -8,11 +8,21 @@ module.exports = {
     try {
       let obj = {
         issuedTrays: 0,
+        rpAuditPending: 0,
       };
       obj.issuedTrays = await masters.count({
         sort_id: "Issued to RP-Audit",
         issued_user_name: username,
       });
+      let dataOfTray = await masters.findOne({
+        sort_id: "Issued to RP-Audit",
+        issued_user_name: username,
+      });
+      console.log(dataOfTray);
+      if (dataOfTray) {
+        console.log(dataOfTray?.temp_array?.length);
+        obj.rpAuditPending = dataOfTray?.temp_array?.length;
+      }
 
       return obj;
     } catch (error) {
@@ -125,9 +135,10 @@ module.exports = {
         let obj = {
           status: dataOfRpAudit.status,
           username_of_rpbqc: dataOfRpAudit.username,
+          grade: dataOfRpAudit.grade,
         };
-        let addIntoTray1, addIntoTray2;
-        itemData.temp_array[0]["rp-audit_status"] = obj;
+        let addIntoTray1, addIntoTray2, addIntoTray3;
+        itemData.temp_array[0]["rp_audit_status"] = obj;
         if (dataOfRpAudit.status == "RP-Audit Failed") {
           addIntoTray1 = await masters.updateOne(
             {
@@ -137,6 +148,18 @@ module.exports = {
               $addToSet: {
                 items: itemData.temp_array[0],
               },
+              $pull: {
+                actual_items: {
+                  uic: dataOfRpAudit.uic,
+                },
+              },
+            }
+          );
+          addIntoTray3 = await masters.updateOne(
+            {
+              code: itemData.temp_array[0]?.rdl_repair_report.rdl_two_tray,
+            },
+            {
               $pull: {
                 temp_array: dataOfRpAudit.uic,
               },
@@ -155,6 +178,28 @@ module.exports = {
             }
           );
         } else {
+          addIntoTray2 = await masters.updateOne(
+            {
+              code: itemData.temp_array[0]?.rdl_repair_report.rdl_two_tray,
+            },
+            {
+              $pull: {
+                actual_items: {
+                  uic: dataOfRpAudit.uic,
+                },
+              },
+            }
+          );
+          addIntoTray3 = await masters.updateOne(
+            {
+              code: itemData.temp_array[0]?.rdl_repair_report.rdl_two_tray,
+            },
+            {
+              $pull: {
+                temp_array: dataOfRpAudit.uic,
+              },
+            }
+          );
           addIntoTray1 = await masters.updateOne(
             {
               code: itemData.code,
@@ -196,7 +241,10 @@ module.exports = {
         }
         if (addIntoTray1.modifiedCount !== 0) {
           if (dataOfRpAudit.status == "RP-Audit Failed") {
-            return { status: 2, trayId: itemData.temp_array[0]?.rp_tray };
+            return {
+              status: 2,
+              trayId: itemData.temp_array[0]?.rdl_repair_report.rdl_two_tray,
+            };
           } else {
             return { status: 1, trayId: itemData.code };
           }
@@ -248,7 +296,7 @@ module.exports = {
             tray_id: trayData.trayId,
             user_name_of_action: data.issued_user_name,
             track_tray: state,
-            user_type: "PRC RP-BQC",
+            user_type: "PRC RP-Audit",
             uic: x.uic,
             description: `RP-Audit done by the agent :${data.issued_user_name} and closed the tray.`,
           });

@@ -89,7 +89,8 @@ const userHistorySchema = mongoose.Schema({
   business_name:String,
   contact_person_name:String,
   billing_address:String
-});
+}
+);
 const usersHistory = mongoose.model("usersHistory", userHistorySchema);
 module.exports = {
   usersHistory: usersHistory,

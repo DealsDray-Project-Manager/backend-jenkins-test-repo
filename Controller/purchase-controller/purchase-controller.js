@@ -18,8 +18,12 @@ module.exports = {
     let count = {
       purchaseCount: 0,
       orderDetails: 0,
+      purchaseCountOfToolsAndConsumables:0
     };
     return new Promise(async (resolve, reject) => {
+      count.purchaseCountOfToolsAndConsumables = await procurmentToolsAndConsumables.count({
+        status: { $ne: "Order Placed" },
+      });
       count.purchaseCount = await purchaseOrder.count({
         status: { $ne: "Order Placed" },
       });

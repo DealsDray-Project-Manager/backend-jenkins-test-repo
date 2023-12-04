@@ -244,7 +244,7 @@ router.get("/getCpc", async (req, res) => {
   }
 });
 router.get("/getCpcBagTransfer/:type", async (req, res) => {
-  const {type}=req.params
+  const { type } = req.params;
   let data = await superAdminController.getCpcBagTransfer(type);
 
   if (data) {
@@ -4456,6 +4456,24 @@ router.post("/oneStepBackWhtToRp", async (req, res, next) => {
     if (data.status == 1) {
       res.status(200).json({
         message: "Done",
+      });
+    } else {
+      res.status(202).json({
+        message: "Failed",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+// DATA OF ALL SPN
+router.post("/extra/allSpnDataWithUic", async (req, res, next) => {
+  try {
+    const data = await superAdminController.getDataOfAllSpnWithUic();
+    console.log(data);
+    if (data.status == 1) {
+      res.status(200).json({
+        message: "Successfull",
       });
     } else {
       res.status(202).json({

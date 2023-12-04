@@ -198,4 +198,64 @@ module.exports = {
       console.log(error);
     }
   },
+  xmlUpdationMail: (gtDate, toDate) => {
+    try {
+      // Subject for the email
+      const subject = "Confirmation: Blancoo XML Date Changes";
+
+      // Composing HTML content for the email
+      const htmlContent = `
+  <html>
+    <body>
+      <p>Dear Admin,</p>
+      <p>This is to confirm that the following items have been updated in Blancoo XML file :</p>
+      <p>
+        Date & Time XML Change: ${new Date(Date.now()).toLocaleString("en-GB", {
+          hour12: true,
+        })}
+      </p>
+      <p>Details:</p>
+      <br>
+      <p>Date of GT (Greater Than): ${new Date(gtDate).toLocaleString("en-GB", {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+      })}</p>
+      <p>Date of LT (Less Than): ${new Date(toDate).toLocaleString("en-GB", {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+      })}</p>
+      </p>
+      <p>Thank you for your attention.</p>
+      <p>Best regards,</p>
+      <p>PREXO IMPORT MODULE</p>
+    </body>
+  </html>
+`.trim();
+
+      // Configuring mail options
+      const mailOptions = {
+        from: "prexo-no-reply@dealsdray.com",
+        to: "muhammedrafnasvk@gmail.com",
+        subject: `[${new Date(Date.now()).toLocaleString("en-GB", {
+          year: "numeric",
+          month: "2-digit",
+          day: "2-digit",
+        })}] Confirmation: Blancoo XML Date Changes`,
+        html: htmlContent,
+      };
+
+      // Sending the email
+      transporter.sendMail(mailOptions, (error, info) => {
+        if (error) {
+          console.error("Error occurred while sending email:", error.message);
+        } else {
+          console.log("Email sent successfully. Response:", info.response);
+        }
+      });
+    } catch (error) {
+      console.log(error);
+    }
+  },
 };

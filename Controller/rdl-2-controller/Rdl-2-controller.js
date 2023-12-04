@@ -209,16 +209,15 @@ module.exports = {
         if (dupEntry) {
           return { status: 3 };
         }
-
         checkAlreadyAdded.items[0].rdl_repair_report =
           trayItemData.rdl_repair_report;
-        let obj = {
-          rpbqc_username: trayItemData.rpbqc_username,
-          rbqc_tray: trayItemData.rbqc_tray,
-        };
-        checkAlreadyAdded.items[0]["rpbqc_info"] = obj;
-
         if (trayItemData.rpbqc_username !== "") {
+          let obj = {
+            rpbqc_username: trayItemData.rpbqc_username,
+            rbqc_tray: trayItemData.rbqc_tray,
+          };
+          checkAlreadyAdded.items[0]["rpbqc_info"] = obj;
+          checkAlreadyAdded.items[0]["rpt_tray"] = trayItemData.trayId;
           let updateToRbqc = await masters.updateOne(
             {
               code: trayItemData.rbqc_tray,
@@ -233,11 +232,18 @@ module.exports = {
           );
           if (updateToRbqc.modifiedCount !== 0) {
             trayType = "RPB";
+            let updateOfRepair = await masters.updateOne(
+              { code: trayItemData.trayId },
+              {
+                $addToSet: {
+                  temp_array: checkAlreadyAdded.items[0].uic,
+                },
+              }
+            );
           } else {
             return { status: 6 };
           }
         }
-
         for (let x of trayItemData.rdl_repair_report.rdl_two_part_status) {
           if (x.rdl_two_status !== "Used") {
             await masters.updateOne(
@@ -311,7 +317,6 @@ module.exports = {
           {
             $addToSet: {
               actual_items: checkAlreadyAdded.items[0],
-              temp_array: checkAlreadyAdded.items[0].uic,
             },
             $pull: {
               items: {
@@ -330,6 +335,7 @@ module.exports = {
                 tray_type: trayType,
                 updated_at: Date.now(),
                 rdl_two_closed_date_units: Date.now(),
+                rp_bqc_tray: trayItemData.rbqc_tray,
               },
             }
           );
@@ -423,7 +429,7 @@ module.exports = {
               user_name_of_action: getRpTray.issued_user_name,
               track_tray: "Tray",
               user_type: "PRC RDL-2",
-              description: `RDL-2 done and sent to warehouse by agent:${updateSpTray.issued_user_name}`,
+              description: `RDL-2 done and sent to warehouse by agent:${updateRpTray.issued_user_name}`,
             });
             for (let x of getRpTray.actual_items) {
               const addLogsofUnits = await unitsActionLog.create({

@@ -41,7 +41,7 @@ exports = module.exports = () => {
   }
   // RDL-2 OUTPUT GENERATE
   try {
-    corn.schedule("*/01 * * * *", () => {
+    corn.schedule("*/30 * * * *", () => {
       reportingAgentRouter.generateRdlTwoOutputReport();
     });
   } catch (error) {
