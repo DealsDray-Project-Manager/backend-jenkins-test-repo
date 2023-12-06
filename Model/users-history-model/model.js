@@ -88,7 +88,8 @@ const userHistorySchema = mongoose.Schema({
   },
   business_name:String,
   contact_person_name:String,
-  billing_address:String
+  billing_address:String,
+  type:String
 }
 );
 const usersHistory = mongoose.model("usersHistory", userHistorySchema);

@@ -59,7 +59,9 @@ const checkDatabaseMiddleware = async (req, res, next) => {
             ) {
               res.status(202).json({
                 status: 0,
-                message: "You need to change your password.",
+                message1:"Your password has expired",
+                message: "You need to create a new password"
+
               });
             } else {
               return next();

@@ -11,6 +11,9 @@ const { trayRack } = require("../../Model/tray-rack/tray-rack");
 const { unitsActionLog } = require("../../Model/units-log/units-action-log");
 const { trayCategory } = require("../../Model/tray-category/tray-category");
 const { stxUtility } = require("../../Model/Stx-utility/stx-utility");
+const {
+  partInventoryLedger,
+} = require("../../Model/part-inventory-ledger/part-inventory-ledger");
 
 /********************************************************************/
 /* 
@@ -65,9 +68,9 @@ module.exports = {
         rackChangeStockOut: 0,
         displayGradingRequest: 0,
         returnFromDisplayGrading: 0,
-        allRpaTray:0,
-        allRpbTray:0,
-        returnFromRpaOrRpb:0
+        allRpaTray: 0,
+        allRpbTray: 0,
+        returnFromRpaOrRpb: 0,
       };
       count.rackChangeStockin = await masters.count({
         $or: [
@@ -238,12 +241,12 @@ module.exports = {
         prefix: "tray-master",
         type_taxanomy: "RPA",
         cpc: location,
-      })
+      });
       count.allRpbTray = await masters.count({
         prefix: "tray-master",
         type_taxanomy: "RPB",
         cpc: location,
-      })
+      });
       count.returnFromRpaOrRpb = await masters.count({
         $or: [
           { cpc: location, sort_id: "Closed by RP-BQC" },
@@ -251,7 +254,7 @@ module.exports = {
           { cpc: location, sort_id: "Received From RP-Audit" },
           { cpc: location, sort_id: "Received From RP-BQC" },
         ],
-      })
+      });
       count.ctxToStxSortRequest = await masters.count({
         prefix: "tray-master",
         cpc: location,
@@ -263,7 +266,7 @@ module.exports = {
         $or: [
           {
             prefix: "tray-master",
-            type_taxanomy: { $in: ["CT","RPA"] },
+            type_taxanomy: { $in: ["CT", "RPA"] },
             sort_id: "Accepted From Processing",
             cpc: location,
           },
@@ -271,19 +274,19 @@ module.exports = {
             prefix: "tray-master",
             cpc: location,
             sort_id: "Accepted From Sales",
-            type_taxanomy: { $in: ["CT","RPA"] },
+            type_taxanomy: { $in: ["CT", "RPA"] },
           },
           {
             prefix: "tray-master",
             cpc: location,
             sort_id: "Received From Processing",
-            type_taxanomy: { $in: ["CT","RPA"] },
+            type_taxanomy: { $in: ["CT", "RPA"] },
           },
           {
             prefix: "tray-master",
             cpc: location,
             sort_id: "Received From Sales",
-            type_taxanomy: { $in: ["CT","RPA"] },
+            type_taxanomy: { $in: ["CT", "RPA"] },
           },
         ],
       });
@@ -291,7 +294,7 @@ module.exports = {
         prefix: "tray-master",
         sort_id: "Transfer Request sent to Warehouse",
         type_taxanomy: {
-          $in: ["CT","RPA"],
+          $in: ["CT", "RPA"],
         },
         cpc: location,
       });
@@ -3070,6 +3073,16 @@ module.exports = {
           track_tray: "Tray",
           description: `Issued to RDL-2 to agent :${data.issued_user_name} by WH :${trayData.actionUser}`,
         });
+        for (let x of data.items) {
+          await partInventoryLedger.create({
+            department: "SPWH",
+            action: "Part Issue",
+            action_done_user: trayData.actionUser,
+            description: `Part issued by SPWH:${trayData.actionUser},to RDL-2 agent:${trayData.username}`,
+            part_code: x.partId,
+            tray_id: trayData.trayId,
+          });
+        }
       } else if (trayData.sortId == "Send for BQC") {
         data = await masters.findOneAndUpdate(
           { code: trayData.trayId },
@@ -4095,6 +4108,7 @@ module.exports = {
                 agent_name: data.issued_user_name,
                 user_type: "Sales Warehouse",
                 tray_id: trayData.trayId,
+                user_name_of_action: trayData.username,
                 track_tray: state,
                 description: `Received From Sorting Agent After Ctx to Stx agent: ${data.issued_user_name} By Wh:${trayData.username}`,
               });
@@ -4108,6 +4122,7 @@ module.exports = {
                 uic: x.uic,
                 tray_id: trayData.trayId,
                 track_tray: state,
+                user_name_of_action: trayData.username,
                 description: `Received From Sorting Agent After Ctx to Stx agent: ${data.issued_user_name} By Wh:${trayData.username}`,
               });
               state = "Units";
@@ -6316,7 +6331,7 @@ module.exports = {
               created_at: Date.now(),
               agent_name: update.issued_user_name,
               user_type: "PRC Warehouse",
-
+              user_name_of_action: trayData.actUser,
               tray_id: update.code,
               track_tray: state,
               description: `Pickup Done Received to agent :${update.issued_user_name} by Wh :${trayData.actUser}`,
@@ -6331,6 +6346,7 @@ module.exports = {
               uic: x.uic,
               tray_id: update.code,
               track_tray: state,
+              user_name_of_action: trayData.actUser,
               description: `Pickup Done Received to agent :${update.issued_user_name} by Wh :${trayData.actUser}`,
             });
             state = "Units";
@@ -6508,6 +6524,7 @@ module.exports = {
             agent_name: data.issued_user_name,
             user_type: "PRC Warehouse",
             tray_id: data.code,
+            user_name_of_action: trayData.actUser,
             track_tray: state,
             description: `${status} Closed by warehoue by Wh :${trayData.actUser}`,
           });
@@ -6521,6 +6538,7 @@ module.exports = {
             uic: x.uic,
             tray_id: data.code,
             track_tray: state,
+            user_name_of_action: trayData.actUser,
             description: `${status} Closed by warehoue by Wh :${trayData.actUser}`,
           });
           state = "Units";
@@ -6879,6 +6897,7 @@ module.exports = {
             created_at: Date.now(),
             tray_id: data.code,
             rack_id: trayData.rackId,
+            user_name_of_action: trayData.actUser,
             description: `Open state closed by agent :${trayData.actUser}`,
             track_tray: state,
             user_type: "PRC Warehouse",
@@ -6913,6 +6932,7 @@ module.exports = {
             created_at: Date.now(),
             tray_id: data.code,
             rack_id: trayData.rackId,
+            user_name_of_action: trayData.actUser,
             description: `Ready to RDL-2 closed by agent :${trayData.actUser}`,
             track_tray: state,
             user_type: "PRC Warehouse",
@@ -6958,6 +6978,7 @@ module.exports = {
             uic: x.uic,
             tray_id: data.code,
             rack_id: trayData.rackId,
+            user_name_of_action: trayData.actUser,
             description: `Ready to RDL-2 closed by agent :${trayData.actUser}`,
             track_tray: state,
             user_type: "PRC Warehouse",
@@ -7001,6 +7022,7 @@ module.exports = {
             user_type: "PRC Warehouse",
             track_tray: state,
             rack_id: trayData.rackId,
+            user_name_of_action: trayData.actionUser,
             description: `RDL-2 done closed by warehouse by WH :${trayData.actionUser}`,
           });
           state = "Units";
@@ -7079,6 +7101,7 @@ module.exports = {
                 track_tray: state,
                 rack_id: trayData.rackId,
                 user_type: `Sales Warehouse`,
+                user_name_of_action: trayData.actUser,
               });
               state = "Units";
               let updateTrack = await delivery.findOneAndUpdate(
@@ -7126,6 +7149,7 @@ module.exports = {
               description: `Received from sales and closed by warehouse by agent :${trayData.actUser}`,
               track_tray: "Tray",
               rack_id: trayData.rackId,
+              user_name_of_action: trayData.actUser,
               user_type: `Processing Warehouse`,
             });
             resolve({ status: 5 });
@@ -7181,6 +7205,7 @@ module.exports = {
               description: `${trayData.sortId} by agent :${trayData.actUser}`,
               track_tray: state,
               user_type: `${trayData.userCpcType} Warehouse`,
+              user_name_of_action: trayData.actUser,
             });
           }
           for (let x of data.items) {
@@ -7189,6 +7214,7 @@ module.exports = {
               created_at: Date.now(),
               uic: x.uic,
               tray_id: trayData.trayId,
+              user_name_of_action: trayData.actUser,
               description: `${trayData.sortId} by agent :${trayData.actUser}`,
               track_tray: state,
               user_type: `${trayData.userCpcType} Warehouse`,
@@ -7898,6 +7924,7 @@ module.exports = {
             track_tray: state,
             rack_id: rackid,
             user_type: "Warehouse",
+            user_name_of_action: actionUser,
             description: `${sortId} closed by the agent :${actionUser}`,
           });
         }
@@ -8015,6 +8042,7 @@ module.exports = {
               user_type: "PRC Warehouse",
               uic: x.uic,
               tray_id: trayData.trayId,
+              user_name_of_action: update.issued_user_name,
               track_tray: state,
               description: `Received for rack change by Wh :${update.issued_user_name}`,
             });
@@ -8554,6 +8582,7 @@ module.exports = {
               user_type: "Sales Warehouse",
               uic: dataOfUic.uic,
               tray_id: dataOfUic.stxTray,
+              user_name_of_action: dataOfUic.actionUser,
               track_tray: "Units",
               description: `Items Transferred to Stx done by Warehouse :${dataOfUic.actionUser}`,
             });

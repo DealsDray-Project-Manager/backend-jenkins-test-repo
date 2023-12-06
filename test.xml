@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<request>
+    <export-report>
+        <report mode="original"/>
+        <search path="user_data.fields.UIC" value="93050011374" operator="gt" datatype="uint" conjunction="true" />
+    <export-report>
+</request>
+
+

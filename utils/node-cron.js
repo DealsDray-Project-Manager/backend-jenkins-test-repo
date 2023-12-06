@@ -32,7 +32,7 @@ exports = module.exports = () => {
   }
   // MORNING 9 BLANCOO AUTOMATION
   try {
-    corn.schedule("00 09 * * *", () => {
+    corn.schedule("34 10 * * *", () => {
       /*----------------------------------------------CSV READ-----------------------------*/
       BlancoAutoMation.blancooFileUpload();
     });
@@ -81,6 +81,15 @@ exports = module.exports = () => {
           deleiveryReportOfLastWeek
         );
       }
+    });
+  } catch (error) {
+    console.log(error);
+  }
+  // TO CHECK BLANCOO UPDATION IS DONE OR NOT AT 5:AM
+  try {
+    corn.schedule("16 10 * * *", () => {
+      /*---------------------------xml read ------------------------------------*/
+      BlancoAutoMation.toCheckBlancoUpdation();
     });
   } catch (error) {
     console.log(error);

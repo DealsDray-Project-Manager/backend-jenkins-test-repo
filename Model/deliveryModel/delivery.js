@@ -341,3 +341,6 @@ const delivery = mongoose.model("delivery", deliverySchema);
 module.exports = {
   delivery: delivery,
 };
+
+
+

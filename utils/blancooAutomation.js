@@ -7,6 +7,8 @@ const { delivery } = require("../Model/deliveryModel/delivery");
 const emailNotification = require("../Utils/email-notification");
 const { products } = require("../Model/productModel/product");
 const { orders } = require("../Model/ordersModel/ordersModel");
+const {blancoReportLog} = require("../Model/blanco-updation-log/blanco-updation-log");
+const blancoUpdationLog = require("../Model/blanco-updation-log/blanco-updation-log");
 const filePathOfXml =
   "C:/DEALSDRAY/PREXO-WEB-APP-CODE/blancco_qc_data/csvRequest.xml";
 const filePathOfCsv =
@@ -56,6 +58,7 @@ module.exports = {
   },
   // NIGHT 11 BLANCOO AUTOMATION
   blancooFileUpload: () => {
+    console.log("working");
     /*----------------------------------------------CSV READ-----------------------------*/
     let result = [];
     fs.createReadStream(filePathOfCsv)
@@ -96,6 +99,11 @@ module.exports = {
             );
 
             if (updateBqcData) {
+              await blancoReportLog.create({
+                action_type: "Blancoo Report",
+                report: x,
+                uic_code: x.uic,
+              });
               let updateOrder = await orders.findOneAndUpdate(
                 { "uic_code.code": x.uic },
                 {
@@ -142,6 +150,26 @@ module.exports = {
 
         return accumulator;
       }, {});
+    }
+  },
+  toCheckBlancoUpdation: async () => {
+    try {
+      console.log("working");
+      const twelveHoursAgo = new Date();
+      twelveHoursAgo.setHours(twelveHoursAgo.getHours() - 12);
+      const data = await blancoReportLog.findOne(
+        {
+          createdAt: { $gte: twelveHoursAgo },
+        },
+        {},
+        { sort: { createdAt: -1 } }
+      );
+      if (data == null) {
+        let check = emailNotification.blancoUpdationFailedMail();
+      }
+    } catch (error) {
+      console.log(error);
+      return error;
     }
   },
 };

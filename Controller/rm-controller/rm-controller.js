@@ -10,6 +10,7 @@ const {
   toolsAndConsumablesIssueRequests,
 } = require("../../Model/toolsAndConsumables-requests/toolsAndConsumablesIssue");
 const { trayRack } = require("../../Model/tray-rack/tray-rack");
+const { unitsActionLog } = require("../../Model/units-log/units-action-log");
 /****************************************************************** */
 
 module.exports = {
@@ -204,6 +205,7 @@ module.exports = {
           part_code: partDetails,
           in_stock: updateStock.avl_stock,
           tray_id: spTrayId,
+          box_id: boxName,
         });
       }
       if (removeFromSpTray) {
@@ -272,7 +274,7 @@ module.exports = {
     }
   },
   // GET ONLY ON REQUEST FROM TOOLS AND CONSUMABLES
-  getOneRequestOfToolsAndConsumables: async (requestId,type) => {
+  getOneRequestOfToolsAndConsumables: async (requestId, type) => {
     try {
       const data = await toolsAndConsumablesIssueRequests.findOne({
         request_id: requestId,
@@ -280,11 +282,9 @@ module.exports = {
       if (data) {
         if (data.status == type) {
           return { status: 1, requestData: data };
-        }
-        else if(type == "All"){
+        } else if (type == "All") {
           return { status: 1, requestData: data };
-        }
-         else {
+        } else {
           return { status: 2 };
         }
       } else {

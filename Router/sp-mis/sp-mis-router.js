@@ -5,8 +5,8 @@ const express = require("express");
 const router = express.Router();
 //CONTROLER
 const SpMisController = require("../../Controller/sp-mis/sp-mis-controller");
-/*-----------------------------------------------*/
 
+/*-----------------------------------------------*/
 //DASHBOARD
 router.post("/dashboard/:location", async (req, res, next) => {
   try {
@@ -21,8 +21,8 @@ router.post("/dashboard/:location", async (req, res, next) => {
     next(error);
   }
 });
-/*------------------------------------PROCUREMENT CREATION---------------------------------------------*/
 
+/*------------------------------------PROCUREMENT CREATION---------------------------------------------*/
 router.post("/procurment/creation", async (req, res, next) => {
   try {
     const { location, brand, model } = req.body;
@@ -44,6 +44,7 @@ router.post("/procurment/creation", async (req, res, next) => {
     next(error);
   }
 });
+
 // CREATE PROCUREMENT REQUEST
 router.post("/procurment/request", async (req, res, next) => {
   try {

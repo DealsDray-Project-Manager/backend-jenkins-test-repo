@@ -1175,6 +1175,7 @@ router.post("/TrayMergeRequestSend", async (req, res, next) => {
 //GET ITEM BASED ON THE TABS
 router.post("/pickup/items/:type/:location", async (req, res, next) => {
   try {
+    console.log(req.params);
     let { type, page, location } = req.params;
     const data = await misUserController.pickupPageItemView(type, location);
     if (data.items.length !== 0) {
@@ -2211,7 +2212,7 @@ router.post(
   "/getTrayForRpaToStx/:trayType/:location/:status",
   async (req, res, next) => {
     try {
-      const { trayType, location,status } = req.params;
+      const { trayType, location, status } = req.params;
       const data = await misUserController.getTrayForRpaToStxSorting(
         trayType,
         location,
@@ -2227,7 +2228,7 @@ router.post(
     }
   }
 );
-// ASSIGN TO WAREHOUSE 
+// ASSIGN TO WAREHOUSE
 router.post("/assignToWarehouseForRpaToStx", async (req, res, next) => {
   try {
     const { tray, user_name, sortId, actUser } = req.body;

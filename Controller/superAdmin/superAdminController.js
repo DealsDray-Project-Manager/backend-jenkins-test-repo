@@ -39,11 +39,14 @@ const {
 const {
   partInventoryLedger,
 } = require("../../Model/part-inventory-ledger/part-inventory-ledger");
+const {
+  blancoReportLog,
+} = require("../../Model/blanco-updation-log/blanco-updation-log");
 
-const IISDOMAIN = "https://prexo-v9-2-dev-api.dealsdray.com/user/profile/";
+const IISDOMAIN = "https://prexo-v9-2-uat-api.dealsdray.com/user/profile/";
 const IISDOMAINBUYERDOC =
-  "https://prexo-v9-2-dev-api.dealsdray.com/user/document/";
-const IISDOMAINPRDT = "https://prexo-v9-2-dev-api.dealsdray.com/product/image/";
+  "https://prexo-v9-2-uat-api.dealsdray.com/user/document/";
+const IISDOMAINPRDT = "https://prexo-v9-2-uat-api.dealsdray.com/product/image/";
 
 /************************************************************************************************** */
 
@@ -120,9 +123,35 @@ module.exports = {
     });
   },
   /*--------------------------------DASHBOARD-----------------------------------*/
+  getBlancoStatus: async () => {
+    try {
+      let count = {
+        blancoUpdationLatest: null,
+        blancoUpdatelast: null,
+      };
+      const twelveHoursAgo = new Date();
+      twelveHoursAgo.setHours(twelveHoursAgo.getHours() - 12);
+      count.blancoUpdationLatest = await blancoReportLog.findOne(
+        {
+          createdAt: { $gte: twelveHoursAgo },
+        },
+        { createdAt: 1 },
+        { sort: { createdAt: -1 } }
+      );
+      count.blancoUpdatelast = await blancoReportLog.findOne(
+        {},
+        { createdAt: 1 },
+        { sort: { _id: -1 } }
+      );
+      return count;
+    } catch (error) {
+      return error;
+    }
+  },
   getDashboardData: () => {
     return new Promise(async (resolve, reject) => {
       let count = {};
+
       count.usersCount = await user.count({ user_type: { $ne: "Buyer" } });
       count.buyerCount = await user.count({ user_type: "Buyer" });
       count.location = await infra.count({ type_taxanomy: "CPC" });
@@ -286,7 +315,6 @@ module.exports = {
   /*--------------------------------CHANGE PASSWORD-----------------------------------*/
 
   changePassword: (userData) => {
-    console.log(userData._id);
     return new Promise(async (resolve, reject) => {
       if (userData.user_type == "super-admin") {
         let findData = await admin.findOne({ _id: userData._id });
@@ -307,6 +335,7 @@ module.exports = {
               user_name: findData.user_name,
               password: userData.new_password,
               last_update_date: Date.now(),
+              type: "Password Change",
             });
             resolve({ status: 1 });
           } else {
@@ -428,7 +457,10 @@ module.exports = {
 
   getUsersHistory: (username) => {
     return new Promise(async (resolve, reject) => {
-      let data = await usersHistory.find({ user_name: username });
+      let data = await usersHistory.find({
+        user_name: username,
+        type: { $ne: "Password Change" },
+      });
       if (data) {
         resolve(data);
       }
@@ -1780,7 +1812,7 @@ module.exports = {
 
   /*--------------------------------DELETE MASTER-----------------------------------*/
 
-  delteMaster: (masterId) => {
+  delteMaster: (masterId, reason) => {
     return new Promise(async (resolve, reject) => {
       let data = await masters.findOneAndDelete({ code: masterId });
       if (data) {
@@ -1797,6 +1829,7 @@ module.exports = {
           created_at: data.created_at,
           prefix: data.prefix,
           limit: data.limit,
+          reason: reason,
         });
         resolve({ status: true });
       } else {
@@ -1814,6 +1847,15 @@ module.exports = {
       });
       console.log(findData);
       return findData;
+    } catch (error) {
+      return error;
+    }
+  },
+  /*----------------------------------TRAY DELETION HISTORY------------------------*/
+  getTrayDeletionHistory: async (trayId) => {
+    try {
+      const data = await deletedMaster.find({ code: trayId });
+      return data;
     } catch (error) {
       return error;
     }
@@ -2964,6 +3006,9 @@ module.exports = {
         ];
         const rackCounts = await trayRack.aggregate(aggregatePipeline);
         for (let x of rackCounts) {
+          let checkLastActionData = await unitsActionLog
+            .findOne({ rack_id: x.rack_id })
+            .sort({ _id: -1 });
           let getAllReport = await masters.aggregate([
             {
               $match: {
@@ -2977,6 +3022,11 @@ module.exports = {
               },
             },
           ]);
+          if (checkLastActionData) {
+            x["last_modified_time"] = checkLastActionData.created_at;
+            x["lat_modified_username"] =
+              checkLastActionData.user_name_of_action;
+          }
           let count_report = {};
           for (let y of getAllReport) {
             count_report[y._id] = y.count;
@@ -2989,6 +3039,47 @@ module.exports = {
         reject(error);
       }
     });
+  },
+  /*-------------------------------VIEW TRAY BASED ON THE RACK ----------------------------------------*/
+  getTrayBasedOnTheRack: async (rackId) => {
+    try {
+      const data = await masters.aggregate([
+        {
+          $match: {
+            rack_id: rackId,
+          },
+        },
+        {
+          $project: {
+            code: 1,
+            rack_id: 1,
+            brand: 1,
+            model: 1,
+            sort_id: 1,
+            created_at: 1,
+            rackDetails: 1,
+            limit: 1,
+            items_length: {
+              $cond: {
+                if: { $isArray: "$items" },
+                then: { $size: "$items" },
+                else: 0,
+              },
+            },
+            actual_items: {
+              $cond: {
+                if: { $isArray: "$actual_items" },
+                then: { $size: "$actual_items" },
+                else: 0,
+              },
+            },
+          },
+        },
+      ]);
+      return data;
+    } catch (error) {
+      return error;
+    }
   },
   /* -------------------------------------------------UPGRADE REPORT IN SUPER-ADMIN NEW FORMAT---------------------------------------*/
   getUpgradeReportData: async () => {
@@ -3035,7 +3126,25 @@ module.exports = {
       return error;
     }
   },
-
+  getUpgradeReportDataViewUic: async (itemId) => {
+    try {
+      const data = await delivery.find(
+        {
+          "audit_report.stage": "Upgrade",
+          item_id: itemId,
+        },
+        {
+          "uic_code.code": 1,
+          old_item_details: 1,
+          audit_report: 1,
+          audit_done_date: 1,
+        }
+      );
+      return data;
+    } catch (error) {
+      return error;
+    }
+  },
   /*--------------------GET RACK BASED ON THE LIMIT AND WAREHOUSE---------------------------*/
   getRackBasedOnTheWarehouse: (warehouse) => {
     return new Promise(async (resolve, reject) => {
@@ -6679,6 +6788,33 @@ module.exports = {
           };
           let createData = await tempOrdersReq.create(obj);
           console.log(createData);
+        }
+      }
+      return { status: 1 };
+    } catch (error) {
+      return error;
+    }
+  },
+  /*--------------------WHT OR TRAY WISE DATA------------------------*/
+  whtTrayWiseData: async () => {
+    try {
+      const dataOfwht = await masters.find({ type_taxanomy: "ST" });
+      for (let x of dataOfwht) {
+        if (x.items.length == 0) {
+          let obj = {
+            tray_id: x.code,
+            tray_status: x.sort_id,
+          };
+          let add = await tempOrdersReq.create(obj);
+        } else {
+          for (let y of x.items) {
+            let obj = {
+              tray_id: x.code,
+              tray_status: x.sort_id,
+              uic: y.uic,
+            };
+            let add = await tempOrdersReq.create(obj);
+          }
         }
       }
       return { status: 1 };

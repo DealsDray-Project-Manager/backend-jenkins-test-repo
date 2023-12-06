@@ -110,6 +110,18 @@ router.post("/superAdminDashboard", async (req, res, next) => {
     next(error);
   }
 });
+router.post("/lastBlancoStatus", async (req, res, next) => {
+  try {
+    let data = await superAdminController.getBlancoStatus();
+    if (data) {
+      res.status(200).json({
+        data: data,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
 
 /*--------------------------------LOGIN-----------------------------------*/
 router.post("/login", async (req, res, next) => {
@@ -173,7 +185,8 @@ router.post("/check-user-status", async (req, res, next) => {
     } else if (data.status == 4) {
       res.status(202).json({
         status: 0,
-        message: "You need to change your password.",
+        message1: "Your password has expired",
+        message: "You need to create a new password",
       });
     } else {
       res.status(202).json({
@@ -1379,9 +1392,10 @@ router.post("/mastersEditHistory/:trayId", async (req, res, next) => {
 });
 
 /*-----------------------------DELETE MASTER--------------------------------------*/
-router.post("/deleteMaster/:masterId", async (req, res, next) => {
+router.post("/deleteMaster", async (req, res, next) => {
   try {
-    let data = await superAdminController.delteMaster(req.params.masterId);
+    const { masterId, reason } = req.body;
+    let data = await superAdminController.delteMaster(masterId, reason);
     if (data.status) {
       res.status(200).json({
         message: "Successfully Deleted",
@@ -1400,6 +1414,20 @@ router.post("/getDeletedMaster/:type", async (req, res, next) => {
   try {
     const { type } = req.params;
     const data = await superAdminController.getDeletedMasters(type);
+    if (data) {
+      res.status(200).json({
+        data: data,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+// GET TRAY DELETION HISTORY
+router.post("/getTrayDeletionHistory/:trayId", async (req, res, next) => {
+  try {
+    const { trayId } = req.params;
+    const data = await superAdminController.getTrayDeletionHistory(trayId);
     if (data) {
       res.status(200).json({
         data: data,
@@ -2022,10 +2050,39 @@ router.post("/trayRacksReport", async (req, res, next) => {
     next(error);
   }
 });
+// VIEW TRAY BASED ON THE RACK
+router.post("/viewTrayBasedOnRack/:rackId", async (req, res, next) => {
+  try {
+    const { rackId } = req.params;
+    const data = await superAdminController.getTrayBasedOnTheRack(rackId);
+    if (data) {
+      res.status(200).json({
+        data: data,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
 /*----------------------------------------REPORT ----------------------------------------*/
 router.post("/upgrade-report", async (req, res, next) => {
   try {
     const getUpgradeReport = await superAdminController.getUpgradeReportData();
+    if (getUpgradeReport) {
+      res.status(200).json({
+        data: getUpgradeReport,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+/*----------------------------------VIEW THE UIC---------------------------------------*/
+router.post("/upgradeReportViewUic/:item_id", async (req, res, next) => {
+  try {
+    const { item_id } = req.params;
+    const getUpgradeReport =
+      await superAdminController.getUpgradeReportDataViewUic(item_id);
     if (getUpgradeReport) {
       res.status(200).json({
         data: getUpgradeReport,
@@ -4470,6 +4527,25 @@ router.post("/oneStepBackWhtToRp", async (req, res, next) => {
 router.post("/extra/allSpnDataWithUic", async (req, res, next) => {
   try {
     const data = await superAdminController.getDataOfAllSpnWithUic();
+    console.log(data);
+    if (data.status == 1) {
+      res.status(200).json({
+        message: "Successfull",
+      });
+    } else {
+      res.status(202).json({
+        message: "Failed",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
+// DATA OF ALL SPN
+router.post("/extra/whtTrayWiseData", async (req, res, next) => {
+  try {
+    const data = await superAdminController.whtTrayWiseData();
     console.log(data);
     if (data.status == 1) {
       res.status(200).json({

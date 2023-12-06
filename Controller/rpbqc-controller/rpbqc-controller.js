@@ -260,7 +260,7 @@ module.exports = {
       return error;
     }
   },
-  getRpAuditTrayForRpBqcelection: async () => {
+  getRpAuditTrayForRpBqcelection: async (username) => {
     const data = await masters.find({
       sort_id: "Issued to RP-Audit",
       issued_user_name: username,

@@ -5,7 +5,8 @@ const unitsActionLogSchema = mongoose.Schema({
     type: String,
   },
   tray_id:{
-     type:String
+     type:String,
+     index: true,
   },
   bag_id:{
     type:String
@@ -43,7 +44,8 @@ const unitsActionLogSchema = mongoose.Schema({
     type:String
   },
   rack_id:{
-    type:String
+    type:String,
+    index: true,
   },
   temp_flag:String
 });

@@ -256,7 +256,7 @@ module.exports = {
             cpc: location,
             sort_id: "Transferred to Sales",
             type_taxanomy: {
-              $in: ["CT","RPA"],
+              $in: ["CT", "RPA"],
             },
           },
           {
@@ -264,7 +264,7 @@ module.exports = {
             cpc: location,
             sort_id: "Transferred to Processing",
 
-            type_taxanomy: { $in: ["CT","RPA"] },
+            type_taxanomy: { $in: ["CT", "RPA"] },
           },
         ],
       });
@@ -3581,6 +3581,7 @@ module.exports = {
   },
   /*-----------------------PICKUP MODEULE-------------------------------*/
   pickupPageItemView: (type, location) => {
+    console.log(type);
     return new Promise(async (resolve, reject) => {
       let items = [];
       const today = new Date(); // Get the current date
@@ -3600,6 +3601,7 @@ module.exports = {
           {
             $unwind: "$items",
           },
+
           {
             $lookup: {
               from: "trayracks",
@@ -3704,15 +3706,20 @@ module.exports = {
           {
             $match: {
               "track_tray.rdl_two_done_closed_by_agent": { $gte: threeDaysAgo },
-              "items.rdl_repair_report.reason": {
-                $ne: "Device not repairable",
-              },
+
               sort_id: type,
               cpc: location,
             },
           },
           {
             $unwind: "$items",
+          },
+          {
+            $match: {
+              "items.rdl_repair_report.reason": {
+                $ne: "Device not repairable",
+              },
+            },
           },
           {
             $lookup: {
@@ -4161,9 +4168,6 @@ module.exports = {
             $match: {
               sort_id: type,
               cpc: location,
-              "items.rdl_repair_report.reason": {
-                $ne: "Device not repairable",
-              },
             },
           },
           {
@@ -4184,6 +4188,13 @@ module.exports = {
             $unwind: {
               path: "$items",
               preserveNullAndEmptyArrays: true,
+            },
+          },
+          {
+            $match: {
+              "items.rdl_repair_report.reason": {
+                $ne: "Device not repairable",
+              },
             },
           },
           {
@@ -5606,7 +5617,7 @@ module.exports = {
             let unitsLogCreation = await unitsActionLog.create({
               action_type: "Assigned to sp warehouse for parts issue to agent",
               created_at: Date.now(),
-              agent_name: agent_name,
+              agent_name: spwhuser,
               user_type: "PRC MIS",
               tray_id: spTray,
               track_tray: "Tray",

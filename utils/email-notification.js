@@ -258,4 +258,50 @@ module.exports = {
       console.log(error);
     }
   },
+  blancoUpdationFailedMail: () => {
+    try {
+      const today = new Date();
+      const yesterday = new Date(today);
+      yesterday.setDate(today.getDate() - 1);
+      const htmlContent = `
+        <html>
+        <body>
+          <p>Dear Admin,</p>
+          <p >kindly check  the blancoo API as the data for the date ${yesterday.toLocaleDateString(
+            "en-GB",
+            {
+              year: "numeric",
+              month: "2-digit",
+              day: "2-digit",
+            }
+          )} was not uploaded in the system.</p>
+         
+          <p>Thanks and regards</p>
+          <p>PREXO IMPORT MODULE</p>
+        </body>
+        </html>
+      `.trim();
+      const mailOptions = {
+        from: "prexo-no-reply@dealsdray.com",
+        to: "muhammedrafnasvk@gmail.com",
+        subject: ` Critical - Blancoo not updated [${new Date(
+          Date.now()
+        ).toLocaleString("en-GB", {
+          year: "numeric",
+          month: "2-digit",
+          day: "2-digit",
+        })}]`,
+        html: htmlContent,
+      };
+      transporter.sendMail(mailOptions, (error, info) => {
+        if (error) {
+          console.log("Error occurred:", error.message);
+        } else {
+          console.log("Email sent:", info.response);
+        }
+      });
+    } catch (error) {
+      console.log(error);
+    }
+  },
 };

@@ -17,6 +17,7 @@ const deletedMasterSchema = mongoose.Schema(
     created_at: Date,
     prefix:String,
     limit:Number,
+    reason:String,
     status:{
       type:String,
       default:"Pending"
