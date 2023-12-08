@@ -3223,4 +3223,136 @@ router.post(
     }
   }
 );
+/*------------------------------------CAN BIN--------------------------------------------*/
+// GET TRAY WITH DEVICE NOT REPAIRABLE FOR CAN BIN
+router.post("/getTrayForCanBin/:location", async (req, res, next) => {
+  try {
+    const { location } = req.params;
+    const data = await warehouseInController.getTrayForCanBin(location);
+    if (data) {
+      res.status(200).json({
+        data: data,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+// SINGLE TRAY VIEW FOR CAN BIN
+router.post(
+  "/oneTrayViewForCanBin/:trayId/:location",
+  async (req, res, next) => {
+    try {
+      const { trayId, location } = req.params;
+      const data = await warehouseInController.oneTrayViewForCanBin(
+        trayId,
+        location
+      );
+      if (data.status === 1) {
+        res.status(200).json({
+          data: data.trayData,
+        });
+      } else {
+        res.status(202).json({
+          message: "Sorry you can't access this data",
+        });
+      }
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+// SCAN UIC FOR CAN BIN
+router.post("/canBinUicScan", async (req, res, next) => {
+  try {
+    const { trayId, uic } = req.body;
+    const data = await warehouseInController.canBinUicScan(trayId, uic);
+    if (data.status === 1) {
+      res.status(200).json({
+        data: data.uicData,
+        flag: 1,
+      });
+    } else if (data.status === 3) {
+      res.status(202).json({
+        message: "Already Added",
+        flag: 1,
+      });
+    } else if (data.status === 0) {
+      res.status(202).json({
+        message: "Item Not present in this tray",
+        flag: 1,
+      });
+    } else if (data.status === 2) {
+      res.status(202).json({
+        message: "Invalid UIC",
+        flag: 1,
+      });
+    } else if (data.status === 5) {
+      res.status(200).json({
+        message: `This item not move keep it in the ${trayId} `,
+        flag: 2,
+      });
+    } else {
+      res.status(202).json({
+        message: `Error please try again!`,
+        flag: 1,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+// ADD TO CAN BIN
+router.post("/addToCanBin", async (req, res, next) => {
+  try {
+    const data = await warehouseInController.addToCanBin(req.body);
+    if (data.status === 1) {
+      res.status(200).json({
+        message: `Successfully Transferred to Can BIn`,
+      });
+    } else {
+      res.status(202).json({
+        message: "Error please try again!",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+// CLOSE CAN BIN TRAY
+router.post("/closeCanBinTray", async (req, res, next) => {
+  try {
+    const { trayId, actionUser,description } = req.body;
+    const data = await warehouseInController.closeCanBinTray(
+      trayId,
+      actionUser,
+      description
+    );
+    if (data.status === 1) {
+      res.status(200).json({
+        message: `Successfully Closed`,
+      });
+    } else {
+      res.status(202).json({
+        message: "Error please try again!",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+/* GET SALES BIN ITEM */
+router.post("/canBinItem/:location", async (req, res, next) => {
+  try {
+    const { location } = req.params;
+    let data = await warehouseInController.getSalesCanBinItem(location);
+    if (data) {
+      res.status(200).json({
+        data: data,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
 module.exports = router;

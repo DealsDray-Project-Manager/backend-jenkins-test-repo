@@ -45,7 +45,7 @@ module.exports = {
           order_status.push(x.order_status);
           err["order_status"] = order_status;
         }
-        if (x?.imei.match(/[0-9]/g).join("").length !== 15) {
+        if (x?.imei?.match(/[0-9]/g).join("").length !== 15) {
           // IMEI length is correct
           imei.push(x.imei);
           err["imei_number_is_duplicate"] = imei;
@@ -293,14 +293,14 @@ module.exports = {
             cpc: location,
             sort_id: "Ready to Transfer to Sales",
             type_taxanomy: {
-              $in: ["CT"],
+              $in: ["CT", "RPA"],
             },
           },
           {
             prefix: "tray-master",
             cpc: location,
             sort_id: "Ready to Transfer to Processing",
-            type_taxanomy: { $in: ["CT"] },
+            type_taxanomy: { $in: ["CT", "RPA"] },
           },
         ],
       });
@@ -3421,10 +3421,8 @@ module.exports = {
             track_tray: state1,
             description: `${stage} to agent :${sortingAgent} by mis :${actionUser}`,
           });
-
           state1 = "Units";
         }
-
         let state2 = "Tray";
         for (let x of updateToTray.items) {
           let unitsLogCreation = await unitsActionLog.create({
@@ -4612,6 +4610,14 @@ module.exports = {
         },
         {
           $lookup: {
+            from: "products",
+            localField: "items.muic",
+            foreignField: "muic",
+            as: "products",
+          },
+        },
+        {
+          $lookup: {
             from: "trayracks",
             localField: "rack_id",
             foreignField: "rack_id",
@@ -4718,6 +4724,14 @@ module.exports = {
             sort_id: "Ready to RDL-2",
             type_taxanomy: "RPT",
             cpc: location,
+          },
+        },
+        {
+          $lookup: {
+            from: "products",
+            localField: "items.muic",
+            foreignField: "muic",
+            as: "products",
           },
         },
         {

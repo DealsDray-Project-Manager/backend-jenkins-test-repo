@@ -32,6 +32,7 @@ const productSchema = mongoose.Schema({
   created_by: {
     type: String,
   },
+  out_of_stock:Array
 });
 
 const products = mongoose.model("product", productSchema);

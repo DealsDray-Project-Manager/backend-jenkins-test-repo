@@ -306,6 +306,7 @@ module.exports = {
             $set: {
               status: "Issued To Agent",
               issued_date: Date.now(),
+              warehouse_description: dataFromBody.description,
             },
           }
         );

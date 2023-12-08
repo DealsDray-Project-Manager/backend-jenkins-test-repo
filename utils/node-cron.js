@@ -7,6 +7,7 @@ const csvParser = require("csv-parser");
 const { delivery } = require("../Model/deliveryModel/delivery");
 const elasticSearch = require("../Elastic-search/elastic");
 const emailNotification = require("../Utils/email-notification");
+const warehouseController = require("../Controller/warehouseIn/warehouseInController");
 const BlancoAutoMation = require("./blancooAutomation");
 const superAdminController = require("../Controller/superAdmin/superAdminController");
 const reportingAgentRouter = require("../Controller/reporting-controller/reporting");
@@ -90,6 +91,15 @@ exports = module.exports = () => {
     corn.schedule("16 10 * * *", () => {
       /*---------------------------xml read ------------------------------------*/
       BlancoAutoMation.toCheckBlancoUpdation();
+    });
+  } catch (error) {
+    console.log(error);
+  }
+  /*----------------------------------------------OUT STOCK ---------------------*/
+  try {
+    corn.schedule("12 15 * * *", () => {
+      /*---------------------------xml read ------------------------------------*/
+      warehouseController.checkOutOfStock();
     });
   } catch (error) {
     console.log(error);

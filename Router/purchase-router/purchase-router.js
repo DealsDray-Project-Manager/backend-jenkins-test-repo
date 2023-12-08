@@ -195,7 +195,7 @@ router.post(
   }
 );
 // PLACE ORDER TOOL AND CONSUMABLES
-router.post("/placeOrder", async (req, res, next) => {
+router.post("/placeOrderToolsAndConsumables", async (req, res, next) => {
   try {
     let data = await purchaseController.placeOrderToolsAndConsumables(req.body);
     if (data.status == 1) {

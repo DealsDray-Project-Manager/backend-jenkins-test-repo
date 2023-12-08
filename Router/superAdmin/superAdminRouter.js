@@ -2064,6 +2064,38 @@ router.post("/viewTrayBasedOnRack/:rackId", async (req, res, next) => {
     next(error);
   }
 });
+// VIEW WITHOUT RACK
+router.post("/viewTrayWithoutRack", async (req, res, next) => {
+  try {
+    const { rackId } = req.params;
+    const data = await superAdminController.getTrayWithoutRack(rackId);
+    if (data) {
+      res.status(200).json({
+        data: data,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+// VIEW TRAY
+router.post("/viewUnitsDataRack/:trayId", async (req, res, next) => {
+  try {
+    const { trayId } = req.params;
+    const data = await superAdminController.viewUnitsDataRack(trayId);
+    if (data.status === 1) {
+      res.status(200).json({
+        data: data.trayData,
+      });
+    } else {
+      res.status(202).json({
+        message: "You can't access this data",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
 /*----------------------------------------REPORT ----------------------------------------*/
 router.post("/upgrade-report", async (req, res, next) => {
   try {

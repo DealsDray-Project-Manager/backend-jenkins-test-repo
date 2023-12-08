@@ -300,6 +300,7 @@ module.exports = {
   },
   // PLACE THE ORDER TOOLS AND CONSUMABLES
   placeOrderToolsAndConsumables: (dataOfOrder) => {
+    console.log(dataOfOrder);
     return new Promise(async (resolve, reject) => {
       const prefix = "POI";
       const randomDigits = Math.floor(Math.random() * 90000) + 10000; // Generates a random 5-digit number
@@ -319,7 +320,10 @@ module.exports = {
               },
             }
           );
-        resolve({ status: 1 });
+          if(updateRequest){
+
+            resolve({ status: 1 });
+          }
       } else {
         resolve({ status: 0 });
       }

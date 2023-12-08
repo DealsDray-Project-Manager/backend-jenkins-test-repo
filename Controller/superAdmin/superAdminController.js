@@ -43,10 +43,10 @@ const {
   blancoReportLog,
 } = require("../../Model/blanco-updation-log/blanco-updation-log");
 
-const IISDOMAIN = "https://prexo-v9-2-uat-api.dealsdray.com/user/profile/";
+const IISDOMAIN = "https://prexo-v9-2-dev-api.dealsdray.com/user/profile/";
 const IISDOMAINBUYERDOC =
-  "https://prexo-v9-2-uat-api.dealsdray.com/user/document/";
-const IISDOMAINPRDT = "https://prexo-v9-2-uat-api.dealsdray.com/product/image/";
+  "https://prexo-v9-2-dev-api.dealsdray.com/user/document/";
+const IISDOMAINPRDT = "https://prexo-v9-2-dev-api.dealsdray.com/product/image/";
 
 /************************************************************************************************** */
 
@@ -3076,9 +3076,78 @@ module.exports = {
           },
         },
       ]);
-      return data;
+      if (data.length !== 0) {
+        for (let x of data) {
+          let checkLastAction = await unitsActionLog
+            .findOne({ tray_id: x.code, track_tray: "Tray" })
+            .sort({ _id: -1 });
+          if (checkLastAction) {
+            x["last_action_user"] = checkLastAction.user_name_of_action;
+            x["last_action_time"] = checkLastAction.created_at;
+          }
+        }
+        return data;
+      } else {
+        return data;
+      }
     } catch (error) {
       return error;
+    }
+  },
+  // VIEW TRAY WITHOUT RACK 
+  getTrayWithoutRack:async()=>{
+      try {
+        const data = await masters.aggregate([
+          {
+            $match: {
+              rack_id: null,
+              prefix:"tray-master",
+              sort_id:{$ne:"No Status"}
+            },
+          },
+          {
+            $project: {
+              code: 1,
+              rack_id: 1,
+              brand: 1,
+              model: 1,
+              sort_id: 1,
+              created_at: 1,
+              rackDetails: 1,
+              limit: 1,
+              items_length: {
+                $cond: {
+                  if: { $isArray: "$items" },
+                  then: { $size: "$items" },
+                  else: 0,
+                },
+              },
+              actual_items: {
+                $cond: {
+                  if: { $isArray: "$actual_items" },
+                  then: { $size: "$actual_items" },
+                  else: 0,
+                },
+              },
+            },
+          },
+        ]);
+        return data
+      } catch (error) {
+        return error
+      }
+  },
+  viewUnitsDataRack:async(trayId)=>{
+    try {
+      const data=await masters.findOne({code:trayId})
+      if(data){
+        return {status:1,trayData:data}
+      }
+      else{
+        return {status:2}
+      }
+    } catch (error) {
+      return error
     }
   },
   /* -------------------------------------------------UPGRADE REPORT IN SUPER-ADMIN NEW FORMAT---------------------------------------*/

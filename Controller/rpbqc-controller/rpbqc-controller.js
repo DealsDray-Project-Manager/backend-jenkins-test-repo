@@ -250,7 +250,8 @@ module.exports = {
       });
       let arr = [];
       for (let x of data) {
-        let count = x.limit - x.items.length;
+        let checkBoth=x.temp_array?.length + x.items.length
+        let count = x.limit - checkBoth;
         if (count >= 1) {
           arr.push(x);
         }
@@ -267,7 +268,8 @@ module.exports = {
     });
     let arr = [];
     for (let x of data) {
-      let count = x.limit - x.items.length;
+      let checkBoth=x.temp_array?.length + x.items.length
+      let count = x.limit - checkBoth;
       if (count >= 1) {
         arr.push(x);
       }

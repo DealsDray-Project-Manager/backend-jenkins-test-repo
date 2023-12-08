@@ -335,6 +335,9 @@ const deliverySchema = mongoose.Schema({
   rpa_done_received_by_wh: Date,
   rpa_to_stx_sorting_assigment_date: Date,
   rpa_to_stx_transferred_date: Date,
+  add_to_can_bin_date:Date,
+  add_to_can_bin_user:String,
+  add_to_can_bin_description:String
 });
 
 const delivery = mongoose.model("delivery", deliverySchema);

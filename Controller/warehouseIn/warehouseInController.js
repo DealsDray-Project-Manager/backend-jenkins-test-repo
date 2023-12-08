@@ -14,6 +14,7 @@ const { stxUtility } = require("../../Model/Stx-utility/stx-utility");
 const {
   partInventoryLedger,
 } = require("../../Model/part-inventory-ledger/part-inventory-ledger");
+const { subMuic } = require("../../Model/sub-muic/sub-muic");
 
 /********************************************************************/
 /* 
@@ -2432,6 +2433,14 @@ module.exports = {
             },
           },
           {
+            $lookup: {
+              from: "products",
+              localField: "items.muic",
+              foreignField: "muic",
+              as: "products",
+            },
+          },
+          {
             $unwind: {
               path: "$rackData",
               preserveNullAndEmptyArrays: true, // This option preserves documents that do not have a matching element in the array
@@ -2674,6 +2683,7 @@ module.exports = {
           x["jack_type"] = "";
           if (x?.products?.length !== 0) {
             x["jack_type"] = x?.products?.[0]?.jack_type;
+            x["out_of_stock"] = x?.products?.[0]?.out_of_stock;
             x["variant"] = x?.products?.[0]?.variant;
           }
           var today = new Date(Date.now());
@@ -8659,6 +8669,353 @@ module.exports = {
       });
       return data;
     } catch (error) {
+      return error;
+    }
+  },
+  // GET TRAY WITH DEVICE NOT REPAIRABLE
+  getTrayForCanBin: async (location) => {
+    try {
+      const data = await masters.aggregate([
+        {
+          $match: {
+            $or: [
+              {
+                sort_id: {
+                  $in: [
+                    "RDL-2 done closed by warehouse",
+                    "Can Bin In progress",
+                  ],
+                },
+                cpc: location,
+                "items.rdl_repair_report.reason": "Device not repairable",
+              },
+              {
+                sort_id: {
+                  $in: [
+                    "RDL-2 done closed by warehouse",
+                    "Can Bin In progress",
+                  ],
+                },
+                cpc: location,
+                "temp_array.rdl_repair_report.reason": "Device not repairable",
+              },
+            ],
+          },
+        },
+        {
+          $lookup: {
+            from: "trayracks",
+            localField: "rack_id",
+            foreignField: "rack_id",
+            as: "rackData",
+          },
+        },
+      ]);
+      return data;
+    } catch (error) {
+      return error;
+    }
+  },
+  // ONE TRAY VIEW FOR CAN BIN
+  oneTrayViewForCanBin: async (trayId, location) => {
+    try {
+      const data = await masters.findOne({
+        $or: [
+          {
+            code: trayId,
+            cpc: location,
+            sort_id: {
+              $in: ["RDL-2 done closed by warehouse", "Can Bin In progress"],
+            },
+            "items.rdl_repair_report.reason": "Device not repairable",
+          },
+          {
+            code: trayId,
+            cpc: location,
+            sort_id: {
+              $in: ["RDL-2 done closed by warehouse", "Can Bin In progress"],
+            },
+            "temp_array.rdl_repair_report.reason": "Device not repairable",
+          },
+        ],
+      });
+      if (data) {
+        return { status: 1, trayData: data };
+      } else {
+        return { status: 2 };
+      }
+    } catch (error) {
+      return error;
+    }
+  },
+  canBinUicScan: async (trayId, uic) => {
+    try {
+      const checkUic = await delivery.findOne(
+        { "uic_code.code": uic },
+        { rdl_two_report: 1 }
+      );
+      if (checkUic) {
+        let checkItemAlreadyAdded = await masters.findOne({
+          $or: [
+            { code: trayId, "actual_items.uic": uic },
+            { code: trayId, "temp_array.uic": uic },
+          ],
+        });
+        if (checkItemAlreadyAdded) {
+          return { status: 3 };
+        } else {
+          const data = await masters.findOne(
+            {
+              $or: [
+                {
+                  code: trayId,
+                  sort_id: "Can Bin In progress",
+                  "items.uic": uic,
+                },
+                {
+                  sort_id: "RDL-2 done closed by warehouse",
+                  code: trayId,
+                  "items.uic": uic,
+                },
+              ],
+            },
+            {
+              _id: 0,
+              items: {
+                $elemMatch: { uic: uic },
+              },
+            }
+          );
+          if (data) {
+            if (checkUic?.rdl_two_report?.reason == "Device not repairable") {
+              return { status: 1, uicData: data.items[0] };
+            } else {
+              let updateTheTray = await masters.findOneAndUpdate(
+                {
+                  $or: [
+                    { code: trayId, sort_id: "RDL-2 done closed by warehouse" },
+                    {
+                      code: trayId,
+                      sort_id: "Can Bin In progress",
+                    },
+                  ],
+                },
+                {
+                  $set: {
+                    sort_id: "Can Bin In progress",
+                  },
+                  $addToSet: {
+                    actual_items: data.items[0],
+                  },
+                  $pull: {
+                    items: {
+                      uic: uic,
+                    },
+                  },
+                }
+              );
+              if (updateTheTray) {
+                return { status: 5 };
+              } else {
+                return { status: 6 };
+              }
+            }
+          } else {
+            return { status: 0 };
+          }
+        }
+      } else {
+        return { status: 2 };
+      }
+    } catch (error) {
+      return error;
+    }
+  },
+  // ADD TO CAN BIN
+  addToCanBin: async (itemdata) => {
+    try {
+      console.log("work");
+      const udpateOrRemove = await masters.findOneAndUpdate(
+        {
+          code: itemdata.trayId,
+          sort_id: {
+            $in: ["RDL-2 done closed by warehouse", "Can Bin In progress"],
+          },
+        },
+        {
+          $pull: {
+            items: {
+              uic: itemdata.item.uic,
+            },
+          },
+          $addToSet: {
+            temp_array: itemdata.item,
+          },
+        }
+      );
+      if (udpateOrRemove) {
+        let uddateDelivery = await delivery.findOneAndUpdate(
+          {
+            "uic_code.code": itemdata.item.uic,
+          },
+          {
+            $set: {
+              add_to_can_bin_date: Date.now(),
+              add_to_can_bin_user: itemdata.username,
+              add_to_can_bin_description: itemdata.description,
+              tray_status: "Moved To Can Bin",
+            },
+          }
+        );
+        await unitsActionLog.create({
+          action_type: "Can Bin",
+          created_at: Date.now(),
+          user_name_of_action: itemdata.username,
+          user_type: "PRC Warehouse",
+          uic: itemdata.item.uic,
+          track_tray: "Units",
+          description: `Item Transferred Can BIn by prc warehouse:${itemdata.username},Warehouse user description:${itemdata.description}`,
+        });
+        return { status: 1 };
+      } else {
+        return { status: 0 };
+      }
+    } catch (error) {
+      return error;
+    }
+  },
+  closeCanBinTray: async (trayId, actionUser, description) => {
+    try {
+      let data, stage;
+      let getTray = await masters.findOne({
+        cdoe: trayId,
+        sort_id: {
+          $in: ["RDL-2 done closed by warehouse", "Can Bin In progress"],
+        },
+      });
+      if (getTray) {
+        if (getTray.actual_items.length == 0) {
+          data = await masters.findOneAndUpdate(
+            { code: trayId },
+            {
+              $set: {
+                sort_id: "Open",
+                actual_items: [],
+                temp_array: [],
+                items: [],
+                description: description,
+              },
+            }
+          );
+          stage = "Open";
+        } else {
+          data = await masters.findOneAndUpdate(
+            { code: trayId },
+            {
+              $set: {
+                sort_id: "RDL-2 done closed by warehouse",
+                actual_items: [],
+                temp_array: [],
+                items: getTray.actual_items,
+              },
+            }
+          );
+          stage = "RDL-2 done closed by warehouse";
+        }
+        if (data) {
+          unitsActionLog.create({
+            action_type: "Can Bin Done",
+            created_at: Date.now(),
+            tray_id: trayId,
+            user_name_of_action: actionUser,
+            track_tray: "Tray",
+            user_type: "Can Bin Done",
+            description: `Can bin done tray moved to the stage:${stage},done by wh:${actionUser},warehouse user description :${description}`,
+          });
+          return { status: 1 };
+        } else {
+          return { status: 0 };
+        }
+      } else {
+        return { status: 0 };
+      }
+    } catch (error) {
+      next(error);
+    }
+  },
+  getSalesCanBinItem: async (location) => {
+    try {
+      const data = await delivery.find(
+        {
+          add_to_can_bin_date: { $exists: true },
+        },
+        {
+          "uic_code.code": 1,
+          rp_tray: 1,
+          add_to_can_bin_date: 1,
+          add_to_can_bin_user: 1,
+          add_to_can_bin_description: 1,
+          rdl_two_report: 1,
+          item_id: 1,
+          old_item_details: 1,
+        }
+      );
+      return data;
+    } catch (error) {
+      return error;
+    }
+  },
+  /*-----------------------------------------OUT STOCK-----------------------------------------------------------*/
+  // IT WILL WORK THROUGH NODE CORN
+  checkOutOfStock: async () => {
+    try {
+      const productData = await products.find();
+      let findAllGrade = await trayCategory.find();
+      for (let x of productData) {
+        let arr = [];
+        let checkAnyStxWithItem;
+        let withoutSubMuic;
+        let checkSubmuic = await subMuic.find({ muic: x.muic });
+        for (let trayGrade of findAllGrade) {
+          for (let submUicCon of checkSubmuic) {
+            checkAnyStxWithItem = await masters.findOne({
+              type_taxanomy: "ST",
+              "items.audit_report.sub_muic": submUicCon.sub_muic,
+              tray_grade: trayGrade.code,
+            });
+            if (checkAnyStxWithItem == null) {
+              let key = `SUB-MUIC:${submUicCon.sub_muic}-Grade:${trayGrade.code}`;
+              let value = "Out of Stock";
+              arr.push(`${key}: ${value}`);
+            }
+          }
+          
+            withoutSubMuic = await masters.findOne({
+              type_taxanomy: "ST",
+              "items.audit_report.sub_muic": { $exists: false },
+              items: { $ne: [] },
+              model: x.model_name,
+              brand: x.brand_name,
+              tray_grade: trayGrade.code,
+            });
+            if (withoutSubMuic == null) {
+              let key = `MUIC:${x.muic}-Grade:${trayGrade.code}`;
+              let value = "Out of Stock";
+              arr.push(`${key}: ${value}`);
+            }
+        }
+        let updateProduct = await products.findOneAndUpdate(
+          { vendor_sku_id: x.vendor_sku_id },
+          {
+            $set: {
+              out_of_stock: arr,
+            },
+          }
+        );
+      }
+      return { status: 1 };
+    } catch (error) {
+      console.log(error);
       return error;
     }
   },

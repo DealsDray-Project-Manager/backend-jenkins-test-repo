@@ -20,7 +20,6 @@ module.exports = {
     return new Promise(async (resolve, reject) => {
       const count = { precourmentCount: 0, toolsAndConsumableProcurement: 0 };
       count.toolsAndConsumableProcurement = await partAndColor.count({
-        avl_stock: Number(0),
         sp_category: { $in: ["Tools", "Consumables"] },
       });
       // Step 1: Create the pipeline for aggregation
@@ -347,7 +346,6 @@ module.exports = {
     try {
       let arr = [];
       const data = await partAndColor.find({
-        avl_stock: Number(0),
         sp_category: { $in: ["Tools", "Consumables"] },
       });
       for (let x of data) {
@@ -358,7 +356,19 @@ module.exports = {
           avl_stock: x.avl_stock,
           required_qty: 1,
           name: x.name,
+          requested_qt:0
         };
+        let getHistoryforRequestQtc=await procurmentToolsAndConsumables.findOne({
+          part_number:x.part_code,
+          status: { $ne: "Order Placed" },
+        },
+        {
+          requred_qty:1
+        }
+        )
+        if(getHistoryforRequestQtc){
+          obj['requested_qt']=getHistoryforRequestQtc?.requred_qty
+        }
         arr.push(obj);
       }
       return arr;
