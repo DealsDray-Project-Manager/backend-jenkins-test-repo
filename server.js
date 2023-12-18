@@ -46,7 +46,7 @@ app.use(express.json({ limit: "25mb" }));
 app.use(cors());
 app.use(express.urlencoded({ limit: "25mb", extended: false }));
 // API for web
-app.use("/api/v7/superAdmin", superAdmin);
+app.use("/api/v7/superAdmin",AuthMiddleWare, superAdmin);
 //API for Mobile
 app.use("/api/mobile/v8/user", AuthMiddleWare, mobileUserRouter);
 /* Api for Mis Users */
@@ -54,7 +54,7 @@ app.use("/api/v7/mis", AuthMiddleWare, misUser);
 /* API for WarehouseIn */
 app.use("/api/v7/warehouseIn", AuthMiddleWare, warehouseIn);
 /* API for Bot Out */
-app.use("/api/v7/bot", AuthMiddleWare, bot);
+app.use("/api/v7/bot",AuthMiddleWare, bot);
 /* API for Charging panel */
 app.use("/api/v7/charging", AuthMiddleWare, chargingPanel);
 /* API for BQC panel */
@@ -82,13 +82,15 @@ app.use("/api/v7/purchase-user", AuthMiddleWare, SpPurchasePanel);
 /* API FOR RP-BQC PANEL */
 app.use("/api/v7/rp-bqc-user", AuthMiddleWare,RpbqcPanel);
 /* API FOR RP-AUDIT PANEL */
-app.use("/api/v7/rp-audit-user",RpAuditPanel)
+app.use("/api/v7/rp-audit-user",AuthMiddleWare,RpAuditPanel)
 /* User-profile */
 app.use("/user/profile", express.static(__dirname + "/public/user-profile"));
 
 app.use("/user/document", express.static(__dirname + "/public/buyer-docs"));
 /* Product Image */
 app.use("/product/image", express.static(__dirname + "/public/product-image"));
+/* Product Image */
+app.use("/bot-level/image", express.static(__dirname + "/public/item-image-bot-level"));
 // Error Handling Middlware
 app.use((err, req, res, next) => {
   console.log(err);

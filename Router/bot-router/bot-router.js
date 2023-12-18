@@ -99,26 +99,37 @@ router.post("/awbnScanning", async (req, res, next) => {
 });
 /***********************************************************************************************/
 /* TRAY SEGGREGATION */
-router.post("/traySegregation", async (req, res, next) => {
-  try {
-    let data = await botController.traySegrigation(req.body);
-    if (data.status == 1) {
-      res.status(200).json({
-        message: "Successfully Added",
-      });
-    } else if (data.status == 3) {
-      res.status(202).json({
-        message: "Already Added",
-      });
-    } else {
-      res.status(202).json({
-        message: "Failed",
-      });
+router.post(
+  "/traySegregation",
+  upload.botLevelPhotosOfUnits.fields([
+    { name: "image_one" },
+    { name: "image_two" },
+    { name: "image_three" },
+    { name: "image_four" },
+    { name: "image_five" },
+    { name: "image_six" },
+  ]),
+  async (req, res, next) => {
+    try {
+      let data = await botController.traySegrigation(req.body,req.files);
+      if (data.status == 1) {
+        res.status(200).json({
+          message: "Successfully Added",
+        });
+      } else if (data.status == 3) {
+        res.status(202).json({
+          message: "Already Added",
+        });
+      } else {
+        res.status(202).json({
+          message: "Failed",
+        });
+      }
+    } catch (error) {
+      next(error);
     }
-  } catch (error) {
-    next(error);
   }
-});
+);
 /* Remove Tray Itme */
 router.post("/trayItemRemove", async (req, res, next) => {
   try {

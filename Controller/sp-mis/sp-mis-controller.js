@@ -21,6 +21,7 @@ module.exports = {
       const count = { precourmentCount: 0, toolsAndConsumableProcurement: 0 };
       count.toolsAndConsumableProcurement = await partAndColor.count({
         sp_category: { $in: ["Tools", "Consumables"] },
+        avl_stock:Number(0)
       });
       // Step 1: Create the pipeline for aggregation
       const pipeline = [
@@ -346,7 +347,8 @@ module.exports = {
     try {
       let arr = [];
       const data = await partAndColor.find({
-        sp_category: { $in: ["Tools", "Consumables"],avl_stock:Number(0) },
+        sp_category: { $in: ["Tools", "Consumables"]},
+        avl_stock:Number(0)
       });
       for (let x of data) {
         let obj = {
@@ -375,6 +377,7 @@ module.exports = {
         }
         arr.push(obj);
       }
+      console.log(arr);
       return arr;
     } catch (error) {
       return error;

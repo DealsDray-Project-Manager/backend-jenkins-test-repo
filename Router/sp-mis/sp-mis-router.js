@@ -71,11 +71,9 @@ router.post("/procurment/request", async (req, res, next) => {
 // ISSUE
 router.post("/assignToAgentToolsAndConsumables", async (req, res, next) => {
   try {
-    console.log(req.body);
     const data = await SpMisController.assignToAgentToolsAndConsumables(
       req.body
     );
-    console.log(data);
     if (data.status === 1) {
       res.status(200).json({
         message: "Successfully Assigned",

@@ -1838,12 +1838,10 @@ module.exports = {
   /*----------------------------------GET DELETED TRAYS -------------------------------*/
   getDeletedMasters: async (type) => {
     try {
-      console.log(type);
       const findData = await deletedMaster.find({
         prefix: type,
         status: "Pending",
       });
-      console.log(findData);
       return findData;
     } catch (error) {
       return error;
@@ -3030,7 +3028,6 @@ module.exports = {
             count_report[y._id] = y.count;
           }
           x["count_report"] = count_report;
-          console.log(x);
         }
         resolve(rackCounts);
       } catch (error) {
@@ -3185,7 +3182,6 @@ module.exports = {
         for (let sub of main.grades) {
           main[sub.grade] = sub.count;
         }
-        console.log(main);
       }
       return upgradeReport;
     } catch (error) {
@@ -6375,9 +6371,6 @@ module.exports = {
             },
           }
         );
-        console.log(main3);
-
-        console.log(main4);
       }
       resolve({ status: true });
     });
@@ -6918,7 +6911,7 @@ module.exports = {
       return error;
     }
   },
-  extraUpdateTheLimit:async() => {
+  extraUpdateTheLimit: async () => {
     try {
       const trayId = [
         "STC3199",
@@ -7064,18 +7057,19 @@ module.exports = {
         "STB23698",
         "STC3261",
       ];
-      for(let x of trayId){
-        let updateTray=await masters.updateOne({
-          code:x   
-        },
-        {
-          $set:{
-            limit:40
+      for (let x of trayId) {
+        let updateTray = await masters.updateOne(
+          {
+            code: x,
+          },
+          {
+            $set: {
+              limit: 40,
+            },
           }
-        }
-        )
+        );
       }
-      return {status:1}
+      return { status: 1 };
     } catch (error) {
       return error;
     }

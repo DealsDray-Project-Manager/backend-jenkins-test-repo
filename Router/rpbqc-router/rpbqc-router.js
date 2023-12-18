@@ -12,7 +12,6 @@ router.post("/dashboard/:username", async (req, res, next) => {
     const { username } = req.params;
     const data = await rpbqcController.dashboard(username);
     if (data) {
-      console.log(data);
       res.status(200).json({
         data: data,
       });
@@ -39,7 +38,6 @@ router.post("/issued-trays/:username", async (req, res, next) => {
 
 router.post("/close-page/:username/:trayId", async (req, res, next) => {
   try {
-    console.log(req.params);
     const { username, trayId } = req.params;
     const data = await rpbqcController.getTrayForClosepage(username, trayId);
     if (data.status == 1) {
@@ -72,9 +70,7 @@ router.post("/pedning-item", async (req, res, next) => {
 // ADD RPBQC DATA
 router.post("/add-rpbqc-data", async (req, res, next) => {
   try {
-    console.log(req.body);
     const data = await rpbqcController.addRpBqcData(req.body);
-    console.log(data);
     if (data.status === 1) {
       res.status(200).json({
         message: `Successfully Added into ${data.trayId}`,
@@ -111,31 +107,39 @@ router.post("/close-rpbqc-tray", async (req, res, next) => {
   }
 });
 // GET RPBQC TRAY FOR RDL-2 SELECTION
-router.post("/getRpbqcTrayRdlTwoSelection/:username", async (req, res, next) => {
-  try {
-    const { username } = req.params;
-    const data = await rpbqcController.getRpbqcTrayForRdlSelection(username);
-    if (data) {
-      res.status(200).json({
-        data: data,
-      });
+router.post(
+  "/getRpbqcTrayRdlTwoSelection/:username",
+  async (req, res, next) => {
+    try {
+      const { username } = req.params;
+      const data = await rpbqcController.getRpbqcTrayForRdlSelection(username);
+      if (data) {
+        res.status(200).json({
+          data: data,
+        });
+      }
+    } catch (error) {
+      next(error);
     }
-  } catch (error) {
-    next(error);
   }
-});
+);
 // GET RPBQC TRAY FOR RDL-2 SELECTION
-router.post("/getRpAuditTrayRpBqcSelection/:username", async (req, res, next) => {
-  try {
-    const { username } = req.params;
-    const data = await rpbqcController.getRpAuditTrayForRpBqcelection(username);
-    if (data) {
-      res.status(200).json({
-        data: data,
-      });
+router.post(
+  "/getRpAuditTrayRpBqcSelection/:username",
+  async (req, res, next) => {
+    try {
+      const { username } = req.params;
+      const data = await rpbqcController.getRpAuditTrayForRpBqcelection(
+        username
+      );
+      if (data) {
+        res.status(200).json({
+          data: data,
+        });
+      }
+    } catch (error) {
+      next(error);
     }
-  } catch (error) {
-    next(error);
   }
-});
+);
 module.exports = router;

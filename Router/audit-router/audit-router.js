@@ -266,9 +266,7 @@ router.post("/trayClose/:trayId", async (req, res, next) => {
 router.post("/getColorStorageRam", async (req, res, next) => {
   try {
     const { grade } = req.body;
-    console.log(grade);
     let data = await auditController.getAllStorageAndRamAndColor(grade);
-    console.log(data);
     if (data) {
       res.status(200).json({
         data: data.allOtherData,
@@ -285,7 +283,6 @@ router.post("/getColorStorageRam", async (req, res, next) => {
 /*---------------------------------SUB MUIC -----------------------------------*/
 router.post("/fetchSubMuic", async (req, res, next) => {
   try {
-    console.log(req.body);
     const { storage, ram, color, muic } = req.body;
     const fetchSubMuic = await auditController.findSubMuic(
       storage,

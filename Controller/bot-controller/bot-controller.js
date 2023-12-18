@@ -4,6 +4,8 @@ const { orders } = require("../../Model/ordersModel/ordersModel");
 var mongoose = require("mongoose");
 const Elasticsearch = require("../../Elastic-search/elastic");
 const { unitsActionLog } = require("../../Model/units-log/units-action-log");
+const IISDOMAINPRDT = "https://prexo-v9-2-dev-api.dealsdray.com//bot-level/image/";
+
 /****************************************************************************** */
 module.exports = {
   getAssignedBagData: (userData) => {
@@ -169,7 +171,40 @@ module.exports = {
       }
     });
   },
-  traySegrigation: (trayData) => {
+  traySegrigation: (trayData, docuemnts) => {
+    if (docuemnts?.image_one && docuemnts?.image_one[0]  && docuemnts != undefined) {
+      trayData.image_one = IISDOMAINPRDT + docuemnts.image_one[0].filename;
+    } else {
+      trayData.image_one = "";
+    }
+    if (docuemnts?.image_two && docuemnts?.image_two[0]  && docuemnts != undefined) {
+      trayData.image_two = IISDOMAINPRDT + docuemnts.image_two[0].filename;
+    } else {
+      trayData.image_two = "";
+    }
+    if (docuemnts?.image_three && docuemnts?.image_three[0]  && docuemnts != undefined) {
+      trayData.image_three =
+      IISDOMAINPRDT + docuemnts.image_three[0].filename;
+    } else {
+      trayData.image_three = "";
+    }
+    if (docuemnts?.image_four && docuemnts?.image_four[0]  && docuemnts != undefined) {
+      trayData.image_four =
+      IISDOMAINPRDT + docuemnts.image_four[0].filename;
+    } else {
+      trayData.image_four = "";
+    }
+    if (docuemnts?.image_five && docuemnts?.image_five[0]  && docuemnts != undefined) {
+      trayData.image_five =
+      IISDOMAINPRDT + docuemnts.image_five[0].filename;
+    } else {
+      trayData.image_five = "";
+    }
+    if (docuemnts?.image_six && docuemnts?.image_six[0]  && docuemnts != undefined) {
+      trayData.image_six = IISDOMAINPRDT + docuemnts.image_six[0].filename;
+    } else {
+      trayData.image_six = "";
+    }
     trayData.added_time = Date.now();
     trayData._id = mongoose.Types.ObjectId();
     let obj = {
@@ -224,6 +259,12 @@ module.exports = {
                 tray_location: "Bag Opening",
                 bot_report: obj,
                 updated_at: Date.now(),
+                image_one:trayData.image_one,
+                image_two:trayData.image_two,
+                image_three:trayData.image_three,
+                image_five:trayData.image_five,
+                image_six:trayData.image_six,
+                image_four:trayData.image_four
               },
             },
             {

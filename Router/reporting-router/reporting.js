@@ -650,7 +650,6 @@ router.post("/get-partinventory-ledger/:part_code", async (req, res, next) => {
     const { part_code } = req.params;
     const getPartInventoryLedger =
       await reportingAgentRouter.getPartInventoryLedger(part_code);
-      console.log(getPartInventoryLedger);
     if (getPartInventoryLedger.status == 1) {
       res.status(200).json({
         data: getPartInventoryLedger.data,

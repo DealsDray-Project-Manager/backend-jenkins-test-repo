@@ -895,7 +895,6 @@ router.post("/ready-for-charging-wht", async (req, res, next) => {
 /* SORT TRAY BASED ON THE BRAND AND MODEL */
 router.post("/toWhtTrayForMerge", async (req, res, next) => {
   try {
-    console.log(req.body);
     const {
       location,
       brand,
@@ -938,7 +937,6 @@ router.post(
   "/get-charging-users/:user_type/:location",
   async (req, res, next) => {
     try {
-      console.log(req.params);
       let data = await misUserController.getChargingUsers(
         req.params.user_type,
         req.params.location
@@ -1102,7 +1100,6 @@ router.post(
   "/toMmtTrayForMerge/:fromTray/:location/:itemsCount",
   async (req, res, next) => {
     try {
-      console.log(req.params);
       const { fromTray, location, itemsCount } = req.params;
       let mmtTray = await misUserController.getToTrayMmtMerge(
         fromTray,
@@ -1175,7 +1172,6 @@ router.post("/TrayMergeRequestSend", async (req, res, next) => {
 //GET ITEM BASED ON THE TABS
 router.post("/pickup/items/:type/:location", async (req, res, next) => {
   try {
-    console.log(req.params);
     let { type, page, location } = req.params;
     const data = await misUserController.pickupPageItemView(type, location);
     if (data.items.length !== 0) {
@@ -1659,7 +1655,6 @@ router.post("/ctx/transferRequestSend", async (req, res, next) => {
 // GET STX TRAY
 router.post("/sorting/ctxToStx/stxTray", async (req, res, next) => {
   try {
-    console.log(req.body);
     const { location, brand, model, fromTray, itemCount, status, type } =
       req.body;
     let data = await misUserController.sortingCtxToStxStxTrayGet(
@@ -1928,7 +1923,6 @@ router.post("/whtToRpSorting/assign", async (req, res, next) => {
       actUser,
       screen
     );
-    console.log(data);
     if (data.status == 1) {
       res.status(200).json({
         message: "Successfully Assigned",
@@ -2173,9 +2167,7 @@ router.post("/bagTransferAndReceive", async (req, res, next) => {
 // SEND THE BAG VIA COURIER OR HAND DELIVERY
 router.post("/bagTransferSend", async (req, res, next) => {
   try {
-    console.log(req.body);
     let data = await misUserController.sendTheBagViaCourierOrHand(req.body);
-    console.log(data);
     if (data.status == 1) {
       res.status(200).json({
         message: "Successfully Transferred",
@@ -2191,9 +2183,7 @@ router.post("/bagTransferSend", async (req, res, next) => {
 });
 router.post("/bagTransferReceive", async (req, res, next) => {
   try {
-    console.log(req.body);
     let data = await misUserController.bagTransferReceive(req.body);
-    console.log(data);
     if (data.status == 1) {
       res.status(200).json({
         message: "Successfully Received",
@@ -2238,7 +2228,6 @@ router.post("/assignToWarehouseForRpaToStx", async (req, res, next) => {
       sortId,
       actUser
     );
-    console.log(data);
     if (data.status == 1) {
       res.status(200).json({
         message: "Successfully Assigned to Warehouse",

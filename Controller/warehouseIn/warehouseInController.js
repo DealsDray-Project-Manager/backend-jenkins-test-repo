@@ -2315,7 +2315,7 @@ module.exports = {
             },
           },
         ]);
-        console.log(data);
+
         resolve(data);
       } else {
         let data = await masters.find({
@@ -2414,7 +2414,6 @@ module.exports = {
         status == "Inuse" ||
         status == "Ready to RDL-1"
       ) {
-        console.log("working");
         data = await masters.aggregate([
           {
             $match: {
@@ -2447,7 +2446,6 @@ module.exports = {
             },
           },
         ]);
-        console.log(data);
       } else if (status == "Closed") {
         data = await masters.find({
           $or: [
@@ -6235,11 +6233,12 @@ module.exports = {
   },
   assigntoSoringForPickUp: (username, fromTray, toTray, actUser) => {
     return new Promise(async (resolve, reject) => {
-      let updateToTray
-      let updateFromTray
-       updateToTray = await masters.findOneAndUpdate(
+      let updateToTray;
+      let updateFromTray;
+      updateToTray = await masters.findOneAndUpdate(
         {
-          code: toTray,sort_id:"Pickup Request sent to Warehouse",
+          code: toTray,
+          sort_id: "Pickup Request sent to Warehouse",
         },
         {
           $set: {
@@ -6250,65 +6249,60 @@ module.exports = {
           },
         }
       );
-      if(updateToTray){
+      if (updateToTray) {
         updateFromTray = await masters.findOneAndUpdate(
-         {
-           code: fromTray,
-         },
-         {
-           $set: {
-             issued_user_name: username,
-             requested_date: Date.now(),
-             actual_items: [],
-             temp_array: [],
-             rack_id: null,
-             sort_id: "Issued to Sorting for Pickup",
-           },
-         }
-       );
-       if (updateFromTray && updateToTray) {
-        let state = "Tray";
-        for (let x of updateFromTray?.items) {
-          let unitsLogCreation = await unitsActionLog.create({
-            action_type: "Issued to Sorting for Pickup",
-            created_at: Date.now(),
-            user_name_of_action: actUser,
-            agent_name: updateFromTray.issued_user_name,
-            user_type: "PRC Warehouse",
-            uic: x.uic,
-            tray_id: fromTray,
-            track_tray: state,
-            description: `Issued to Sorting for Pickup to agent :${updateFromTray.issued_user_name} by Wh :${actUser}`,
-          });
-          state = "Units";
-          let deliveryUpdate = await delivery.findOneAndUpdate(
-            { tracking_id: x.tracking_id },
-            {
-              $set: {
-                tray_status: "Issued to Sorting for Pickup",
-                issued_to_agent_for_pickup: Date.now(),
-                tray_location: "Issued To Pickup",
-                updated_at: Date.now(),
-              },
+          {
+            code: fromTray,
+          },
+          {
+            $set: {
+              issued_user_name: username,
+              requested_date: Date.now(),
+              actual_items: [],
+              temp_array: [],
+              rack_id: null,
+              sort_id: "Issued to Sorting for Pickup",
             },
-            {
-              new: true,
-              projection: { _id: 0 },
-            }
-          );
+          }
+        );
+        if (updateFromTray && updateToTray) {
+          let state = "Tray";
+          for (let x of updateFromTray?.items) {
+            let unitsLogCreation = await unitsActionLog.create({
+              action_type: "Issued to Sorting for Pickup",
+              created_at: Date.now(),
+              user_name_of_action: actUser,
+              agent_name: updateFromTray.issued_user_name,
+              user_type: "PRC Warehouse",
+              uic: x.uic,
+              tray_id: fromTray,
+              track_tray: state,
+              description: `Issued to Sorting for Pickup to agent :${updateFromTray.issued_user_name} by Wh :${actUser}`,
+            });
+            state = "Units";
+            let deliveryUpdate = await delivery.findOneAndUpdate(
+              { tracking_id: x.tracking_id },
+              {
+                $set: {
+                  tray_status: "Issued to Sorting for Pickup",
+                  issued_to_agent_for_pickup: Date.now(),
+                  tray_location: "Issued To Pickup",
+                  updated_at: Date.now(),
+                },
+              },
+              {
+                new: true,
+                projection: { _id: 0 },
+              }
+            );
+          }
+          resolve({ status: 1 });
+        } else {
+          resolve({ status: 2 });
         }
-        resolve({ status: 1 });
       } else {
         resolve({ status: 2 });
       }
-      }
-      else{
-        resolve({ status: 2 });
-      }
-
-      
-
-     
     });
   },
   getPickDoneClosedBySorting: (location) => {
@@ -7968,7 +7962,6 @@ module.exports = {
   },
   getRackChangeRequest: (username, sortId, location) => {
     let data = [];
-    console.log(sortId);
     return new Promise(async (resolve, reject) => {
       if (sortId == "MIS") {
         data = await masters.aggregate([
@@ -8204,7 +8197,6 @@ module.exports = {
   },
   // CHECK THE TRAY BEFOR ISSUE TO RPBQC USER AT A TIME ONE TRAY
   checkTrayForIssueToRpBqc: async (trayId, username, user_type) => {
-    console.log(user_type);
     try {
       let trayType = "";
       let checkUserFreeOrNot;
@@ -8259,7 +8251,6 @@ module.exports = {
   // ISSUE THE TRAY TO AGENT RPBQC
   issueTheTrayToRpbqc: async (dataofTray) => {
     try {
-      console.log(dataofTray);
       let status = "Issued to RP-BQC";
       if (dataofTray.user_type == "RP-Audit") {
         status = "Issued to RP-Audit";
@@ -8533,7 +8524,6 @@ module.exports = {
           }
         );
         let spArr = [];
-        console.log(data);
         if (data.length !== 0) {
           for (let spt of data) {
             if (parseInt(spt.limit) > parseInt(spt.items.length)) {
@@ -8565,7 +8555,6 @@ module.exports = {
           },
         }
       );
-      console.log(item);
       if (item) {
         const addToStx = await masters.updateOne(
           { code: dataOfUic.stxTray },
@@ -8844,7 +8833,6 @@ module.exports = {
   // ADD TO CAN BIN
   addToCanBin: async (itemdata) => {
     try {
-      console.log("work");
       const udpateOrRemove = await masters.findOneAndUpdate(
         {
           code: itemdata.trayId,

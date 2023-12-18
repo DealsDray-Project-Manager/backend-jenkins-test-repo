@@ -2,6 +2,7 @@
 const express = require("express");
 // ROUTER
 const router = express.Router();
+const fs = require("fs");
 // CONTROLLER
 const rpAuditController = require("../../Controller/rp-audit-controller/rp-aduit-controller");
 const BlanccoDataFetch = require("../../Utils/blancco-data-fetch");
@@ -12,7 +13,6 @@ router.post("/dashboard/:username", async (req, res, next) => {
   try {
     const { username } = req.params;
     const data = await rpAuditController.dashboard(username);
-    console.log(data);
     if (data) {
       res.status(200).json({
         data: data,
@@ -27,7 +27,6 @@ router.post("/issuedTrays/:username", async (req, res, next) => {
   try {
     const { username } = req.params;
     const data = await rpAuditController.getIssuedTrays(username);
-    console.log(data);
     if (data) {
       res.status(200).json({
         data: data,
@@ -42,7 +41,6 @@ router.post("/startRpAudit", async (req, res, next) => {
   try {
     const { uic, username } = req.body;
     let blanccoData = await BlanccoDataFetch.fetchDataOfRpAuditScan(uic);
-    console.log(blanccoData);
     if (blanccoData.status == 1 || blanccoData.status == 0) {
       let data = await rpAuditController.getDataforStartRPAudit(uic, username);
       if (data.status === 1) {
@@ -67,7 +65,8 @@ router.post("/startRpAudit", async (req, res, next) => {
 router.post("/add-rpAudit-data", async (req, res, next) => {
   try {
     let data;
-    const {
+    let createSubMuic;
+    let {
       status,
       color,
       storage_verification,
@@ -75,7 +74,8 @@ router.post("/add-rpAudit-data", async (req, res, next) => {
       muic,
       username,
       currentSubMuicCount,
-    } = req.body();
+    } = req.body;
+    currentSubMuicCount = `${muic}-${currentSubMuicCount}`;
     if (status == "RP-Audit Passed") {
       createSubMuic = await auditController.createSubMuic(
         color,
@@ -139,7 +139,6 @@ router.post("/add-rpAudit-data", async (req, res, next) => {
 // GET THE TRAY FOR CLOSE
 router.post("/close-page/:username/:trayId", async (req, res, next) => {
   try {
-    console.log(req.params);
     const { username, trayId } = req.params;
     const data = await rpAuditController.getTrayForClosepage(username, trayId);
     if (data.status == 1) {
@@ -159,7 +158,6 @@ router.post("/close-page/:username/:trayId", async (req, res, next) => {
 router.post("/close-rpaudit-tray", async (req, res, next) => {
   try {
     const data = await rpAuditController.closeRpAuditTray(req.body);
-    console.log(data);
     if (data.status == 1) {
       res.status(200).json({
         message: "Successfully closed",

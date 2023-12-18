@@ -344,6 +344,12 @@ const deliverySchema = mongoose.Schema({
   add_to_can_bin_date: Date,
   add_to_can_bin_user: String,
   add_to_can_bin_description: String,
+  image_one:String,
+  image_two:String,
+  image_three:String,
+  image_five:String,
+  image_six:String,
+  image_four:String,
 });
 
 const delivery = mongoose.model("delivery", deliverySchema);

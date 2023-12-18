@@ -610,7 +610,6 @@ router.post("/deleteBrand/:brandId", async (req, res, next) => {
 router.post("/bulkValidationProduct", async (req, res, next) => {
   try {
     let data = await superAdminController.validationBulkProduct(req.body);
-    console.log(data);
     if (data.status == true) {
       res.status(200).json({
         message: "Successfully Validated",
@@ -1133,7 +1132,6 @@ router.post("/createBulkTray", async (req, res, next) => {
           } else {
             obj = JSON.parse(datafile);
             for (let key in allCount) {
-              console.log(key, allCount[key]);
               obj[key] = allCount[key];
             }
 
@@ -2136,7 +2134,6 @@ router.post("/trayracks/view/:warehouse", async (req, res, next) => {
     const trayracksData = await superAdminController.getRackBasedOnTheWarehouse(
       warehouse
     );
-    console.log(trayracksData);
     if (trayracksData) {
       res.status(200).json({
         data: trayracksData,
@@ -2825,7 +2822,6 @@ router.post("/warranty/one/:id", async (req, res, next) => {
 router.post("/partAndColor/create", async (req, res, next) => {
   try {
     const { type } = req.body;
-    console.log(req.body);
     const data = await superAdminController.createPartOrColor(req.body);
     if (data.status == 1) {
       if (type == "part-list") {
@@ -3908,14 +3904,12 @@ router.post("/getTrayForRemoveDuplicate/:trayId", async (req, res, next) => {
 // REMOVE DUPLICATE ITEMS
 router.post("/removeDuplicteFromTray", async (req, res, next) => {
   try {
-    console.log(req.body);
     const { expectedSide, actualSide, trayId } = req.body;
     const data = await superAdminController.removeDuplicateFromTray(
       expectedSide,
       actualSide,
       trayId
     );
-    console.log(data);
     if (data.status == 1) {
       res.status(200).json({
         message: "Successfully Removed",
@@ -4545,7 +4539,6 @@ router.post("/extra/pickupIssueRollBack", async (req, res, next) => {
 router.post("/oneStepBackWhtToRp", async (req, res, next) => {
   try {
     const data = await superAdminController.oneStepBackWhtRp();
-    console.log(data);
     if (data.status == 1) {
       res.status(200).json({
         message: "Done",
@@ -4563,7 +4556,6 @@ router.post("/oneStepBackWhtToRp", async (req, res, next) => {
 router.post("/extra/allSpnDataWithUic", async (req, res, next) => {
   try {
     const data = await superAdminController.getDataOfAllSpnWithUic();
-    console.log(data);
     if (data.status == 1) {
       res.status(200).json({
         message: "Successfull",
@@ -4582,7 +4574,6 @@ router.post("/extra/allSpnDataWithUic", async (req, res, next) => {
 router.post("/extra/whtTrayWiseData", async (req, res, next) => {
   try {
     const data = await superAdminController.whtTrayWiseData();
-    console.log(data);
     if (data.status == 1) {
       res.status(200).json({
         message: "Successfull",

@@ -1493,7 +1493,6 @@ router.post("/viewTrayFromAndTo", async (req, res, next) => {
       type
     );
     if (data) {
-      console.log(data);
       let checkDup = data;
       if (type == "ctx-to-stx-sorting-page") {
         checkDup = await duplicateEntryCheck.onlyItemsArrayForSortingLevel(
@@ -2713,7 +2712,6 @@ router.post("/returnFromWhtToRpSorting/:location", async (req, res, next) => {
 router.post("/recieved-from-sortingWhtToRp", async (req, res, next) => {
   try {
     let data = await warehouseInController.receivedFromWhtToRpSorting(req.body);
-    console.log(data);
     if (data.status == 1) {
       res.status(200).json({
         message: "Successfully Received",
@@ -3050,7 +3048,6 @@ router.post("/return-from-rpbqc/:location", async (req, res, next) => {
 router.post("/receiveFromRpaOrRpb", async (req, res, next) => {
   try {
     let data = await warehouseInController.trayReceiveFromRpaOrRpb(req.body);
-    console.log(data);
     if (data.status == 1) {
       res.status(200).json({
         message: "Successfully Received",
@@ -3118,7 +3115,6 @@ router.post(
         status,
         username
       );
-      console.log(data);
       if (data.status == 1) {
         res.status(200).json({
           data: data.tray,
@@ -3136,7 +3132,6 @@ router.post(
 // GET STX TRAY FOR RPA TO STX
 router.post("/getStxTrayForRpaToStx", async (req, res, next) => {
   try {
-    console.log(req.body);
     const { brand, model, location, uic } = req.body;
     const data = await warehouseInController.getStxTrayForRpaToStxSort(
       brand,
@@ -3144,7 +3139,6 @@ router.post("/getStxTrayForRpaToStx", async (req, res, next) => {
       location,
       uic
     );
-    console.log(data);
     if (data.status === 1) {
       res.status(200).json({
         data: data.tray,
@@ -3171,7 +3165,7 @@ router.post("/getStxTrayForRpaToStx", async (req, res, next) => {
 router.post("/addItemToStxFromRpa", async (req, res, next) => {
   try {
     const data = await warehouseInController.addItemToStxFromRpa(req.body);
-    
+
     if (data.status === 1) {
       res.status(200).json({
         message: "Successfully Added",
@@ -3322,7 +3316,7 @@ router.post("/addToCanBin", async (req, res, next) => {
 // CLOSE CAN BIN TRAY
 router.post("/closeCanBinTray", async (req, res, next) => {
   try {
-    const { trayId, actionUser,description } = req.body;
+    const { trayId, actionUser, description } = req.body;
     const data = await warehouseInController.closeCanBinTray(
       trayId,
       actionUser,
