@@ -2267,4 +2267,66 @@ router.post("/deviceNotRepairableUnits/:location", async (req, res, next) => {
     next(error);
   }
 });
+/*-----------------------------------------SALES MIS STOCK REPORT ----------------------------------------------------------------*/
+router.post("/sales-stock-report", async (req, res, next) => {
+  try {
+    const getReport = await misUserController.salesMisStockReport();
+    if (getReport) {
+      res.status(200).json({
+        data: getReport,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+/*----------------------------------VIEW THE UIC FROM SALES STOCK---------------------------------------*/
+// WITH SUB-MUIC
+router.post("/salesStockReportViewUic/:sub_muic", async (req, res, next) => {
+  try {
+    const { sub_muic } = req.params;
+    const getUicFromSalesReport = await misUserController.getSalesReportUicData(
+      sub_muic
+    );
+    if (getUicFromSalesReport) {
+      res.status(200).json({
+        data: getUicFromSalesReport,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+// WITH MUIC
+router.post("/sales-stock-report-withmuic", async (req, res, next) => {
+  try {
+    const getReport = await misUserController.salesMisStockReportWithMuic();
+    if (getReport) {
+      res.status(200).json({
+        data: getReport,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+/*----------------------------------VIEW THE UIC FROM SALES STOCK---------------------------------------*/
+// WITH MUIC
+router.post(
+  "/salesStockReportViewUicWithMuic/:itemId",
+  async (req, res, next) => {
+    try {
+      const { itemId } = req.params;
+      const getUicFromSalesReport =
+        await misUserController.getSalesReportUicDataWithMuic(itemId);
+      if (getUicFromSalesReport) {
+        res.status(200).json({
+          data: getUicFromSalesReport,
+        });
+      }
+    } catch (error) {
+      next(error);
+    }
+  }
+);
 module.exports = router;

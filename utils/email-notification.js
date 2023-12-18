@@ -284,13 +284,13 @@ module.exports = {
       const mailOptions = {
         from: "prexo-no-reply@dealsdray.com",
         to: "muhammedrafnasvk@gmail.com",
-        subject: ` Critical - Blancoo not updated [${new Date(
-          Date.now()
-        ).toLocaleString("en-GB", {
-          year: "numeric",
-          month: "2-digit",
-          day: "2-digit",
-        })}]`,
+        subject: ` Critical - Blancoo not updated [${new Date().toLocaleString(
+          "en-GB",
+          {
+            month: "long",
+            day: "numeric",
+          }
+        )} ${new Date().getFullYear()}]`,
         html: htmlContent,
       };
       transporter.sendMail(mailOptions, (error, info) => {

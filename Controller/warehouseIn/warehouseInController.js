@@ -6235,25 +6235,11 @@ module.exports = {
   },
   assigntoSoringForPickUp: (username, fromTray, toTray, actUser) => {
     return new Promise(async (resolve, reject) => {
-      let updateFromTray = await masters.findOneAndUpdate(
+      let updateToTray
+      let updateFromTray
+       updateToTray = await masters.findOneAndUpdate(
         {
-          code: fromTray,
-        },
-        {
-          $set: {
-            issued_user_name: username,
-            requested_date: Date.now(),
-            actual_items: [],
-            temp_array: [],
-            rack_id: null,
-            sort_id: "Issued to Sorting for Pickup",
-          },
-        }
-      );
-
-      let updateToTray = await masters.findOneAndUpdate(
-        {
-          code: toTray,
+          code: toTray,sort_id:"Pickup Request sent to Warehouse",
         },
         {
           $set: {
@@ -6264,8 +6250,23 @@ module.exports = {
           },
         }
       );
-
-      if (updateFromTray && updateToTray) {
+      if(updateToTray){
+        updateFromTray = await masters.findOneAndUpdate(
+         {
+           code: fromTray,
+         },
+         {
+           $set: {
+             issued_user_name: username,
+             requested_date: Date.now(),
+             actual_items: [],
+             temp_array: [],
+             rack_id: null,
+             sort_id: "Issued to Sorting for Pickup",
+           },
+         }
+       );
+       if (updateFromTray && updateToTray) {
         let state = "Tray";
         for (let x of updateFromTray?.items) {
           let unitsLogCreation = await unitsActionLog.create({
@@ -6300,6 +6301,14 @@ module.exports = {
       } else {
         resolve({ status: 2 });
       }
+      }
+      else{
+        resolve({ status: 2 });
+      }
+
+      
+
+     
     });
   },
   getPickDoneClosedBySorting: (location) => {
@@ -8604,6 +8613,7 @@ module.exports = {
                 $set: {
                   stx_tray_id: dataOfUic.stxTray,
                   rpa_to_stx_transferred_date: Date.now(),
+                  tray_type: "ST",
                 },
               }
             );
@@ -8989,20 +8999,20 @@ module.exports = {
               arr.push(`${key}: ${value}`);
             }
           }
-          
-            withoutSubMuic = await masters.findOne({
-              type_taxanomy: "ST",
-              "items.audit_report.sub_muic": { $exists: false },
-              items: { $ne: [] },
-              model: x.model_name,
-              brand: x.brand_name,
-              tray_grade: trayGrade.code,
-            });
-            if (withoutSubMuic == null) {
-              let key = `MUIC:${x.muic}-Grade:${trayGrade.code}`;
-              let value = "Out of Stock";
-              arr.push(`${key}: ${value}`);
-            }
+
+          withoutSubMuic = await masters.findOne({
+            type_taxanomy: "ST",
+            "items.audit_report.sub_muic": { $exists: false },
+            items: { $ne: [] },
+            model: x.model_name,
+            brand: x.brand_name,
+            tray_grade: trayGrade.code,
+          });
+          if (withoutSubMuic == null) {
+            let key = `MUIC:${x.muic}-Grade:${trayGrade.code}`;
+            let value = "Out of Stock";
+            arr.push(`${key}: ${value}`);
+          }
         }
         let updateProduct = await products.findOneAndUpdate(
           { vendor_sku_id: x.vendor_sku_id },

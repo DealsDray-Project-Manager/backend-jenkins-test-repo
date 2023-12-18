@@ -18,9 +18,7 @@ module.exports = {
         sort_id: "Issued to RP-Audit",
         issued_user_name: username,
       });
-      console.log(dataOfTray);
       if (dataOfTray) {
-        console.log(dataOfTray?.temp_array?.length);
         obj.rpAuditPending = dataOfTray?.temp_array?.length;
       }
 
@@ -70,6 +68,14 @@ module.exports = {
             },
           },
           {
+            $lookup: {
+              from: "products",
+              localField: `item_id`,
+              foreignField: "vendor_sku_id",
+              as: "products",
+            },
+          },
+          {
             $project: {
               uic_code: 1,
               tracking_id: 1,
@@ -89,6 +95,9 @@ module.exports = {
               imei: 1,
               rdl_fls_one_report: 1,
               rdl_two_report: 1,
+              rp_bqc_report: 1,
+              rp_bqc_software_report: 1,
+              products: 1,
             },
           },
         ]);
@@ -136,6 +145,11 @@ module.exports = {
           status: dataOfRpAudit.status,
           username_of_rpbqc: dataOfRpAudit.username,
           grade: dataOfRpAudit.grade,
+          description: dataOfRpAudit.description,
+          sub_muic: dataOfRpAudit.subMuic,
+          ram_verification: dataOfRpAudit.ram_verification,
+          storage_verification: dataOfRpAudit.storage_verification,
+          color: dataOfRpAudit.color,
         };
         let addIntoTray1, addIntoTray2, addIntoTray3;
         itemData.temp_array[0]["rp_audit_status"] = obj;
@@ -235,6 +249,7 @@ module.exports = {
               $set: {
                 rp_audit_report: dataOfRpAudit,
                 rp_audit_done_date: Date.now(),
+                final_grade: dataOfRpAudit.grade,
               },
             }
           );

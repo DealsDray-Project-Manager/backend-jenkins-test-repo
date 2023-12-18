@@ -82,7 +82,7 @@ app.use("/api/v7/purchase-user", AuthMiddleWare, SpPurchasePanel);
 /* API FOR RP-BQC PANEL */
 app.use("/api/v7/rp-bqc-user", AuthMiddleWare,RpbqcPanel);
 /* API FOR RP-AUDIT PANEL */
-app.use("/api/v7/rp-audit-user", AuthMiddleWare,RpAuditPanel)
+app.use("/api/v7/rp-audit-user",RpAuditPanel)
 /* User-profile */
 app.use("/user/profile", express.static(__dirname + "/public/user-profile"));
 

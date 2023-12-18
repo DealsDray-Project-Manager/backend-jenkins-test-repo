@@ -3171,7 +3171,7 @@ router.post("/getStxTrayForRpaToStx", async (req, res, next) => {
 router.post("/addItemToStxFromRpa", async (req, res, next) => {
   try {
     const data = await warehouseInController.addItemToStxFromRpa(req.body);
-    console.log(data);
+    
     if (data.status === 1) {
       res.status(200).json({
         message: "Successfully Added",

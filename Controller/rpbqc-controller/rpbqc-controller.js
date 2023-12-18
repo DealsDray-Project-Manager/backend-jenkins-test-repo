@@ -19,7 +19,6 @@ module.exports = {
         sort_id: "Issued to RP-BQC",
         issued_user_name: username,
       });
-      console.log(dataOfTray);
       if (dataOfTray) {
         obj.rpBqcPending = dataOfTray?.temp_array?.length;
       }
@@ -43,13 +42,11 @@ module.exports = {
   //GET DATA FOR CLOSE PAGE
   getTrayForClosepage: async (username, trayId) => {
     try {
-      console.log(trayId);
       const data = await masters.findOne({
         code: trayId,
         issued_user_name: username,
         sort_id: "Issued to RP-BQC",
       });
-      console.log(data);
       if (data) {
         return { status: 1, trayData: data };
       } else {

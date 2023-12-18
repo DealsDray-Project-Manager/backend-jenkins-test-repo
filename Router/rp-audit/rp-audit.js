@@ -4,7 +4,8 @@ const express = require("express");
 const router = express.Router();
 // CONTROLLER
 const rpAuditController = require("../../Controller/rp-audit-controller/rp-aduit-controller");
-
+const BlanccoDataFetch = require("../../Utils/blancco-data-fetch");
+const auditController = require("../../Controller/audit-controller/audit-controller");
 /*--------------------------------------------------------------------------------------------------*/
 // DASHBOARD
 router.post("/dashboard/:username", async (req, res, next) => {
@@ -40,20 +41,23 @@ router.post("/issuedTrays/:username", async (req, res, next) => {
 router.post("/startRpAudit", async (req, res, next) => {
   try {
     const { uic, username } = req.body;
-    let data = await rpAuditController.getDataforStartRPAudit(uic, username);
-    console.log(data);
-    if (data.status === 1) {
-      res.status(200).json({
-        data: data.allData,
-      });
-    } else if (data.status === 2) {
-      res.status(202).json({
-        message: "UIC does not exists",
-      });
-    } else {
-      res.status(202).json({
-        message: "Error please try again!",
-      });
+    let blanccoData = await BlanccoDataFetch.fetchDataOfRpAuditScan(uic);
+    console.log(blanccoData);
+    if (blanccoData.status == 1 || blanccoData.status == 0) {
+      let data = await rpAuditController.getDataforStartRPAudit(uic, username);
+      if (data.status === 1) {
+        res.status(200).json({
+          data: data.allData,
+        });
+      } else if (data.status === 2) {
+        res.status(202).json({
+          message: "UIC does not exists",
+        });
+      } else {
+        res.status(202).json({
+          message: "Error please try again!",
+        });
+      }
     }
   } catch (error) {
     next(error);
@@ -62,8 +66,59 @@ router.post("/startRpAudit", async (req, res, next) => {
 // ADD RPBQC DATA
 router.post("/add-rpAudit-data", async (req, res, next) => {
   try {
-    const data = await rpAuditController.addRpAuditData(req.body);
-    console.log(data);
+    let data;
+    const {
+      status,
+      color,
+      storage_verification,
+      ram_verification,
+      muic,
+      username,
+      currentSubMuicCount,
+    } = req.body();
+    if (status == "RP-Audit Passed") {
+      createSubMuic = await auditController.createSubMuic(
+        color,
+        storage_verification,
+        ram_verification,
+        muic,
+        username,
+        currentSubMuicCount
+      );
+      if (createSubMuic.status == 1) {
+        fs.readFile(
+          "myjsonfile.json",
+          "utf8",
+          function readFileCallback(err, datafile) {
+            if (err) {
+            } else {
+              obj = JSON.parse(datafile);
+              let num = parseInt(obj.SUBMUIC.substring(0)) + 1;
+              let updatedStr =
+                obj.SUBMUIC.substring(0, 0) + num.toString().padStart(6, "0");
+              obj.SUBMUIC = updatedStr;
+              json = JSON.stringify(obj);
+              fs.writeFile(
+                "myjsonfile.json",
+                json,
+                "utf8",
+                function readFileCallback(err, data) {
+                  if (err) {
+                  }
+                }
+              );
+            }
+          }
+        );
+        data = await rpAuditController.addRpAuditData(req.body);
+      } else {
+        res.status(202).json({
+          message: "Failed please try again",
+        });
+      }
+    } else {
+      data = await rpAuditController.addRpAuditData(req.body);
+    }
     if (data.status === 1) {
       res.status(200).json({
         message: `Successfully Added into ${data.trayId}`,

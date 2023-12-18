@@ -88,8 +88,9 @@ exports = module.exports = () => {
   }
   // TO CHECK BLANCOO UPDATION IS DONE OR NOT AT 5:AM
   try {
-    corn.schedule("16 10 * * *", () => {
+    corn.schedule("37 16 * * *", () => {
       /*---------------------------xml read ------------------------------------*/
+
       BlancoAutoMation.toCheckBlancoUpdation();
     });
   } catch (error) {

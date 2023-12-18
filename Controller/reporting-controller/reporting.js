@@ -2501,7 +2501,6 @@ module.exports = {
 
         // Calculate toDateTimestamp by adding one day to fromDateTimestamp
         const toDateTimestamp = fromDateTimestamp + oneDayInMilliseconds;
-        console.log(new Date(fromDateTimestamp), new Date(toDateTimestamp));
         const getReportBasisAuditFinelGrade = await delivery.aggregate([
           {
             $match: {
@@ -2740,7 +2739,6 @@ module.exports = {
                   },
                 }
               );
-              console.log(updateRequestStatus);
             }
           }
         }
@@ -2753,7 +2751,6 @@ module.exports = {
   /* ---------------------------------------PART INVENTORY LEDGER------------------------------------------*/
   getPartInventoryLedger: async (part_code) => {
     try {
-      console.log(part_code);
       let findPartData = await partAndColor.findOne(
         { part_code: part_code },
         {

@@ -610,17 +610,17 @@ router.post("/deleteBrand/:brandId", async (req, res, next) => {
 router.post("/bulkValidationProduct", async (req, res, next) => {
   try {
     let data = await superAdminController.validationBulkProduct(req.body);
-
+    console.log(data);
     if (data.status == true) {
       res.status(200).json({
         message: "Successfully Validated",
       });
-    } else if (data.status == 0) {
+    } else if (data.status === 0) {
       res.status(202).json({
         status: "1",
         message: "Error please import file again",
       });
-    } else if (data.status == 1) {
+    } else if (data.status === 1) {
       res.status(202).json({
         status: "1",
         message: "Error some fileds are empty please check",
@@ -1394,8 +1394,12 @@ router.post("/mastersEditHistory/:trayId", async (req, res, next) => {
 /*-----------------------------DELETE MASTER--------------------------------------*/
 router.post("/deleteMaster", async (req, res, next) => {
   try {
-    const { masterId, reason } = req.body;
-    let data = await superAdminController.delteMaster(masterId, reason);
+    const { masterId, reason, actionUser } = req.body;
+    let data = await superAdminController.delteMaster(
+      masterId,
+      reason,
+      actionUser
+    );
     if (data.status) {
       res.status(200).json({
         message: "Successfully Deleted",
@@ -4582,6 +4586,23 @@ router.post("/extra/whtTrayWiseData", async (req, res, next) => {
     if (data.status == 1) {
       res.status(200).json({
         message: "Successfull",
+      });
+    } else {
+      res.status(202).json({
+        message: "Failed",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+// UPDATE THE LIMIT
+router.post("/extra/updateTrayLimit", async (req, res, next) => {
+  try {
+    let data = await superAdminController.extraUpdateTheLimit();
+    if (data.status == 1) {
+      res.status(200).json({
+        message: "Successfully Update",
       });
     } else {
       res.status(202).json({

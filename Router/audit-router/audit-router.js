@@ -266,13 +266,16 @@ router.post("/trayClose/:trayId", async (req, res, next) => {
 router.post("/getColorStorageRam", async (req, res, next) => {
   try {
     const { grade } = req.body;
+    console.log(grade);
     let data = await auditController.getAllStorageAndRamAndColor(grade);
+    console.log(data);
     if (data) {
       res.status(200).json({
         data: data.allOtherData,
         upArray: data.upArray,
         downArray: data.downArray,
         flagToHigh: data.flagToHigh,
+        allCategory:data.allCategory
       });
     }
   } catch (error) {

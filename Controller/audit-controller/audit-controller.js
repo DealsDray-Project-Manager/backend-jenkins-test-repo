@@ -526,6 +526,7 @@ module.exports = {
           upArray: upArray,
           downArray: downArray,
           flagToHigh: flagToHigh,
+          allCategory:findAllCategory
         });
       } else {
         resolve({
@@ -533,6 +534,8 @@ module.exports = {
           upArray: upArray,
           downArray: downArray,
           flagToHigh: flagToHigh,
+          allCategory:findAllCategory
+
         });
       }
     });

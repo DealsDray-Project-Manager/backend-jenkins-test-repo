@@ -3579,7 +3579,6 @@ module.exports = {
   },
   /*-----------------------PICKUP MODEULE-------------------------------*/
   pickupPageItemView: (type, location) => {
-    console.log(type);
     return new Promise(async (resolve, reject) => {
       let items = [];
       const today = new Date(); // Get the current date
@@ -3801,7 +3800,6 @@ module.exports = {
           },
         ]);
       }
-      console.log(items);
       resolve({ items: items });
     });
   },
@@ -3992,7 +3990,6 @@ module.exports = {
           },
         ]);
       }
-      console.log(items);
       resolve({ items: items });
     });
   },
@@ -4074,7 +4071,7 @@ module.exports = {
         ]);
       } else if (type == "Audit Done") {
         items = await masters.aggregate([
-          { $match: { sort_id: "Ready to RDL", cpc: location } },
+          { $match: { sort_id: "Ready to RDL-1", cpc: location } },
           {
             $lookup: {
               from: "trayracks",
@@ -4765,7 +4762,6 @@ module.exports = {
           },
         },
       ]);
-      console.log(data);
       if (data) {
         resolve(data);
       }
@@ -5033,7 +5029,6 @@ module.exports = {
               item.rdl_fls_report.selected_status === "Software Installation"
           ).length);
       });
-      console.log(findItem);
       resolve(findItem);
     });
   },
@@ -5175,7 +5170,6 @@ module.exports = {
       let partsNotAvailable = [];
       let units = [];
       let temp = [];
-      console.log(findItem);
       if (findItem) {
         for (let x of findItem) {
           let flag = false;
@@ -6333,7 +6327,6 @@ module.exports = {
     grade,
     system_status
   ) => {
-    console.log(system_status);
     return new Promise(async (resolve, reject) => {
       let obj = {};
       if (system_status == "IN STX" || system_status == "IN CTX") {
@@ -6833,6 +6826,214 @@ module.exports = {
       ]);
 
       return findUpgardeUnits;
+    } catch (error) {
+      return error;
+    }
+  },
+  // SALES MIS STOCK REPORT
+  salesMisStockReport: async () => {
+    try {
+      const salesStockReport = await delivery.aggregate([
+        {
+          $match: {
+            stx_tray_id: { $exists: true },
+            tray_type: "ST",
+            item_moved_to_billed_bin: { $exists: false },
+            "audit_report.sub_muic": { $exists: true },
+          },
+        },
+        {
+          $group: {
+            _id: {
+              sub_muic: "$audit_report.sub_muic",
+              final_grade: "$final_grade",
+            },
+            count: { $sum: 1 }, // Count the occurrences of each grade within each item_id
+            old_item_details: { $first: "$old_item_details" }, // Include old_item_details in the result
+          },
+        },
+        {
+          $group: {
+            _id: "$_id.sub_muic",
+            grades: {
+              $push: {
+                grade: "$_id.final_grade",
+                count: "$count",
+              },
+            },
+            total: { $sum: "$count" }, // Calculate the total count for each item_id
+            old_item_details: { $first: "$old_item_details" }, // Include old_item_details in the result
+          },
+        },
+      ]);
+      for (let main of salesStockReport) {
+        for (let sub of main.grades) {
+          main[sub.grade] = sub.count;
+        }
+      }
+      return salesStockReport;
+    } catch (error) {
+      return error;
+    }
+  },
+  // VIEW UIC IN SALES STOCK REPORT
+  getSalesReportUicData: async (subMuic) => {
+    try {
+      const data = await delivery.find(
+        {
+          stx_tray_id: { $exists: true },
+          tray_type: "ST",
+          item_moved_to_billed_bin: { $exists: false },
+          "audit_report.sub_muic": subMuic,
+        },
+        {
+          "uic_code.code": 1,
+          old_item_details: 1,
+          audit_report: 1,
+          audit_done_date: 1,
+          rdl_fls_one_report: 1,
+          rdl_fls_one_user_name: 1,
+          rdl_fls_closed_date: 1,
+        }
+      );
+      let arr = [];
+      for (let x of data) {
+        // console.log(x.uic_code.code);
+        let findTray = await masters.findOne(
+          {
+            "items.uic": x.uic_code.code,
+            prefix: "tray-master",
+            type_taxanomy: { $nin: ["SPT"] },
+          },
+          { code: 1 }
+        );
+        let obj = {
+          uic_code: x.uic_code,
+          old_item_details: x.old_item_details,
+          audit_report: x.audit_report,
+          audit_done_date: x.audit_done_date,
+          rdl_fls_one_report: x.rdl_fls_one_report,
+          rdl_fls_one_user_name: x.rdl_fls_one_user_name,
+          rdl_fls_closed_date: x.rdl_fls_closed_date,
+        };
+        if (findTray) {
+          obj["current_tray_id"] = findTray.code;
+        } else {
+          obj["current_tray_id"] = "";
+        }
+        arr.push(obj);
+      }
+      return arr;
+    } catch (error) {
+      return error;
+    }
+  },
+  salesMisStockReportWithMuic:async () => {
+    try {
+      const salesStockReport = await delivery.aggregate([
+        {
+          $match: {
+            stx_tray_id: { $exists: true },
+            tray_type: "ST",
+            item_moved_to_billed_bin: { $exists: false },
+            "audit_report.sub_muic": { $exists: false },
+          },
+        },
+        {
+          $lookup: {
+            from: "products",
+            localField: `item_id`,
+            foreignField: "vendor_sku_id",
+            as: "products",
+          },
+        },
+        {
+          $group: {
+            _id: {
+              item_id: "$item_id",
+              final_grade: "$final_grade",
+            },
+            count: { $sum: 1 }, // Count the occurrences of each grade within each item_id
+            old_item_details: { $first: "$old_item_details" }, // Include old_item_details in the result
+            products: { $first: "$products" }, // Include the products array in the result
+
+          },
+        },
+        {
+          $group: {
+            _id: "$_id.item_id",
+            grades: {
+              $push: {
+                grade: "$_id.final_grade",
+                count: "$count",
+              },
+            },
+            total: { $sum: "$count" }, // Calculate the total count for each item_id
+            old_item_details: { $first: "$old_item_details" }, // Include old_item_details in the result
+            products: { $first: "$products" }, // Include the products array in the result
+          },
+        },
+      ]);
+      for (let main of salesStockReport) {
+        for (let sub of main.grades) {
+          main[sub.grade] = sub.count;
+        }
+        main['muic']=main?.products[0]?.muic
+      }
+      return salesStockReport;
+    } catch (error) {
+      return error;
+    }
+  },
+  // VIEW UIC IN SALES STOCK REPORT BASED ON MUIC
+  getSalesReportUicDataWithMuic:async(itemId) => {
+    try {
+      const data = await delivery.find(
+        {
+          stx_tray_id: { $exists: true },
+          tray_type: "ST",
+          item_moved_to_billed_bin: { $exists: false },
+          "audit_report.sub_muic": { $exists: false },
+          item_id: itemId,
+        },
+        {
+          "uic_code.code": 1,
+          old_item_details: 1,
+          audit_report: 1,
+          audit_done_date: 1,
+          rdl_fls_one_report: 1,
+          rdl_fls_one_user_name: 1,
+          rdl_fls_closed_date: 1,
+        }
+      );
+      let arr = [];
+      for (let x of data) {
+        // console.log(x.uic_code.code);
+        let findTray = await masters.findOne(
+          {
+            "items.uic": x.uic_code.code,
+            prefix: "tray-master",
+            type_taxanomy: { $nin: ["SPT"] },
+          },
+          { code: 1 }
+        );
+        let obj = {
+          uic_code: x.uic_code,
+          old_item_details: x.old_item_details,
+          audit_report: x.audit_report,
+          audit_done_date: x.audit_done_date,
+          rdl_fls_one_report: x.rdl_fls_one_report,
+          rdl_fls_one_user_name: x.rdl_fls_one_user_name,
+          rdl_fls_closed_date: x.rdl_fls_closed_date,
+        };
+        if (findTray) {
+          obj["current_tray_id"] = findTray.code;
+        } else {
+          obj["current_tray_id"] = "";
+        }
+        arr.push(obj);
+      }
+      return arr;
     } catch (error) {
       return error;
     }

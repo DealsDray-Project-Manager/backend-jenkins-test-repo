@@ -346,7 +346,7 @@ module.exports = {
     try {
       let arr = [];
       const data = await partAndColor.find({
-        sp_category: { $in: ["Tools", "Consumables"] },
+        sp_category: { $in: ["Tools", "Consumables"],avl_stock:Number(0) },
       });
       for (let x of data) {
         let obj = {
@@ -356,9 +356,11 @@ module.exports = {
           avl_stock: x.avl_stock,
           required_qty: 1,
           name: x.name,
-          requested_qt:0
+          requested_qt:0,
+          box_id:x.box_id,
+          description:x.description,
         };
-        let getHistoryforRequestQtc=await procurmentToolsAndConsumables.findOne({
+        let getHistoryforRequestQtc=await procurmentToolsAndConsumables.find({
           part_number:x.part_code,
           status: { $ne: "Order Placed" },
         },
@@ -366,8 +368,10 @@ module.exports = {
           requred_qty:1
         }
         )
-        if(getHistoryforRequestQtc){
-          obj['requested_qt']=getHistoryforRequestQtc?.requred_qty
+        if(getHistoryforRequestQtc.length !== 0){
+          for(let qtyCount of getHistoryforRequestQtc){
+            obj['requested_qt']=Number(obj['requested_qt'] + qtyCount?.requred_qty)
+          }
         }
         arr.push(obj);
       }

@@ -297,7 +297,6 @@ module.exports = {
               data.last_password_changed == undefined ||
               timeDifference >= oneWeekInMilliseconds
             ) {
-              console.log("w");
               resolve({ status: 4 });
             } else {
               resolve({ data: data, status: 1 });
@@ -347,7 +346,6 @@ module.exports = {
         if (findData.password == userData.new_password) {
           resolve({ status: 2 });
         } else {
-          console.log(findData.password);
           let data = await user.updateOne(
             { _id: userData._id, password: userData.old_password },
             {
@@ -480,7 +478,6 @@ module.exports = {
         type_taxanomy: "CPC",
         location_type: { $nin: [type, "Sales"] },
       });
-      console.log(cpc.length);
       resolve(cpc);
     });
   },
@@ -1812,7 +1809,7 @@ module.exports = {
 
   /*--------------------------------DELETE MASTER-----------------------------------*/
 
-  delteMaster: (masterId, reason) => {
+  delteMaster: (masterId, reason, actionUser) => {
     return new Promise(async (resolve, reject) => {
       let data = await masters.findOneAndDelete({ code: masterId });
       if (data) {
@@ -1830,6 +1827,7 @@ module.exports = {
           prefix: data.prefix,
           limit: data.limit,
           reason: reason,
+          deleted_by: actionUser,
         });
         resolve({ status: true });
       } else {
@@ -3094,60 +3092,59 @@ module.exports = {
       return error;
     }
   },
-  // VIEW TRAY WITHOUT RACK 
-  getTrayWithoutRack:async()=>{
-      try {
-        const data = await masters.aggregate([
-          {
-            $match: {
-              rack_id: null,
-              prefix:"tray-master",
-              sort_id:{$ne:"No Status"}
-            },
-          },
-          {
-            $project: {
-              code: 1,
-              rack_id: 1,
-              brand: 1,
-              model: 1,
-              sort_id: 1,
-              created_at: 1,
-              rackDetails: 1,
-              limit: 1,
-              items_length: {
-                $cond: {
-                  if: { $isArray: "$items" },
-                  then: { $size: "$items" },
-                  else: 0,
-                },
-              },
-              actual_items: {
-                $cond: {
-                  if: { $isArray: "$actual_items" },
-                  then: { $size: "$actual_items" },
-                  else: 0,
-                },
-              },
-            },
-          },
-        ]);
-        return data
-      } catch (error) {
-        return error
-      }
-  },
-  viewUnitsDataRack:async(trayId)=>{
+  // VIEW TRAY WITHOUT RACK
+  getTrayWithoutRack: async () => {
     try {
-      const data=await masters.findOne({code:trayId})
-      if(data){
-        return {status:1,trayData:data}
-      }
-      else{
-        return {status:2}
+      const data = await masters.aggregate([
+        {
+          $match: {
+            rack_id: null,
+            prefix: "tray-master",
+            sort_id: { $ne: "No Status" },
+          },
+        },
+        {
+          $project: {
+            code: 1,
+            rack_id: 1,
+            brand: 1,
+            model: 1,
+            sort_id: 1,
+            created_at: 1,
+            rackDetails: 1,
+            limit: 1,
+            items_length: {
+              $cond: {
+                if: { $isArray: "$items" },
+                then: { $size: "$items" },
+                else: 0,
+              },
+            },
+            actual_items: {
+              $cond: {
+                if: { $isArray: "$actual_items" },
+                then: { $size: "$actual_items" },
+                else: 0,
+              },
+            },
+          },
+        },
+      ]);
+      return data;
+    } catch (error) {
+      return error;
+    }
+  },
+  viewUnitsDataRack: async (trayId) => {
+    try {
+      const data = await masters.findOne({ code: trayId });
+      if (data) {
+        return { status: 1, trayData: data };
+      } else {
+        return { status: 2 };
       }
     } catch (error) {
-      return error
+      return error;
     }
   },
   /* -------------------------------------------------UPGRADE REPORT IN SUPER-ADMIN NEW FORMAT---------------------------------------*/
@@ -3207,9 +3204,39 @@ module.exports = {
           old_item_details: 1,
           audit_report: 1,
           audit_done_date: 1,
+          rdl_fls_one_report: 1,
+          rdl_fls_one_user_name: 1,
+          rdl_fls_closed_date: 1,
         }
       );
-      return data;
+      let arr = [];
+      for (let x of data) {
+        // console.log(x.uic_code.code);
+        let findTray = await masters.findOne(
+          {
+            "items.uic": x.uic_code.code,
+            prefix: "tray-master",
+            type_taxanomy: { $nin: ["SPT"] },
+          },
+          { code: 1 }
+        );
+        let obj = {
+          uic_code: x.uic_code,
+          old_item_details: x.old_item_details,
+          audit_report: x.audit_report,
+          audit_done_date: x.audit_done_date,
+          rdl_fls_one_report: x.rdl_fls_one_report,
+          rdl_fls_one_user_name: x.rdl_fls_one_user_name,
+          rdl_fls_closed_date: x.rdl_fls_closed_date,
+        };
+        if (findTray) {
+          obj["current_tray_id"] = findTray.code;
+        } else {
+          obj["current_tray_id"] = "";
+        }
+        arr.push(obj);
+      }
+      return arr;
     } catch (error) {
       return error;
     }
@@ -6887,6 +6914,168 @@ module.exports = {
         }
       }
       return { status: 1 };
+    } catch (error) {
+      return error;
+    }
+  },
+  extraUpdateTheLimit:async() => {
+    try {
+      const trayId = [
+        "STC3199",
+        "STC3200",
+        "STC3201",
+        "STC3202",
+        "STC3203",
+        "STC3204",
+        "STC3205",
+        "STC3206",
+        "STC3207",
+        "STC3208",
+        "STC3209",
+        "STRB2661",
+        "STRB2662",
+        "STRB2664",
+        "STB23671",
+        "STB23672",
+        "STB23673",
+        "STB23674",
+        "STD4012",
+        "STC3210",
+        "STC3211",
+        "STC3212",
+        "STC3213",
+        "STB23675",
+        "STB23676",
+        "STD4013",
+        "STRB2668",
+        "STRB2671",
+        "STRB2672",
+        "STRB2673",
+        "STA1015",
+        "STA1018",
+        "STC3214",
+        "STB23677",
+        "STB23678",
+        "STB23679",
+        "STRB2674",
+        "STRB2676",
+        "STA1020",
+        "STC3215",
+        "STC3216",
+        "STB23680",
+        "STRB2680",
+        "STB23681",
+        "STB23682",
+        "STC3217",
+        "STC3218",
+        "STC3219",
+        "STC3220",
+        "STC3221",
+        "STRB2681",
+        "STRB2683",
+        "STRB2684",
+        "STRB2685",
+        "STB2169",
+        "STB2170",
+        "STB2171",
+        "STB23683",
+        "STB23684",
+        "STB23685",
+        "STC3222",
+        "STC3223",
+        "STRB2688",
+        "STC3224",
+        "STC3225",
+        "STB2172",
+        "STB2173",
+        "STB23687",
+        "STC3226",
+        "STRB2689",
+        "STB2174",
+        "STB23688",
+        "STC3227",
+        "STD4014",
+        "STB2175",
+        "STB2176",
+        "STB2177",
+        "STA1026",
+        "STB23689",
+        "STC3228",
+        "STC3229",
+        "STRB2700",
+        "STC3230",
+        "STC3231",
+        "STC3232",
+        "STC3233",
+        "STB23690",
+        "STB23691",
+        "STB23692",
+        "STRB2703",
+        "STA1027",
+        "STB2178",
+        "STB2179",
+        "STB2180",
+        "STC3234",
+        "STC3235",
+        "STC3236",
+        "STC3237",
+        "STB23693",
+        "STRB2705",
+        "STC3238",
+        "STC3239",
+        "STC3240",
+        "STC3241",
+        "STC3242",
+        "STC3243",
+        "STC3244",
+        "STC3245",
+        "STC3246",
+        "STC3247",
+        "STC3248",
+        "STC3249",
+        "STB2181",
+        "STB2182",
+        "STB2183",
+        "STB2184",
+        "STB2185",
+        "STB2186",
+        "STB2187",
+        "STB23694",
+        "STRB2707",
+        "STC3250",
+        "STC3251",
+        "STC3252",
+        "STC3253",
+        "STC3254",
+        "STC3255",
+        "STC3256",
+        "STC3257",
+        "STB2188",
+        "STB2189",
+        "STB23695",
+        "STB2190",
+        "STB2191",
+        "STC3258",
+        "STC3259",
+        "STB23696",
+        "STC3260",
+        "STB23697",
+        "STB2192",
+        "STB23698",
+        "STC3261",
+      ];
+      for(let x of trayId){
+        let updateTray=await masters.updateOne({
+          code:x   
+        },
+        {
+          $set:{
+            limit:40
+          }
+        }
+        )
+      }
+      return {status:1}
     } catch (error) {
       return error;
     }

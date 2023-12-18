@@ -65,6 +65,9 @@ module.exports = {
       .pipe(csvParser())
       .on("data", (data) => {
         data["device_color_one"] = data["Device_Color"];
+        data["device_color_two"] = data["Device_Color"];
+        data["hardware_device_color"] = data["Device color"];
+
         result.push(toLowerKeys(data));
       })
       .on("end", async () => {
