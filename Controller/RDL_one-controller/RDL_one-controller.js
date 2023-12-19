@@ -84,7 +84,6 @@ module.exports = {
       }
     });
   },
-
   rdlFlsDoneClose: (trayData) => {
     return new Promise(async (resolve, reject) => {
       let dataz = await masters.findOne({ code: trayData.trayId });

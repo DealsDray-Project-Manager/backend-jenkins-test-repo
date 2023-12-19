@@ -6642,24 +6642,31 @@ module.exports = {
   },
   tempReq: async () => {
     try {
-      const startDate = new Date("2023-10-23T00:00:00.000+00:00");
-      const endDate = new Date("2023-10-23T23:59:59.999+00:00");
-      const find = await unitsActionLog.updateMany(
-        {
-          created_at: {
-            $gte: startDate,
-            $lt: endDate,
-          },
-          tray_id: "RPT18042",
-          action_type: "Closed by RDL-two",
-        },
-        {
-          $set: {
-            temp_flag: "YES",
-          },
+      let arr=[
+        "STB23733",
+        "STC3199",
+        "STRB2646",
+        "STC3190",
+        "STB23645",
+        "STB2132",
+        "STB2072",
+        "STC3067"
+      ]
+      for(let x of arr){
+        let findTray=await masters.findOne({code:x})
+        console.log(findTray);
+        for(let y of findTray.items){
+          console.log(y.uic);
+          let finduic=await delivery.updateOne({"uic_code.code":y.uic},{
+            $set:{
+              temp_flag:true
+            }
+          })
+          console.log(finduic);
+         
         }
-      );
-      console.log(find);
+      }
+      return {status:1}
     } catch (error) {
       return error;
     }

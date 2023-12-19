@@ -5165,6 +5165,11 @@ module.exports = {
             code: "$code",
           },
         },
+        {
+          $sort: {
+              "deliveryData.rdl_fls_closed_date": -1
+          }
+      }
       ]);
       let partsAvailable = [];
       let partsNotAvailable = [];
@@ -5186,13 +5191,20 @@ module.exports = {
             let count = temp.filter(function (element) {
               return element === y.part_id;
             }).length;
-
-            if (Number(count) <= Number(checkPart?.avl_stock)) {
+            if (Number(count) < Number(checkPart?.avl_stock)) {
             } else {
               flag = true;
+              const matchingIndex = temp.findIndex(element => {
+                return x.items.rdl_fls_report.partRequired.some(item => item?.part_id === element);
+            });
+            
+            if (matchingIndex !== -1) {
+                // Remove one element at the found index
+                temp.splice(matchingIndex, 1);
+            }
             }
           }
-
+          console.log(temp);
           if (flag) {
             partsNotAvailable.push(x);
           } else {
@@ -6843,6 +6855,14 @@ module.exports = {
           },
         },
         {
+          $lookup: {
+            from: "submuics",
+            localField: `audit_report.sub_muic`,
+            foreignField: "sub_muic",
+            as: "subMuicData",
+          },
+        },
+        {
           $group: {
             _id: {
               sub_muic: "$audit_report.sub_muic",
@@ -6850,6 +6870,7 @@ module.exports = {
             },
             count: { $sum: 1 }, // Count the occurrences of each grade within each item_id
             old_item_details: { $first: "$old_item_details" }, // Include old_item_details in the result
+            subMuicData:{$first:"$subMuicData"},
           },
         },
         {
@@ -6861,16 +6882,21 @@ module.exports = {
                 count: "$count",
               },
             },
+            subMuicData:{$first:"$subMuicData"},
             total: { $sum: "$count" }, // Calculate the total count for each item_id
             old_item_details: { $first: "$old_item_details" }, // Include old_item_details in the result
           },
         },
       ]);
       for (let main of salesStockReport) {
+        main['storage']=main.subMuicData?.[0]?.storage
+        main['ram']=main.subMuicData?.[0]?.ram
+        main['color']=main.subMuicData?.[0]?.color
         for (let sub of main.grades) {
           main[sub.grade] = sub.count;
         }
       }
+      console.log(salesStockReport);
       return salesStockReport;
     } catch (error) {
       return error;
@@ -6879,6 +6905,7 @@ module.exports = {
   // VIEW UIC IN SALES STOCK REPORT
   getSalesReportUicData: async (subMuic) => {
     try {
+      
       const data = await delivery.find(
         {
           stx_tray_id: { $exists: true },
@@ -6928,7 +6955,7 @@ module.exports = {
       return error;
     }
   },
-  salesMisStockReportWithMuic:async () => {
+  salesMisStockReportWithMuic: async () => {
     try {
       const salesStockReport = await delivery.aggregate([
         {
@@ -6956,7 +6983,6 @@ module.exports = {
             count: { $sum: 1 }, // Count the occurrences of each grade within each item_id
             old_item_details: { $first: "$old_item_details" }, // Include old_item_details in the result
             products: { $first: "$products" }, // Include the products array in the result
-
           },
         },
         {
@@ -6978,7 +7004,7 @@ module.exports = {
         for (let sub of main.grades) {
           main[sub.grade] = sub.count;
         }
-        main['muic']=main?.products[0]?.muic
+        main["muic"] = main?.products[0]?.muic;
       }
       return salesStockReport;
     } catch (error) {
@@ -6986,7 +7012,7 @@ module.exports = {
     }
   },
   // VIEW UIC IN SALES STOCK REPORT BASED ON MUIC
-  getSalesReportUicDataWithMuic:async(itemId) => {
+  getSalesReportUicDataWithMuic: async (itemId) => {
     try {
       const data = await delivery.find(
         {

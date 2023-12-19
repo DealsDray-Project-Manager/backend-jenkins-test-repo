@@ -46,7 +46,7 @@ app.use(express.json({ limit: "25mb" }));
 app.use(cors());
 app.use(express.urlencoded({ limit: "25mb", extended: false }));
 // API for web
-app.use("/api/v7/superAdmin",AuthMiddleWare, superAdmin);
+app.use("/api/v7/superAdmin", superAdmin);
 //API for Mobile
 app.use("/api/mobile/v8/user", AuthMiddleWare, mobileUserRouter);
 /* Api for Mis Users */
