@@ -1960,6 +1960,7 @@ router.post("/stxUtilityScanUic/:uic", async (req, res, next) => {
   try {
     // PARAMS
     const { uic } = req.params;
+
     // FUNCTION FROM CONTROLLER
     let data = await misUserController.stxUtilityScanUic(uic);
     if (data.status == 1) {

@@ -2,9 +2,15 @@ const mongoose = require("mongoose");
 
 const tempOrdersSchema = mongoose.Schema({
   uic: String,
-  tray_id:String,
+  final_grade:String,
+  muic:String,
   sub_muic:String,
-  audit_report:Object
+  brand:String,
+  model:String,
+  color:String,
+  storage:String,
+  ram:String,
+  item_moved_to_billed_bin:String
 });
 
 const tempOrdersReq = mongoose.model("tempOrdersReq", tempOrdersSchema);

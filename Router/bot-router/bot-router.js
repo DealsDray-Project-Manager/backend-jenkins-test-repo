@@ -111,7 +111,7 @@ router.post(
   ]),
   async (req, res, next) => {
     try {
-      let data = await botController.traySegrigation(req.body,req.files);
+      let data = await botController.traySegrigation(req.body, req.files);
       if (data.status == 1) {
         res.status(200).json({
           message: "Successfully Added",

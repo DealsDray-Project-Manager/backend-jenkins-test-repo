@@ -98,7 +98,7 @@ exports = module.exports = () => {
   }
   /*----------------------------------------------OUT STOCK ---------------------*/
   try {
-    corn.schedule("12 15 * * *", () => {
+    corn.schedule("53 18 * * *", () => {
       /*---------------------------xml read ------------------------------------*/
       warehouseController.checkOutOfStock();
     });

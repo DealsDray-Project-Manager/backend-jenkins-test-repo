@@ -244,6 +244,9 @@ const deliverySchema = mongoose.Schema({
   rdl_fls_done_closed_wh: {
     type: Date,
   },
+  rdl_fls_done_units_date:{
+    type:Date
+  },
   rdl_fls_one_report: {
     type: Object,
   },

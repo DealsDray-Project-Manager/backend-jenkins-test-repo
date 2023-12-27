@@ -2,8 +2,10 @@ const { orders } = require("../../Model/ordersModel/ordersModel");
 const { delivery } = require("../../Model/deliveryModel/delivery");
 const { masters } = require("../../Model/mastersModel");
 const Elasticsearch = require("../../Elastic-search/elastic");
-const {partAndColor}=require("../../Model/Part-list-and-color/part-list-and-color");
-const {unitsActionLog} = require("../../Model/units-log/units-action-log");
+const {
+  partAndColor,
+} = require("../../Model/Part-list-and-color/part-list-and-color");
+const { unitsActionLog } = require("../../Model/units-log/units-action-log");
 
 module.exports = {
   getAssignedTray: (username) => {
@@ -77,6 +79,14 @@ module.exports = {
           }
         );
         if (data.matchedCount != 0) {
+          let deliveryUpdate = await delivery.findOneAndUpdate(
+            { "uic_code.uic": trayItemData.uic },
+            {
+              $set: {
+                rdl_fls_done_units_date: Date.now(),
+              },
+            }
+          );
           resolve({ status: 1 });
         } else {
           resolve({ status: 2 });
@@ -97,7 +107,6 @@ module.exports = {
             temp_array: [],
             sort_id: "Closed by RDL-1",
             closed_date_agent: Date.now(),
-
           },
         },
         {
@@ -105,7 +114,7 @@ module.exports = {
         }
       );
       if (dataSwitch) {
-        let state="Tray"
+        let state = "Tray";
         for (let x of dataSwitch.items) {
           const addLogsofUnits = await unitsActionLog.create({
             action_type: "Closed by RDL-1",
@@ -114,11 +123,11 @@ module.exports = {
             tray_id: trayData.trayId,
             user_name_of_action: dataSwitch.issued_user_name,
             report: x.rdl_fls_report,
-            user_type:"PRC RDL-1",
-            description:`Closed by RDL-1 agent:${dataSwitch.issued_user_name}`,
-            track_tray:state
+            user_type: "PRC RDL-1",
+            description: `Closed by RDL-1 agent:${dataSwitch.issued_user_name}`,
+            track_tray: state,
           });
-          state="Units"
+          state = "Units";
           let deliveryUpdate = await delivery.findOneAndUpdate(
             { tracking_id: x.tracking_id },
             {
@@ -150,7 +159,8 @@ module.exports = {
   },
   rdlFlsFetchPartList: (muic) => {
     return new Promise(async (resolve, reject) => {
-      const partList = await partAndColor.find({ "muic_association.muic": muic, status: "Active" })
+      const partList = await partAndColor
+        .find({ "muic_association.muic": muic, status: "Active" })
         .catch((err) => {
           reject(err);
         });

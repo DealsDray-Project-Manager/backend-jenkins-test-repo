@@ -14,6 +14,7 @@ const PartInventoryLedgerSchema = mongoose.Schema(
     },
     box_id:String,
     tray_id:String,
+    avl_stock:Number
   },
   {
     timestamps: true, // This option adds created_at and updated_at timestamps to your documents

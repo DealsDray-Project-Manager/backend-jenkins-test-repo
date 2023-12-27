@@ -2,7 +2,7 @@
 <request>
 <export-report>
         <report mode="original"/>
-        <search path="user_data.fields.UIC" value="91010000380" operator="eq" datatype="string" conjunction="true" />
+        <search path="user_data.fields.UIC" value="92100004303" operator="eq" datatype="string" conjunction="true" />
         <reportColumns>
             <columnPath>user_data.fields.UIC</columnPath>
             <columnPath>user_data.fields.Tray-ID</columnPath>
@@ -56,7 +56,6 @@
             <columnPath>blancco_data.blancco_hardware_report.hardware_tests.camera_flash</columnPath>
             <columnPath>blancco_data.blancco_hardware_report.hardware_tests.front_camera_flash</columnPath>
             <columnPath>blancco_data.blancco_hardware_report.hardware_tests.battery_charging</columnPath>
-            <columnPath>blancco_data.blancco_hardware_report.hardware_tests.headset</columnPath>
             <columnPath>blancco_data.blancco_hardware_report.hardware_tests.touch</columnPath>
             <columnPath>blancco_data.blancco_hardware_report.hardware_tests.proximity</columnPath>
             <columnPath>blancco_data.blancco_hardware_report.hardware_tests.compass</columnPath>
@@ -91,12 +90,9 @@
             <columnPath>blancco_data.description.description_entries.company_information.business_location</columnPath>
             <columnPath>report.id</columnPath>
             <columnPath>blancco_data.blancco_hardware_report.system.rooted</columnPath>
-            <columnPath>blancco_data.blancco_hardware_report.system.internal_model</columnPath>
             <columnPath>blancco_data.blancco_hardware_report.system.frp_status</columnPath>
             <columnPath>user_data.fields.FRP_Status</columnPath>
             <columnPath>blancco_data.blancco_hardware_report.system.mdm_status</columnPath>
-            <columnPath>blancco_data.blancco_software_report.operating_system.name</columnPath>
-            <columnPath>blancco_data.blancco_software_report.operating_system.version</columnPath>
             <columnPath>blancco_data.blancco_hardware_report.hardware_tests.auto_fingerprint</columnPath>
             <columnPath>blancco_data.blancco_hardware_report.system.device_color</columnPath>
             <columnPath>blancco_data.blancco_hardware_report.disks.disk.capacity</columnPath>

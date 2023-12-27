@@ -4211,18 +4211,30 @@ module.exports = {
   getBotAndWhtSortingRequestTray: (username) => {
     return new Promise(async (resolve, reject) => {
       let data = [];
-      let botTray = await masters.find({
-        $or: [
-          {
-            sort_id: "Sorting Request Sent To Warehouse",
-            issued_user_name: username,
+      let botTray = await masters.aggregate([
+        {
+          $match: {
+            $or: [
+              {
+                sort_id: "Sorting Request Sent To Warehouse",
+                issued_user_name: username,
+              },
+              {
+                sort_id: "Assigned to sorting agent",
+                issued_user_name: username,
+              },
+            ],
           },
-          {
-            sort_id: "Assigned to sorting agent",
-            issued_user_name: username,
+        },
+        {
+          $lookup: {
+            from: "trayracks",
+            localField: "rack_id",
+            foreignField: "rack_id",
+            as: "rackData",
           },
-        ],
-      });
+        },
+      ]);
 
       if (botTray) {
         resolve(botTray);
@@ -4670,35 +4682,47 @@ module.exports = {
   mmtMergerequest: (location) => {
     return new Promise(async (resolve, reject) => {
       let getMmttray = await masters
-        .find({
-          $or: [
-            {
-              sort_id: "Merge Request Sent To Wharehouse",
-              cpc: location,
-              to_merge: { $ne: null },
+        .aggregate([
+          {
+            $match: {
+              $or: [
+                {
+                  sort_id: "Merge Request Sent To Wharehouse",
+                  cpc: location,
+                  to_merge: { $ne: null },
+                },
+                {
+                  sort_id: "Audit Done Merge Request Sent To Wharehouse",
+                  cpc: location,
+                  to_merge: { $ne: null },
+                },
+                {
+                  sort_id: "Ready to BQC Merge Request Sent To Wharehouse",
+                  cpc: location,
+                  to_merge: { $ne: null },
+                },
+                {
+                  sort_id: "Ready to RDL-2 Merge Request Sent To Wharehouse",
+                  cpc: location,
+                  to_merge: { $ne: null },
+                },
+                {
+                  sort_id: "Ready to Audit Merge Request Sent To Wharehouse",
+                  cpc: location,
+                  to_merge: { $ne: null },
+                },
+              ],
             },
-            {
-              sort_id: "Audit Done Merge Request Sent To Wharehouse",
-              cpc: location,
-              to_merge: { $ne: null },
+          },
+          {
+            $lookup: {
+              from: "trayracks",
+              localField: "rack_id",
+              foreignField: "rack_id",
+              as: "rackData",
             },
-            {
-              sort_id: "Ready to BQC Merge Request Sent To Wharehouse",
-              cpc: location,
-              to_merge: { $ne: null },
-            },
-            {
-              sort_id: "Ready to RDL-2 Merge Request Sent To Wharehouse",
-              cpc: location,
-              to_merge: { $ne: null },
-            },
-            {
-              sort_id: "Ready to Audit Merge Request Sent To Wharehouse",
-              cpc: location,
-              to_merge: { $ne: null },
-            },
-          ],
-        })
+          },
+        ])
         .catch((err) => reject(err));
       if (getMmttray) {
         resolve(getMmttray);
@@ -4708,14 +4732,36 @@ module.exports = {
   getFromAndToTrayMerge: (location, fromTray) => {
     return new Promise(async (resolve, reject) => {
       let arr = [];
-      let data = await masters.findOne({ cpc: location, code: fromTray });
-      if (data) {
-        let toTray = await masters.findOne({
-          cpc: location,
-          code: data.to_merge,
-        });
-        arr.push(data);
-        arr.push(toTray);
+      let data = await masters.aggregate([
+        { $match: { cpc: location, code: fromTray } },
+        {
+          $lookup: {
+            from: "trayracks",
+            localField: "rack_id",
+            foreignField: "rack_id",
+            as: "rackData",
+          },
+        },
+      ]);
+      if (data.length !== 0) {
+        let toTray = await masters.aggregate([
+          {
+            $match: {
+              cpc: location,
+              code: data?.[0].to_merge,
+            },
+          },
+          {
+            $lookup: {
+              from: "trayracks",
+              localField: "rack_id",
+              foreignField: "rack_id",
+              as: "rackData",
+            },
+          },
+        ]);
+        arr.push(data?.[0]);
+        arr.push(toTray?.[0]);
         resolve(arr);
       } else {
         resolve();
@@ -6183,12 +6229,24 @@ module.exports = {
   },
   pickupRequest: (location, type) => {
     return new Promise(async (resolve, reject) => {
-      let tray = await masters.find({
-        cpc: location,
-        prefix: "tray-master",
-        sort_id: type,
-        to_tray_for_pickup: { $ne: null },
-      });
+      let tray = await masters.aggregate([
+        {
+          $match: {
+            cpc: location,
+            prefix: "tray-master",
+            sort_id: type,
+            to_tray_for_pickup: { $ne: null },
+          },
+        },
+        {
+          $lookup: {
+            from: "trayracks",
+            localField: "rack_id",
+            foreignField: "rack_id",
+            as: "rackData",
+          },
+        },
+      ]);
       if (tray) {
         resolve(tray);
       }
@@ -6197,16 +6255,40 @@ module.exports = {
   pickupePageRequestApprove: (location, fromTray) => {
     return new Promise(async (resolve, reject) => {
       let arr = [];
-      let data = await masters.findOne({
-        cpc: location,
-        code: fromTray,
-        sort_id: "Pickup Request sent to Warehouse",
-      });
+      let data = await masters.aggregate([
+        {
+          $match: {
+            cpc: location,
+            code: fromTray,
+            sort_id: "Pickup Request sent to Warehouse",
+          },
+        },
+        {
+          $lookup: {
+            from: "trayracks",
+            localField: "rack_id",
+            foreignField: "rack_id",
+            as: "rackData",
+          },
+        },
+      ]);
       if (data) {
-        let toTray = await masters.findOne({
-          cpc: location,
-          code: data.to_tray_for_pickup,
-        });
+        let toTray = await masters.aggregate([
+          {
+            $match: {
+              cpc: location,
+              code: data.to_tray_for_pickup,
+            },
+          },
+          {
+            $lookup: {
+              from: "trayracks",
+              localField: "rack_id",
+              foreignField: "rack_id",
+              as: "rackData",
+            },
+          },
+        ]);
         arr.push(data);
         arr.push(toTray);
         resolve(arr);
@@ -8100,6 +8182,7 @@ module.exports = {
             { "uic_code.code": uic },
             { sales_bin_status: 1, item_moved_to_billed_bin: 1 }
           );
+          console.log(checkDelivery);
           if (checkDelivery) {
             if (checkDelivery.sales_bin_status !== undefined) {
               for (let statusSet of data) {
@@ -8214,6 +8297,7 @@ module.exports = {
         checkUserFreeOrNot = await masters.findOne({
           $or: [
             { issued_user_name: username, sort_id: "Issued to RP-BQC" },
+            { issued_user_name: username, sort_id: "RP-BQC In Progress" },
             { issued_user_name: username, sort_id: "Closed By RP-BQC" },
           ],
         });
@@ -8485,9 +8569,9 @@ module.exports = {
     try {
       let checkUic = await delivery.findOne(
         { "uic_code.code": uic },
-        { "bqc_software_report.final_grade": 1 }
+        { "bqc_software_report.final_grade": 1, final_grade: 1 }
       );
-      if (checkUic?.bqc_software_report?.final_grade) {
+      if (checkUic?.final_grade) {
         const data = await masters.find(
           {
             $or: [
@@ -8495,7 +8579,7 @@ module.exports = {
                 sort_id: "Open",
                 type_taxanomy: "ST",
                 cpc: location,
-                tray_grade: checkUic.bqc_software_report.final_grade,
+                tray_grade: checkUic?.final_grade,
                 brand: brand,
                 model: model,
               },
@@ -8503,7 +8587,7 @@ module.exports = {
                 sort_id: "Inuse",
                 type_taxanomy: "ST",
                 cpc: location,
-                tray_grade: checkUic.bqc_software_report.final_grade,
+                tray_grade: checkUic?.final_grade,
                 brand: brand,
                 model: model,
               },
@@ -8511,7 +8595,7 @@ module.exports = {
                 sort_id: "RPA to STX Work In Progress",
                 type_taxanomy: "ST",
                 cpc: location,
-                tray_grade: checkUic.bqc_software_report.final_grade,
+                tray_grade: checkUic?.final_grade,
                 brand: brand,
                 model: model,
               },
@@ -8886,13 +8970,13 @@ module.exports = {
     try {
       let data, stage;
       let getTray = await masters.findOne({
-        cdoe: trayId,
+        code: trayId,
         sort_id: {
           $in: ["RDL-2 done closed by warehouse", "Can Bin In progress"],
         },
       });
       if (getTray) {
-        if (getTray.actual_items.length == 0) {
+        if (getTray?.actual_items?.length == 0) {
           data = await masters.findOneAndUpdate(
             { code: trayId },
             {
@@ -8990,12 +9074,16 @@ module.exports = {
 
           withoutSubMuic = await masters.findOne({
             type_taxanomy: "ST",
-            "items.audit_report.sub_muic": { $exists: false },
-            items: { $ne: [] },
+            items: {
+              $elemMatch: {
+                "audit_report.sub_muic": { $exists: false },
+              },
+            },
             model: x.model_name,
             brand: x.brand_name,
             tray_grade: trayGrade.code,
           });
+          console.log(withoutSubMuic);
           if (withoutSubMuic == null) {
             let key = `MUIC:${x.muic}-Grade:${trayGrade.code}`;
             let value = "Out of Stock";

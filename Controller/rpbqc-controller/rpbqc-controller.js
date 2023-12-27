@@ -12,11 +12,11 @@ module.exports = {
         rpBqcDone: 0,
       };
       obj.issuedTray = await masters.count({
-        sort_id: "Issued to RP-BQC",
+        sort_id:{$in:["Issued to RP-BQC","RP-BQC In Progress"]},
         issued_user_name: username,
       });
       let dataOfTray = await masters.findOne({
-        sort_id: "Issued to RP-BQC",
+        sort_id:{$in:["Issued to RP-BQC","RP-BQC In Progress"]},
         issued_user_name: username,
       });
       if (dataOfTray) {
@@ -31,7 +31,7 @@ module.exports = {
   getIssuedTrays: async (username) => {
     try {
       const data = await masters.find({
-        sort_id: "Issued to RP-BQC",
+        sort_id:{$in:["Issued to RP-BQC","RP-BQC In Progress"]},
         issued_user_name: username,
       });
       return data;
@@ -45,7 +45,7 @@ module.exports = {
       const data = await masters.findOne({
         code: trayId,
         issued_user_name: username,
-        sort_id: "Issued to RP-BQC",
+        sort_id:{$in:["Issued to RP-BQC","RP-BQC In Progress"]},
       });
       if (data) {
         return { status: 1, trayData: data };
@@ -87,7 +87,7 @@ module.exports = {
     try {
       let itemData = await masters.findOne(
         {
-          sort_id: "Issued to RP-BQC",
+          sort_id:{$in:["Issued to RP-BQC","RP-BQC In Progress"]},
           issued_user_name: dataOfRpBqc.username,
           "temp_array.uic": dataOfRpBqc.uic,
         },
@@ -150,6 +150,9 @@ module.exports = {
               code: dataOfRpBqc.rpa_tray,
             },
             {
+              $set:{
+                sort_id:"RP-Audit In Progress"
+              },
               $addToSet: {
                 temp_array: itemData.temp_array[0],
               },
@@ -211,7 +214,8 @@ module.exports = {
   closeRpbqcTray: async (trayData) => {
     try {
       const data = await masters.findOneAndUpdate(
-        { code: trayData.trayId, sort_id: "Issued to RP-BQC" },
+        { code: trayData.trayId,sort_id:{$in:["Issued to RP-BQC","RP-BQC In Progress"]},
+      },
         {
           $set: {
             sort_id: "Closed by RP-BQC",
@@ -242,7 +246,7 @@ module.exports = {
   getRpbqcTrayForRdlSelection: async (username) => {
     try {
       const data = await masters.find({
-        sort_id: "Issued to RP-BQC",
+        sort_id:{$in:["Issued to RP-BQC","RP-BQC In Progress"]},
         issued_user_name: username,
       });
       let arr = [];
@@ -260,7 +264,7 @@ module.exports = {
   },
   getRpAuditTrayForRpBqcelection: async (username) => {
     const data = await masters.find({
-      sort_id: "Issued to RP-Audit",
+      sort_id: {$in:["Issued to RP-Audit","RP-Audit In Progress"]},
       issued_user_name: username,
     });
     let arr = [];

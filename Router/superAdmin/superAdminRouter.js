@@ -1440,10 +1440,15 @@ router.post("/getTrayDeletionHistory/:trayId", async (req, res, next) => {
   }
 });
 // RESTORE DELETED MASTER
-router.post("/restoreDeletedMaster/:id", async (req, res, next) => {
+router.post("/restoreDeletedMaster", async (req, res, next) => {
   try {
-    const { id } = req.params;
-    const dataOfRestore = await superAdminController.restoreDeletedMaster(id);
+    console.log("work");
+    const { id, actionUser, reason } = req.body;
+    const dataOfRestore = await superAdminController.restoreDeletedMaster(
+      id,
+      actionUser,
+      reason
+    );
     if (dataOfRestore.status === 1) {
       res.status(200).json({
         message: "Successfully Restored",
@@ -4591,6 +4596,23 @@ router.post("/extra/whtTrayWiseData", async (req, res, next) => {
 router.post("/extra/updateTrayLimit", async (req, res, next) => {
   try {
     let data = await superAdminController.extraUpdateTheLimit();
+    if (data.status == 1) {
+      res.status(200).json({
+        message: "Successfully Update",
+      });
+    } else {
+      res.status(202).json({
+        message: "Failed",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+// UPDATE THE LIMIT
+router.post("/extra/updateTheRdl-OneData", async (req, res, next) => {
+  try {
+    let data = await superAdminController.extraUpdateRdlOneDoneDate();
     if (data.status == 1) {
       res.status(200).json({
         message: "Successfully Update",

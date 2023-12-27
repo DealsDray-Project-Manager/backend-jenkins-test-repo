@@ -82,7 +82,7 @@ module.exports = {
                 latestData["device_color_one"] = latestData["Device_Color"];
                 latestData["device_color_two"] = latestData["Device_Color"];
                 latestData["hardware_device_color"] = latestData["Device color"];
-
+                
                 let finalData = toLowerKeys(latestData);
                 
                 let updateDelivery = await delivery.updateOne(

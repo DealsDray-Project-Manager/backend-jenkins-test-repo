@@ -1857,13 +1857,16 @@ module.exports = {
     }
   },
   /*--------------------------------RESTORE THE DELETED MASTER----------------------*/
-  restoreDeletedMaster: async (id) => {
+  restoreDeletedMaster: async (id, actionUser, reason) => {
     try {
       const findAndUpdateStatus = await deletedMaster.findOneAndUpdate(
         { code: id, status: "Pending" },
         {
           $set: {
             status: "Restored",
+            restored_by: actionUser,
+            reason_for_restore: reason,
+            restored_date: Date.now(),
           },
         }
       );
@@ -3023,12 +3026,22 @@ module.exports = {
             x["lat_modified_username"] =
               checkLastActionData.user_name_of_action;
           }
-          let count_report = {};
+          x["BOT"] = 0;
+          x["PMT"] = 0;
+          x["MMT"] = 0;
+          x["CT"] = 0;
+          x["ST"] = 0;
+          x["WHT"] = 0;
+          x["SPT"] = 0;
+          x["RPT"] = 0;
+          x["RPA"] = 0;
+          x["RPB"] = 0;
+
           for (let y of getAllReport) {
-            count_report[y._id] = y.count;
+            x[y._id] = y.count;
           }
-          x["count_report"] = count_report;
         }
+        console.log(rackCounts);
         resolve(rackCounts);
       } catch (error) {
         reject(error);
@@ -3203,6 +3216,7 @@ module.exports = {
           rdl_fls_one_report: 1,
           rdl_fls_one_user_name: 1,
           rdl_fls_closed_date: 1,
+          audit_user_name: 1,
         }
       );
       let arr = [];
@@ -3214,21 +3228,24 @@ module.exports = {
             prefix: "tray-master",
             type_taxanomy: { $nin: ["SPT"] },
           },
-          { code: 1 }
+          { code: 1, sort_id: 1 }
         );
         let obj = {
-          uic_code: x.uic_code,
-          old_item_details: x.old_item_details,
-          audit_report: x.audit_report,
-          audit_done_date: x.audit_done_date,
-          rdl_fls_one_report: x.rdl_fls_one_report,
-          rdl_fls_one_user_name: x.rdl_fls_one_user_name,
-          rdl_fls_closed_date: x.rdl_fls_closed_date,
+          uic_code: x?.uic_code,
+          old_item_details: x?.old_item_details,
+          audit_report: x?.audit_report,
+          audit_done_date: x?.audit_done_date,
+          rdl_fls_one_report: x?.rdl_fls_one_report,
+          rdl_fls_one_user_name: x?.rdl_fls_one_user_name,
+          rdl_fls_closed_date: x?.rdl_fls_closed_date,
+          audit_user_name: x?.audit_user_name,
         };
         if (findTray) {
           obj["current_tray_id"] = findTray.code;
+          obj["current_tray_status"] = findTray.sort_id;
         } else {
           obj["current_tray_id"] = "";
+          obj["current_tray_status"] = "";
         }
         arr.push(obj);
       }
@@ -4498,10 +4515,11 @@ module.exports = {
         if (updateStock) {
           await partInventoryLedger.create({
             department: "Super-admin",
-            in_stock: updateStock.avl_stock,
+            in_stock: x.add_stock,
             action: "Stock Update",
             action_done_user: username,
             part_code: x.part_code,
+            avl_stock: Number(updateStock?.avl_stock),
             description: `Stock updated by:${username}`,
           });
         }
@@ -6642,31 +6660,27 @@ module.exports = {
   },
   tempReq: async () => {
     try {
-      let arr=[
-        "STB23733",
-        "STC3199",
-        "STRB2646",
-        "STC3190",
-        "STB23645",
-        "STB2132",
-        "STB2072",
-        "STC3067"
-      ]
-      for(let x of arr){
-        let findTray=await masters.findOne({code:x})
-        console.log(findTray);
-        for(let y of findTray.items){
-          console.log(y.uic);
-          let finduic=await delivery.updateOne({"uic_code.code":y.uic},{
-            $set:{
-              temp_flag:true
-            }
-          })
-          console.log(finduic);
-         
-        }
+      let findAndUpdate = await unitsActionLog
+        .find(
+          // Filter criteria
+          { tray_id: "WHT1835" }
+          // Update operation
+
+          // Options: Sort by _id in ascending order and limit the update to 100 documents
+        )
+        .sort({ _id: -1 })
+        .limit(189);
+      for (let x of findAndUpdate) {
+        let update = await unitsActionLog.updateOne(
+          { _id: x._id },
+          {
+            $set: {
+              temp_flag: "true",
+            },
+          }
+        );
       }
-      return {status:1}
+      return { status: 1 };
     } catch (error) {
       return error;
     }
@@ -7078,6 +7092,30 @@ module.exports = {
       }
       return { status: 1 };
     } catch (error) {
+      return error;
+    }
+  },
+  extraUpdateRdlOneDoneDate: async () => {
+    try {
+      let find = await delivery.find(
+        { rdl_fls_closed_date: { $exists: true } },
+        { rdl_fls_closed_date: 1, uic_code: 1 }
+      );
+      for (let x of find) {
+        const update = await delivery.updateOne(
+          { "uic_code.code": x.uic_code.code },
+          {
+            $set: {
+              rdl_fls_done_units_date: x.rdl_fls_closed_date,
+            },
+          }
+        );
+        console.log(update);
+      }
+
+      return { status: 1 };
+    } catch (error) {
+      console.log(error);
       return error;
     }
   },

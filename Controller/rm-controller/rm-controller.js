@@ -21,6 +21,7 @@ module.exports = {
         rdl2Request: 0,
         partIssue: 0,
         issueToRdl2: 0,
+        issueRequestForToolsAndConsumables:0
       };
       count.partIssue = await masters.count({
         prefix: "tray-master",
@@ -28,6 +29,9 @@ module.exports = {
         issued_user_name: username,
         sort_id: "Assigned to sp warehouse",
         cpc: location,
+      });
+      count.issueRequestForToolsAndConsumables = await toolsAndConsumablesIssueRequests.count({
+        status: "Assigned",
       });
       count.issueToRdl2 = await masters.count({
         prefix: "tray-master",
@@ -203,9 +207,10 @@ module.exports = {
           action_done_user: username,
           description: `Spare parts add into box after rdl-2 done by:${username}`,
           part_code: partDetails,
-          in_stock: updateStock.avl_stock,
+          in_stock: 1,
           tray_id: spTrayId,
           box_id: boxName,
+          avl_stock:Number(updateStock?.avl_stock)
         });
       }
       if (removeFromSpTray) {

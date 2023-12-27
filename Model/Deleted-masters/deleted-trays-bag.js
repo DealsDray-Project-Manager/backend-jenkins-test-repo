@@ -18,6 +18,9 @@ const deletedMasterSchema = mongoose.Schema(
     prefix:String,
     limit:Number,
     reason:String,
+    reason_for_restore:String,
+    restored_date:Date,
+    restored_by:String,
     deleted_by:String,
     status:{
       type:String,

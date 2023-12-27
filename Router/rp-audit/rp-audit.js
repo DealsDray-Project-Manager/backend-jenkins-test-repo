@@ -74,9 +74,10 @@ router.post("/add-rpAudit-data", async (req, res, next) => {
       muic,
       username,
       currentSubMuicCount,
+      subMuic,
     } = req.body;
     currentSubMuicCount = `${muic}-${currentSubMuicCount}`;
-    if (status == "RP-Audit Passed") {
+    if (status == "RP-Audit Passed" && subMuic == null) {
       createSubMuic = await auditController.createSubMuic(
         color,
         storage_verification,
@@ -110,14 +111,17 @@ router.post("/add-rpAudit-data", async (req, res, next) => {
             }
           }
         );
-        data = await rpAuditController.addRpAuditData(req.body);
+        data = await rpAuditController.addRpAuditData(
+          req.body,
+          currentSubMuicCount
+        );
       } else {
         res.status(202).json({
           message: "Failed please try again",
         });
       }
     } else {
-      data = await rpAuditController.addRpAuditData(req.body);
+      data = await rpAuditController.addRpAuditData(req.body, subMuic);
     }
     if (data.status === 1) {
       res.status(200).json({

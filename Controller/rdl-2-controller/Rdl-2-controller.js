@@ -303,10 +303,13 @@ module.exports = {
           let updateToRbqc = await masters.updateOne(
             {
               code: trayItemData.rbqc_tray,
-              sort_id: "Issued to RP-BQC",
+              sort_id:{$in:["Issued to RP-BQC","RP-BQC In Progress"]},
               issued_user_name: trayItemData.rpbqc_username,
             },
             {
+              $set:{
+                  sort_id:"RP-BQC In Progress"
+              },
               $addToSet: {
                 temp_array: checkAlreadyAdded.items[0],
               },

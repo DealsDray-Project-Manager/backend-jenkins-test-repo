@@ -503,7 +503,7 @@ module.exports = {
         .find({})
         .sort({ name: 1 })
         .collation({ locale: "en_US", numericOrdering: true });
-      const findAllCategory = await trayCategory.find({});
+      const findAllCategory = await trayCategory.find({}).sort({float:1});
       const findGradeFlot = await trayCategory.findOne({ code: grade });
       let upArray = [];
       let downArray = [];
@@ -526,7 +526,7 @@ module.exports = {
           upArray: upArray,
           downArray: downArray,
           flagToHigh: flagToHigh,
-          allCategory:findAllCategory
+          allCategory: findAllCategory,
         });
       } else {
         resolve({
@@ -534,8 +534,7 @@ module.exports = {
           upArray: upArray,
           downArray: downArray,
           flagToHigh: flagToHigh,
-          allCategory:findAllCategory
-
+          allCategory: findAllCategory,
         });
       }
     });

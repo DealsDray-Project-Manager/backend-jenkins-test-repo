@@ -21,7 +21,7 @@ module.exports = {
       const count = { precourmentCount: 0, toolsAndConsumableProcurement: 0 };
       count.toolsAndConsumableProcurement = await partAndColor.count({
         sp_category: { $in: ["Tools", "Consumables"] },
-        avl_stock:Number(0)
+        avl_stock: Number(0),
       });
       // Step 1: Create the pipeline for aggregation
       const pipeline = [
@@ -312,7 +312,7 @@ module.exports = {
             action_done_user: dataFromBody.actionUser,
             description: `Tools and consumables assigned to :${dataFromBody.issued_user_name}.approve request sent to sp warehouse`,
             part_code: x.part_code,
-            in_stock: Number(checkStock.avl_stock),
+            avl_stock: Number(checkStock?.avl_stock),
             out_stock: x.selected_quantity,
           });
         } else {
@@ -347,8 +347,8 @@ module.exports = {
     try {
       let arr = [];
       const data = await partAndColor.find({
-        sp_category: { $in: ["Tools", "Consumables"]},
-        avl_stock:Number(0)
+        sp_category: { $in: ["Tools", "Consumables"] },
+        // avl_stock:Number(0)
       });
       for (let x of data) {
         let obj = {
@@ -356,23 +356,26 @@ module.exports = {
           color: x.color,
           sp_category: x.sp_category,
           avl_stock: x.avl_stock,
-          required_qty: 1,
+          required_qty: 0,
           name: x.name,
-          requested_qt:0,
-          box_id:x.box_id,
-          description:x.description,
+          requested_qt: 0,
+          box_id: x.box_id,
+          description: x.description,
         };
-        let getHistoryforRequestQtc=await procurmentToolsAndConsumables.find({
-          part_number:x.part_code,
-          status: { $ne: "Order Placed" },
-        },
-        {
-          requred_qty:1
-        }
-        )
-        if(getHistoryforRequestQtc.length !== 0){
-          for(let qtyCount of getHistoryforRequestQtc){
-            obj['requested_qt']=Number(obj['requested_qt'] + qtyCount?.requred_qty)
+        let getHistoryforRequestQtc = await procurmentToolsAndConsumables.find(
+          {
+            part_number: x.part_code,
+            status: { $ne: "Order Placed" },
+          },
+          {
+            requred_qty: 1,
+          }
+        );
+        if (getHistoryforRequestQtc.length !== 0) {
+          for (let qtyCount of getHistoryforRequestQtc) {
+            obj["requested_qt"] = Number(
+              obj["requested_qt"] + qtyCount?.requred_qty
+            );
           }
         }
         arr.push(obj);
