@@ -80,7 +80,7 @@ module.exports = {
         );
         if (data.matchedCount != 0) {
           let deliveryUpdate = await delivery.findOneAndUpdate(
-            { "uic_code.uic": trayItemData.uic },
+            { "uic_code.code": trayItemData.uic },
             {
               $set: {
                 rdl_fls_done_units_date: Date.now(),

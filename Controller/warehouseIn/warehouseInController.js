@@ -72,7 +72,20 @@ module.exports = {
         allRpaTray: 0,
         allRpbTray: 0,
         returnFromRpaOrRpb: 0,
+        assignedTraysRpaToStx: 0,
+        rpaToStxWorkInProgressTrays: 0,
       };
+      count.rpaToStxWorkInProgressTrays = await masters.count({
+        sort_id: "RPA to STX Work In Progress",
+        type_taxanomy: "ST",
+        cpc: location,
+      });
+      count.assignedTraysRpaToStx = await masters.count({
+        issued_user_name: username,
+        sort_id: "Assigned to Warehouse for Stx Sorting",
+        type_taxanomy: "RPA",
+        cpc: location,
+      });
       count.rackChangeStockin = await masters.count({
         $or: [
           {
@@ -9059,31 +9072,31 @@ module.exports = {
         let withoutSubMuic;
         let checkSubmuic = await subMuic.find({ muic: x.muic });
         for (let trayGrade of findAllGrade) {
-          for (let submUicCon of checkSubmuic) {
-            checkAnyStxWithItem = await masters.findOne({
-              type_taxanomy: "ST",
-              "items.audit_report.sub_muic": submUicCon.sub_muic,
-              tray_grade: trayGrade.code,
-            });
-            if (checkAnyStxWithItem == null) {
-              let key = `SUB-MUIC:${submUicCon.sub_muic}-Grade:${trayGrade.code}`;
-              let value = "Out of Stock";
-              arr.push(`${key}: ${value}`);
-            }
-          }
+          // for (let submUicCon of checkSubmuic) {
+          //   checkAnyStxWithItem = await masters.findOne({
+          //     type_taxanomy: "ST",
+          //     "items.audit_report.sub_muic": submUicCon.sub_muic,
+          //     tray_grade: trayGrade.code,
+          //   });
+          //   if (checkAnyStxWithItem == null) {
+          //     let key = `SUB-MUIC:${submUicCon.sub_muic}-Grade:${trayGrade.code}`;
+          //     let value = "Out of Stock";
+          //     arr.push(`${key}: ${value}`);
+          //   }
+          // }
 
           withoutSubMuic = await masters.findOne({
             type_taxanomy: "ST",
-            items: {
-              $elemMatch: {
-                "audit_report.sub_muic": { $exists: false },
-              },
-            },
+            // items: {
+            //   $elemMatch: {
+            //     "audit_report.sub_muic": { $exists: false },
+            //   },
+            // },
+            items: { $ne: [] },
             model: x.model_name,
             brand: x.brand_name,
             tray_grade: trayGrade.code,
           });
-          console.log(withoutSubMuic);
           if (withoutSubMuic == null) {
             let key = `MUIC:${x.muic}-Grade:${trayGrade.code}`;
             let value = "Out of Stock";

@@ -21,7 +21,7 @@ module.exports = {
       const count = { precourmentCount: 0, toolsAndConsumableProcurement: 0 };
       count.toolsAndConsumableProcurement = await partAndColor.count({
         sp_category: { $in: ["Tools", "Consumables"] },
-        avl_stock: Number(0),
+        // avl_stock: Number(0),
       });
       // Step 1: Create the pipeline for aggregation
       const pipeline = [

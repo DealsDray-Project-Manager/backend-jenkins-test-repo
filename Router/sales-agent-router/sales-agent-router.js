@@ -148,7 +148,6 @@ router.post("/getModelBasisOfArray", async (req, res, next) => {
     let data = await salesController.getBrandBasedPrdouctArray(
       req.body
     );
-
     if (data) {
       res.status(200).json({
         data: data,
