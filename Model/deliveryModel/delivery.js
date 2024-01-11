@@ -9,7 +9,7 @@ const deliverySchema = mongoose.Schema({
     index: true,
   },
   order_date: {
-    type: String,
+    type: Date,
   },
   item_id: {
     type: String,
@@ -244,8 +244,8 @@ const deliverySchema = mongoose.Schema({
   rdl_fls_done_closed_wh: {
     type: Date,
   },
-  rdl_fls_done_units_date:{
-    type:Date
+  rdl_fls_done_units_date: {
+    type: Date,
   },
   rdl_fls_one_report: {
     type: Object,
@@ -347,13 +347,15 @@ const deliverySchema = mongoose.Schema({
   add_to_can_bin_date: Date,
   add_to_can_bin_user: String,
   add_to_can_bin_description: String,
-  image_one:String,
-  image_two:String,
-  image_three:String,
-  image_five:String,
-  image_six:String,
-  image_four:String,
+  image_one: String,
+  image_two: String,
+  image_three: String,
+  image_five: String,
+  image_six: String,
+  image_four: String,
+  can_bin_tray:String
 });
+
 
 const delivery = mongoose.model("delivery", deliverySchema);
 module.exports = {

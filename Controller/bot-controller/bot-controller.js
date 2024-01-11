@@ -160,6 +160,7 @@ module.exports = {
           ]);
           let ordersGet = await orders.findOne({ order_id: data[0].order_id });
           data[0].order_date = ordersGet.order_date;
+          data[0].delivery_date = ordersGet?.delivery_date;
           data[0].status = itemExistThisBag.items[0].status;
           if (data.length != 0) {
             resolve({ status: 1, data: data });

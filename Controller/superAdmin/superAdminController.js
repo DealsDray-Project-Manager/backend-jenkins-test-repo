@@ -71,21 +71,28 @@ module.exports = {
       } else {
         let userGet = await user.findOne({
           user_name: loginData.user_name,
-          password: loginData.password,
         });
+        
         if (userGet) {
-          let activeOrNotActive = await user.findOne({
-            user_name: loginData.user_name,
-            password: loginData.password,
-            status: "Active",
-          });
-          if (activeOrNotActive) {
-            resolve({ status: 1, data: userGet });
-          } else {
-            resolve({ status: 3 });
+          if(userGet.password == loginData.password){
+            let activeOrNotActive = await user.findOne({
+              user_name: loginData.user_name,
+              password: loginData.password,
+              status: "Active",
+            });
+            if (activeOrNotActive) {
+              resolve({ status: 1, data: userGet });
+            } else {
+              resolve({ status: 3 });
+            }
+          }
+          else{
+            resolve({ status: 4 });
           }
         }
-        resolve({ status: 2 });
+        else{
+          resolve({ status: 2 });
+        }
       }
     });
   },
@@ -1446,6 +1453,8 @@ module.exports = {
           trayData[i].tray_category !== "RPT" &&
           trayData[i].tray_category !== "RPB" &&
           trayData[i].tray_category !== "RPA"
+          &&
+          trayData[i].tray_category !== "CBT"
         ) {
           if (
             trayData[i].tray_category !== "CT" &&
@@ -2375,10 +2384,22 @@ module.exports = {
 
   getAuditDone: () => {
     return new Promise(async (resolve, reject) => {
-      let data = await masters.find({
-        sort_id: "Audit Done Closed By Warehouse",
-        type_taxanomy: "WHT",
-      });
+      let data = await masters.aggregate([{
+        $match:{
+          sort_id: "Audit Done Closed By Warehouse",
+          type_taxanomy: "WHT",
+        }
+      },
+      {
+        $lookup: {
+          from: "trayracks",
+          localField: "rack_id",
+          foreignField: "rack_id",
+          as: "rackData",
+        },
+      },
+    ]);
+    
       if (data) {
         resolve(data);
       }
@@ -3041,7 +3062,7 @@ module.exports = {
             x[y._id] = y.count;
           }
         }
-        console.log(rackCounts);
+       
         resolve(rackCounts);
       } catch (error) {
         reject(error);
@@ -3066,6 +3087,7 @@ module.exports = {
             sort_id: 1,
             created_at: 1,
             rackDetails: 1,
+            tray_grade:1,
             limit: 1,
             items_length: {
               $cond: {
@@ -4488,7 +4510,6 @@ module.exports = {
   partlistManageStockUpdate: (partStockData, username) => {
     return new Promise(async (resolve, reject) => {
       for (let x of partStockData) {
-        console.log(x.add_stock);
         let updateStock;
         let number = parseInt(x.add_stock);
         if (number >= "0") {
@@ -4988,7 +5009,6 @@ module.exports = {
   /*-----------------------------------------GET TRAY FOR REMOVE DUPLICATE UNITS------------------------------*/
   getTrayForRemoveDuplicateUnits: async (trayId) => {
     try {
-      console.log(trayId);
       const trayData = await masters.findOne({ code: trayId });
       if (trayData) {
         if (trayData.sort_id != "Open") {
@@ -7116,6 +7136,96 @@ module.exports = {
       return { status: 1 };
     } catch (error) {
       console.log(error);
+      return error;
+    }
+  },
+   // CHANGE ITEM ID BACKEND PROCESS
+   changeItemId: async () => {
+    try {
+      let arr=[
+        {
+          sku:"Mobile_1198",
+          model:"V9:All | All",
+          old_item_details:"vivo:v9:all | all",
+          old_model:"V9"
+        },
+        {
+          sku:"Mobile_2307",
+          model:"Redmi Note 10T 5G:All | All",
+          old_item_details:"xiaomi:redmi note 10t 5g:all | all",
+          old_model:"Redmi Note 10T 5G"
+        },
+        {
+          sku:"Mobile_1720",
+          model:"iPhone 11 Pro | 64 gb",
+          old_item_details: "apple:iphone 11 pro | 64 gb",
+          old_model:"iPhone 11 Pro"
+        }
+      ]
+      for(let x of arr){
+
+        const data = await products.updateOne(
+          { vendor_sku_id: x.sku },
+          {
+            $set: {
+              model_name: x.model,
+            },
+          }
+        );
+        let updateTrayOrder = await orders.updateMany(
+          {
+            item_id: x.sku,
+          },
+          {
+            $set: {
+              old_item_details: x.model,
+            },
+          }
+        );
+        let updateTrayDelivery = await delivery.updateMany(
+          {
+            item_id: x.sku,
+          },
+          {
+            $set: {
+              old_item_details: x?.old_item_details,
+            },
+          }
+        );
+        let updateTray = await masters.find({ model: x.old_model},{code:1});
+        
+      for (let y of updateTray) {
+        let updpateTrayModel = await masters.findOneAndUpdate(
+          { code: y.code },
+          {
+            $set: {
+              model: x.model,
+            },
+          }
+        );
+        if (updpateTrayModel.items.length != 0) {
+          for (let data of updpateTrayModel.items) {
+            let updateUnits = await masters.updateOne(
+              {
+                "items.uic": data.uic,
+              },
+              {
+                $set: {
+                  "items.$.model_name":x.model,
+                },
+              }
+            );
+            // if (updateUnits.modifiedCount == 0) {
+            //   console.log(x.model);
+            //   console.log("4",updateUnits);
+            //   return { status: 2 };
+            // }
+          }
+        }
+      }
+    }
+    return { status: 1 };
+    } catch (error) {
       return error;
     }
   },

@@ -12,11 +12,11 @@ module.exports = {
         rpBqcDone: 0,
       };
       obj.issuedTray = await masters.count({
-        sort_id:{$in:["Issued to RP-BQC","RP-BQC In Progress"]},
+        sort_id: { $in: ["Issued to RP-BQC", "RP-BQC In Progress"] },
         issued_user_name: username,
       });
       let dataOfTray = await masters.findOne({
-        sort_id:{$in:["Issued to RP-BQC","RP-BQC In Progress"]},
+        sort_id: { $in: ["Issued to RP-BQC", "RP-BQC In Progress"] },
         issued_user_name: username,
       });
       if (dataOfTray) {
@@ -31,7 +31,7 @@ module.exports = {
   getIssuedTrays: async (username) => {
     try {
       const data = await masters.find({
-        sort_id:{$in:["Issued to RP-BQC","RP-BQC In Progress"]},
+        sort_id: { $in: ["Issued to RP-BQC", "RP-BQC In Progress"] },
         issued_user_name: username,
       });
       return data;
@@ -45,7 +45,7 @@ module.exports = {
       const data = await masters.findOne({
         code: trayId,
         issued_user_name: username,
-        sort_id:{$in:["Issued to RP-BQC","RP-BQC In Progress"]},
+        sort_id: { $in: ["Issued to RP-BQC", "RP-BQC In Progress"] },
       });
       if (data) {
         return { status: 1, trayData: data };
@@ -72,6 +72,8 @@ module.exports = {
             charging: 1,
             rdl_fls_one_report: 1,
             rdl_two_report: 1,
+            rp_audit_report:1,
+            rp_bqc_report:1
           }
         );
         return { status: 1, findData: findData };
@@ -87,7 +89,7 @@ module.exports = {
     try {
       let itemData = await masters.findOne(
         {
-          sort_id:{$in:["Issued to RP-BQC","RP-BQC In Progress"]},
+          sort_id: { $in: ["Issued to RP-BQC", "RP-BQC In Progress"] },
           issued_user_name: dataOfRpBqc.username,
           "temp_array.uic": dataOfRpBqc.uic,
         },
@@ -107,7 +109,8 @@ module.exports = {
         let addIntoTray1, addIntoTray2, addIntoTray3;
         itemData.temp_array[0]["rp_bqc_report"] = obj;
         if (dataOfRpBqc.status == "RP-BQC Failed") {
-          addIntoTray1 = await masters.updateOne(
+          itemData.temp_array[0].rbqc_tray = null;
+          addIntoTray1 = await masters.findOneAndUpdate(
             {
               code: itemData.temp_array[0]?.rdl_repair_report.rdl_two_tray,
             },
@@ -120,7 +123,7 @@ module.exports = {
               },
             }
           );
-          addIntoTray3 = await masters.updateOne(
+          addIntoTray3 = await masters.findOneAndUpdate(
             {
               code: itemData.temp_array[0]?.rdl_repair_report.rdl_two_tray,
             },
@@ -132,7 +135,7 @@ module.exports = {
               },
             }
           );
-          addIntoTray2 = await masters.updateOne(
+          addIntoTray2 = await masters.findOneAndUpdate(
             {
               code: itemData.code,
             },
@@ -145,20 +148,20 @@ module.exports = {
             }
           );
         } else {
-          addIntoTray1 = await masters.updateOne(
+          addIntoTray1 = await masters.findOneAndUpdate(
             {
               code: dataOfRpBqc.rpa_tray,
             },
             {
-              $set:{
-                sort_id:"RP-Audit In Progress"
+              $set: {
+                sort_id: "RP-Audit In Progress",
               },
               $addToSet: {
                 temp_array: itemData.temp_array[0],
               },
             }
           );
-          addIntoTray2 = await masters.updateOne(
+          addIntoTray2 = await masters.findOneAndUpdate(
             {
               code: itemData.code,
             },
@@ -196,7 +199,11 @@ module.exports = {
         }
         if (addIntoTray1.modifiedCount !== 0) {
           if (dataOfRpBqc.status == "RP-BQC Failed") {
-            return { status: 2, trayId: itemData.temp_array[0]?.rpt_tray };
+            return {
+              status: 2,
+              trayId: itemData.temp_array[0]?.rpt_tray,
+              username: addIntoTray3?.issued_user_name,
+            };
           } else {
             return { status: 1, trayId: dataOfRpBqc.rpa_tray };
           }
@@ -214,8 +221,10 @@ module.exports = {
   closeRpbqcTray: async (trayData) => {
     try {
       const data = await masters.findOneAndUpdate(
-        { code: trayData.trayId,sort_id:{$in:["Issued to RP-BQC","RP-BQC In Progress"]},
-      },
+        {
+          code: trayData.trayId,
+          sort_id: { $in: ["Issued to RP-BQC", "RP-BQC In Progress"] },
+        },
         {
           $set: {
             sort_id: "Closed by RP-BQC",
@@ -246,12 +255,12 @@ module.exports = {
   getRpbqcTrayForRdlSelection: async (username) => {
     try {
       const data = await masters.find({
-        sort_id:{$in:["Issued to RP-BQC","RP-BQC In Progress"]},
+        sort_id: { $in: ["Issued to RP-BQC", "RP-BQC In Progress"] },
         issued_user_name: username,
       });
       let arr = [];
       for (let x of data) {
-        let checkBoth=x.temp_array?.length + x.items.length
+        let checkBoth = x.temp_array?.length + x.items.length;
         let count = x.limit - checkBoth;
         if (count >= 1) {
           arr.push(x);
@@ -264,12 +273,12 @@ module.exports = {
   },
   getRpAuditTrayForRpBqcelection: async (username) => {
     const data = await masters.find({
-      sort_id: {$in:["Issued to RP-Audit","RP-Audit In Progress"]},
+      sort_id: { $in: ["Issued to RP-Audit", "RP-Audit In Progress"] },
       issued_user_name: username,
     });
     let arr = [];
     for (let x of data) {
-      let checkBoth=x.temp_array?.length + x.items.length
+      let checkBoth = x.temp_array?.length + x.items.length;
       let count = x.limit - checkBoth;
       if (count >= 1) {
         arr.push(x);

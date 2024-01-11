@@ -129,7 +129,7 @@ router.post("/add-rpAudit-data", async (req, res, next) => {
       });
     } else if (data.status == 2) {
       res.status(202).json({
-        message: `Item Return to RDL-2 tray ${data.trayId}`,
+        message: `Return this item to RDL-2 User:-${data?.usernameOfRDL2} / Tray:-${data.trayId}`,
       });
     } else {
       res.status(202).json({

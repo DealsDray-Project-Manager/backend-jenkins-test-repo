@@ -279,7 +279,7 @@ router.post("/pickup/itemTransfer", async (req, res, next) => {
       });
     } else if (data.status == 2) {
       res.status(200).json({
-        message: `This item not move keep it in the ${fromTray} `,
+        message: `Do not move this unit,keep in Same tray (${fromTray}) `,
       });
     } else if (data.status == 3) {
       res.status(200).json({
@@ -434,7 +434,7 @@ router.post("/whtToRp/itemTransfer", async (req, res, next) => {
       });
     } else if (data.status == 2) {
       res.status(200).json({
-        message: `This item not move keep it in the ${whtTray} `,
+        message: `Do not move this unit,keep in Same tray (${whtTray}) `,
       });
     } else if (data.status == 3) {
       res.status(200).json({
@@ -569,7 +569,7 @@ router.post("/copyGradingCheckUic", async (req, res, next) => {
       res.status(200).json({
         message: "Valid UIC",
         data: data.data,
-        copyGradeReport:data.copyGradeReport
+        copyGradeReport: data.copyGradeReport,
       });
     }
   } catch (error) {

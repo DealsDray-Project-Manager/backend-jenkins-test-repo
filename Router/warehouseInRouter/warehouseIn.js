@@ -117,7 +117,7 @@ router.post("/checkBotUserStatus/:username", async (req, res, next) => {
       });
     } else {
       res.status(200).json({
-        data: "Agent already have a lot",
+        data: "User already have a lot",
       });
     }
   } catch (error) {
@@ -1532,7 +1532,7 @@ router.post("/mmtTraySendToSorting", async (req, res, next) => {
       });
     } else if (data.status === 2) {
       res.status(202).json({
-        message: `Agent already have a lot `,
+        message: `User already have a lot `,
       });
     }
   } catch (error) {
@@ -1606,7 +1606,7 @@ router.post("/sortingAgnetStatus/:username/:toTray", async (req, res, next) => {
       });
     } else if (data.status === 2) {
       res.status(202).json({
-        data: "Agent already have a lot",
+        data: "User already have a lot",
       });
     } else if (data.status === 3) {
       res.status(202).json({
@@ -1629,7 +1629,7 @@ router.post("/chargingAgentStatus/:username", async (req, res, next) => {
       });
     } else if (data.status === 2) {
       res.status(200).json({
-        data: "Agent already have a lot",
+        data: "User already have a lot",
       });
     } else if (data.status === 3) {
       res.status(200).json({
@@ -1846,7 +1846,7 @@ router.post("/auditUserStatusChecking", async (req, res, next) => {
       });
     } else if (data.status === 2) {
       res.status(200).json({
-        data: "Agent already have a lot",
+        data: "User already have a lot",
       });
     } else if (data.status === 3) {
       res.status(200).json({
@@ -2209,7 +2209,7 @@ router.post("/checkRdl-1UserStatus/:username", async (req, res, next) => {
       });
     } else if (data.status === 2) {
       res.status(202).json({
-        data: "Agent already have a lot",
+        data: "User already have a lot",
       });
     } else if (data.status === 3) {
       res.status(202).json({
@@ -2231,7 +2231,7 @@ router.post("/checkRdl-2/status/:username", async (req, res, next) => {
       });
     } else if (data.status === 2) {
       res.status(202).json({
-        data: "Agent already have a lot",
+        data: "User already have a lot",
       });
     } else if (data.status === 3) {
       res.status(202).json({
@@ -2573,7 +2573,7 @@ router.post(
 router.post("/stxTray/:type/:location", async (req, res, next) => {
   try {
     const { type, location } = req.params;
-    const trayData = await warehouseInController.stxTray(type, location);
+    const trayData = await warehouseInController.stxstxMergeTray(type, location);
     if (trayData.status == 1) {
       res.status(200).json({
         data: trayData.tray,
@@ -3132,16 +3132,15 @@ router.post(
 // GET STX TRAY FOR RPA TO STX
 router.post("/getStxTrayForRpaToStx", async (req, res, next) => {
   try {
-    const { brand, model, location, uic } = req.body;
+    const { location, uic } = req.body;
     const data = await warehouseInController.getStxTrayForRpaToStxSort(
-      brand,
-      model,
       location,
       uic
     );
     if (data.status === 1) {
       res.status(200).json({
         data: data.tray,
+        modelData: data.modelData,
       });
     } else if (data.status == 2) {
       res.status(202).json({
@@ -3283,7 +3282,7 @@ router.post("/canBinUicScan", async (req, res, next) => {
       });
     } else if (data.status === 5) {
       res.status(200).json({
-        message: `This item not move keep it in the ${trayId} `,
+        message: `Do not move this unit,keep in Same tray (${trayId})`,
         flag: 2,
       });
     } else {
@@ -3340,6 +3339,20 @@ router.post("/canBinItem/:location", async (req, res, next) => {
   try {
     const { location } = req.params;
     let data = await warehouseInController.getSalesCanBinItem(location);
+    if (data) {
+      res.status(200).json({
+        data: data,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+// GET CBT TRAY 
+router.post("/canBinGetCbtTray/:location", async (req, res, next) => {
+  try {
+    const { location } = req.params;
+    let data = await warehouseInController.getCbtTrayForCanBin(location);
     if (data) {
       res.status(200).json({
         data: data,

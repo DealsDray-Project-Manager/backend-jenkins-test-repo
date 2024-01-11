@@ -15,7 +15,7 @@ const reportingAgentRouter = require("../Controller/reporting-controller/reporti
 
 exports = module.exports = () => {
   try {
-    corn.schedule("17 11 * * *", () => {
+    corn.schedule("00 20 * * *", () => {
       /*---------------------------xml read ------------------------------------*/
       BlancoAutoMation.xmlFileRead();
     });
@@ -24,7 +24,7 @@ exports = module.exports = () => {
   }
   // NIGHT 11 BLANCOO AUTOMATION
   try {
-    corn.schedule("22 11 * * *", () => {
+    corn.schedule("00 23 * * *", () => {
       /*----------------------------------------------CSV READ-----------------------------*/
       BlancoAutoMation.blancooFileUpload();
     });
@@ -33,7 +33,7 @@ exports = module.exports = () => {
   }
   // MORNING 9 BLANCOO AUTOMATION
   try {
-    corn.schedule("34 10 * * *", () => {
+    corn.schedule("00 09 * * *", () => {
       /*----------------------------------------------CSV READ-----------------------------*/
       BlancoAutoMation.blancooFileUpload();
     });
@@ -88,7 +88,7 @@ exports = module.exports = () => {
   }
   // TO CHECK BLANCOO UPDATION IS DONE OR NOT AT 5:AM
   try {
-    corn.schedule("37 16 * * *", () => {
+    corn.schedule("00 10 * * *", () => {
       /*---------------------------xml read ------------------------------------*/
 
       BlancoAutoMation.toCheckBlancoUpdation();
@@ -98,7 +98,7 @@ exports = module.exports = () => {
   }
   /*----------------------------------------------OUT STOCK ---------------------*/
   try {
-    corn.schedule("53 18 * * *", () => {
+    corn.schedule("00 10 * * *", () => {
       /*---------------------------xml read ------------------------------------*/
       warehouseController.checkOutOfStock();
     });

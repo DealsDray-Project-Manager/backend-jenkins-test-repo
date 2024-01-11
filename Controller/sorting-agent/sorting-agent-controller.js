@@ -401,7 +401,7 @@ module.exports = {
           let data = await masters.findOneAndUpdate(
             { code: mmtTrayData.toTray },
             {
-              $push: {
+              $addToSet: {
                 items: mmtTrayData.item,
               },
             }

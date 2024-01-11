@@ -291,6 +291,12 @@ module.exports = {
             cpc: location,
             sort_id: "Inuse",
             type_taxanomy: "ST",
+            $expr: {
+              $and: [
+                { $ne: [{ $ifNull: ["$items", null] }, null] },
+                { $ne: [{ $size: "$items" }, { $toInt: "$limit" }] },
+              ],
+            },
           },
         ],
       });
@@ -396,6 +402,12 @@ module.exports = {
         type_taxanomy: "MMT",
         prefix: "tray-master",
         sort_id: "Closed By Warehouse",
+        $expr: {
+          $and: [
+            { $ne: [{ $ifNull: ["$items", null] }, null] },
+            { $ne: [{ $size: "$items" }, { $toInt: "$limit" }] },
+          ],
+        },
       });
       count.trackItem = await orders.count({
         partner_shop: location,
@@ -488,6 +500,14 @@ module.exports = {
             },
           },
           {
+            $lookup: {
+              from: "deliveries",
+              localField: "order_id",
+              foreignField: "order_id",
+              as: "delivery",
+            },
+          },
+          {
             $facet: {
               results: [{ $skip: skip }, { $limit: limit }],
               count: [{ $count: "count" }],
@@ -509,6 +529,14 @@ module.exports = {
               localField: `item_id`,
               foreignField: "vendor_sku_id",
               as: "products",
+            },
+          },
+          {
+            $lookup: {
+              from: "deliveries",
+              localField: "order_id",
+              foreignField: "order_id",
+              as: "delivery",
             },
           },
           {
@@ -536,6 +564,14 @@ module.exports = {
             },
           },
           {
+            $lookup: {
+              from: "deliveries",
+              localField: "order_id",
+              foreignField: "order_id",
+              as: "delivery",
+            },
+          },
+          {
             $facet: {
               results: [{ $skip: skip }, { $limit: limit }],
               count: [{ $count: "count" }],
@@ -557,6 +593,14 @@ module.exports = {
               localField: `item_id`,
               foreignField: "vendor_sku_id",
               as: "products",
+            },
+          },
+          {
+            $lookup: {
+              from: "deliveries",
+              localField: "order_id",
+              foreignField: "order_id",
+              as: "delivery",
             },
           },
           {
@@ -584,6 +628,14 @@ module.exports = {
             },
           },
           {
+            $lookup: {
+              from: "deliveries",
+              localField: "order_id",
+              foreignField: "order_id",
+              as: "delivery",
+            },
+          },
+          {
             $facet: {
               results: [{ $skip: skip }, { $limit: limit }],
               count: [{ $count: "count" }],
@@ -608,6 +660,14 @@ module.exports = {
             },
           },
           {
+            $lookup: {
+              from: "deliveries",
+              localField: "order_id",
+              foreignField: "order_id",
+              as: "delivery",
+            },
+          },
+          {
             $facet: {
               results: [{ $skip: skip }, { $limit: limit }],
               count: [{ $count: "count" }],
@@ -629,6 +689,14 @@ module.exports = {
               localField: `item_id`,
               foreignField: "vendor_sku_id",
               as: "products",
+            },
+          },
+          {
+            $lookup: {
+              from: "deliveries",
+              localField: "order_id",
+              foreignField: "order_id",
+              as: "delivery",
             },
           },
           {
@@ -1489,6 +1557,16 @@ module.exports = {
       resolve({ data: data, count: count });
     });
   },
+  notDeliveredOrdersDataForDownload: (location) => {
+    return new Promise(async (resolve, reject) => {
+      let data = await orders.find({
+        partner_shop: location,
+        order_status: "NEW",
+        delivery_status: "Pending",
+      });
+      resolve(data);
+    });
+  },
   searchDeliveredOrders: (searchType, value, location, status, limit, skip) => {
     return new Promise(async (resolve, reject) => {
       let allOrders;
@@ -1814,6 +1892,7 @@ module.exports = {
     return new Promise(async (resolve, reject) => {
       let allDeliveryData = await delivery.aggregate([
         { $match: { partner_shop: location } },
+
         {
           $lookup: {
             from: "orders",
@@ -1849,6 +1928,7 @@ module.exports = {
           $limit: limit,
         },
       ]);
+     
       resolve(allDeliveryData);
     });
   },
@@ -2770,9 +2850,9 @@ module.exports = {
             prefix: "tray-master",
             sort_id: "Closed By Warehouse",
             cpc: location,
-            closed_time_wharehouse_from_bot: new Date(
-              date.toISOString().split("T")[0]
-            ),
+            // closed_time_wharehouse_from_bot: new Date(
+            //   date.toISOString().split("T")[0]
+            // ),
           },
         },
         {
@@ -3163,6 +3243,12 @@ module.exports = {
               type_taxanomy: "MMT",
               prefix: "tray-master",
               sort_id: "Closed By Warehouse",
+              $expr: {
+                $and: [
+                  { $ne: [{ $ifNull: ["$items", null] }, null] },
+                  { $ne: [{ $size: "$items" }, { $toInt: "$limit" }] },
+                ],
+              },
             },
           },
           {
@@ -5218,7 +5304,6 @@ module.exports = {
                 (element) => item?.part_id === element
               );
               if (x.items.uic == "93070013422") {
-                console.log(matchingIndex);
               }
               if (matchingIndex !== -1) {
                 // Remove one element at the found index
@@ -6956,35 +7041,60 @@ module.exports = {
   // VIEW UIC IN SALES STOCK REPORT
   getSalesReportUicData: async (subMuic) => {
     try {
-      const data = await delivery.find(
+      const data = await delivery.aggregate([
         {
-          stx_tray_id: { $exists: true },
-          tray_type: "ST",
-          item_moved_to_billed_bin: { $exists: false },
-          "audit_report.sub_muic": subMuic,
+          $match: {
+            stx_tray_id: { $exists: true },
+            tray_type: "ST",
+            item_moved_to_billed_bin: { $exists: false },
+            "audit_report.sub_muic": subMuic,
+          },
         },
         {
-          "uic_code.code": 1,
-          old_item_details: 1,
-          audit_report: 1,
-          audit_done_date: 1,
-          rdl_fls_one_report: 1,
-          rdl_fls_one_user_name: 1,
-          rdl_fls_closed_date: 1,
-        }
-      );
+          $lookup: {
+            from: "products",
+            localField: `item_id`,
+            foreignField: "vendor_sku_id",
+            as: "products",
+          },
+        },
+        {
+          $project: {
+            "uic_code.code": 1,
+            old_item_details: 1,
+            audit_report: 1,
+            audit_done_date: 1,
+            rdl_fls_one_report: 1,
+            rdl_fls_one_user_name: 1,
+            rdl_fls_closed_date: 1,
+            products: 1,
+            final_grade: 1,
+          },
+        },
+      ]);
       let arr = [];
       for (let x of data) {
         // console.log(x.uic_code.code);
-        let findTray = await masters.findOne(
+        let findTray = await masters.aggregate([
           {
-            "items.uic": x.uic_code.code,
-            prefix: "tray-master",
-            type_taxanomy: { $nin: ["SPT"] },
+            $match: {
+              "items.uic": x.uic_code.code,
+              prefix: "tray-master",
+              type_taxanomy: { $nin: ["SPT"] },
+            },
           },
-          { code: 1 }
-        );
+          {
+            $lookup: {
+              from: "trayracks",
+              localField: "rack_id",
+              foreignField: "rack_id",
+              as: "rackData",
+            },
+          },
+          { $project: { code: 1, name: 1, rackData: 1 } },
+        ]);
         let obj = {
+          muic: x.products?.[0]?.muic,
           uic_code: x.uic_code,
           old_item_details: x.old_item_details,
           audit_report: x.audit_report,
@@ -6992,11 +7102,16 @@ module.exports = {
           rdl_fls_one_report: x.rdl_fls_one_report,
           rdl_fls_one_user_name: x.rdl_fls_one_user_name,
           rdl_fls_closed_date: x.rdl_fls_closed_date,
+          final_grade: x.final_grade,
         };
         if (findTray) {
-          obj["current_tray_id"] = findTray.code;
+          obj["current_tray_id"] = findTray[0].code;
+          obj["current_tray_name"] = findTray[0].name;
+          obj["current_tray_rack_display"] = findTray[0]?.rackData[0]?.display;
+          obj["current_tray_rack_id"] = findTray[0]?.rackData[0]?.rack_id;
         } else {
           obj["current_tray_id"] = "";
+          obj["current_tray_name"] = "";
         }
         arr.push(obj);
       }
@@ -7082,36 +7197,60 @@ module.exports = {
   // VIEW UIC IN SALES STOCK REPORT BASED ON MUIC
   getSalesReportUicDataWithMuic: async (itemId) => {
     try {
-      const data = await delivery.find(
+      const data = await delivery.aggregate([
         {
-          stx_tray_id: { $exists: true },
-          tray_type: "ST",
-          item_moved_to_billed_bin: { $exists: false },
-          "audit_report.sub_muic": { $exists: false },
-          item_id: itemId,
+          $match: {
+            stx_tray_id: { $exists: true },
+            tray_type: "ST",
+            item_moved_to_billed_bin: { $exists: false },
+            "audit_report.sub_muic": { $exists: false },
+            item_id: itemId,
+          },
         },
         {
-          "uic_code.code": 1,
-          old_item_details: 1,
-          audit_report: 1,
-          audit_done_date: 1,
-          rdl_fls_one_report: 1,
-          rdl_fls_one_user_name: 1,
-          rdl_fls_closed_date: 1,
-        }
-      );
+          $lookup: {
+            from: "products",
+            localField: `item_id`,
+            foreignField: "vendor_sku_id",
+            as: "products",
+          },
+        },
+        {
+          $project: {
+            "uic_code.code": 1,
+            old_item_details: 1,
+            audit_report: 1,
+            audit_done_date: 1,
+            rdl_fls_one_report: 1,
+            rdl_fls_one_user_name: 1,
+            rdl_fls_closed_date: 1,
+            final_grade: 1,
+            products: 1,
+          },
+        },
+      ]);
       let arr = [];
       for (let x of data) {
-        // console.log(x.uic_code.code);
-        let findTray = await masters.findOne(
+        let findTray = await masters.aggregate([
           {
-            "items.uic": x.uic_code.code,
-            prefix: "tray-master",
-            type_taxanomy: { $nin: ["SPT"] },
+            $match: {
+              "items.uic": x.uic_code.code,
+              prefix: "tray-master",
+              type_taxanomy: { $nin: ["SPT"] },
+            },
           },
-          { code: 1 }
-        );
+          {
+            $lookup: {
+              from: "trayracks",
+              localField: "rack_id",
+              foreignField: "rack_id",
+              as: "rackData",
+            },
+          },
+          { $project: { code: 1, name: 1, rackData: 1 } },
+        ]);
         let obj = {
+          muic: x.products?.[0]?.muic,
           uic_code: x.uic_code,
           old_item_details: x.old_item_details,
           audit_report: x.audit_report,
@@ -7119,6 +7258,7 @@ module.exports = {
           rdl_fls_one_report: x.rdl_fls_one_report,
           rdl_fls_one_user_name: x.rdl_fls_one_user_name,
           rdl_fls_closed_date: x.rdl_fls_closed_date,
+          final_grade: x.final_grade,
         };
         if (obj?.audit_report == undefined) {
           obj.audit_report = {
@@ -7127,15 +7267,20 @@ module.exports = {
         } else if (obj?.audit_report?.orgGrade == undefined) {
           obj.audit_report.orgGrade = "";
         }
-
-        if (findTray) {
-          obj["current_tray_id"] = findTray.code;
+        console.log(findTray);
+        if (findTray.length != 0) {
+          obj["current_tray_id"] = findTray[0].code;
+          obj["current_tray_name"] = findTray[0].name;
+          obj["current_tray_rack_display"] = findTray[0]?.rackData[0]?.display;
+          obj["current_tray_rack_id"] = findTray[0]?.rackData[0]?.rack_id;
         } else {
           obj["current_tray_id"] = "";
+          obj["current_tray_name"] = "";
         }
         // console.log(obj);
         arr.push(obj);
       }
+      console.log(arr);
       return arr;
     } catch (error) {
       return error;

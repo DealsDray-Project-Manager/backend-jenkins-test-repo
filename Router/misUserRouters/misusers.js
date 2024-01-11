@@ -245,6 +245,28 @@ router.post(
     }
   }
 );
+// NOT DELIVERED DATA FOR DOWNLOAD 
+router.post(
+  "/notDeliveredOrdersForDownload/:location",
+  async (req, res, next) => {
+    try {
+      let { location,  } = req.params;
+      
+      let data = await misUserController.notDeliveredOrdersDataForDownload(
+        location,
+       
+      );
+      if (data) {
+        res.status(200).json({
+          data: data,
+          
+        });
+      }
+    } catch (error) {
+      next(error);
+    }
+  }
+);
 /* SEARCH BAD ORDERS */
 router.post("/searchDeliveredOrders", async (req, res, next) => {
   try {
@@ -844,7 +866,7 @@ router.post("/assign-to-sorting-agent", async (req, res, next) => {
     let data = await misUserController.botTrayAssignedToSortingAgent(req.body);
     if (data) {
       res.status(200).json({
-        message: "Request Send To wareshouse",
+        message: "Request Sent to Warehouse",
       });
     } else {
       res.status(202).json({

@@ -60,6 +60,27 @@ router.post("/bag/closed/:location", async (req, res, next) => {
     next(error);
   }
 });
+//GET IN-PROGRESS STATE BAG
+router.post(
+  "/bag/inprogress/:location/:status/:prefix",
+  async (req, res, next) => {
+    try {
+      const { location, status, prefix } = req.params;
+      const bag = await reportingAgentRouter.getInProgressBags(
+        location,
+        status,
+        prefix
+      );
+      if (bag) {
+        res.status(200).json({
+          data: bag,
+        });
+      }
+    } catch (error) {
+      next(error);
+    }
+  }
+);
 //TRAY BASED REPORTING
 router.post("/tray/:sortId/:trayType/:location", async (req, res, next) => {
   try {
@@ -633,11 +654,10 @@ router.post(
         res.status(200).json({
           data: getData.dataOfOut,
         });
-      }
-      else{
-       res.status(202).json({
-        message:"No records available for this"
-       })
+      } else {
+        res.status(202).json({
+          message: "No records available for this",
+        });
       }
     } catch (error) {
       next(error);

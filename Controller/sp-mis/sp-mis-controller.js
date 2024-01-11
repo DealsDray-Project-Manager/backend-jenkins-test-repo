@@ -380,7 +380,6 @@ module.exports = {
         }
         arr.push(obj);
       }
-      console.log(arr);
       return arr;
     } catch (error) {
       return error;

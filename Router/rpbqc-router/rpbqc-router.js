@@ -77,7 +77,7 @@ router.post("/add-rpbqc-data", async (req, res, next) => {
       });
     } else if (data.status == 2) {
       res.status(202).json({
-        message: `Item Return to RDL-2 tray ${data.trayId}`,
+        message: `Return this item to RDL-2 User:-${data?.username} / Tray ID:-${data.trayId}`,
       });
     } else {
       res.status(202).json({
@@ -92,7 +92,7 @@ router.post("/add-rpbqc-data", async (req, res, next) => {
 router.post("/close-rpbqc-tray", async (req, res, next) => {
   try {
     const data = await rpbqcController.closeRpbqcTray(req.body);
-    console.log(data);
+   
     if (data.status == 1) {
       res.status(200).json({
         message: "Successfully closed",

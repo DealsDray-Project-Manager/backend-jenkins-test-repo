@@ -3,6 +3,7 @@ const fs = require("fs");
 const { Client } = require("@elastic/elasticsearch");
 const { delivery } = require("../Model/deliveryModel/delivery");
 const { orders } = require("../Model/ordersModel/ordersModel");
+const { products } = require("../Model/productModel/product");
 const client = new Client({
   node: "http://localhost:9200",
 });
@@ -13,7 +14,6 @@ const client = new Client({
 module.exports = {
   creatIndex: async () => {
     const result = await client.indices.create({ index: "prexo-delivery" });
-    
   },
   mappings: async () => {
     let data = await client.indices.putMapping({
@@ -240,7 +240,6 @@ module.exports = {
         },
       },
     });
-    
   },
   bulkImportToElastic: async () => {
     let findDeliveryData = await delivery.find({}, { _id: 0, __v: 0 });
@@ -439,14 +438,29 @@ module.exports = {
     });
     let arr1 = [];
     for (let result of dataForDownload.hits.hits) {
+      let findData = await products.find(
+        { vendor_sku_id: result["_source"]?.item_id },
+        { out_of_stock: 0 }
+      );
+      if (findData) {
+        result["_source"]["products"] = findData;
+      }
+      console.log(result["_source"]);
       arr1.push(result["_source"]);
     }
     let arr = [];
     let count = data?.hits?.total?.value;
 
     for (let result of data.hits.hits) {
+      let findData = await products.find(
+        { vendor_sku_id: result["_source"]?.item_id },
+        { out_of_stock: 0 }
+      );
+      if (findData) {
+        result["_source"]["products"] = findData;
+      }
       console.log(result["_source"]);
-
+      arr1.push(result["_source"]);
       arr.push(result["_source"]);
     }
 

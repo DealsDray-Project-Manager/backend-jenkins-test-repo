@@ -98,7 +98,7 @@ module.exports = {
               rp_bqc_report: 1,
               rp_bqc_software_report: 1,
               products: 1,
-              rp_bqc_done_date:1
+              rp_bqc_done_date: 1,
             },
           },
         ]);
@@ -145,7 +145,7 @@ module.exports = {
       if (itemData) {
         let obj = {
           status: dataOfRpAudit.status,
-          username_of_rpbqc: dataOfRpAudit.username,
+          username_of_rpaudit: dataOfRpAudit.username,
           grade: dataOfRpAudit.grade,
           description: dataOfRpAudit.description,
           sub_muic: currentSubMuicCount,
@@ -156,7 +156,9 @@ module.exports = {
         let addIntoTray1, addIntoTray2, addIntoTray3;
         itemData.temp_array[0]["rp_audit_status"] = obj;
         if (dataOfRpAudit.status == "RP-Audit Failed") {
-          addIntoTray1 = await masters.updateOne(
+          itemData.temp_array[0].rpbqc_info.rbqc_tray = null;
+          itemData.temp_array[0].rpbqc_info.rpbqc_username=null
+          addIntoTray1 = await masters.findOneAndUpdate(
             {
               code: itemData.temp_array[0]?.rdl_repair_report.rdl_two_tray,
             },
@@ -171,7 +173,7 @@ module.exports = {
               },
             }
           );
-          addIntoTray3 = await masters.updateOne(
+          addIntoTray3 = await masters.findOneAndUpdate(
             {
               code: itemData.temp_array[0]?.rdl_repair_report.rdl_two_tray,
             },
@@ -181,7 +183,7 @@ module.exports = {
               },
             }
           );
-          addIntoTray2 = await masters.updateOne(
+          addIntoTray2 = await masters.findOneAndUpdate(
             {
               code: itemData.code,
             },
@@ -194,7 +196,7 @@ module.exports = {
             }
           );
         } else {
-          addIntoTray2 = await masters.updateOne(
+          addIntoTray2 = await masters.findOneAndUpdate(
             {
               code: itemData.temp_array[0]?.rdl_repair_report.rdl_two_tray,
             },
@@ -204,9 +206,12 @@ module.exports = {
                   uic: dataOfRpAudit.uic,
                 },
               },
-            }
+              $addToSet:{
+                wht_tray:itemData.temp_array[0]
+              }
+            },
           );
-          addIntoTray3 = await masters.updateOne(
+          addIntoTray3 = await masters.findOneAndUpdate(
             {
               code: itemData.temp_array[0]?.rdl_repair_report.rdl_two_tray,
             },
@@ -216,7 +221,7 @@ module.exports = {
               },
             }
           );
-          addIntoTray1 = await masters.updateOne(
+          addIntoTray1 = await masters.findOneAndUpdate(
             {
               code: itemData.code,
             },
@@ -262,6 +267,7 @@ module.exports = {
             return {
               status: 2,
               trayId: itemData.temp_array[0]?.rdl_repair_report.rdl_two_tray,
+              usernameOfRDL2: addIntoTray3?.issued_user_name,
             };
           } else {
             return { status: 1, trayId: itemData.code };

@@ -133,12 +133,12 @@ module.exports = {
         $or: [
           {
             type_taxanomy: "RPT",
-            location: location,
+            cpc: location,
             sort_id: "Closed by RDL-2",
           },
           {
             type_taxanomy: "RPT",
-            location: location,
+            cpc: location,
             sort_id: "Received from RDL-2",
           },
         ],
@@ -281,13 +281,13 @@ module.exports = {
           {
             prefix: "tray-master",
             type_taxanomy: { $in: ["CT", "RPA"] },
-            sort_id: "Accepted From Processing",
+            sort_id: "Accepted from Processing WH",
             cpc: location,
           },
           {
             prefix: "tray-master",
             cpc: location,
-            sort_id: "Accepted From Sales",
+            sort_id: "Accepted From Sales WH",
             type_taxanomy: { $in: ["CT", "RPA"] },
           },
           {
@@ -764,8 +764,8 @@ module.exports = {
           delivery_status: "Delivered",
         });
         if (deliveredOrNot) {
-          if (deliveredOrNot.order_date == null) {
-            deliveredOrNot.order_date = data?.order_date;
+          if (deliveredOrNot.delivery_date == null) {
+            deliveredOrNot.order_date = data?.delivery_date;
           }
           deliveredOrNot.tracking_id = data.tracking_id;
           let dup = await masters.findOne({
@@ -835,7 +835,6 @@ module.exports = {
                 stock_in_status: data.status,
                 updated_at: Date.now(),
                 old_item_details: data.old_item_details,
-                order_date: data.order_date,
               },
             }
           );
@@ -1798,6 +1797,7 @@ module.exports = {
               ),
               actual_items: [],
               issued_user_name: null,
+              rack_id: trayData.rackId,
               "track_tray.bot_done_tray_close_wh": Date.now(),
             },
           }
@@ -1809,6 +1809,7 @@ module.exports = {
             $set: {
               sort_id: "Open",
               track_tray: {},
+              rack_id: trayData.rackId,
               closed_time_wharehouse: Date.now(),
               issued_user_name: null,
             },
@@ -2496,6 +2497,12 @@ module.exports = {
                   prefix: "tray-master",
                   type_taxanomy: "WHT",
                   sort_id: "Audit Done Closed By Warehouse",
+                  $expr: {
+                    $and: [
+                      { $ne: [{ $ifNull: ["$items", null] }, null] },
+                      { $ne: [{ $size: "$items" }, { $toInt: "$limit" }] },
+                    ],
+                  },
                 },
                 {
                   cpc: location,
@@ -3076,6 +3083,7 @@ module.exports = {
               temp_array: [],
               rack_id: null,
               sort_id: "Issued to RDL-2",
+              wht_tray:[],
               assigned_date: Date.now(),
               "track_tray.issued_to_rdl_two": Date.now(),
             },
@@ -3465,12 +3473,12 @@ module.exports = {
         $or: [
           {
             type_taxanomy: "RPT",
-            location: location,
+            cpc: location,
             sort_id: "Closed by RDL-2",
           },
           {
             type_taxanomy: "RPT",
-            location: location,
+            cpc: location,
             sort_id: "Received from RDL-2",
           },
         ],
@@ -6020,7 +6028,7 @@ module.exports = {
               prefix: "tray-master",
               cpc: location,
               type_taxanomy: {
-                $in: ["ST", "CT"],
+                $in: ["CT"],
               },
             },
           },
@@ -6149,7 +6157,7 @@ module.exports = {
         if (tray) {
           reslove({ status: 1, tray: tray });
         }
-      } else if (type === "Accepted From Processing") {
+      } else if (type === "Accepted from Processing WH") {
         let tray = await masters.find({
           $or: [
             {
@@ -6157,13 +6165,13 @@ module.exports = {
               type_taxanomy: {
                 $in: ["CT", "RPA"],
               },
-              sort_id: "Accepted From Processing",
+              sort_id: "Accepted from Processing WH",
               cpc: location,
             },
             {
               prefix: "tray-master",
               cpc: location,
-              sort_id: "Accepted From Sales",
+              sort_id: "Accepted From Sales WH",
               type_taxanomy: {
                 $in: ["CT", "RPA"],
               },
@@ -7355,7 +7363,7 @@ module.exports = {
       let tray = await masters.findOne({ code: trayData.trayId });
       let data;
       if (tray?.items?.length == trayData.counts) {
-        if (tray.sort_id == "Accepted From Processing") {
+        if (tray.sort_id == "Accepted from Processing WH") {
           data = await masters.findOneAndUpdate(
             { code: trayData.trayId },
             {
@@ -7375,7 +7383,7 @@ module.exports = {
           );
         }
         if (data) {
-          if (tray.sort_id == "Accepted From Processing") {
+          if (tray.sort_id == "Accepted from Processing WH") {
             for (let i = 0; i < data.actual_items.length; i++) {
               let deliveryTrack = await delivery.findOneAndUpdate(
                 { tracking_id: data.actual_items[i].tracking_id },
@@ -7464,6 +7472,52 @@ module.exports = {
         });
       }
       for (let x of items) {
+        let findDelivery = await delivery.findOne(
+          {
+            "uic_code.code": x?.uic,
+            sp_price: { $exists: false }, // Filter out documents with null or missing sp_price
+            mrp_price: { $exists: false },
+          },
+          { audit_report: 1, final_grade: 1, item_id: 1 }
+        );
+        let findPrice = null;
+        if (findDelivery) {
+          if (findDelivery?.audit_report?.sub_muic !== undefined) {
+            findPrice = await delivery.findOne({
+              item_moved_to_billed_bin: { $exists: false },
+              stx_tray_id: { $exists: true },
+              tray_type: "ST",
+              sp_price: { $exists: true }, // Filter out documents with null or missing sp_price
+              mrp_price: { $exists: true },
+              final_grade: findDelivery.final_grade,
+              "audit_report.sub_muic": findDelivery?.audit_report?.sub_muic,
+            });
+          } else {
+            findPrice = await delivery.findOne({
+              item_moved_to_billed_bin: { $exists: false },
+              stx_tray_id: { $exists: true },
+              tray_type: "ST",
+              sp_price: { $exists: true }, // Filter out documents with null or missing sp_price
+              mrp_price: { $exists: true },
+              final_grade: x.grade,
+              "audit_report.sub_muic": { $exists: false },
+              item_id: findDelivery.item_id,
+            });
+          }
+          if (findPrice) {
+            let updatePrice = await delivery.updateOne(
+              {
+                "uic_code.code": x?.uic,
+              },
+              {
+                $set: {
+                  sp_price: findPrice?.sp_price,
+                  mrp_price: findPrice?.mrp_price,
+                },
+              }
+            );
+          }
+        }
         const addLogsofUnits = await unitsActionLog.create({
           action_type: stage,
           created_at: Date.now(),
@@ -7634,6 +7688,36 @@ module.exports = {
               as: "rackDetails",
             },
           },
+          {
+            $project: {
+              rackDetails: 1,
+              code: 1,
+              rack_id: 1,
+              brand: 1,
+              model: 1,
+              sort_id: 1,
+              created_at: 1,
+              limit: 1,
+              tray_grade: 1,
+              name: 1,
+              type_taxanomy: 1,
+              issued_user_name: 1,
+              items_length: {
+                $cond: {
+                  if: { $isArray: "$items" },
+                  then: { $size: "$items" },
+                  else: 0,
+                },
+              },
+              actual_items: {
+                $cond: {
+                  if: { $isArray: "$actual_items" },
+                  then: { $size: "$actual_items" },
+                  else: 0,
+                },
+              },
+            },
+          },
         ]);
         if (tray) {
           reslove({ status: 1, tray: tray });
@@ -7649,6 +7733,38 @@ module.exports = {
             },
           ],
         });
+        if (tray) {
+          reslove({ status: 1, tray: tray });
+        }
+      } else if (type == "Merge") {
+        let tray = await masters.aggregate([
+          {
+            $match: {
+              $or: [
+                {
+                  prefix: "tray-master",
+                  cpc: location,
+                  sort_id: "Inuse",
+                  type_taxanomy: "ST",
+                  $expr: {
+                    $and: [
+                      { $ne: [{ $ifNull: ["$items", null] }, null] },
+                      { $ne: [{ $size: "$items" }, { $toInt: "$limit" }] },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+          {
+            $lookup: {
+              from: "trayracks",
+              localField: "rack_id",
+              foreignField: "rack_id",
+              as: "rackData",
+            },
+          },
+        ]);
         if (tray) {
           reslove({ status: 1, tray: tray });
         }
@@ -8195,7 +8311,6 @@ module.exports = {
             { "uic_code.code": uic },
             { sales_bin_status: 1, item_moved_to_billed_bin: 1 }
           );
-          console.log(checkDelivery);
           if (checkDelivery) {
             if (checkDelivery.sales_bin_status !== undefined) {
               for (let statusSet of data) {
@@ -8463,72 +8578,95 @@ module.exports = {
   trayCloseAfterRpaRpb: async (trayData) => {
     try {
       let updateTray;
-      if (trayData.tray_type == "RPB") {
-        updateTray = await masters.findOneAndUpdate(
-          { code: trayData.trayId, sort_id: "Received From RP-BQC" },
+      let findTheTray = await masters.findOne({ code: trayData.trayId });
+      if (findTheTray) {
+        if (trayData.tray_type == "RPB") {
+          updateTray = await masters.findOneAndUpdate(
+            { code: trayData.trayId, sort_id: "Received From RP-BQC" },
 
-          {
-            $set: {
-              rack_id: trayData.rackId,
-              actual_items: [],
-              description: trayData.description,
-              temp_array: [],
-              sort_id: "Open",
-              items: [],
-              closed_time_wharehouse: Date.now(),
-              issued_user_name: null,
-            },
-          }
-        );
-        if (updateTray) {
-          await unitsActionLog.create({
-            action_type: "RP-BQC Done Closed By Warehouse",
-            created_at: Date.now(),
-            user_name_of_action: trayData.actioUser,
-            user_type: "PRC Warehouse",
-            tray_id: trayData.trayId,
-            track_tray: state,
-            description: `RP-BQC Done Closed By Warehouse by Wh: ${trayData.actioUser}`,
-          });
-          return { status: 1 };
-        } else {
-          return { status: 2 };
-        }
-      } else {
-        updateTray = await masters.findOneAndUpdate(
-          { code: trayData.trayId, sort_id: "Received From RP-Audit" },
-
-          {
-            $set: {
-              rack_id: trayData.rackId,
-              actual_items: [],
-              description: trayData.description,
-              temp_array: [],
-              sort_id: "Ready to Transfer to Sales",
-              closed_time_wharehouse: Date.now(),
-              issued_user_name: null,
-            },
-          }
-        );
-        if (updateTray) {
-          let state = "Tray";
-          for (let x of updateTray.items) {
+            {
+              $set: {
+                rack_id: trayData.rackId,
+                actual_items: [],
+                description: trayData.description,
+                temp_array: [],
+                sort_id: "Open",
+                items: [],
+                closed_time_wharehouse: Date.now(),
+                issued_user_name: null,
+              },
+            }
+          );
+          if (updateTray) {
             await unitsActionLog.create({
-              action_type: "RP-Audit Done Closed By Warehouse",
+              action_type: "RP-BQC Done Closed By Warehouse",
               created_at: Date.now(),
               user_name_of_action: trayData.actioUser,
               user_type: "PRC Warehouse",
-              uic: x.uic,
               tray_id: trayData.trayId,
               track_tray: state,
-              description: `RP-Audit Done Closed By Warehouse by Wh: ${trayData.actioUser} . Ready to Transfer to Sales`,
+              description: `RP-BQC Done Closed By Warehouse by Wh: ${trayData.actioUser}`,
             });
-            state = "Units";
+            return { status: 1 };
+          } else {
+            return { status: 2 };
           }
-          return { status: 1 };
         } else {
-          return { status: 2 };
+          if (findTheTray?.items.length == 0) {
+            updateTray = await masters.findOneAndUpdate(
+              { code: trayData.trayId, sort_id: "Received From RP-Audit" },
+
+              {
+                $set: {
+                  rack_id: trayData.rackId,
+                  actual_items: [],
+                  description: trayData.description,
+                  temp_array: [],
+                  sort_id: "Open",
+                  closed_time_wharehouse: Date.now(),
+                  issued_user_name: null,
+                },
+              }
+            );
+          } else {
+            updateTray = await masters.findOneAndUpdate(
+              { code: trayData.trayId, sort_id: "Received From RP-Audit" },
+
+              {
+                $set: {
+                  rack_id: trayData.rackId,
+                  actual_items: [],
+                  description: trayData.description,
+                  temp_array: [],
+                  sort_id: "Ready to Transfer to Sales",
+                  closed_time_wharehouse: Date.now(),
+                  issued_user_name: null,
+                },
+              }
+            );
+          }
+          if (updateTray) {
+            let state = "Tray";
+            for (let x of updateTray.items) {
+              await unitsActionLog.create({
+                action_type: "RP-Audit Done Closed By Warehouse",
+                created_at: Date.now(),
+                user_name_of_action: trayData.actioUser,
+                user_type: "PRC Warehouse",
+                uic: x.uic,
+                tray_id: trayData.trayId,
+                track_tray: state,
+                description: `RP-Audit Done Closed By Warehouse by Wh: ${trayData.actioUser} . Ready to Transfer to Sales`,
+              });
+              state = "Units";
+            }
+            return { status: 1 };
+          } else {
+            return { status: 2 };
+          }
         }
+      } else {
+        return { status: 2 };
       }
     } catch (error) {
       return error;
@@ -8578,13 +8716,33 @@ module.exports = {
     }
   },
   // GET STX TRAY FOR RPA TO STX
-  getStxTrayForRpaToStxSort: async (brand, model, location, uic) => {
+  getStxTrayForRpaToStxSort: async (location, uic) => {
     try {
-      let checkUic = await delivery.findOne(
-        { "uic_code.code": uic },
-        { "bqc_software_report.final_grade": 1, final_grade: 1 }
-      );
-      if (checkUic?.final_grade) {
+      let checkUic = await delivery.aggregate([
+        {
+          $match: {
+            "uic_code.code": uic,
+          },
+        },
+        {
+          $lookup: {
+            from: "products",
+            localField: `item_id`,
+            foreignField: "vendor_sku_id",
+            as: "products",
+          },
+        },
+
+        {
+          $project: {
+            "bqc_software_report.final_grade": 1,
+            final_grade: 1,
+            products: 1,
+            rp_audit_report: 1,
+          },
+        },
+      ]);
+      if (checkUic?.[0]?.final_grade) {
         const data = await masters.find(
           {
             $or: [
@@ -8592,25 +8750,25 @@ module.exports = {
                 sort_id: "Open",
                 type_taxanomy: "ST",
                 cpc: location,
-                tray_grade: checkUic?.final_grade,
-                brand: brand,
-                model: model,
+                tray_grade: checkUic?.[0]?.final_grade,
+                brand: checkUic?.[0]?.products?.[0].brand_name,
+                model: checkUic?.[0]?.products?.[0].model_name,
               },
               {
                 sort_id: "Inuse",
                 type_taxanomy: "ST",
                 cpc: location,
-                tray_grade: checkUic?.final_grade,
-                brand: brand,
-                model: model,
+                tray_grade: checkUic?.[0]?.final_grade,
+                brand: checkUic?.[0]?.products?.[0].brand_name,
+                model: checkUic?.[0]?.products?.[0].model_name,
               },
               {
                 sort_id: "RPA to STX Work In Progress",
                 type_taxanomy: "ST",
                 cpc: location,
-                tray_grade: checkUic?.final_grade,
-                brand: brand,
-                model: model,
+                tray_grade: checkUic?.[0]?.final_grade,
+                brand: checkUic?.[0]?.products?.[0].brand_name,
+                model: checkUic?.[0]?.products?.[0].model_name,
               },
             ],
           },
@@ -8627,7 +8785,11 @@ module.exports = {
               spArr.push(spt);
             }
           }
-          return { status: 1, tray: spArr };
+          return {
+            status: 1,
+            tray: spArr,
+            modelData: checkUic?.[0]?.rp_audit_report,
+          };
         } else {
           return { status: 2 };
         }
@@ -8930,6 +9092,7 @@ module.exports = {
   // ADD TO CAN BIN
   addToCanBin: async (itemdata) => {
     try {
+      itemdata.item["cbt"] = itemdata.cbt;
       const udpateOrRemove = await masters.findOneAndUpdate(
         {
           code: itemdata.trayId,
@@ -8948,6 +9111,31 @@ module.exports = {
           },
         }
       );
+      let addToNewTray = await masters.findOneAndUpdate(
+        { code: itemdata.cbt },
+        {
+          $addToSet: {
+            items: itemdata.item,
+          },
+          $set: {
+            sort_id: "Inuse",
+          },
+        },
+        {
+          new: true,
+        }
+      );
+
+      if (addToNewTray?.items?.length == addToNewTray?.limit) {
+        let closeTheTray = await masters.updateOne(
+          { code: itemdata.cbt },
+          {
+            $set: {
+              sort_id: "Closed",
+            },
+          }
+        );
+      }
       if (udpateOrRemove) {
         let uddateDelivery = await delivery.findOneAndUpdate(
           {
@@ -8959,6 +9147,7 @@ module.exports = {
               add_to_can_bin_user: itemdata.username,
               add_to_can_bin_description: itemdata.description,
               tray_status: "Moved To Can Bin",
+              can_bin_tray: itemdata.cbt,
             },
           }
         );
@@ -8969,6 +9158,7 @@ module.exports = {
           user_type: "PRC Warehouse",
           uic: itemdata.item.uic,
           track_tray: "Units",
+          tray_id: itemdata.cbt,
           description: `Item Transferred Can BIn by prc warehouse:${itemdata.username},Warehouse user description:${itemdata.description}`,
         });
         return { status: 1 };
@@ -9053,8 +9243,21 @@ module.exports = {
           rdl_two_report: 1,
           item_id: 1,
           old_item_details: 1,
+          can_bin_tray: 1,
         }
       );
+      return data;
+    } catch (error) {
+      return error;
+    }
+  },
+  getCbtTrayForCanBin: async (location) => {
+    try {
+      const data = await masters.find({
+        type_taxanomy: "CBT",
+        sort_id: { $in: ["Inuse", "Open"] },
+        cpc: location,
+      });
       return data;
     } catch (error) {
       return error;

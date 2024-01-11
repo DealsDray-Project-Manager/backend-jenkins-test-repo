@@ -65,7 +65,6 @@ module.exports = {
             delimiter: ";",
             complete: async (result) => {
               if (result.data.length !== 0) {
-                console.log(result.data);
                 let latestData = null;
                 for (let x of result.data) {
                   // Assuming x.Date is a Date object or a string representing a date

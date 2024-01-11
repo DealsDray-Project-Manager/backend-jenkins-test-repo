@@ -154,9 +154,12 @@ router.post("/login", async (req, res, next) => {
         res.status(202).json({ data: { message: "server error" } });
       }
     } else if (loginData.status == 2) {
-      res.status(202).json({ data: { message: "Wrong username or password" } });
+      res.status(202).json({ data: { message: "Wrong username" } });
+    }
+    else if (loginData.status == 4) {
+      res.status(202).json({ data: { message: "Wrong password" } });
     } else if (loginData.status == 3) {
-      res.status(202).json({ data: { message: "admin deactivated" } });
+      res.status(202).json({ data: { message: "Admin Deactivated" } });
     }
   } catch (error) {
     next(error);
@@ -991,6 +994,11 @@ router.post("/trayIdGenrate", async (req, res, next) => {
               data: obj.RPB,
             });
           }
+          else if (type == "CBT") {
+            res.status(200).json({
+              data: obj.CBT,
+            });
+          }
           //  else if (type == "CTA") {
           //   res.status(200).json({
           //     data: obj.CTA,
@@ -1442,7 +1450,6 @@ router.post("/getTrayDeletionHistory/:trayId", async (req, res, next) => {
 // RESTORE DELETED MASTER
 router.post("/restoreDeletedMaster", async (req, res, next) => {
   try {
-    console.log("work");
     const { id, actionUser, reason } = req.body;
     const dataOfRestore = await superAdminController.restoreDeletedMaster(
       id,
@@ -1528,7 +1535,7 @@ router.post("/ready-for-charging", async (req, res, next) => {
     let data = await superAdminController.readyForCharging(ischeck, status);
     if (data.status === 1) {
       res.status(200).json({
-        message: "Successfully Sent to MIS",
+        message: "Tray Enabled for Ready to Charge",
       });
     } else {
       res.status(202).json({
@@ -4616,6 +4623,23 @@ router.post("/extra/updateTheRdl-OneData", async (req, res, next) => {
     if (data.status == 1) {
       res.status(200).json({
         message: "Successfully Update",
+      });
+    } else {
+      res.status(202).json({
+        message: "Failed",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+// CHANGE ITEM ID
+router.post("/extra/changeItemId", async (req, res, next) => {
+  try {
+    const data = await superAdminController.changeItemId();
+    if (data.status === 1) {
+      res.status(200).json({
+        message: "Successfully Updated",
       });
     } else {
       res.status(202).json({

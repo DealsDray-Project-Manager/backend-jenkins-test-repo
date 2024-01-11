@@ -50,7 +50,6 @@ module.exports = {
     }
     for (let tempUic of data.items) {
       if (actFindUic.includes(tempUic.uic)) {
-        console.log("s");
         tempUic["dup_uic_status"] = "Duplicate";
       }
       actFindUic.push(tempUic.uic);

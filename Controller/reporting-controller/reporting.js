@@ -52,7 +52,76 @@ module.exports = {
         ctxTransferToSalesInProgress: 0,
         monthWisePurchase: 0,
         rdlOneDoneUnits: 0,
+        processingUnits: 0,
+        readyForSale: 0,
+        closedBag: 0,
+        ctxTransferToSalesInProgress: 0,
+        ctxTransferToSalesInProgressItemCount: 0,
+        ctxTransferPendingToSales: 0,
+        ctxTransferPendingToSalesItemCount: 0,
+        closedBagItemCount: 0,
+        sortingPendingBot: 0,
+        sortingPendingBotItemsCount: 0,
+        sortingPendingBotIDeliveryDate: 0,
+        bagsIssuedToBotUnits: 0,
+        bagsIssuedToBotBag: 0,
+        botIssuedToSortingTray: 0,
+        botIssuedToSortingUnits: 0,
       };
+      count.botIssuedToSortingTray = await masters.count({
+        cpc: location,
+        prefix: "tray-master",
+        sort_id: "Issued to sorting agent",
+        type_taxanomy: "BOT",
+      });
+      count.botIssuedToSortingUnits = await masters.aggregate([
+        {
+          $match: {
+            cpc: location,
+            prefix: "tray-master",
+            sort_id: "Issued to sorting agent",
+            items: { $exists: true, $type: "array" },
+            type_taxanomy: "BOT",
+          },
+        },
+        {
+          $project: {
+            itemCount: { $size: "$items" },
+          },
+        },
+        {
+          $group: {
+            _id: null,
+            totalItemCount: { $sum: "$itemCount" },
+          },
+        },
+      ]);
+      count.bagsIssuedToBotBag = await masters.count({
+        cpc: location,
+        prefix: "bag-master",
+        sort_id: "Issued",
+      });
+      count.bagsIssuedToBotUnits = await masters.aggregate([
+        {
+          $match: {
+            cpc: location,
+            prefix: "bag-master",
+            sort_id: "Issued",
+            items: { $exists: true, $type: "array" },
+          },
+        },
+        {
+          $project: {
+            itemCount: { $size: "$items" },
+          },
+        },
+        {
+          $group: {
+            _id: null,
+            totalItemCount: { $sum: "$itemCount" },
+          },
+        },
+      ]);
       count.rdlOneDoneUnits = await delivery.count({
         partner_shop: location,
         rdl_fls_closed_date: { $exists: true },
@@ -896,6 +965,7 @@ module.exports = {
           },
         },
       ]);
+      
       count.inRdlFls = await masters.count({
         cpc: location,
         type_taxanomy: "WHT",
@@ -1046,21 +1116,79 @@ module.exports = {
   getUnitsCond: (location, limit, skip, screen) => {
     return new Promise(async (resolve, reject) => {
       if (screen == "Processing-units") {
-        const units = await delivery
-          .find({
-            partner_shop: location,
-            ctx_tray_id: { $exists: false },
-            temp_delivery_status: { $ne: "Pending" },
-            sales_bin_status: { $exists: false },
-          })
-          .limit(limit)
-          .skip(skip);
+        const units = await delivery.aggregate([
+          {
+            $match: {
+              partner_shop: location,
+              ctx_tray_id: { $exists: false },
+              temp_delivery_status: { $ne: "Pending" },
+              sales_bin_status: { $exists: false },
+            },
+          },
+          {
+            $lookup: {
+              from: "products",
+              localField: `item_id`,
+              foreignField: "vendor_sku_id",
+              as: "products",
+            },
+          },
+          {
+            $limit: limit,
+          },
+          {
+            $skip: skip,
+          },
+          {
+            $project: {
+              uic_code: 1,
+              audit_report: 1,
+              updated_at: 1,
+              products: 1,
+            },
+          },
+        ]);
         const forCount = await delivery.count({
           partner_shop: location,
           ctx_tray_id: { $exists: false },
           temp_delivery_status: { $ne: "Pending" },
           sales_bin_status: { $exists: false },
         });
+        for (let x of units) {
+          let findTray = await masters.aggregate([
+            {
+              $match: {
+                $or: [
+                  { prefix: "tray-master", "items.uic": x.uic_code.code },
+                  {
+                    prefix: "tray-master",
+                    "actual_items.uic": x.uic_code.code,
+                  },
+                ],
+              },
+            },
+            {
+              $lookup: {
+                from: "trayracks",
+                localField: "rack_id",
+                foreignField: "rack_id",
+                as: "rackData",
+              },
+            },
+          ]);
+          if (findTray.length !== 0) {
+            x["current_tray"] = findTray?.[0]?.code;
+            x["current_tray_status"] = findTray?.[0]?.sort_id;
+            x["rack_id"] = findTray?.[0]?.rackData?.[0]?.rack_id;
+            x["rack_display"] = findTray?.[0]?.rackData?.[0]?.display;
+          }
+          let findUicLastTracking = await unitsActionLog
+            .findOne({ uic: x.uic_code.code })
+            .sort({ _id: -1 });
+          if (findUicLastTracking) {
+            x["uic_tracking_last_status"] = findUicLastTracking?.description;
+          }
+        }
         resolve({ units: units, forCount: forCount });
       } else {
         const units = await delivery
@@ -1098,6 +1226,59 @@ module.exports = {
           },
         ],
       });
+      resolve(bags);
+    });
+  },
+  getInProgressBags: (location, status, prefix) => {
+    return new Promise(async (resolve, reject) => {
+      const bags = await masters.aggregate([
+        {
+          $match: {
+            $or: [
+              {
+                cpc: location,
+                sort_id: status,
+                prefix: prefix,
+                type_taxanomy: "BOT",
+              },
+            ],
+          },
+        },
+        {
+          $unwind: "$items",
+        },
+      ]);
+
+      for (let x of bags) {
+        let findDelivery = await delivery.aggregate([
+          { $match: { tracking_id: x.items.awbn_number } },
+          {
+            $lookup: {
+              from: "products",
+              localField: "item_id",
+              foreignField: "vendor_sku_id",
+              as: "products",
+            },
+          },
+          {
+            $project: {
+              uic_code: 1,
+              products: 1,
+            },
+          },
+        ]);
+        if (findDelivery.length !== 0) {
+          x["uic"] = findDelivery?.[0]?.uic_code?.code;
+          x["muic"] = findDelivery?.[0]?.products?.[0]?.muic;
+          x["brand"] = findDelivery?.[0]?.products?.[0]?.brand_name;
+          x["model"] = findDelivery?.[0]?.products?.[0]?.model_name;
+        } else {
+          x["uic"] = "";
+          x["muic"] = "";
+          x["brand"] = ""
+          x["model"] = ""
+        }
+      }
       resolve(bags);
     });
   },
@@ -1194,13 +1375,28 @@ module.exports = {
   },
   getDeliveryForReport: (location, limit, skip) => {
     return new Promise(async (resolve, reject) => {
-      const deliveryData = await delivery
-        .find({
-          partner_shop: location,
-          temp_delivery_status: { $ne: "Pending" },
-        })
-        .skip(skip)
-        .limit(limit);
+      const deliveryData = await delivery.aggregate([
+        {
+          $match: {
+            partner_shop: location,
+            temp_delivery_status: { $ne: "Pending" },
+          },
+        },
+        {
+          $lookup: {
+            from: "products",
+            localField: "item_id",
+            foreignField: "vendor_sku_id",
+            as: "products",
+          },
+        },
+        {
+          $skip: skip,
+        },
+        {
+          $limit: limit,
+        },
+      ]);
       const count = await delivery.count({
         partner_shop: location,
         temp_delivery_status: { $ne: "Pending" },
@@ -1333,8 +1529,10 @@ module.exports = {
     type
   ) => {
     return new Promise(async (resolve, reject) => {
-      const fromDateTimestamp = Date.parse(fromDate);
-      const toDateTimestamp = Date.parse(toDate);
+      const fromDateTimestamp = new Date(fromDate);
+      fromDateTimestamp.setHours(0, 0, 0, 0); // Set time to the beginning of the day
+      const toDateTimestamp = new Date(toDate);
+      toDateTimestamp.setHours(23, 59, 59, 999);
       let allOrdersReport = await orders.aggregate([
         {
           $match: {
@@ -1352,6 +1550,14 @@ module.exports = {
             localField: `item_id`,
             foreignField: "vendor_sku_id",
             as: "products",
+          },
+        },
+        {
+          $lookup: {
+            from: "deliveries",
+            localField: "order_id",
+            foreignField: "order_id",
+            as: "delivery",
           },
         },
         {
@@ -1379,6 +1585,14 @@ module.exports = {
             localField: `item_id`,
             foreignField: "vendor_sku_id",
             as: "products",
+          },
+        },
+        {
+          $lookup: {
+            from: "deliveries",
+            localField: "order_id",
+            foreignField: "order_id",
+            as: "delivery",
           },
         },
       ]);
@@ -1423,6 +1637,14 @@ module.exports = {
             },
           },
           {
+            $lookup: {
+              from: "products",
+              localField: "item_id",
+              foreignField: "vendor_sku_id",
+              as: "products",
+            },
+          },
+          {
             $facet: {
               results: [{ $skip: skip }, { $limit: limit }],
               count: [{ $count: "count" }],
@@ -1447,6 +1669,14 @@ module.exports = {
               localField: "order_id",
               foreignField: "order_id",
               as: "delivery",
+            },
+          },
+          {
+            $lookup: {
+              from: "products",
+              localField: "item_id",
+              foreignField: "vendor_sku_id",
+              as: "products",
             },
           },
         ]);
@@ -1606,6 +1836,14 @@ module.exports = {
             as: "products",
           },
         },
+        {
+          $lookup: {
+            from: "deliveries",
+            localField: "order_id",
+            foreignField: "order_id",
+            as: "delivery",
+          },
+        },
         { $sort: { order_date: -1 } },
         {
           $skip: skip,
@@ -1700,7 +1938,14 @@ module.exports = {
               order_id: { $regex: "^" + value + ".*", $options: "i" },
             },
           },
-
+          {
+            $lookup: {
+              from: "products",
+              localField: `item_id`,
+              foreignField: "vendor_sku_id",
+              as: "products",
+            },
+          },
           {
             $lookup: {
               from: "orders",
@@ -1741,6 +1986,14 @@ module.exports = {
               temp_delivery_status: { $ne: "Pending" },
               sales_bin_status: { $exists: false },
               tracking_id: { $regex: ".*" + value + ".*", $options: "i" },
+            },
+          },
+          {
+            $lookup: {
+              from: "products",
+              localField: `item_id`,
+              foreignField: "vendor_sku_id",
+              as: "products",
             },
           },
           {
@@ -1787,6 +2040,14 @@ module.exports = {
           },
           {
             $lookup: {
+              from: "products",
+              localField: `item_id`,
+              foreignField: "vendor_sku_id",
+              as: "products",
+            },
+          },
+          {
+            $lookup: {
               from: "orders",
               let: {
                 order_id: "$order_id",
@@ -1825,6 +2086,14 @@ module.exports = {
               temp_delivery_status: { $ne: "Pending" },
               sales_bin_status: { $exists: false },
               "uic_code.code": { $regex: "^" + value + ".*", $options: "i" },
+            },
+          },
+          {
+            $lookup: {
+              from: "products",
+              localField: `item_id`,
+              foreignField: "vendor_sku_id",
+              as: "products",
             },
           },
           {
@@ -1871,6 +2140,14 @@ module.exports = {
           },
           {
             $lookup: {
+              from: "products",
+              localField: `item_id`,
+              foreignField: "vendor_sku_id",
+              as: "products",
+            },
+          },
+          {
+            $lookup: {
               from: "orders",
               let: {
                 order_id: "$order_id",
@@ -1903,6 +2180,41 @@ module.exports = {
         ]);
       }
       if (allOrders) {
+        for (let x of allOrders[0]?.results) {
+          let findTray = await masters.aggregate([
+            {
+              $match: {
+                $or: [
+                  { prefix: "tray-master", "items.uic": x.uic_code.code },
+                  {
+                    prefix: "tray-master",
+                    "actual_items.uic": x.uic_code.code,
+                  },
+                ],
+              },
+            },
+            {
+              $lookup: {
+                from: "trayracks",
+                localField: "rack_id",
+                foreignField: "rack_id",
+                as: "rackData",
+              },
+            },
+          ]);
+          if (findTray.length !== 0) {
+            x["current_tray"] = findTray?.[0]?.code;
+            x["current_tray_status"] = findTray?.[0]?.sort_id;
+            x["rack_id"] = findTray?.[0]?.rackData?.[0]?.rack_id;
+            x["rack_display"] = findTray?.[0]?.rackData?.[0]?.display;
+          }
+          let findUicLastTracking = await unitsActionLog
+            .findOne({ uic: x.uic_code.code })
+            .sort({ _id: -1 });
+          if (findUicLastTracking) {
+            x["uic_tracking_last_status"] = findUicLastTracking?.description;
+          }
+        }
         const count = allOrders[0]?.count[0]?.count;
         const deliveryData = allOrders[0]?.results;
         resolve({ count: count, deliveryData: deliveryData });
@@ -2199,14 +2511,40 @@ module.exports = {
           .skip(skip)
           .limit(limit);
       } else if (type == "model_name") {
-        deliveryData = await delivery
-          .find({
-            partner_shop: location,
-            temp_delivery_status: { $ne: "Pending" },
-          })
-          .sort({ old_item_details: sortFormate })
-          .skip(skip)
-          .limit(limit);
+        deliveryData = await delivery.aggregate([
+          {
+            $match: {
+              partner_shop: location,
+              temp_delivery_status: { $ne: "Pending" },
+            },
+          },
+          {
+            $lookup: {
+              from: "products",
+              localField: "item_id",
+              foreignField: "vendor_sku_id",
+              as: "products",
+            },
+          },
+          {
+            $addFields: {
+              // Add a new field "firstProductName" to store the model_name of the first product
+              firstProductName: { $arrayElemAt: ["$products.model_name", 0] },
+            },
+          },
+          {
+            $sort: {
+              // Sort based on the firstProductName
+              firstProductName: 1, // 1 for ascending order, -1 for descending order
+            },
+          },
+          {
+            $skip: skip,
+          },
+          {
+            $limit: limit,
+          },
+        ]);
       } else if (type == "imei") {
         deliveryData = await delivery
           .find({
