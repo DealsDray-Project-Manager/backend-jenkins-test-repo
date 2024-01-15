@@ -1280,9 +1280,13 @@ router.post("/createMasters", async (req, res, next) => {
                 obj.WHT = obj.WHT + 1;
               } else if (type_taxanomy == "SPT") {
                 obj.SPT = obj.SPT + 1;
-              } else if (type_taxanomy == "RPT") {
+              } else if (type_taxanomy == "CBT") {
+                obj.CBT = obj.CBT + 1;
+              }
+              else if (type_taxanomy == "RPT") {
                 obj.RPT = obj.RPT + 1;
-              } else if (type_taxanomy == "RPA") {
+              }
+               else if (type_taxanomy == "RPA") {
                 obj.RPA = (parseInt(obj.RPA, 10) + 1)
                   .toString()
                   .padStart(4, "0");

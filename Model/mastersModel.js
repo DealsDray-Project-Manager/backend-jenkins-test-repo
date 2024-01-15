@@ -179,8 +179,9 @@ const mastersSchema = mongoose.Schema({
   price_updation_date: {
     type: Date,
   },
-  count_of_c_display:Number,
-  count_of_g_display:Number
+  count_of_c_display: Number,
+  count_of_g_display: Number,
+  can_bin_tray: String,
 });
 const masters = mongoose.model("masters", mastersSchema);
 module.exports = {

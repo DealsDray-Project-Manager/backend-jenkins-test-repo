@@ -2573,7 +2573,10 @@ router.post(
 router.post("/stxTray/:type/:location", async (req, res, next) => {
   try {
     const { type, location } = req.params;
-    const trayData = await warehouseInController.stxstxMergeTray(type, location);
+    const trayData = await warehouseInController.stxstxMergeTray(
+      type,
+      location
+    );
     if (trayData.status == 1) {
       res.status(200).json({
         data: trayData.tray,
@@ -3312,6 +3315,24 @@ router.post("/addToCanBin", async (req, res, next) => {
     next(error);
   }
 });
+// SAVE CAN BIN TRAY
+router.post("/saveCanBinTray", async (req, res, next) => {
+  try {
+    const data = await warehouseInController.saveCanBinTray(req.body);
+    console.log(data);
+    if (data.status === 1) {
+      res.status(200).json({
+        message: `Successfully Saved`,
+      });
+    } else {
+      res.status(202).json({
+        message: "Error please try again!",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
 // CLOSE CAN BIN TRAY
 router.post("/closeCanBinTray", async (req, res, next) => {
   try {
@@ -3348,7 +3369,7 @@ router.post("/canBinItem/:location", async (req, res, next) => {
     next(error);
   }
 });
-// GET CBT TRAY 
+// GET CBT TRAY
 router.post("/canBinGetCbtTray/:location", async (req, res, next) => {
   try {
     const { location } = req.params;

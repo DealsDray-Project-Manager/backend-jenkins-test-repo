@@ -3083,7 +3083,7 @@ module.exports = {
               temp_array: [],
               rack_id: null,
               sort_id: "Issued to RDL-2",
-              wht_tray:[],
+              wht_tray: [],
               assigned_date: Date.now(),
               "track_tray.issued_to_rdl_two": Date.now(),
             },
@@ -8998,7 +8998,18 @@ module.exports = {
         ],
       });
       if (data) {
-        return { status: 1, trayData: data };
+        let arr = [];
+        arr.push(data);
+        if (data.can_bin_tray !== null && data.can_bin_tray !== undefined) {
+          let findCanBinTray = await masters.findOne(
+            { code: data.can_bin_tray },
+            { code: 1, items: 1, limit: 1 }
+          );
+          if (findCanBinTray) {
+            arr.push(findCanBinTray);
+          }
+        }
+        return { status: 1, trayData: arr };
       } else {
         return { status: 2 };
       }
@@ -9135,6 +9146,15 @@ module.exports = {
             },
           }
         );
+        await unitsActionLog.create({
+          action_type: "Can Bin Tray Close",
+          created_at: Date.now(),
+          user_name_of_action: itemdata.username,
+          user_type: "PRC Warehouse",
+          track_tray: "Tray",
+          tray_id: itemdata.cbt,
+          description: `Tray is full action done by PRC WH:${itemdata.username}`,
+        });
       }
       if (udpateOrRemove) {
         let uddateDelivery = await delivery.findOneAndUpdate(
@@ -9160,6 +9180,35 @@ module.exports = {
           track_tray: "Units",
           tray_id: itemdata.cbt,
           description: `Item Transferred Can BIn by prc warehouse:${itemdata.username},Warehouse user description:${itemdata.description}`,
+        });
+        return { status: 1 };
+      } else {
+        return { status: 0 };
+      }
+    } catch (error) {
+      return error;
+    }
+  },
+  saveCanBinTray: async (trayData) => {
+    try {
+      console.log(trayData);
+      const updateData = await masters.updateOne(
+        { code: trayData.trayId },
+        {
+          $set: {
+            can_bin_tray: trayData?.can_bin_tray,
+          },
+        }
+      );
+      if (updateData.modifiedCount != 0) {
+        await unitsActionLog.create({
+          action_type: "Can Bin Tray Selection",
+          created_at: Date.now(),
+          user_name_of_action: trayData.username,
+          user_type: "PRC Warehouse",
+          track_tray: "Tray",
+          tray_id: trayData.can_bin_tray,
+          description: `Tray selected for can bin`,
         });
         return { status: 1 };
       } else {
