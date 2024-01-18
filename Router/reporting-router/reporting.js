@@ -643,7 +643,7 @@ router.post("/get-report-for-rdl-two-output", async (req, res, next) => {
 });
 // DOWNLOAD THE DATA
 router.post(
-  "/get-data-for-rdl-2-downalod/:requestId",
+  "/get-data-for-rdl-2-download/:requestId",
   async (req, res, next) => {
     try {
       const { requestId } = req.params;

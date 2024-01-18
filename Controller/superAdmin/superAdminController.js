@@ -59,7 +59,6 @@ const IISDOMAINPRDT = "https://prexo-v9-2-dev-api.dealsdray.com/product/image/";
 
 module.exports = {
   /*--------------------------------LOGIN-----------------------------------*/
-
   doLogin: (loginData) => {
     return new Promise(async (resolve, reject) => {
       let data = await admin.findOne({
@@ -72,9 +71,9 @@ module.exports = {
         let userGet = await user.findOne({
           user_name: loginData.user_name,
         });
-        
+
         if (userGet) {
-          if(userGet.password == loginData.password){
+          if (userGet.password == loginData.password) {
             let activeOrNotActive = await user.findOne({
               user_name: loginData.user_name,
               password: loginData.password,
@@ -85,12 +84,10 @@ module.exports = {
             } else {
               resolve({ status: 3 });
             }
-          }
-          else{
+          } else {
             resolve({ status: 4 });
           }
-        }
-        else{
+        } else {
           resolve({ status: 2 });
         }
       }
@@ -1452,8 +1449,7 @@ module.exports = {
           trayData[i].tray_category !== "SPT" &&
           trayData[i].tray_category !== "RPT" &&
           trayData[i].tray_category !== "RPB" &&
-          trayData[i].tray_category !== "RPA"
-          &&
+          trayData[i].tray_category !== "RPA" &&
           trayData[i].tray_category !== "CBT"
         ) {
           if (
@@ -1594,7 +1590,9 @@ module.exports = {
           trayData[i].tray_category !== "PMT" &&
           trayData[i].tray_category !== "MMT" &&
           trayData[i].tray_category !== "SPT" &&
-          trayData[i].tray_category !== "RBQC"
+          trayData[i].tray_category !== "CBT" &&
+          trayData[i].tray_category !== "RPA" &&
+          trayData[i].tray_category !== "RPB"
         ) {
           let brandModel = await brands.findOne({
             brand_name: {
@@ -2384,22 +2382,23 @@ module.exports = {
 
   getAuditDone: () => {
     return new Promise(async (resolve, reject) => {
-      let data = await masters.aggregate([{
-        $match:{
-          sort_id: "Audit Done Closed By Warehouse",
-          type_taxanomy: "WHT",
-        }
-      },
-      {
-        $lookup: {
-          from: "trayracks",
-          localField: "rack_id",
-          foreignField: "rack_id",
-          as: "rackData",
+      let data = await masters.aggregate([
+        {
+          $match: {
+            sort_id: "Audit Done Closed By Warehouse",
+            type_taxanomy: "WHT",
+          },
         },
-      },
-    ]);
-    
+        {
+          $lookup: {
+            from: "trayracks",
+            localField: "rack_id",
+            foreignField: "rack_id",
+            as: "rackData",
+          },
+        },
+      ]);
+
       if (data) {
         resolve(data);
       }
@@ -3062,7 +3061,7 @@ module.exports = {
             x[y._id] = y.count;
           }
         }
-       
+
         resolve(rackCounts);
       } catch (error) {
         reject(error);
@@ -3087,7 +3086,7 @@ module.exports = {
             sort_id: 1,
             created_at: 1,
             rackDetails: 1,
-            tray_grade:1,
+            tray_grade: 1,
             limit: 1,
             items_length: {
               $cond: {
@@ -7139,31 +7138,30 @@ module.exports = {
       return error;
     }
   },
-   // CHANGE ITEM ID BACKEND PROCESS
-   changeItemId: async () => {
+  // CHANGE ITEM ID BACKEND PROCESS
+  changeItemId: async () => {
     try {
-      let arr=[
+      let arr = [
         {
-          sku:"Mobile_1198",
-          model:"V9:All | All",
-          old_item_details:"vivo:v9:all | all",
-          old_model:"V9"
+          sku: "Mobile_1198",
+          model: "V9:All | All",
+          old_item_details: "vivo:v9:all | all",
+          old_model: "V9",
         },
         {
-          sku:"Mobile_2307",
-          model:"Redmi Note 10T 5G:All | All",
-          old_item_details:"xiaomi:redmi note 10t 5g:all | all",
-          old_model:"Redmi Note 10T 5G"
+          sku: "Mobile_2307",
+          model: "Redmi Note 10T 5G:All | All",
+          old_item_details: "xiaomi:redmi note 10t 5g:all | all",
+          old_model: "Redmi Note 10T 5G",
         },
         {
-          sku:"Mobile_1720",
-          model:"iPhone 11 Pro | 64 gb",
+          sku: "Mobile_1720",
+          model: "iPhone 11 Pro | 64 gb",
           old_item_details: "apple:iphone 11 pro | 64 gb",
-          old_model:"iPhone 11 Pro"
-        }
-      ]
-      for(let x of arr){
-
+          old_model: "iPhone 11 Pro",
+        },
+      ];
+      for (let x of arr) {
         const data = await products.updateOne(
           { vendor_sku_id: x.sku },
           {
@@ -7192,39 +7190,42 @@ module.exports = {
             },
           }
         );
-        let updateTray = await masters.find({ model: x.old_model},{code:1});
-        
-      for (let y of updateTray) {
-        let updpateTrayModel = await masters.findOneAndUpdate(
-          { code: y.code },
-          {
-            $set: {
-              model: x.model,
-            },
-          }
+        let updateTray = await masters.find(
+          { model: x.old_model },
+          { code: 1 }
         );
-        if (updpateTrayModel.items.length != 0) {
-          for (let data of updpateTrayModel.items) {
-            let updateUnits = await masters.updateOne(
-              {
-                "items.uic": data.uic,
+
+        for (let y of updateTray) {
+          let updpateTrayModel = await masters.findOneAndUpdate(
+            { code: y.code },
+            {
+              $set: {
+                model: x.model,
               },
-              {
-                $set: {
-                  "items.$.model_name":x.model,
+            }
+          );
+          if (updpateTrayModel.items.length != 0) {
+            for (let data of updpateTrayModel.items) {
+              let updateUnits = await masters.updateOne(
+                {
+                  "items.uic": data.uic,
                 },
-              }
-            );
-            // if (updateUnits.modifiedCount == 0) {
-            //   console.log(x.model);
-            //   console.log("4",updateUnits);
-            //   return { status: 2 };
-            // }
+                {
+                  $set: {
+                    "items.$.model_name": x.model,
+                  },
+                }
+              );
+              // if (updateUnits.modifiedCount == 0) {
+              //   console.log(x.model);
+              //   console.log("4",updateUnits);
+              //   return { status: 2 };
+              // }
+            }
           }
         }
       }
-    }
-    return { status: 1 };
+      return { status: 1 };
     } catch (error) {
       return error;
     }

@@ -8969,6 +8969,13 @@ module.exports = {
           },
         },
       ]);
+      for (let x of data) {
+        let nr = x?.items?.filter(
+          (data) => data?.rdl_repair_report?.reason === "Device not repairable"
+        )?.length;
+        x["nr"] = nr;
+      }
+      console.log(data);
       return data;
     } catch (error) {
       return error;
@@ -9003,7 +9010,7 @@ module.exports = {
         if (data.can_bin_tray !== null && data.can_bin_tray !== undefined) {
           let findCanBinTray = await masters.findOne(
             { code: data.can_bin_tray },
-            { code: 1, items: 1, limit: 1 }
+            { code: 1, items: 1, limit: 1,sort_id:1 }
           );
           if (findCanBinTray) {
             arr.push(findCanBinTray);
@@ -9136,8 +9143,8 @@ module.exports = {
           new: true,
         }
       );
-
-      if (addToNewTray?.items?.length == addToNewTray?.limit) {
+       console.log(addToNewTray?.items?.length);
+      if (parseInt(addToNewTray?.items?.length) == parseInt(addToNewTray?.limit)) {
         let closeTheTray = await masters.updateOne(
           { code: itemdata.cbt },
           {
@@ -9208,7 +9215,7 @@ module.exports = {
           user_type: "PRC Warehouse",
           track_tray: "Tray",
           tray_id: trayData.can_bin_tray,
-          description: `Tray selected for can bin`,
+          description: `Tray selected for can bin RPT Tray ID:${trayData.trayId} ,PRC WH:${trayData.username}`,
         });
         return { status: 1 };
       } else {
@@ -9238,6 +9245,7 @@ module.exports = {
                 temp_array: [],
                 items: [],
                 description: description,
+                can_bin_tray:null
               },
             }
           );
@@ -9251,6 +9259,7 @@ module.exports = {
                 actual_items: [],
                 temp_array: [],
                 items: getTray.actual_items,
+                can_bin_tray:null
               },
             }
           );
