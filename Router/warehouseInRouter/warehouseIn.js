@@ -3383,4 +3383,85 @@ router.post("/canBinGetCbtTray/:location", async (req, res, next) => {
     next(error);
   }
 });
+/*-------------------------------------------PMT CLOSURE-----------------------------------------------------------*/
+// UNIT ADD TO PMT BIN
+router.post("/add-unit-to-pmt-bin", async (req, res, next) => {
+  try {
+    const data = await warehouseInController.unitShiftFromPmtToPmtBin(req.body);
+    if (data?.status === 1) {
+      res.status(200).json({
+        message: "Successfully Added to PMT-BIN",
+      });
+    } else {
+      res.status(202).json({
+        message: "Failed please try again",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+// CLOSE PMT TRAY
+router.post("/close-pmt-tray-pmt-bin", async (req, res, next) => {
+  try {
+    const data = await warehouseInController.closePmtTrayAfterPmtBing(req.body);
+    if (data?.status === 1) {
+      res.status(200).json({
+        message: "Successfully Closed",
+      });
+    } else {
+      res.status(202).json({
+        message: "Failed please try again",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+// GET PMT TRAY DATA
+router.post(
+  "/getOnePmtDataForPmtBin/:trayId/:location",
+  async (req, res, next) => {
+    try {
+      const { trayId, location } = req.params;
+      const data = await warehouseInController.getOnePmtDataFroPmtBin(
+        trayId,
+        location
+      );
+      if (data?.status === 1) {
+        res.status(200).json({
+          data: data?.tray,
+        });
+      } else if (data?.status === 2) {
+        res.status(202).json({
+          message: "You can't access this data",
+        });
+      } else if (data?.status === 3) {
+        res.status(202).json({
+          message: "Invalid Tray ID",
+        });
+      } else {
+        res.status(202).json({
+          message: "Internal Server Error",
+        });
+      }
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+// GET PMT BIN REPORT 
+router.post("/pmtBinUnits/:location", async (req, res, next) => {
+  try {
+    const { location } = req.params;
+    let data = await warehouseInController.setPmtBinUnits(location);
+    if (data) {
+      res.status(200).json({
+        data: data,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
 module.exports = router;

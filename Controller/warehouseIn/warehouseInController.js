@@ -9010,7 +9010,7 @@ module.exports = {
         if (data.can_bin_tray !== null && data.can_bin_tray !== undefined) {
           let findCanBinTray = await masters.findOne(
             { code: data.can_bin_tray },
-            { code: 1, items: 1, limit: 1,sort_id:1 }
+            { code: 1, items: 1, limit: 1, sort_id: 1 }
           );
           if (findCanBinTray) {
             arr.push(findCanBinTray);
@@ -9143,8 +9143,10 @@ module.exports = {
           new: true,
         }
       );
-       console.log(addToNewTray?.items?.length);
-      if (parseInt(addToNewTray?.items?.length) == parseInt(addToNewTray?.limit)) {
+      console.log(addToNewTray?.items?.length);
+      if (
+        parseInt(addToNewTray?.items?.length) == parseInt(addToNewTray?.limit)
+      ) {
         let closeTheTray = await masters.updateOne(
           { code: itemdata.cbt },
           {
@@ -9245,7 +9247,7 @@ module.exports = {
                 temp_array: [],
                 items: [],
                 description: description,
-                can_bin_tray:null
+                can_bin_tray: null,
               },
             }
           );
@@ -9259,7 +9261,7 @@ module.exports = {
                 actual_items: [],
                 temp_array: [],
                 items: getTray.actual_items,
-                can_bin_tray:null
+                can_bin_tray: null,
               },
             }
           );
@@ -9291,6 +9293,7 @@ module.exports = {
       const data = await delivery.find(
         {
           add_to_can_bin_date: { $exists: true },
+          partner_shop:location
         },
         {
           "uic_code.code": 1,
@@ -9376,6 +9379,148 @@ module.exports = {
       return { status: 1 };
     } catch (error) {
       console.log(error);
+      return error;
+    }
+  },
+  /*-----------------------------------------------PMT CLOSURE----------------------------------------------------------*/
+  unitShiftFromPmtToPmtBin: async (unitData) => {
+    try {
+      let obj = {
+        action_user_name: unitData?.actionUsername,
+        pmt_bin_status: unitData?.pmt_bin_status,
+        pmt_bin_user_remark: unitData?.pmt_bin_user_remark,
+      };
+      const removeFromTray = await masters.updateOne(
+        {
+          code: unitData?.trayId,
+        },
+        {
+          $pull: {
+            items: {
+              uic: unitData?.uic,
+            },
+          },
+        }
+      );
+      if (removeFromTray.modifiedCount != 0) {
+        let updateDelivery = await delivery.updateOne(
+          { "uic_code.code": unitData?.uic },
+          {
+            $set: {
+              pmt_bin_report: obj,
+              pmt_bin_status: "Yes",
+              pmt_bin_added_date: Date.now(),
+            },
+          }
+        );
+        if (updateDelivery.modifiedCount !== 0) {
+          let updateTrack = await unitsActionLog.create({
+            action_type: "Item transferred to PMT-BIN",
+            created_at: Date.now(),
+            user_name_of_action: unitData.actionUsername,
+            report: obj,
+            uic: unitData?.uic,
+            user_type: "PRC WH",
+            track_tray: "Units",
+            description: `Item transferred to PMT-BIN done by an agent:${unitData?.actionUsername},PMT-BIN-STATUS:-${unitData?.pmt_bin_status}`,
+          });
+          if (updateTrack) {
+            return { status: 1 };
+          } else {
+            return { status: 0 };
+          }
+        } else {
+          return { status: 0 };
+        }
+      } else {
+        return { status: 0 };
+      }
+    } catch (error) {
+      return error;
+    }
+  },
+  closePmtTrayAfterPmtBing: async (trayData) => {
+    try {
+      const updateTheTray = await masters.updateOne(
+        { code: trayData?.trayId },
+        {
+          $set: {
+            sort_id: "Open",
+            wht_tray: [],
+            actual_items: [],
+            temp_array: [],
+          },
+        }
+      );
+      if (updateTheTray.modifiedCount != 0) {
+        let updateTrack = await unitsActionLog.create({
+          action_type: "Items transferred to PMT-BIN Tray closed",
+          created_at: Date.now(),
+          user_name_of_action: trayData.actionUsername,
+          user_type: "PRC WH",
+          track_tray: "Tray",
+          tray_id: trayData?.trayId,
+          description: `Items transferred to PMT-BIN after closed the action done by an user:${trayData?.actionUsername},User Description:-${trayData?.description}`,
+        });
+        if (updateTrack) {
+          return { status: 1 };
+        } else {
+          return { status: 0 };
+        }
+      } else {
+        return { status: 0 };
+      }
+    } catch (error) {
+      return error;
+    }
+  },
+  getOnePmtDataFroPmtBin: async (trayId, location) => {
+    try {
+      const data = await masters.aggregate([
+        { $match: { code: trayId, cpc: location } },
+        {
+          $lookup: {
+            from: "trayracks",
+            localField: "rack_id",
+            foreignField: "rack_id",
+            as: "rackData",
+          },
+        },
+      ]);
+      console.log(data);
+      if (data.length != 0) {
+        if (data?.[0]?.sort_id == "Closed By Warehouse") {
+          return { status: 1, tray: data[0] };
+        } else {
+          return { status: 2 };
+        }
+      } else {
+        return { status: 3 };
+      }
+    } catch (error) {
+      return error;
+    }
+  },
+  setPmtBinUnits: async (location) => {
+    try {
+      const data = await delivery.find(
+        {
+          pmt_bin_status: { $exists: true },
+          partner_shop:location
+        },
+        {
+          "uic_code.code": 1,
+          tray_id: 1,
+          agent_name: 1,
+          pmt_bin_added_date: 1,
+          item_id: 1,
+          old_item_details: 1,
+          pmt_bin_report: 1,
+          pmt_bin_status: 1,
+        }
+      );
+      return data;
+    } catch (error) {
       return error;
     }
   },

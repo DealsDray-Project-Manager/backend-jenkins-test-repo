@@ -63,10 +63,13 @@ module.exports = {
     return new Promise(async (resolve, reject) => {
       let data = await admin.findOne({
         user_name: loginData.user_name,
-        password: loginData.password,
       });
       if (data) {
-        resolve({ status: 1, data: data });
+        if (data.password == loginData.password) {
+          resolve({ status: 1, data: data });
+        } else {
+          resolve({ status: 4 });
+        }
       } else {
         let userGet = await user.findOne({
           user_name: loginData.user_name,

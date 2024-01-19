@@ -353,9 +353,11 @@ const deliverySchema = mongoose.Schema({
   image_five: String,
   image_six: String,
   image_four: String,
-  can_bin_tray:String
+  can_bin_tray: String,
+  pmt_bin_added_date:Date,
+  pmt_bin_report:Object,
+  pmt_bin_status:String
 });
-
 
 const delivery = mongoose.model("delivery", deliverySchema);
 module.exports = {
