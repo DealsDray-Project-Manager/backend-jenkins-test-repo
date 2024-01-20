@@ -155,8 +155,7 @@ router.post("/login", async (req, res, next) => {
       }
     } else if (loginData.status == 2) {
       res.status(202).json({ data: { message: "Wrong username" } });
-    }
-    else if (loginData.status == 4) {
+    } else if (loginData.status == 4) {
       res.status(202).json({ data: { message: "Wrong password" } });
     } else if (loginData.status == 3) {
       res.status(202).json({ data: { message: "Admin Deactivated" } });
@@ -993,8 +992,7 @@ router.post("/trayIdGenrate", async (req, res, next) => {
             res.status(200).json({
               data: obj.RPB,
             });
-          }
-          else if (type == "CBT") {
+          } else if (type == "CBT") {
             res.status(200).json({
               data: obj.CBT,
             });
@@ -1282,11 +1280,9 @@ router.post("/createMasters", async (req, res, next) => {
                 obj.SPT = obj.SPT + 1;
               } else if (type_taxanomy == "CBT") {
                 obj.CBT = obj.CBT + 1;
-              }
-              else if (type_taxanomy == "RPT") {
+              } else if (type_taxanomy == "RPT") {
                 obj.RPT = obj.RPT + 1;
-              }
-               else if (type_taxanomy == "RPA") {
+              } else if (type_taxanomy == "RPA") {
                 obj.RPA = (parseInt(obj.RPA, 10) + 1)
                   .toString()
                   .padStart(4, "0");

@@ -965,7 +965,7 @@ module.exports = {
           },
         },
       ]);
-      
+
       count.inRdlFls = await masters.count({
         cpc: location,
         type_taxanomy: "WHT",
@@ -1275,8 +1275,8 @@ module.exports = {
         } else {
           x["uic"] = "";
           x["muic"] = "";
-          x["brand"] = ""
-          x["model"] = ""
+          x["brand"] = "";
+          x["model"] = "";
         }
       }
       resolve(bags);
@@ -1697,21 +1697,48 @@ module.exports = {
       } else {
         const fromDateISO = new Date(fromDate).toISOString();
         const toDateISO = new Date(toDate).toISOString();
-        monthWiseReport = await delivery
-          .find({
-            partner_shop: location,
-            delivery_date: { $gte: fromDateISO, $lte: toDateISO },
-          })
-          .limit(limit)
-          .skip(skip);
+        monthWiseReport = await delivery.aggregate([
+          {
+            $match: {
+              partner_shop: location,
+              delivery_date: { $gte: fromDateISO, $lte: toDateISO },
+            },
+          },
+          {
+            $lookup: {
+              from: "products",
+              localField: "item_id",
+              foreignField: "vendor_sku_id",
+              as: "products",
+            },
+          },
+          {
+            $limit: limit,
+          },
+          {
+            $skip: skip,
+          },
+        ]);
         getCount = await delivery.count({
           partner_shop: location,
           delivery_date: { $gte: fromDateISO, $lte: toDateISO },
         });
-        forXlsxDownload = await delivery.find({
-          partner_shop: location,
-          delivery_date: { $gte: fromDateISO, $lte: toDateISO },
-        });
+        forXlsxDownload = await delivery.aggregate([
+          {
+            $match: {
+              partner_shop: location,
+              delivery_date: { $gte: fromDateISO, $lte: toDateISO },
+            },
+          },
+          {
+            $lookup: {
+              from: "products",
+              localField: "item_id",
+              foreignField: "vendor_sku_id",
+              as: "products",
+            },
+          },
+        ]);
       }
       resolve({
         monthWiseReport: monthWiseReport,

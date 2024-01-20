@@ -3247,6 +3247,7 @@ router.post(
       if (data.status === 1) {
         res.status(200).json({
           data: data.trayData,
+          countOfNr:data?.countOfNr
         });
       } else {
         res.status(202).json({
@@ -3370,10 +3371,10 @@ router.post("/canBinItem/:location", async (req, res, next) => {
   }
 });
 // GET CBT TRAY
-router.post("/canBinGetCbtTray/:location", async (req, res, next) => {
+router.post("/canBinGetCbtTray/:location/:countOfNr", async (req, res, next) => {
   try {
-    const { location } = req.params;
-    let data = await warehouseInController.getCbtTrayForCanBin(location);
+    const { location,countOfNr } = req.params;
+    let data = await warehouseInController.getCbtTrayForCanBin(location,countOfNr);
     if (data) {
       res.status(200).json({
         data: data,

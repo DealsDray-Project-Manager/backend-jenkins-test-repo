@@ -765,7 +765,7 @@ module.exports = {
         });
         if (deliveredOrNot) {
           if (deliveredOrNot.delivery_date == null) {
-            deliveredOrNot.order_date = data?.delivery_date;
+            deliveredOrNot.delivery_date = data?.delivery_date;
           }
           deliveredOrNot.tracking_id = data.tracking_id;
           let dup = await masters.findOne({
@@ -9006,6 +9006,9 @@ module.exports = {
       });
       if (data) {
         let arr = [];
+        let countOfNr = data?.items?.filter(
+          (data) => data?.rdl_repair_report?.reason === "Device not repairable"
+        )?.length;
         arr.push(data);
         if (data.can_bin_tray !== null && data.can_bin_tray !== undefined) {
           let findCanBinTray = await masters.findOne(
@@ -9016,7 +9019,7 @@ module.exports = {
             arr.push(findCanBinTray);
           }
         }
-        return { status: 1, trayData: arr };
+        return { status: 1, trayData: arr, countOfNr: countOfNr };
       } else {
         return { status: 2 };
       }
@@ -9210,6 +9213,11 @@ module.exports = {
         }
       );
       if (updateData.modifiedCount != 0) {
+        let updatTheStatus=await masters.updateOne({code:trayData?.can_bin_tray},{
+          $set:{
+            sort_id:"Selected for CAN-BIN"
+          }
+        })
         await unitsActionLog.create({
           action_type: "Can Bin Tray Selection",
           created_at: Date.now(),
@@ -9290,36 +9298,50 @@ module.exports = {
   },
   getSalesCanBinItem: async (location) => {
     try {
-      const data = await delivery.find(
-        {
-          add_to_can_bin_date: { $exists: true },
-          partner_shop:location
-        },
-        {
-          "uic_code.code": 1,
-          rp_tray: 1,
-          add_to_can_bin_date: 1,
-          add_to_can_bin_user: 1,
-          add_to_can_bin_description: 1,
-          rdl_two_report: 1,
-          item_id: 1,
-          old_item_details: 1,
-          can_bin_tray: 1,
-        }
-      );
+      const data = await delivery
+        .find(
+          {
+            add_to_can_bin_date: { $exists: true },
+            partner_shop: location,
+          },
+          {
+            "uic_code.code": 1,
+            rp_tray: 1,
+            add_to_can_bin_date: 1,
+            add_to_can_bin_user: 1,
+            add_to_can_bin_description: 1,
+            rdl_two_report: 1,
+            item_id: 1,
+            old_item_details: 1,
+            can_bin_tray: 1,
+          }
+        )
+        .sort({ can_bin_tray: 1 });
       return data;
     } catch (error) {
       return error;
     }
   },
-  getCbtTrayForCanBin: async (location) => {
+  getCbtTrayForCanBin: async (location, countOfNr) => {
     try {
-      const data = await masters.find({
-        type_taxanomy: "CBT",
-        sort_id: { $in: ["Inuse", "Open"] },
-        cpc: location,
-      });
-      return data;
+      let arr = [];
+      const data = await masters
+        .find({
+          type_taxanomy: "CBT",
+          sort_id: { $in: ["Inuse", "Open"] },
+          cpc: location,
+        })
+        .sort((a, b) => a.items.length - b.items.length);
+      if (data?.length !== 0) {
+        for (let x of data) {
+          let lengthofItems = parseInt(x?.items?.length) + parseInt(countOfNr);
+          if (parent(x?.limit) >= parseInt(lengthofItems)) {
+            arr.push(x);
+          }
+        }
+      }
+
+      return arr;
     } catch (error) {
       return error;
     }
@@ -9506,7 +9528,7 @@ module.exports = {
       const data = await delivery.find(
         {
           pmt_bin_status: { $exists: true },
-          partner_shop:location
+          partner_shop: location,
         },
         {
           "uic_code.code": 1,
