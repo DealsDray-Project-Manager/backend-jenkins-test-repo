@@ -2131,9 +2131,15 @@ router.post("/pickup/issueToAgent", async (req, res, next) => {
       toTray,
       actUser
     );
+    console.log(data);
     if (data.status === 1) {
       res.status(200).json({
         message: "Successfully Issued",
+      });
+    }
+    else if (data.status === 2) {
+      res.status(202).json({
+        message: "Please check Target tray",
       });
     } else if (data.status === 0) {
       res.status(202).json({
@@ -2573,7 +2579,7 @@ router.post(
 router.post("/stxTray/:type/:location", async (req, res, next) => {
   try {
     const { type, location } = req.params;
-    const trayData = await warehouseInController.stxstxMergeTray(
+    const trayData = await warehouseInController.stxTray(
       type,
       location
     );
@@ -3375,6 +3381,7 @@ router.post("/canBinGetCbtTray/:location/:countOfNr", async (req, res, next) => 
   try {
     const { location,countOfNr } = req.params;
     let data = await warehouseInController.getCbtTrayForCanBin(location,countOfNr);
+    console.log(data);
     if (data) {
       res.status(200).json({
         data: data,

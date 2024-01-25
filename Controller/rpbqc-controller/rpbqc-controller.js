@@ -72,8 +72,8 @@ module.exports = {
             charging: 1,
             rdl_fls_one_report: 1,
             rdl_two_report: 1,
-            rp_audit_report:1,
-            rp_bqc_report:1
+            rp_audit_report: 1,
+            rp_bqc_report: 1,
           }
         );
         return { status: 1, findData: findData };
@@ -87,6 +87,7 @@ module.exports = {
   // ITEM ADD INTO TRAY AFTER RPBQC
   addRpBqcData: async (dataOfRpBqc) => {
     try {
+      let findDataofRdlOne = null;
       let itemData = await masters.findOne(
         {
           sort_id: { $in: ["Issued to RP-BQC", "RP-BQC In Progress"] },
@@ -105,6 +106,7 @@ module.exports = {
         let obj = {
           status: dataOfRpBqc.status,
           username_of_rpbqc: dataOfRpBqc.username,
+          description: dataOfRpBqc.description,
         };
         let addIntoTray1, addIntoTray2, addIntoTray3;
         itemData.temp_array[0]["rp_bqc_report"] = obj;
@@ -147,6 +149,10 @@ module.exports = {
               },
             }
           );
+          findDataofRdlOne = await delivery.findOne(
+            { "uic_code.code": dataOfRpBqc.uic },
+            { rdl_fls_one_report_copy: 1 }
+          );
         } else {
           addIntoTray1 = await masters.findOneAndUpdate(
             {
@@ -175,27 +181,81 @@ module.exports = {
           );
         }
         if (addIntoTray1.modifiedCount !== 0) {
-          await unitsActionLog.create({
-            action_type: "RP-BQC Done",
-            created_at: Date.now(),
-            tray_id: itemData.code,
-            user_name_of_action: dataOfRpBqc.username,
-            track_tray: "Units",
-            uic: dataOfRpBqc.uic,
-            user_type: "PRC RP-BQC",
-            report: dataOfRpBqc,
-            tray_id: itemData.code,
-            description: `RP-BQC done by the agent :${dataOfRpBqc.username}. status:${dataOfRpBqc.status}`,
-          });
-          await delivery.updateOne(
-            { "uic_code.code": dataOfRpBqc.uic },
-            {
-              $set: {
-                rp_bqc_report: dataOfRpBqc,
-                rp_bqc_done_date: Date.now(),
+         
+          if (dataOfRpBqc.status == "RP-BQC Failed") {
+            await unitsActionLog.create({
+              action_type: "RP-BQC Done",
+              created_at: Date.now(),
+              tray_id: itemData.temp_array[0]?.rdl_repair_report.rdl_two_tray,
+              user_name_of_action: dataOfRpBqc.username,
+              track_tray: "Both",
+              uic: dataOfRpBqc.uic,
+              user_type: "PRC RP-BQC",
+              report: dataOfRpBqc,
+              tray_id: itemData.code,
+              tray_unit_in_count:1,
+              description: `RP-BQC done by the agent :${dataOfRpBqc.username}. status:${dataOfRpBqc.status}.Source Tray ID:${itemData.code}`,
+            });
+            await unitsActionLog.create({
+              action_type: "RP-BQC Done",
+              created_at: Date.now(),
+              tray_id: itemData.code,
+              user_name_of_action: dataOfRpBqc.username,
+              track_tray: "Units",
+              uic: dataOfRpBqc.uic,
+              user_type: "PRC RP-BQC",
+              report: dataOfRpBqc,
+              tray_id: itemData.code,
+              tray_unit_out_count:1,
+              description: `RP-BQC done by the agent :${dataOfRpBqc.username}. status:${dataOfRpBqc.status}.Target Tray ID:${itemData.temp_array[0]?.rdl_repair_report.rdl_two_tray}`,
+            });
+          } else {
+            await unitsActionLog.create({
+              action_type: "RP-BQC Done",
+              created_at: Date.now(),
+              tray_id: itemData.temp_array[0]?.rdl_repair_report.rdl_two_tray,
+              user_name_of_action: dataOfRpBqc.username,
+              track_tray: "Both",
+              user_type: "PRC RP-BQC",
+              report: dataOfRpBqc,
+              tray_id: itemData.code,
+              description: `RP-BQC done by the agent :${dataOfRpBqc.username}. status:${dataOfRpBqc.status}`,
+            });
+          }
+          if (findDataofRdlOne) {
+            await delivery.updateOne(
+              { "uic_code.code": dataOfRpBqc.uic },
+              {
+                $set: {
+                  rp_bqc_report: dataOfRpBqc,
+                  rp_bqc_done_date: Date.now(),
+                  rp_bqc_username: dataOfRpBqc.username,
+                  rdl_fls_one_report: findDataofRdlOne?.rdl_fls_one_report_copy,
+                },
+              }
+            );
+            let spDetailsRemove = await masters.updateOne(
+              {
+                code: addIntoTray3?.sp_tray,
               },
-            }
-          );
+              {
+                $set: {
+                  temp_array: [],
+                },
+              }
+            );
+          } else {
+            await delivery.updateOne(
+              { "uic_code.code": dataOfRpBqc.uic },
+              {
+                $set: {
+                  rp_bqc_report: dataOfRpBqc,
+                  rp_bqc_done_date: Date.now(),
+                  rp_bqc_username: dataOfRpBqc.username,
+                },
+              }
+            );
+          }
         }
         if (addIntoTray1.modifiedCount !== 0) {
           if (dataOfRpBqc.status == "RP-BQC Failed") {

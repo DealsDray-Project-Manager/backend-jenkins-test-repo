@@ -352,7 +352,7 @@ module.exports = {
               item_moved_to_billed_bin: { $exists: false },
               stx_tray_id: { $exists: true },
               tray_type: "ST",
-              sp_price: { $exists: true }, // Filter out documents with null or missing sp_price
+              sp_price: { $exists: true },
               mrp_price: { $exists: true },
               final_grade: x.grade,
               "audit_report.sub_muic": { $exists: false },

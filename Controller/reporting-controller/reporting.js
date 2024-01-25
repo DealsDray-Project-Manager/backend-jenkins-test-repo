@@ -1683,10 +1683,12 @@ module.exports = {
 
         let arrLimit = [];
         for (let x of monthWiseReport?.[0].results) {
+          x.delivery[0]["products"] = x?.products;
           arrLimit.push(...x.delivery);
         }
         let arrWithoutLimit = [];
         for (let y of forXlsxDownload) {
+          y.delivery[0]["products"] = y?.products;
           arrWithoutLimit.push(...y.delivery);
         }
         resolve({
@@ -1695,13 +1697,18 @@ module.exports = {
           forXlsxDownload: arrWithoutLimit,
         });
       } else {
+        const fromDateTimestamp = Date.parse(fromDate);
+        const toDateTimestamp = Date.parse(toDate);
         const fromDateISO = new Date(fromDate).toISOString();
         const toDateISO = new Date(toDate).toISOString();
         monthWiseReport = await delivery.aggregate([
           {
             $match: {
               partner_shop: location,
-              delivery_date: { $gte: fromDateISO, $lte: toDateISO },
+              delivery_date: {
+                $gte: new Date(fromDateTimestamp),
+                $lte: new Date(toDateTimestamp),
+              },
             },
           },
           {
@@ -1713,21 +1720,27 @@ module.exports = {
             },
           },
           {
-            $limit: limit,
-          },
-          {
-            $skip: skip,
+            $facet: {
+              results: [{ $skip: skip }, { $limit: limit }],
+              count: [{ $count: "count" }],
+            },
           },
         ]);
         getCount = await delivery.count({
           partner_shop: location,
-          delivery_date: { $gte: fromDateISO, $lte: toDateISO },
+          delivery_date: {
+            $gte: new Date(fromDateTimestamp),
+            $lte: new Date(toDateTimestamp),
+          },
         });
         forXlsxDownload = await delivery.aggregate([
           {
             $match: {
               partner_shop: location,
-              delivery_date: { $gte: fromDateISO, $lte: toDateISO },
+              delivery_date: {
+                $gte: new Date(fromDateTimestamp),
+                $lte: new Date(toDateTimestamp),
+              },
             },
           },
           {
@@ -1740,8 +1753,12 @@ module.exports = {
           },
         ]);
       }
+      let arrLimit = [];
+      for (let x of monthWiseReport?.[0].results) {
+        arrLimit.push(x);
+      }
       resolve({
-        monthWiseReport: monthWiseReport,
+        monthWiseReport: arrLimit,
         forXlsxDownload: forXlsxDownload,
         getCount: getCount,
       });
@@ -2762,51 +2779,59 @@ module.exports = {
 
         const findTrayJourney = await unitsActionLog
           .find({
-            tray_id: tray.code,
-            track_tray: "Tray",
+            $or:[
+              {
+                tray_id: tray.code,
+                track_tray: "Tray",
+              },
+              {
+                tray_id: tray.code,
+                track_tray: "Both",
+              }
+            ]
           })
           .sort({ _id: 1 });
 
         tray.actual_items = findTrayJourney;
 
-        const auditData = await unitsActionLog
-          .find({ action_type: "Issued to Audit", tray_id: trayId })
-          .sort({ _id: 1 })
-          .limit(tray.limit);
+        // const auditData = await unitsActionLog
+        //   .find({ action_type: "Issued to Audit", tray_id: trayId })
+        //   .sort({ _id: 1 })
+        //   .limit(tray.limit);
 
         let trayIdArr = [];
         let uicArr = [];
         let obj = {};
 
-        await Promise.all(
-          auditData.map(async (data) => {
-            if (uicArr.includes(data.uic)) {
-              return;
-            }
+        // await Promise.all(
+        //   auditData.map(async (data) => {
+        //     if (uicArr.includes(data.uic)) {
+        //       return;
+        //     }
 
-            uicArr.push(data.uic);
+        //     uicArr.push(data.uic);
 
-            const findCurrentTray = await masters.findOne(
-              {
-                "items.uic": data.uic,
-                type_taxanomy: "CT",
-              },
-              { code: 1, type_taxanomy: 1 }
-            );
+        //     const findCurrentTray = await masters.findOne(
+        //       {
+        //         "items.uic": data.uic,
+        //         type_taxanomy: "CT",
+        //       },
+        //       { code: 1, type_taxanomy: 1 }
+        //     );
 
-            if (findCurrentTray) {
-              if (findCurrentTray.type_taxanomy !== "WHT") {
-                if (trayIdArr.includes(findCurrentTray.code)) {
-                  obj[findCurrentTray.code] =
-                    (obj[findCurrentTray.code] || 0) + 1;
-                } else {
-                  obj[findCurrentTray.code] = 1;
-                }
-              }
-              trayIdArr.push(findCurrentTray.code);
-            }
-          })
-        );
+        //     if (findCurrentTray) {
+        //       if (findCurrentTray.type_taxanomy !== "WHT") {
+        //         if (trayIdArr.includes(findCurrentTray.code)) {
+        //           obj[findCurrentTray.code] =
+        //             (obj[findCurrentTray.code] || 0) + 1;
+        //         } else {
+        //           obj[findCurrentTray.code] = 1;
+        //         }
+        //       }
+        //       trayIdArr.push(findCurrentTray.code);
+        //     }
+        //   })
+        // );
 
         resolve({ tray: tray, status: 1, otherDetails: obj });
       } catch (error) {

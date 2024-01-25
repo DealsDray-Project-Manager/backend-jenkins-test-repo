@@ -250,6 +250,9 @@ const deliverySchema = mongoose.Schema({
   rdl_fls_one_report: {
     type: Object,
   },
+  rdl_fls_one_report_copy: {
+    type: Object,
+  },
   ctx_tray_id: {
     type: String,
   },
@@ -356,7 +359,11 @@ const deliverySchema = mongoose.Schema({
   can_bin_tray: String,
   pmt_bin_added_date:Date,
   pmt_bin_report:Object,
-  pmt_bin_status:String
+  pmt_bin_status:String,
+  rp_audit_done_tray_wise:Date,
+  rp_audit_username:String,
+  rp_bqc_username:String,
+  flag_status:Boolean
 });
 
 const delivery = mongoose.model("delivery", deliverySchema);

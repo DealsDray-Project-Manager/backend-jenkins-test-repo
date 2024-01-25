@@ -151,6 +151,8 @@ module.exports = {
               rdl_fls_one_report: 1,
               bqc_software_report: 1,
               imei: 1,
+              rp_audit_report: 1,
+              rp_bqc_report: 1,
             }
           );
           if (uicExists) {
@@ -164,6 +166,7 @@ module.exports = {
             obj.order = getOrder;
             obj.checkIntray = checkIntray;
             obj.muic = muicFind;
+            console.log(obj);
 
             resolve({ status: 1, data: obj });
           } else {
@@ -353,6 +356,7 @@ module.exports = {
                 updated_at: Date.now(),
                 rdl_two_closed_date_units: Date.now(),
                 rp_bqc_tray: trayItemData.rbqc_tray,
+                rdl_fls_one_report_copy: trayItemData.rdl_fls_one_report,
                 rdl_fls_one_report: checkAlreadyAdded.items[0]?.rdl_fls_report,
               },
             }
@@ -368,6 +372,31 @@ module.exports = {
             user_type: "PRC RDL-2",
             description: `Repair Done by agent:${checkAlreadyAdded.issued_user_name}`,
           });
+          if (trayItemData.rpbqc_username !== "") {
+            await unitsActionLog.create({
+              action_type: "Repair Done",
+              created_at: Date.now(),
+              tray_id: trayItemData.trayId,
+              user_name_of_action: checkAlreadyAdded.issued_user_name,
+              report: trayItemData.rdl_repair_report,
+              track_tray: "Tray",
+              user_type: "PRC RDL-2",
+              tray_unit_out_count: 1,
+              description: `Repair Done by agent:${checkAlreadyAdded.issued_user_name}.Target Tray ID:${trayItemData.rbqc_tray}`,
+            });
+            await unitsActionLog.create({
+              action_type: "Repair Done",
+              created_at: Date.now(),
+              tray_id: trayItemData.rbqc_tray,
+              user_name_of_action: checkAlreadyAdded.issued_user_name,
+              report: trayItemData.rdl_repair_report,
+              track_tray: "Tray",
+              user_type: "PRC RDL-2",
+              tray_unit_in_count: 1,
+              description: `Repair Done by agent:${checkAlreadyAdded.issued_user_name}.Source Tray ID:${trayItemData.trayId}`,
+            });
+          }
+
           return { status: 1 };
         } else {
           return { status: 2 };
@@ -383,7 +412,7 @@ module.exports = {
       throw error;
     }
   },
-  traySummary: (trayId, user_name) => {
+    traySummary: (trayId, user_name) => {
     return new Promise(async (resolve, reject) => {
       const getTheTray = await masters.findOne({ code: trayId });
       if (getTheTray.sort_id == "Rdl-2 in-progress") {
@@ -398,6 +427,12 @@ module.exports = {
               issued_user_name: user_name,
             });
             for (let x of getTheTray.actual_items) {
+              if(x?.rp_audit_status == undefined){
+                x['rp_audit_status']={
+                  description:"",
+                  status:""
+                }
+              }
               if (x.rdl_repair_report.more_part_required.length !== 0) {
                 obj.morePartRequred.push(x);
               }
@@ -476,6 +511,7 @@ module.exports = {
                     tray_status: "Closed by RDL-2",
                     tray_type: "RPT",
                     updated_at: Date.now(),
+                    rdl_fls_one_report_copy: {},
                   },
                 }
               );

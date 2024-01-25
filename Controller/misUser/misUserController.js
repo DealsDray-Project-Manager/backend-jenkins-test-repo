@@ -1928,7 +1928,7 @@ module.exports = {
           $limit: limit,
         },
       ]);
-     
+
       resolve(allDeliveryData);
     });
   },
@@ -5647,7 +5647,7 @@ module.exports = {
             state = "Tray";
             for (let y of updateItem.items) {
               let unitsLogCreation = await unitsActionLog.create({
-                action_type: "Assigned to sorting (Wht to rp)",
+                action_type: "Assigned to sorting (WHT TO RP)",
                 created_at: Date.now(),
                 user_name_of_action: actUser,
                 agent_name: sortingUser,
@@ -5655,7 +5655,7 @@ module.exports = {
                 uic: y.uic,
                 tray_id: updateItem.code,
                 track_tray: state,
-                description: `Assigned to sorting (Wht to rp) to agent :${sortingUser} by mis :${actUser}`,
+                description: `Assigned to sorting (WHT TO RP) to agent :${sortingUser} by mis :${actUser}`,
               });
               state = "Units";
             }
@@ -5736,7 +5736,7 @@ module.exports = {
               code: otherTray,
               agent_name: spwhuser,
               actUser: actUser,
-              description: "Assigned to sorting (Wht to rp) to agent",
+              description: "Assigned to sorting (WHT TO RP) to agent",
             };
             let unitsLogCreation = await unitsActionLog.create({
               action_type: "Assigned to sp warehouse for parts issue to agent",
@@ -5763,7 +5763,7 @@ module.exports = {
             code: otherTray,
             agent_name: sortingUser,
             actUser: actUser,
-            description: "Assigned to sorting (Wht to rp) to agent",
+            description: "Assigned to sorting (WHT TO RP) to agent",
           };
           let logCreationRes = await module.exports.trackSpAndRpAssignLevel(
             obj

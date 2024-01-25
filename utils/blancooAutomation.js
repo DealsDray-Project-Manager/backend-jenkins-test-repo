@@ -7,7 +7,9 @@ const { delivery } = require("../Model/deliveryModel/delivery");
 const emailNotification = require("../Utils/email-notification");
 const { products } = require("../Model/productModel/product");
 const { orders } = require("../Model/ordersModel/ordersModel");
-const {blancoReportLog} = require("../Model/blanco-updation-log/blanco-updation-log");
+const {
+  blancoReportLog,
+} = require("../Model/blanco-updation-log/blanco-updation-log");
 const blancoUpdationLog = require("../Model/blanco-updation-log/blanco-updation-log");
 const filePathOfXml =
   "C:/DEALSDRAY/PREXO-WEB-APP-CODE/blancco_qc_data/csvRequest.xml";
@@ -58,7 +60,6 @@ module.exports = {
   },
   // NIGHT 11 BLANCOO AUTOMATION
   blancooFileUpload: () => {
-    console.log("working");
     /*----------------------------------------------CSV READ-----------------------------*/
     let result = [];
     fs.createReadStream(filePathOfCsv)
@@ -84,7 +85,11 @@ module.exports = {
                 imeiCheck?.imei?.match(/[0-9]/g)?.join("") == x?.mobile_imei ||
                 imeiCheck?.imei?.match(/[0-9]/g)?.join("") == x?.mobile_imei2 ||
                 imeiCheck?.imei?.match(/[0-9]/g)?.join("") ==
-                  x?._ro_ril_miui_imei0
+                  x?._ro_ril_miui_imei0 ||
+                imeiCheck?.imei?.match(/[0-9]/g)?.join("") ==
+                  imeiCheck?.charging?.cimei_1 ||
+                imeiCheck?.imei?.match(/[0-9]/g)?.join("") ==
+                  imeiCheck?.charging?.cimei_2
               ) {
                 x["imei_verification_status_from_prexo"] = "Verified";
               }

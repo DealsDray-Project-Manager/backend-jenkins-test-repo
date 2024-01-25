@@ -231,8 +231,19 @@ module.exports = {
             user_type: "PRC Sorting",
             uic: itemData.uic,
             tray_id: itemData.wht_tray,
-            track_tray: "Units",
-            description: `Item transferred to WHT done by agent: ${assignToWht.issued_user_name}`,
+            track_tray: "Both",
+            tray_unit_in_count: 1,
+            description: `Item transferred to WHT done by agent: ${assignToWht.issued_user_name}.Source BOT Tray ID:${itemData.tray_id}`,
+          });
+          let unitsLogCreationBot = await unitsActionLog.create({
+            action_type: "Item transfered to WHT",
+            created_at: Date.now(),
+            user_name_of_action: assignToWht.issued_user_name,
+            user_type: "PRC Sorting",
+            tray_id: itemData.tray_id,
+            track_tray: "Tray",
+            tray_unit_out_count: 1,
+            description: `Item transferred to WHT done by agent: ${assignToWht.issued_user_name}.Target WHT Tray ID:${itemData.wht_tray}`,
           });
           let updateDelivery = await delivery.findOneAndUpdate(
             { tracking_id: itemData.awbn_number },
@@ -428,8 +439,8 @@ module.exports = {
                     tray_location: "Merging",
                     wht_tray: mmtTrayData.toTray,
                     updated_at: Date.now(),
-                    merge_done_date:Date.now(),
-                    merge_done_tray:mmtTrayData.fromTray
+                    merge_done_date: Date.now(),
+                    merge_done_tray: mmtTrayData.fromTray,
                   },
                 },
                 {
@@ -446,8 +457,8 @@ module.exports = {
                     stx_tray_id: mmtTrayData.toTray,
                     tray_type: "ST",
                     updated_at: Date.now(),
-                    merge_done_date:Date.now(),
-                    merge_done_tray:mmtTrayData.fromTray
+                    merge_done_date: Date.now(),
+                    merge_done_tray: mmtTrayData.fromTray,
                   },
                 },
                 {
@@ -463,8 +474,8 @@ module.exports = {
                     tray_location: "Merging",
                     ctx_tray_id: mmtTrayData.toTray,
                     updated_at: Date.now(),
-                    merge_done_date:Date.now(),
-                    merge_done_tray:mmtTrayData.fromTray
+                    merge_done_date: Date.now(),
+                    merge_done_tray: mmtTrayData.fromTray,
                   },
                 },
                 {
@@ -480,8 +491,8 @@ module.exports = {
                     tray_location: "Merging",
                     tray_id: mmtTrayData.toTray,
                     updated_at: Date.now(),
-                    merge_done_date:Date.now(),
-                    merge_done_tray:mmtTrayData.fromTray
+                    merge_done_date: Date.now(),
+                    merge_done_tray: mmtTrayData.fromTray,
                   },
                 },
                 {
@@ -498,8 +509,19 @@ module.exports = {
                 user_type: "PRC Sorting",
                 uic: mmtTrayData.item.uic,
                 tray_id: data.code,
-                track_tray: "units",
-                description: `Item transferred to tray done by agent: ${data.issued_user_name}`,
+                track_tray: "Both",
+                tray_unit_in_count:1,
+                description: `Item transferred to tray done by agent: ${data.issued_user_name}.Source Tray ID:${mmtTrayData?.fromTray}`,
+              });
+              let unitsLogCreationFromTray = await unitsActionLog.create({
+                action_type: "Item transfered to tray",
+                created_at: Date.now(),
+                user_name_of_action: data.issued_user_name,
+                user_type: "PRC Sorting",
+                tray_id: mmtTrayData.fromTray,
+                track_tray: "Tray",
+                tray_unit_out_count:1,
+                description: `Item transferred to tray done by agent: ${data.issued_user_name}.Target Tray ID:${data.code}`,
               });
               resolve({ status: 1 });
             } else {
@@ -837,7 +859,7 @@ module.exports = {
           itemData.item.pickup_toTray == undefined ||
           itemData.item.pickup_toTray == "" ||
           itemData.item.pickup_toTray == null ||
-          itemData.item.pickup_toTray !== itemData.toTray 
+          itemData.item.pickup_toTray !== itemData.toTray
         ) {
           let updateData = await masters.updateOne(
             { code: itemData.fromTray },
@@ -880,8 +902,8 @@ module.exports = {
               $set: {
                 wht_tray: itemData.toTray,
                 updated_at: Date.now(),
-                pickup_done_tray:itemData.fromTray,
-                pickup_done_date:Date.now()
+                pickup_done_tray: itemData.fromTray,
+                pickup_done_date: Date.now(),
               },
             },
             {
@@ -889,7 +911,27 @@ module.exports = {
               projection: { _id: 0 },
             }
           );
-
+          let unitsLogCreation = await unitsActionLog.create({
+            action_type: "Item transfered to tray",
+            created_at: Date.now(),
+            user_name_of_action: updateData.issued_user_name,
+            user_type: "PRC Sorting",
+            uic: itemData.item.uic,
+            tray_id: itemData.fromTray,
+            track_tray: "Both",
+            tray_unit_out_count:1,
+            description: `Item transferred to tray done by agent: ${updateData.issued_user_name}.Target Tray ID:${itemData.toTray}`,
+          });
+          let unitsLogCreationToTray = await unitsActionLog.create({
+            action_type: "Item transfered to tray",
+            created_at: Date.now(),
+            user_name_of_action: updateData.issued_user_name,
+            user_type: "PRC Sorting",
+            tray_id: itemData.toTray,
+            track_tray: "Tray",
+            tray_unit_in_count:1,
+            description: `Item transferred to tray done by agent: ${updateData.issued_user_name}.Source Tray ID:${itemData.fromTray}`,
+          });
           if (updateDelivery.modifiedCount !== 0) {
             resolve({ status: 1 });
           } else {
@@ -1178,7 +1220,7 @@ module.exports = {
             resolve({ status: 0 });
           }
         } else {
-          let updateData = await masters.updateOne(
+          let updateData = await masters.findOneAndUpdate(
             { code: itemData.whtTray },
             {
               $pull: {
@@ -1213,7 +1255,28 @@ module.exports = {
               projection: { _id: 0 },
             }
           );
-          if (updateDelivery.modifiedCount !== 0) {
+          let unitsLogCreation = await unitsActionLog.create({
+            action_type: "Item transfered to tray (WHT TO RP)",
+            created_at: Date.now(),
+            user_name_of_action: updateData.issued_user_name,
+            user_type: "PRC Sorting",
+            uic: itemData.item.uic,
+            tray_id: itemData.whtTray,
+            track_tray: "Both",
+            tray_unit_out_count:1,
+            description: `Item transferred to tray done by agent: ${updateData.issued_user_name}.Target Tray ID:${itemData.rpTray}`,
+          });
+          let unitsLogCreationFromTray = await unitsActionLog.create({
+            action_type: "Item transfered to tray (WHT TO RP)",
+            created_at: Date.now(),
+            user_name_of_action: updateData.issued_user_name,
+            user_type: "PRC Sorting",
+            tray_id: itemData.rpTray,
+            track_tray: "Tray",
+            tray_unit_in_count:1,
+            description: `Item transferred to tray done by agent: ${updateData.issued_user_name}.Source Tray ID:${itemData.whtTray}`,
+          });
+          if (updateDelivery) {
             resolve({ status: 1 });
           } else {
             resolve({ status: 0 });
@@ -1295,14 +1358,14 @@ module.exports = {
         let state = "Tray";
         if (data?.items?.length == 0) {
           await unitsActionLog.create({
-            action_type: "Sorting done (Wht to rp)",
+            action_type: "Sorting done (WHT TO RP)",
             created_at: Date.now(),
             user_name_of_action: trayDetails.actionUser,
             agent_name: data.issued_user_name,
             user_type: "PRC Soriting",
             tray_id: data.code,
             track_tray: state,
-            description: `Sorting done (Wht to rp) by agent :${data.issued_user_name} `,
+            description: `Sorting done (WHT TO RP) by agent :${data.issued_user_name} `,
           });
         }
         for (let x of concatenatedArray) {
@@ -1311,7 +1374,7 @@ module.exports = {
             trayIdCode = x.rp_tray;
           }
           await unitsActionLog.create({
-            action_type: "Sorting done (Wht to rp)",
+            action_type: "Sorting done (WHT TO RP)",
             created_at: Date.now(),
             user_name_of_action: trayDetails.actionUser,
             agent_name: data.issued_user_name,
@@ -1319,7 +1382,7 @@ module.exports = {
             uic: x.uic,
             tray_id: trayIdCode,
             track_tray: state,
-            description: `Sorting done (Wht to rp) by agent :${data.issued_user_name} `,
+            description: `Sorting done (WHT TO RP) by agent :${data.issued_user_name} `,
           });
           state = "Units";
           updateDelivery = await delivery.findOneAndUpdate(

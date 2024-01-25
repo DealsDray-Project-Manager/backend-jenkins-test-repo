@@ -354,8 +354,20 @@ module.exports = {
                   user_name_of_action: findTray.issued_user_name,
                   report: obj,
                   user_type: "PRC Audit",
-                  description: `Item transferred to ctx tray done by an agent :${findTray.issued_user_name}`,
-                  track_tray: "Units",
+                  tray_unit_in_count: 1,
+                  description: `Item transferred to ctx tray done by an agent :${findTray.issued_user_name}.Source Tray ID:${itemData.trayId}`,
+                  track_tray: "Both",
+                });
+                const addLogsofUnitsWht = await unitsActionLog.create({
+                  action_type: "Item transfferd to ctx",
+                  created_at: Date.now(),
+                  tray_id: itemData.trayId,
+                  user_name_of_action: item.issued_user_name,
+                  report: obj,
+                  user_type: "PRC Audit",
+                  tray_unit_out_count: 1,
+                  description: `Item transfferd to ctx tray done by an agent :${findTray.issued_user_name}.Target Tray ID:${findTray.code}`,
+                  track_tray: "Tray",
                 });
                 let update = await delivery.findOneAndUpdate(
                   { "uic_code.code": itemData.uic },
@@ -503,7 +515,7 @@ module.exports = {
         .find({})
         .sort({ name: 1 })
         .collation({ locale: "en_US", numericOrdering: true });
-      const findAllCategory = await trayCategory.find({}).sort({float:1});
+      const findAllCategory = await trayCategory.find({}).sort({ float: 1 });
       const findGradeFlot = await trayCategory.findOne({ code: grade });
       let upArray = [];
       let downArray = [];

@@ -3276,6 +3276,7 @@ module.exports = {
               rack_id: null,
               requested_date: Date.now(),
               assigned_date: Date.now(),
+              wht_tray: [],
               "track_tray.issued_to_rdl_two": Date.now(),
               temp_array: [],
             },
@@ -6339,9 +6340,18 @@ module.exports = {
       let updateToTray;
       let updateFromTray;
       updateToTray = await masters.findOneAndUpdate(
-        {
-          code: toTray,
-          sort_id: "Pickup Request sent to Warehouse",
+        { 
+          $or:[
+            {
+              code: toTray,
+              sort_id: "Pickup Request sent to Warehouse",
+            },
+            {
+              code: toTray,
+              sort_id: "Issued to Sorting for Pickup",
+            }
+          ]
+         
         },
         {
           $set: {
@@ -7938,7 +7948,7 @@ module.exports = {
           let state = "Tray";
           for (let x of rptTrayUpdate?.items) {
             let unitsLogCreation = await unitsActionLog.create({
-              action_type: "Issued to sorting (Wht to rp)",
+              action_type: "Issued to sorting (WHT TO RP)",
               created_at: Date.now(),
               user_name_of_action: actUser,
               agent_name: rptTrayUpdate.issued_user_name,
@@ -7946,7 +7956,7 @@ module.exports = {
               uic: x.uic,
               tray_id: tray,
               track_tray: state,
-              description: `Issued to sorting (Wht to rp) to agent :${rptTrayUpdate.issued_user_name} by Wh :${actUser}`,
+              description: `Issued to sorting (WHT TP RP) to agent :${rptTrayUpdate.issued_user_name} by Wh :${actUser}`,
             });
             state = "Units";
             const updateDelivery = await delivery.findOneAndUpdate(
@@ -8006,19 +8016,19 @@ module.exports = {
           let state = "Tray";
           if (data?.items.length == 0) {
             await unitsActionLog.create({
-              action_type: "Received from sorting (Wht to rp)",
+              action_type: "Received from sorting (WHT TO RP)",
               created_at: Date.now(),
               user_name_of_action: trayData.actUser,
               agent_name: data.issued_user_name,
               user_type: "PRC Warehouse",
               tray_id: trayData.trayId,
               track_tray: state,
-              description: `Received from sorting (Wht to rp) to agent :${data.issued_user_name} by Wh :${trayData.actUser}`,
+              description: `Received from sorting (WHT TO RP) to agent :${data.issued_user_name} by Wh :${trayData.actUser}`,
             });
           }
           for (let x of data.items) {
             await unitsActionLog.create({
-              action_type: "Received from sorting (Wht to rp)",
+              action_type: "Received from sorting (WHT TO RP)",
               created_at: Date.now(),
               user_name_of_action: trayData.actUser,
               agent_name: data.issued_user_name,
@@ -8026,14 +8036,14 @@ module.exports = {
               uic: x.uic,
               tray_id: trayData.trayId,
               track_tray: state,
-              description: `Received from sorting (Wht to rp) to agent :${data.issued_user_name} by Wh :${trayData.actUser}`,
+              description: `Received from sorting (WHT TO RP) to agent :${data.issued_user_name} by Wh :${trayData.actUser}`,
             });
             state = "Units";
             let deliveryTrack = await delivery.findOneAndUpdate(
               { tracking_id: x.tracking_id },
               {
                 $set: {
-                  tray_status: "Received from sorting (Wht to rp)",
+                  tray_status: "Received from sorting (WHT TO RP)",
                   tray_location: "Warehouse",
                   wht_to_rp_sorting_done_received: Date.now(),
                   updated_at: Date.now(),
@@ -8850,8 +8860,20 @@ module.exports = {
               uic: dataOfUic.uic,
               tray_id: dataOfUic.stxTray,
               user_name_of_action: dataOfUic.actionUser,
-              track_tray: "Units",
-              description: `Items Transferred to Stx done by Warehouse :${dataOfUic.actionUser}`,
+              track_tray: "Both",
+              tray_unit_in_count: 1,
+              description: `Items Transferred to Stx done by Warehouse :${dataOfUic.actionUser}.Source Tray ID:${dataOfUic.rpaTray}`,
+            });
+            await unitsActionLog.create({
+              action_type: "Item Transferred to Stx",
+              created_at: Date.now(),
+              user_name_of_action: dataOfUic.actionUser,
+              user_type: "Sales Warehouse",
+              tray_id: dataOfUic.rpaTray,
+              user_name_of_action: dataOfUic.actionUser,
+              track_tray: "Tray",
+              tray_unit_out_count: 1,
+              description: `Items Transferred to Stx done by Warehouse :${dataOfUic.actionUser}.Target Tray ID:${dataOfUic.stxTray}`,
             });
             const updateDelivery = await delivery.updateOne(
               {
@@ -8975,7 +8997,6 @@ module.exports = {
         )?.length;
         x["nr"] = nr;
       }
-      console.log(data);
       return data;
     } catch (error) {
       return error;
@@ -9146,7 +9167,6 @@ module.exports = {
           new: true,
         }
       );
-      console.log(addToNewTray?.items?.length);
       if (
         parseInt(addToNewTray?.items?.length) == parseInt(addToNewTray?.limit)
       ) {
@@ -9203,7 +9223,6 @@ module.exports = {
   },
   saveCanBinTray: async (trayData) => {
     try {
-      console.log(trayData);
       const updateData = await masters.updateOne(
         { code: trayData.trayId },
         {
@@ -9213,11 +9232,14 @@ module.exports = {
         }
       );
       if (updateData.modifiedCount != 0) {
-        let updatTheStatus=await masters.updateOne({code:trayData?.can_bin_tray},{
-          $set:{
-            sort_id:"Selected for CAN-BIN"
+        let updatTheStatus = await masters.updateOne(
+          { code: trayData?.can_bin_tray },
+          {
+            $set: {
+              sort_id: "Selected for CAN-BIN",
+            },
           }
-        })
+        );
         await unitsActionLog.create({
           action_type: "Can Bin Tray Selection",
           created_at: Date.now(),
@@ -9331,16 +9353,16 @@ module.exports = {
           sort_id: { $in: ["Inuse", "Open"] },
           cpc: location,
         })
-        .sort((a, b) => a.items.length - b.items.length);
+        .sort({ "items.length": 1 });
       if (data?.length !== 0) {
         for (let x of data) {
           let lengthofItems = parseInt(x?.items?.length) + parseInt(countOfNr);
-          if (parent(x?.limit) >= parseInt(lengthofItems)) {
+          if (parseInt(x?.limit) >= parseInt(lengthofItems)) {
             arr.push(x);
           }
         }
       }
-
+      console.log(arr);
       return arr;
     } catch (error) {
       return error;
@@ -9509,7 +9531,6 @@ module.exports = {
           },
         },
       ]);
-      console.log(data);
       if (data.length != 0) {
         if (data?.[0]?.sort_id == "Closed By Warehouse") {
           return { status: 1, tray: data[0] };

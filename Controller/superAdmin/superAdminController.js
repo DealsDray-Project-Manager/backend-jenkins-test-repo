@@ -6682,26 +6682,42 @@ module.exports = {
   },
   tempReq: async () => {
     try {
-      let findAndUpdate = await unitsActionLog
-        .find(
-          // Filter criteria
-          { tray_id: "WHT1835" }
-          // Update operation
-
-          // Options: Sort by _id in ascending order and limit the update to 100 documents
-        )
-        .sort({ _id: -1 })
-        .limit(189);
-      for (let x of findAndUpdate) {
-        let update = await unitsActionLog.updateOne(
-          { _id: x._id },
-          {
-            $set: {
-              temp_flag: "true",
-            },
+      let checktrayRptTrayRdl2 = await masters.find({
+        sort_id: "Ready to RDL-2",
+        "items.rdl_repair_report.status": "Repair Done",
+      });
+      for (let x of checktrayRptTrayRdl2) {
+        for (let y of x?.items) {
+          if (y?.rdl_repair_report?.status == "Repair Done") {
+            let update = await delivery.updateOne(
+              {
+                "uic_code.code": y.uic,
+              },
+              {
+                $set: {
+                  flag_status: true,
+                },
+              }
+            );
           }
-        );
+        }
       }
+      // let checktrayRptTrayRdl2=await masters.find({sort_id:"Ready to RDL-2",type_taxanomy:"WHT","items.rdl_repair_report.reason":"Device not repairable"})
+      // for(let x of checktrayRptTrayRdl2){
+      //   for(let y of x?.items){
+      //     if(y?.rdl_repair_report?.reason == "Device not repairable"){
+      //       let update=await delivery.updateOne({
+      //         "uic_code.code":y.uic
+      //       },
+      //       {
+      //         $set:{
+      //           flag_status:true
+      //         }
+      //       }
+      //       )
+      //     }
+      //   }
+      // }
       return { status: 1 };
     } catch (error) {
       return error;
@@ -7226,6 +7242,66 @@ module.exports = {
               // }
             }
           }
+        }
+      }
+      return { status: 1 };
+    } catch (error) {
+      return error;
+    }
+  },
+  // UPDATE THE PRICE
+  updatePriceOld: async () => {
+    try {
+      let checkTheDelivery = await delivery.find({
+        item_moved_to_billed_bin: { $exists: false },
+        stx_tray_id: { $exists: true },
+        tray_type: "ST",
+        sp_price: { $exists: true },
+        mrp_price: { $exists: true },
+      });
+      for (let x of checkTheDelivery) {
+        console.log(x.mrp_price);
+        if (x?.audit_report?.sub_muic !== undefined) {
+          let updateWithSubMuic = await delivery.updateMany(
+            {
+              item_moved_to_billed_bin: { $exists: false },
+              stx_tray_id: { $exists: true },
+              tray_type: "ST",
+              sp_price: { $exists: false },
+              mrp_price: { $exists: false },
+              final_grade: x.final_grade,
+              "audit_report.sub_muic": x?.audit_report?.sub_muic,
+            },
+            {
+              $set: {
+                sp_price: x.sp_price,
+                mrp_price: x.mrp_price,
+                price_updation_date: x?.price_updation_date,
+                price_creation_date: x?.price_creation_date,
+              },
+            }
+          );
+        } else {
+          let updateWithSubMuic = await delivery.updateMany(
+            {
+              item_moved_to_billed_bin: { $exists: false },
+              stx_tray_id: { $exists: true },
+              tray_type: "ST",
+              sp_price: { $exists: false },
+              mrp_price: { $exists: false },
+              final_grade: x.final_grade,
+              "audit_report.sub_muic": { $exists: false },
+              item_id: x.item_id,
+            },
+            {
+              $set: {
+                sp_price: x.sp_price,
+                mrp_price: x.mrp_price,
+                price_updation_date: x?.price_updation_date,
+                price_creation_date: x?.price_creation_date,
+              },
+            }
+          );
         }
       }
       return { status: 1 };

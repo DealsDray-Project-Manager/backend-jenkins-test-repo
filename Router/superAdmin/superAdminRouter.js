@@ -4650,4 +4650,22 @@ router.post("/extra/changeItemId", async (req, res, next) => {
     next(error);
   }
 });
+// UPDATE THE PRICE FROM OLD
+router.post("/extra/updatePriceOld", async (req, res, next) => {
+  try {
+    const data = await superAdminController.updatePriceOld();
+    console.log(data);
+    if (data.status === 1) {
+      res.status(200).json({
+        message: "Successfully Updated",
+      });
+    } else {
+      res.status(202).json({
+        message: "Failed",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
 module.exports = router;

@@ -42,7 +42,7 @@ exports = module.exports = () => {
   }
   // RDL-2 OUTPUT GENERATE
   try {
-    corn.schedule("*/30 * * * *", () => {
+    corn.schedule("*/10 * * * *", () => {
       reportingAgentRouter.generateRdlTwoOutputReport();
     });
   } catch (error) {
@@ -90,7 +90,6 @@ exports = module.exports = () => {
   try {
     corn.schedule("00 10 * * *", () => {
       /*---------------------------xml read ------------------------------------*/
-
       BlancoAutoMation.toCheckBlancoUpdation();
     });
   } catch (error) {

@@ -74,6 +74,7 @@ module.exports = {
       );
       let bag = await masters.findOne({ code: bagData.bagId });
       if (bag) {
+        let state = "Tray";
         for (let x of bag.items) {
           let deliveryTrack = await delivery.findOneAndUpdate(
             { tracking_id: x.awbn_number },
@@ -81,7 +82,7 @@ module.exports = {
               $set: {
                 tray_closed_by_bot: Date.now(),
                 tray_status: "Closed By Bot",
-                bot_report: x.bot_e,
+                bot_report: x.bot_eval_result,
                 updated_at: Date.now(),
               },
             },
@@ -90,9 +91,22 @@ module.exports = {
               projection: { _id: 0 },
             }
           );
-          // let updateElasticSearch = await Elasticsearch.uicCodeGen(
-          //   deliveryTrack
-          // );
+          // const addLogsofUnits = await unitsActionLog.create({
+          //   action_type: "Closed By BOT",
+          //   created_at: Date.now(),
+          //   awbn_number: x.awbn_number,
+          //   user_name_of_action: bagData.username,
+          //   report: x.bot_eval_result,
+          //   uic: x.uic,
+          //   tray_id: x.tray_id,
+          //   user_type: "BOT",
+          //   track_tray: state,
+          //   description: `BOT done Closed By an agent:${bagData.username}`,
+          // });
+          // // let updateElasticSearch = await Elasticsearch.uicCodeGen(
+          // //   deliveryTrack
+          // // );
+          // state = "Units";
         }
       }
       if (close.modifiedCount !== 0) {
@@ -265,12 +279,13 @@ module.exports = {
             created_at: Date.now(),
             awbn_number: trayData.awbn_number,
             user_name_of_action: res.issued_user_name,
-            tray_id: trayData.tray_id,
             report: obj,
             uic: trayData.uic,
+            tray_id: trayData.tray_id,
             user_type: "BOT",
-            track_tray: "Units",
-            description: `Item transferred to bot tray done by an agent:${res.issued_user_name}`,
+            track_tray: "Both",
+            tray_unit_in_count: 1,
+            description: `Item transferred to bot tray done by an agent:${res.issued_user_name}.from bag:${trayData?.bag_id}`,
           });
           let updateDelivery = await delivery.findOneAndUpdate(
             { tracking_id: trayData.awbn_number },

@@ -102,6 +102,26 @@ module.exports = {
             },
           },
         ]);
+        if (obj.orderAndDelivery?.length !== 0) {
+          if (
+            obj?.orderAndDelivery?.[0]?.rp_bqc_software_report !== undefined &&
+            Object.keys(obj?.orderAndDelivery?.[0]?.rp_bqc_software_report)
+              ?.length !== 0
+          ) {
+            const date1 = new Date(
+              obj?.orderAndDelivery?.[0]?.rp_bqc_done_date
+            );
+            const date2 = new Date(
+              obj?.orderAndDelivery?.[0]?.rp_bqc_software_report?.date
+            );
+            if (date1 <= date2) {
+              console.log("date1 is less than date2");
+            } else {
+              obj.orderAndDelivery[0].rp_bqc_software_report = {};
+            }
+          }
+        }
+
         let previousBqc = await unitsActionLog
           .findOne({ uic: uic, action_type: "BQC Done" })
           .sort({ _id: -1 })
@@ -127,6 +147,7 @@ module.exports = {
   // RU-AUDIT DONE ACTION
   addRpAuditData: async (dataOfRpAudit, currentSubMuicCount) => {
     try {
+      let findDataofRdlOne = null;
       dataOfRpAudit.subMuic = currentSubMuicCount;
       let itemData = await masters.findOne(
         {
@@ -157,7 +178,7 @@ module.exports = {
         itemData.temp_array[0]["rp_audit_status"] = obj;
         if (dataOfRpAudit.status == "RP-Audit Failed") {
           itemData.temp_array[0].rpbqc_info.rbqc_tray = null;
-          itemData.temp_array[0].rpbqc_info.rpbqc_username=null
+          itemData.temp_array[0].rpbqc_info.rpbqc_username = null;
           addIntoTray1 = await masters.findOneAndUpdate(
             {
               code: itemData.temp_array[0]?.rdl_repair_report.rdl_two_tray,
@@ -195,6 +216,10 @@ module.exports = {
               },
             }
           );
+          findDataofRdlOne = await delivery.findOne(
+            { "uic_code.code": dataOfRpAudit.uic },
+            { rdl_fls_one_report_copy: 1 }
+          );
         } else {
           addIntoTray2 = await masters.findOneAndUpdate(
             {
@@ -206,10 +231,10 @@ module.exports = {
                   uic: dataOfRpAudit.uic,
                 },
               },
-              $addToSet:{
-                wht_tray:itemData.temp_array[0]
-              }
-            },
+              $addToSet: {
+                wht_tray: itemData.temp_array[0],
+              },
+            }
           );
           addIntoTray3 = await masters.findOneAndUpdate(
             {
@@ -238,29 +263,81 @@ module.exports = {
           );
         }
         if (addIntoTray1.modifiedCount !== 0) {
-          await unitsActionLog.create({
-            action_type: "RP-Audit Done",
-            created_at: Date.now(),
-            tray_id: itemData.code,
-            user_name_of_action: dataOfRpAudit.username,
-            track_tray: "Units",
-            uic: dataOfRpAudit.uic,
-            user_type: "PRC RP-Audit",
-            report: dataOfRpAudit,
-            tray_id: itemData.code,
-            description: `RP-Audit done by the agent :${dataOfRpAudit.username}. status:${dataOfRpAudit.status}`,
-          });
-          await delivery.updateOne(
-            { "uic_code.code": dataOfRpAudit.uic },
-            {
-              $set: {
-                rp_audit_report: dataOfRpAudit,
-                rp_audit_done_date: Date.now(),
-                final_grade: dataOfRpAudit.grade,
-                "audit_report.sub_muic": currentSubMuicCount,
+          if (dataOfRpAudit.status == "RP-Audit Failed") {
+            await unitsActionLog.create({
+              action_type: "RP-Audit Done",
+              created_at: Date.now(),
+              tray_id: itemData.temp_array[0]?.rdl_repair_report.rdl_two_tray,
+              user_name_of_action: dataOfRpAudit.username,
+              track_tray: "Both",
+              user_type: "PRC RP-Audit",
+              report: dataOfRpAudit,
+              tray_unit_in_count: 1,
+              description: `RP-Audit done by the agent :${dataOfRpAudit.username}. status:${dataOfRpAudit.status}.Source Tray ID:${itemData.code}`,
+            });
+            await unitsActionLog.create({
+              action_type: "RP-Audit Done",
+              created_at: Date.now(),
+              user_name_of_action: dataOfRpAudit.username,
+              track_tray: "Tray",
+              uic: dataOfRpAudit.uic,
+              user_type: "PRC RP-Audit",
+              report: dataOfRpAudit,
+              tray_id: itemData.code,
+              tray_unit_out_count:1,
+              description: `RP-Audit done by the agent :${dataOfRpAudit.username}. status:${dataOfRpAudit.status}.Target Tray ID:${itemData.temp_array[0]?.rdl_repair_report.rdl_two_tray}`,
+            });
+          } else {
+            await unitsActionLog.create({
+              action_type: "RP-Audit Done",
+              created_at: Date.now(),
+              user_name_of_action: dataOfRpAudit.username,
+              track_tray: "Both",
+              uic: dataOfRpAudit.uic,
+              user_type: "PRC RP-Audit",
+              report: dataOfRpAudit,
+              tray_id: itemData.code,
+              description: `RP-Audit done by the agent :${dataOfRpAudit.username}. status:${dataOfRpAudit.status}`,
+            });
+          }
+          if (findDataofRdlOne) {
+            await delivery.updateOne(
+              { "uic_code.code": dataOfRpAudit.uic },
+              {
+                $set: {
+                  rp_audit_username: dataOfRpAudit.username,
+                  rp_audit_report: dataOfRpAudit,
+                  rp_audit_done_date: Date.now(),
+                  final_grade: dataOfRpAudit.grade,
+                  "audit_report.sub_muic": currentSubMuicCount,
+                  rdl_fls_one_report: findDataofRdlOne?.rdl_fls_one_report_copy,
+                },
+              }
+            );
+            let spDetailsRemove = await masters.updateOne(
+              {
+                code: addIntoTray3?.sp_tray,
               },
-            }
-          );
+              {
+                $set: {
+                  temp_array: [],
+                },
+              }
+            );
+          } else {
+            await delivery.updateOne(
+              { "uic_code.code": dataOfRpAudit.uic },
+              {
+                $set: {
+                  rp_audit_username: dataOfRpAudit.username,
+                  rp_audit_report: dataOfRpAudit,
+                  rp_audit_done_date: Date.now(),
+                  final_grade: dataOfRpAudit.grade,
+                  "audit_report.sub_muic": currentSubMuicCount,
+                },
+              }
+            );
+          }
         }
         if (addIntoTray1.modifiedCount !== 0) {
           if (dataOfRpAudit.status == "RP-Audit Failed") {
@@ -328,6 +405,15 @@ module.exports = {
             description: `RP-Audit done by the agent :${data.issued_user_name} and closed the tray.`,
           });
           state = "Units";
+          let updatDelivery = await delivery.updateOne(
+            { "uic_code.code": x?.uic },
+            {
+              $set: {
+                rp_audit_done_tray_wise: Date.now(),
+                rdl_fls_one_report_copy: {},
+              },
+            }
+          );
         }
         return { status: 1 };
       } else {
