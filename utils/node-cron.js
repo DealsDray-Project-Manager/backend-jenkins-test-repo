@@ -95,9 +95,9 @@ exports = module.exports = () => {
   } catch (error) {
     console.log(error);
   }
-  /*----------------------------------------------OUT STOCK ---------------------*/
+  /*----------------------------------------------OUT STOCK---------------------*/
   try {
-    corn.schedule("00 10 * * *", () => {
+    corn.schedule("*/10 * * * *", () => {
       /*---------------------------xml read ------------------------------------*/
       warehouseController.checkOutOfStock();
     });

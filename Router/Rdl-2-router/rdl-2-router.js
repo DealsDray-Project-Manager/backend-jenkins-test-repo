@@ -33,7 +33,30 @@ router.post("/assigned-tray/:userName", async (req, res, next) => {
     next(error);
   }
 });
-
+// GET ONE TRAY 
+router.post("/getOneTrayForProcess/:trayId/:location/:username", async (req, res, next) => {
+  try {
+    const {trayId,location,username}=req.params
+    let data = await Rdl2Controller.getOneTrayForRepairStart(trayId,location,username);
+    if (data) {
+      res.status(200).json({
+        data: data?.trayData,
+      });
+    }
+    else if(data?.status === 2){
+      res.status(202).json({
+        message:"Invalid Tray Id",
+      });
+    }
+    else{
+      res.status(202).json({
+        message:"You can't access this data",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
 // RECEIVE SP TRAY
 router.post("/recieved-sp-tray", async (req, res, next) => {
   try {

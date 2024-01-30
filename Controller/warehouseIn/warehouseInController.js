@@ -6724,7 +6724,7 @@ module.exports = {
             },
             {
               issued_user_name: username,
-              sort_id: "Closed By RDL-2",
+              sort_id: "Closed by RDL-2",
               type_taxanomy: "RPT",
             },
             {
@@ -8427,6 +8427,7 @@ module.exports = {
           $or: [
             { issued_user_name: username, sort_id: "Issued to RP-Audit" },
             { issued_user_name: username, sort_id: "Closed By RP-Audit" },
+            { issued_user_name: username, sort_id: "RP-Audit In Progress" },
           ],
         });
       } else {

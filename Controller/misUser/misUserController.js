@@ -5279,23 +5279,28 @@ module.exports = {
       if (findItem) {
         for (let x of findItem) {
           let flag = false;
-          for (let y of x?.items?.rdl_fls_report?.partRequired) {
-            const checkPart = await partAndColor.findOne({
-              part_code: y?.part_id,
-            });
-            if (checkPart) {
-              y["avl_qty"] = checkPart?.avl_stock;
-            } else {
-              y["avl_qty"] = 0;
-            }
-            temp.push(y.part_id);
-            let count = temp.filter(function (element) {
-              return element === y.part_id;
-            }).length;
-
-            if (Number(count) <= Number(checkPart?.avl_stock)) {
-            } else {
-              flag = true;
+          if(x?.items?.rdl_fls_report?.partRequired.length == 0){
+            flag=true
+          }
+          else{
+            for (let y of x?.items?.rdl_fls_report?.partRequired) {
+              const checkPart = await partAndColor.findOne({
+                part_code: y?.part_id,
+              });
+              if (checkPart) {
+                y["avl_qty"] = checkPart?.avl_stock;
+              } else {
+                y["avl_qty"] = 0;
+              }
+              temp.push(y.part_id);
+              let count = temp.filter(function (element) {
+                return element === y.part_id;
+              }).length;
+  
+              if (Number(count) <= Number(checkPart?.avl_stock)) {
+              } else {
+                flag = true;
+              }
             }
           }
           if (flag) {
@@ -5303,8 +5308,6 @@ module.exports = {
               let matchingIndex = temp.findIndex(
                 (element) => item?.part_id === element
               );
-              if (x.items.uic == "93070013422") {
-              }
               if (matchingIndex !== -1) {
                 // Remove one element at the found index
                 temp.splice(matchingIndex, 1);

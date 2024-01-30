@@ -319,8 +319,13 @@ module.exports = {
                 code: addIntoTray3?.sp_tray,
               },
               {
-                $set: {
-                  temp_array: [],
+                $pull: {
+                  temp_array:{
+                    uic:dataOfRpAudit.uic
+                  },
+                  actual_items:{
+                    uic:dataOfRpAudit.uic
+                  }
                 },
               }
             );

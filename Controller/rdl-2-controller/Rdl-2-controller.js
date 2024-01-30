@@ -65,6 +65,44 @@ module.exports = {
       }
     });
   },
+  getOneTrayForRepairStart: async (trayId, location, username) => {
+    try {
+      const data = await masters.findOne({ code: trayId, cpc: location });
+      if (data) {
+        if (
+          data?.issued_user_name == username &&
+          data?.sort_id == "Rdl-2 in-progress"
+        ) {
+          if (data?.actual_items?.length !== 0) {
+            for (let x of data?.actual_items) {
+              if (
+                x?.rdl_repair_report?.status == "Repair Not Done" &&
+                x?.rpbqc_info?.rpbqc_username != undefined
+              ) {
+                x.rpbqc_info.rpbqc_username = "";
+              }
+            }
+            if (
+              data?.sp_tray !== undefined &&
+              data?.sp_tray !== null &&
+              data?.sp_tray !== ""
+            ) {
+              data["display_condition"] = true;
+            } else {
+              data["display_condition"] = false;
+            }
+          }
+          return { status: 1, trayData: data };
+        } else {
+          return { status: 3 };
+        }
+      } else {
+        return { status: 2 };
+      }
+    } catch (error) {
+      return error;
+    }
+  },
   receiveSpTray: (trayData) => {
     return new Promise(async (resolve, reject) => {
       let selectedQtySum = 0;
@@ -166,7 +204,7 @@ module.exports = {
             obj.order = getOrder;
             obj.checkIntray = checkIntray;
             obj.muic = muicFind;
-            console.log(obj);
+            
 
             resolve({ status: 1, data: obj });
           } else {
@@ -412,7 +450,7 @@ module.exports = {
       throw error;
     }
   },
-    traySummary: (trayId, user_name) => {
+  traySummary: (trayId, user_name) => {
     return new Promise(async (resolve, reject) => {
       const getTheTray = await masters.findOne({ code: trayId });
       if (getTheTray.sort_id == "Rdl-2 in-progress") {
@@ -427,12 +465,13 @@ module.exports = {
               issued_user_name: user_name,
             });
             for (let x of getTheTray.actual_items) {
-              if(x?.rp_audit_status == undefined){
-                x['rp_audit_status']={
-                  description:"",
-                  status:""
-                }
+              if (x?.rp_audit_status == undefined) {
+                x["rp_audit_status"] = {
+                  description: "",
+                  status: "",
+                };
               }
+              
               if (x.rdl_repair_report.more_part_required.length !== 0) {
                 obj.morePartRequred.push(x);
               }

@@ -181,7 +181,6 @@ module.exports = {
           );
         }
         if (addIntoTray1.modifiedCount !== 0) {
-         
           if (dataOfRpBqc.status == "RP-BQC Failed") {
             await unitsActionLog.create({
               action_type: "RP-BQC Done",
@@ -193,7 +192,7 @@ module.exports = {
               user_type: "PRC RP-BQC",
               report: dataOfRpBqc,
               tray_id: itemData.code,
-              tray_unit_in_count:1,
+              tray_unit_in_count: 1,
               description: `RP-BQC done by the agent :${dataOfRpBqc.username}. status:${dataOfRpBqc.status}.Source Tray ID:${itemData.code}`,
             });
             await unitsActionLog.create({
@@ -201,12 +200,11 @@ module.exports = {
               created_at: Date.now(),
               tray_id: itemData.code,
               user_name_of_action: dataOfRpBqc.username,
-              track_tray: "Units",
-              uic: dataOfRpBqc.uic,
+              track_tray: "Tray",
               user_type: "PRC RP-BQC",
               report: dataOfRpBqc,
               tray_id: itemData.code,
-              tray_unit_out_count:1,
+              tray_unit_out_count: 1,
               description: `RP-BQC done by the agent :${dataOfRpBqc.username}. status:${dataOfRpBqc.status}.Target Tray ID:${itemData.temp_array[0]?.rdl_repair_report.rdl_two_tray}`,
             });
           } else {
@@ -219,6 +217,7 @@ module.exports = {
               user_type: "PRC RP-BQC",
               report: dataOfRpBqc,
               tray_id: itemData.code,
+              uic: dataOfRpBqc.uic,
               description: `RP-BQC done by the agent :${dataOfRpBqc.username}. status:${dataOfRpBqc.status}`,
             });
           }
@@ -239,8 +238,13 @@ module.exports = {
                 code: addIntoTray3?.sp_tray,
               },
               {
-                $set: {
-                  temp_array: [],
+                $pull: {
+                  temp_array: {
+                    uic: dataOfRpBqc.uic,
+                  },
+                  actual_items: {
+                    uic: dataOfRpBqc.uic,
+                  },
                 },
               }
             );
