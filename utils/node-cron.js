@@ -42,7 +42,7 @@ exports = module.exports = () => {
   }
   // RDL-2 OUTPUT GENERATE
   try {
-    corn.schedule("*/10 * * * *", () => {
+    corn.schedule("*/01 * * * *", () => {
       reportingAgentRouter.generateRdlTwoOutputReport();
     });
   } catch (error) {
@@ -97,7 +97,7 @@ exports = module.exports = () => {
   }
   /*----------------------------------------------OUT STOCK---------------------*/
   try {
-    corn.schedule("*/10 * * * *", () => {
+    corn.schedule("00 10 * * *", () => {
       /*---------------------------xml read ------------------------------------*/
       warehouseController.checkOutOfStock();
     });

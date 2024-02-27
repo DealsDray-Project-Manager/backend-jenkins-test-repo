@@ -204,7 +204,6 @@ module.exports = {
             obj.order = getOrder;
             obj.checkIntray = checkIntray;
             obj.muic = muicFind;
-            
 
             resolve({ status: 1, data: obj });
           } else {
@@ -471,7 +470,7 @@ module.exports = {
                   status: "",
                 };
               }
-              
+
               if (x.rdl_repair_report.more_part_required.length !== 0) {
                 obj.morePartRequred.push(x);
               }
@@ -527,33 +526,45 @@ module.exports = {
               user_type: "PRC RDL-2",
               description: `RDL-2 done and sent to warehouse by agent:${updateRpTray.issued_user_name}`,
             });
-            for (let x of getRpTray.actual_items) {
-              const addLogsofUnits = await unitsActionLog.create({
+            if (getRpTray.actual_items?.length == 0) {
+              await unitsActionLog.create({
                 action_type: "Closed by RDL-2",
                 created_at: Date.now(),
-                uic: x.uic,
                 tray_id: trayData.rpTrayId,
                 user_name_of_action: getRpTray.issued_user_name,
-                report: x.rdl_repair_report,
-                track_tray: state,
+                track_tray: "Tray",
                 user_type: "PRC RDL-2",
                 description: `RDL-2 done and sent to warehouse by agent:${updateRpTray.issued_user_name}`,
               });
-              state = "Units";
-              let updateDelivery = await delivery.findOneAndUpdate(
-                { "uic_code.code": x.uic },
-                {
-                  $set: {
-                    rdl_two_closed_date: Date.now(),
-                    rdl_fls_one_report: x.rdl_fls_report,
-                    rdl_two_report: x.rdl_repair_report,
-                    tray_status: "Closed by RDL-2",
-                    tray_type: "RPT",
-                    updated_at: Date.now(),
-                    rdl_fls_one_report_copy: {},
-                  },
-                }
-              );
+            } else {
+              for (let x of getRpTray.actual_items) {
+                const addLogsofUnits = await unitsActionLog.create({
+                  action_type: "Closed by RDL-2",
+                  created_at: Date.now(),
+                  uic: x.uic,
+                  tray_id: trayData.rpTrayId,
+                  user_name_of_action: getRpTray.issued_user_name,
+                  report: x.rdl_repair_report,
+                  track_tray: state,
+                  user_type: "PRC RDL-2",
+                  description: `RDL-2 done and sent to warehouse by agent:${updateRpTray.issued_user_name}`,
+                });
+                state = "Units";
+                let updateDelivery = await delivery.findOneAndUpdate(
+                  { "uic_code.code": x.uic },
+                  {
+                    $set: {
+                      rdl_two_closed_date: Date.now(),
+                      rdl_fls_one_report: x.rdl_fls_report,
+                      rdl_two_report: x.rdl_repair_report,
+                      tray_status: "Closed by RDL-2",
+                      tray_type: "RPT",
+                      updated_at: Date.now(),
+                      rdl_fls_one_report_copy: {},
+                    },
+                  }
+                );
+              }
             }
             resolve({ status: 1 });
           } else {

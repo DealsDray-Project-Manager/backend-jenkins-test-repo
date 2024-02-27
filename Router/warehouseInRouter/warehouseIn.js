@@ -2136,8 +2136,7 @@ router.post("/pickup/issueToAgent", async (req, res, next) => {
       res.status(200).json({
         message: "Successfully Issued",
       });
-    }
-    else if (data.status === 2) {
+    } else if (data.status === 2) {
       res.status(202).json({
         message: "Please check Target tray",
       });
@@ -2436,7 +2435,7 @@ router.post("/rdl-1/closedByWh", async (req, res, next) => {
 router.post("/rdl-2/closedByWh", async (req, res, next) => {
   try {
     let data = await warehouseInController.rdlTwoDoneClose(req.body);
-    if (data) {
+    if (data.status === 1) {
       res.status(200).json({
         message: "Tray Closed Succcessfully",
       });
@@ -2579,10 +2578,7 @@ router.post(
 router.post("/stxTray/:type/:location", async (req, res, next) => {
   try {
     const { type, location } = req.params;
-    const trayData = await warehouseInController.stxTray(
-      type,
-      location
-    );
+    const trayData = await warehouseInController.stxTray(type, location);
     if (trayData.status == 1) {
       res.status(200).json({
         data: trayData.tray,
@@ -3253,7 +3249,7 @@ router.post(
       if (data.status === 1) {
         res.status(200).json({
           data: data.trayData,
-          countOfNr:data?.countOfNr
+          countOfNr: data?.countOfNr,
         });
       } else {
         res.status(202).json({
@@ -3377,20 +3373,26 @@ router.post("/canBinItem/:location", async (req, res, next) => {
   }
 });
 // GET CBT TRAY
-router.post("/canBinGetCbtTray/:location/:countOfNr", async (req, res, next) => {
-  try {
-    const { location,countOfNr } = req.params;
-    let data = await warehouseInController.getCbtTrayForCanBin(location,countOfNr);
-    console.log(data);
-    if (data) {
-      res.status(200).json({
-        data: data,
-      });
+router.post(
+  "/canBinGetCbtTray/:location/:countOfNr",
+  async (req, res, next) => {
+    try {
+      const { location, countOfNr } = req.params;
+      let data = await warehouseInController.getCbtTrayForCanBin(
+        location,
+        countOfNr
+      );
+      console.log(data);
+      if (data) {
+        res.status(200).json({
+          data: data,
+        });
+      }
+    } catch (error) {
+      next(error);
     }
-  } catch (error) {
-    next(error);
   }
-});
+);
 /*-------------------------------------------PMT CLOSURE-----------------------------------------------------------*/
 // UNIT ADD TO PMT BIN
 router.post("/add-unit-to-pmt-bin", async (req, res, next) => {
@@ -3458,7 +3460,7 @@ router.post(
     }
   }
 );
-// GET PMT BIN REPORT 
+// GET PMT BIN REPORT
 router.post("/pmtBinUnits/:location", async (req, res, next) => {
   try {
     const { location } = req.params;

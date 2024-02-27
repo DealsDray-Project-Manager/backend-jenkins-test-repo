@@ -2884,11 +2884,9 @@ module.exports = {
       let getPendingRequest = await rdl2OutputRequest.find({
         status: "Pending",
       });
-
       for (let x of getPendingRequest) {
         const fromDateTimestamp = Date.parse(x.from_date);
         const oneDayInMilliseconds = 24 * 60 * 60 * 1000;
-
         // Calculate toDateTimestamp by adding one day to fromDateTimestamp
         const toDateTimestamp = fromDateTimestamp + oneDayInMilliseconds;
         const getReportBasisAuditFinelGrade = await delivery.aggregate([

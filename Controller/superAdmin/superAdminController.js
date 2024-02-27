@@ -7309,4 +7309,86 @@ module.exports = {
       return error;
     }
   },
+  fixStxTrayIssue: async () => {
+    try {
+      let arr = [
+        "90010002214",
+        "90010002213",
+        "90010000670",
+        "90010002275",
+        "90010000479",
+        "90010000487",
+        "90010001473",
+        "92100004932",
+        "90010001294",
+      ];
+      for (let x of arr) {
+        const deliveryData = await delivery.findOne({ "uic_code.code": x });
+        let findProduct = await products.findOne({
+          vendor_sku_id: deliveryData.item_id,
+        });
+        if (deliveryData) {
+          let obj = {
+            tracking_id: deliveryData.tracking_id,
+            uic: deliveryData.uic_code.code,
+            imei: deliveryData.imei,
+            muic: findProduct.muic,
+            brand_name: findProduct.brand_name,
+            model_name: findProduct.model_name,
+            order_id: deliveryData.order_id,
+            order_date: deliveryData.order_date,
+            charging: deliveryData.charging,
+            audit_report: deliveryData.audit_report,
+            rdl_fls_report: deliveryData.rdl_fls_one_report,
+            bqc_report: deliveryData.bqc_report,
+          };
+          let createTray;
+          let findTheTray = await masters.findOne({
+            code: deliveryData.stx_tray_id,
+          });
+          if (findTheTray) {
+            createTray = await masters.findOneAndUpdate(
+              { code: deliveryData.stx_tray_id },
+              {
+                $set: {
+                  sort_id: "Received From Sorting Agent After Ctx to Stx",
+                  issued_user_name: "subrata.srt.s.ggn.100074",
+                  closed_time_sorting_agent: new Date(
+                    "2023-10-16T08:55:30.469+00:00"
+                  ),
+                },
+                $push: {
+                  items: obj,
+                },
+              }
+            );
+          } else {
+            console.log("working");
+            createTray = await masters.create({
+              name: deliveryData.stx_tray_id,
+              limit: 15,
+              sort_id: "Received From Sorting Agent After Ctx to Stx",
+              type_taxanomy: "ST",
+              prefix: "tray-master",
+              display: deliveryData.stx_tray_id,
+              created_at: Date.now(),
+              model: findProduct.model_name,
+              brand: findProduct.brand_name,
+              cpc: "Sales_Gurgaon_122016",
+              warehouse: "Sales WH: DealsDray / PREXO Gurgaon",
+              items: [obj],
+              code: deliveryData.stx_tray_id,
+              closed_time_sorting_agent: new Date(
+                "2023-10-16T08:55:30.469+00:00"
+              ),
+              issued_user_name: "subrata.srt.s.ggn.100074",
+            });
+          }
+        }
+      }
+      return { status: 1 };
+    } catch (error) {
+      return error;
+    }
+  },
 };

@@ -6330,7 +6330,7 @@ module.exports = {
           ctx_tray_id: x?.ctx_tray_id,
           current_status: x?.current_status,
           model_name: x?.model_name,
-          grade: x.grade,
+          grade: x?.grade,
           old_grade: x?.old_grade,
           type: "Stx-to-stx",
           description: x.description,

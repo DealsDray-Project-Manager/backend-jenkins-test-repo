@@ -114,7 +114,13 @@ module.exports = {
             const date2 = new Date(
               obj?.orderAndDelivery?.[0]?.rp_bqc_software_report?.date
             );
-            if (date1 <= date2) {
+            // date2.setUTCHours(0, 0, 0, 0);
+            // Add 5 hours and 30 minutes
+            date2.setUTCHours(date2.getUTCHours() + 5);
+            date2.setUTCMinutes(date2.getUTCMinutes() + 30);
+            console.log(date1);
+            console.log(date2);
+            if (date1 < date2) {
               console.log("date1 is less than date2");
             } else {
               obj.orderAndDelivery[0].rp_bqc_software_report = {};
@@ -284,7 +290,7 @@ module.exports = {
               user_type: "PRC RP-Audit",
               report: dataOfRpAudit,
               tray_id: itemData.code,
-              tray_unit_out_count:1,
+              tray_unit_out_count: 1,
               description: `RP-Audit done by the agent :${dataOfRpAudit.username}. status:${dataOfRpAudit.status}.Target Tray ID:${itemData.temp_array[0]?.rdl_repair_report.rdl_two_tray}`,
             });
           } else {
@@ -320,12 +326,12 @@ module.exports = {
               },
               {
                 $pull: {
-                  temp_array:{
-                    uic:dataOfRpAudit.uic
+                  temp_array: {
+                    uic: dataOfRpAudit.uic,
                   },
-                  actual_items:{
-                    uic:dataOfRpAudit.uic
-                  }
+                  actual_items: {
+                    uic: dataOfRpAudit.uic,
+                  },
                 },
               }
             );

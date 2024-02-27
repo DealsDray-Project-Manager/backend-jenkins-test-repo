@@ -1556,34 +1556,47 @@ module.exports = {
           );
           if (data) {
             let state = "Tray";
-            for (let x of data.items) {
-              const addLogsofUnits = await unitsActionLog.create({
+            if (data.items?.length == 0) {
+              await unitsActionLog.create({
                 action_type: "Received from RDL-2",
                 created_at: Date.now(),
-                uic: x.uic,
                 tray_id: trayData.trayId,
                 agent_name: data.issued_user_name,
                 user_name_of_action: trayData.username,
-                track_tray: state,
+                track_tray: "Tray",
                 user_type: "PRC WAREHOUSE",
                 description: `Received from RDL-2 to agent:${data.issued_user_name} by WH :${trayData.actioUser}`,
               });
-              state = "Units";
-              let deliveryTrack = await delivery.findOneAndUpdate(
-                { "uic_code.code": x.uic },
-                {
-                  $set: {
-                    tray_status: "Received from RDL-2",
-                    tray_location: "Warehouse",
-                    received_from_rdl_two: Date.now(),
-                    updated_at: Date.now(),
+            } else {
+              for (let x of data.items) {
+                const addLogsofUnits = await unitsActionLog.create({
+                  action_type: "Received from RDL-2",
+                  created_at: Date.now(),
+                  uic: x.uic,
+                  tray_id: trayData.trayId,
+                  agent_name: data.issued_user_name,
+                  user_name_of_action: trayData.username,
+                  track_tray: state,
+                  user_type: "PRC WAREHOUSE",
+                  description: `Received from RDL-2 to agent:${data.issued_user_name} by WH :${trayData.actioUser}`,
+                });
+                state = "Units";
+                let deliveryTrack = await delivery.findOneAndUpdate(
+                  { "uic_code.code": x.uic },
+                  {
+                    $set: {
+                      tray_status: "Received from RDL-2",
+                      tray_location: "Warehouse",
+                      received_from_rdl_two: Date.now(),
+                      updated_at: Date.now(),
+                    },
                   },
-                },
-                {
-                  new: true,
-                  projection: { _id: 0 },
-                }
-              );
+                  {
+                    new: true,
+                    projection: { _id: 0 },
+                  }
+                );
+              }
             }
             resolve({ status: 1 });
           } else {
@@ -6340,8 +6353,8 @@ module.exports = {
       let updateToTray;
       let updateFromTray;
       updateToTray = await masters.findOneAndUpdate(
-        { 
-          $or:[
+        {
+          $or: [
             {
               code: toTray,
               sort_id: "Pickup Request sent to Warehouse",
@@ -6349,9 +6362,8 @@ module.exports = {
             {
               code: toTray,
               sort_id: "Issued to Sorting for Pickup",
-            }
-          ]
-         
+            },
+          ],
         },
         {
           $set: {
@@ -7123,56 +7135,96 @@ module.exports = {
   rdlTwoDoneClose: (trayData) => {
     return new Promise(async (resolve, reject) => {
       let data;
-      data = await masters.findOneAndUpdate(
-        { code: trayData.trayId },
-        {
-          $set: {
-            actual_items: [],
-            description: trayData.description,
-            temp_array: [],
-            rack_id: trayData.rackId,
-            issued_user_name: null,
-            sort_id: "RDL-2 done closed by warehouse",
-          },
-        }
-      );
-      if (data) {
-        let state = "Tray";
-        for (let x of data.items) {
-          await unitsActionLog.create({
-            action_type: "RDL-2 done closed by warehouse",
-            created_at: Date.now(),
-            uic: x.uic,
-            user_name_of_action: trayData.actionUser,
-            tray_id: trayData.trayId,
-            user_type: "PRC Warehouse",
-            track_tray: state,
-            rack_id: trayData.rackId,
-            user_name_of_action: trayData.actionUser,
-            description: `RDL-2 done closed by warehouse by WH :${trayData.actionUser}`,
-          });
-          state = "Units";
-          let deliveryUpdate = await delivery.findOneAndUpdate(
-            { tracking_id: x.tracking_id },
+      let findTheLen = await masters.findOne({
+        code: trayData.trayId,
+        sort_id: "Received from RDL-2",
+      });
+      if (findTheLen) {
+        if (parseInt(findTheLen?.items?.length) == parseInt(0)) {
+          data = await masters.findOneAndUpdate(
+            { code: trayData.trayId },
             {
               $set: {
-                tray_status: "RDL-2 done closed by warehouse",
-                rdl_two_done_close_by_warehouse: Date.now(),
-                tray_location: "Warehouse",
-                updated_at: Date.now(),
+                actual_items: [],
+                description: trayData.description,
+                temp_array: [],
+                rack_id: trayData.rackId,
+                issued_user_name: null,
+                sort_id: "Open",
               },
-            },
-            {
-              new: true,
-              projection: { _id: 0 },
             }
           );
+          if (data) {
+            await unitsActionLog.create({
+              action_type: "RDL-2 done closed by warehouse",
+              created_at: Date.now(),
+              user_name_of_action: trayData.actionUser,
+              tray_id: trayData.trayId,
+              user_type: "PRC Warehouse",
+              track_tray: state,
+              rack_id: trayData.rackId,
+              user_name_of_action: trayData.actionUser,
+              description: `RDL-2 done closed by warehouse by WH :${trayData.actionUser}`,
+            });
+            resolve({ status: 1 });
+          } else {
+            resolve({ status: 2 });
+          }
+        } else {
+          data = await masters.findOneAndUpdate(
+            { code: trayData.trayId },
+            {
+              $set: {
+                actual_items: [],
+                description: trayData.description,
+                temp_array: [],
+                rack_id: trayData.rackId,
+                issued_user_name: null,
+                sort_id: "RDL-2 done closed by warehouse",
+              },
+            }
+          );
+          if (data) {
+            let state = "Tray";
+            for (let x of data.items) {
+              await unitsActionLog.create({
+                action_type: "RDL-2 done closed by warehouse",
+                created_at: Date.now(),
+                uic: x.uic,
+                user_name_of_action: trayData.actionUser,
+                tray_id: trayData.trayId,
+                user_type: "PRC Warehouse",
+                track_tray: state,
+                rack_id: trayData.rackId,
+                user_name_of_action: trayData.actionUser,
+                description: `RDL-2 done closed by warehouse by WH :${trayData.actionUser}`,
+              });
+              state = "Units";
+              let deliveryUpdate = await delivery.findOneAndUpdate(
+                { tracking_id: x.tracking_id },
+                {
+                  $set: {
+                    tray_status: "RDL-2 done closed by warehouse",
+                    rdl_two_done_close_by_warehouse: Date.now(),
+                    tray_location: "Warehouse",
+                    updated_at: Date.now(),
+                  },
+                },
+                {
+                  new: true,
+                  projection: { _id: 0 },
+                }
+              );
+            }
+          }
         }
-      }
-      if (data) {
-        resolve(data);
+        if (data) {
+          resolve({ status: 1 });
+        } else {
+          resolve({ status: 2 });
+        }
       } else {
-        resolve();
+        resolve({ status: 3 });
       }
     });
   },

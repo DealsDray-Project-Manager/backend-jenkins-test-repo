@@ -31,16 +31,14 @@ module.exports = {
           resolve({ status: 1 });
           return;
         }
-        // result.request["export-report"][0].search[0].$.value = uic;
+        result.request["export-report"][0].search[0].$.value = uic;
         const builder = new xml2js.Builder();
         xmlData = builder.buildObject(result);
-
         const formData = new FormData();
         formData.append("xmlRequest", xmlData, {
           filename: "xmlRequest.xml",
           contentType: "application/xml",
         });
-
         axios
           .post(apiUrl, formData, {
             auth: {
@@ -80,10 +78,11 @@ module.exports = {
                 }
                 latestData["device_color_one"] = latestData["Device_Color"];
                 latestData["device_color_two"] = latestData["Device_Color"];
-                latestData["hardware_device_color"] = latestData["Device color"];
-                
+                latestData["hardware_device_color"] =
+                  latestData["Device color"];
+
                 let finalData = toLowerKeys(latestData);
-                
+                finalData.date=new Date(finalData.date)
                 let updateDelivery = await delivery.updateOne(
                   {
                     "uic_code.code": uic,
