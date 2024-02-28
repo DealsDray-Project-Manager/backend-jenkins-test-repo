@@ -43,10 +43,10 @@ const {
   blancoReportLog,
 } = require("../../Model/blanco-updation-log/blanco-updation-log");
 
-const IISDOMAIN = "https://prexo-v9-2-dev-api.dealsdray.com/user/profile/";
+const IISDOMAIN = "https://prexo-v9-2-adminapi.dealsdray.com/user/profile/";
 const IISDOMAINBUYERDOC =
-  "https://prexo-v9-2-dev-api.dealsdray.com/user/document/";
-const IISDOMAINPRDT = "https://prexo-v9-2-dev-api.dealsdray.com/product/image/";
+  "https://prexo-v9-2-adminapi.dealsdray.com/user/document/";
+const IISDOMAINPRDT = "https://prexo-v9-2-adminapi.dealsdray.com/product/image/";
 
 /************************************************************************************************** */
 

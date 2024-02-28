@@ -5,7 +5,7 @@ var mongoose = require("mongoose");
 const Elasticsearch = require("../../Elastic-search/elastic");
 const { unitsActionLog } = require("../../Model/units-log/units-action-log");
 const IISDOMAINPRDT =
-  "https://prexo-v9-2-dev-api.dealsdray.com/bot-level/image/";
+  "https://prexo-v9-2-adminapi.dealsdray.com/bot-level/image/";
 
 /****************************************************************************** */
 module.exports = {

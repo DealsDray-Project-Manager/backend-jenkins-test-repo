@@ -7161,7 +7161,7 @@ module.exports = {
               user_name_of_action: trayData.actionUser,
               tray_id: trayData.trayId,
               user_type: "PRC Warehouse",
-              track_tray: state,
+              track_tray: "Tray",
               rack_id: trayData.rackId,
               user_name_of_action: trayData.actionUser,
               description: `RDL-2 done closed by warehouse by WH :${trayData.actionUser}`,

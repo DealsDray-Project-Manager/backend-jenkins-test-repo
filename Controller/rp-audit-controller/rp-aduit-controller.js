@@ -118,8 +118,6 @@ module.exports = {
             // Add 5 hours and 30 minutes
             date2.setUTCHours(date2.getUTCHours() + 5);
             date2.setUTCMinutes(date2.getUTCMinutes() + 30);
-            console.log(date1);
-            console.log(date2);
             if (date1 < date2) {
               console.log("date1 is less than date2");
             } else {
