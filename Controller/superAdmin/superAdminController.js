@@ -46,7 +46,8 @@ const {
 const IISDOMAIN = "https://prexo-v9-2-adminapi.dealsdray.com/user/profile/";
 const IISDOMAINBUYERDOC =
   "https://prexo-v9-2-adminapi.dealsdray.com/user/document/";
-const IISDOMAINPRDT = "https://prexo-v9-2-adminapi.dealsdray.com/product/image/";
+const IISDOMAINPRDT =
+  "https://prexo-v9-2-adminapi.dealsdray.com/product/image/";
 
 /************************************************************************************************** */
 
@@ -7312,18 +7313,373 @@ module.exports = {
   fixStxTrayIssue: async () => {
     try {
       let arr = [
-        "90010002214",
-        "90010002213",
-        "90010000670",
-        "90010002275",
-        "90010000479",
-        "90010000487",
-        "90010001473",
-        "92100004932",
-        "90010001294",
+        {
+          uic: "92100004525",
+          tray: "WHT1286",
+        },
+        {
+          uic: "92110006237",
+          tray: "WHT1286",
+        },
+        {
+          uic: "92110006302",
+          tray: "WHT1286",
+        },
+        {
+          uic: "92110008216",
+          tray: "WHT1286",
+        },
+        {
+          uic: "92110006134",
+          tray: "WHT1286",
+        },
+        {
+          uic: "92110006070",
+          tray: "WHT1286",
+        },
+        {
+          uic: "92110006212",
+          tray: "WHT1286",
+        },
+        {
+          uic: "92100004476",
+          tray: "WHT1286",
+        },
+        {
+          uic: "92110006239",
+          tray: "WHT1286",
+        },
+        {
+          uic: "92100004358",
+          tray: "WHT1286",
+        },
+        {
+          uic: "92100004479",
+          tray: "WHT1286",
+        },
+        {
+          uic: "92110006267",
+          tray: "WHT1286",
+        },
+        {
+          uic: "92100004345",
+          tray: "WHT1286",
+        },
+        {
+          uic: "92100004490",
+          tray: "WHT1286",
+        },
+        {
+          uic: "92110008653",
+          tray: "WHT1286",
+        },
+        {
+          uic: "92110007963",
+          tray: "WHT1286",
+        },
+        {
+          uic: "92110008399",
+          tray: "WHT1286",
+        },
+        {
+          uic: "92110008621",
+          tray: "WHT1286",
+        },
+        {
+          uic: "92110008624",
+          tray: "WHT1286",
+        },
+        {
+          uic: "92110008824",
+          tray: "WHT1286",
+        },
+        {
+          uic: "92110007953",
+          tray: "WHT1286",
+        },
+        {
+          uic: "92110008314",
+          tray: "WHT1286",
+        },
+        {
+          uic: "92110007980",
+          tray: "WHT1286",
+        },
+        {
+          uic: "92110008848",
+          tray: "WHT1286",
+        },
+        {
+          uic: "92110008516",
+          tray: "WHT1286",
+        },
+        {
+          uic: "92100004489",
+          tray: "WHT1286",
+        },
+        {
+          uic: "92110006133",
+          tray: "WHT1286",
+        },
+        {
+          uic: "92110006148",
+          tray: "WHT1286",
+        },
+        {
+          uic: "92100004418",
+          tray: "WHT1286",
+        },
+        {
+          uic: "92110007958",
+          tray: "WHT1286",
+        },
+        {
+          uic: "92110007976",
+          tray: "WHT1286",
+        },
+        {
+          uic: "92110008203",
+          tray: "WHT1286",
+        },
+        {
+          uic: "92110008378",
+          tray: "WHT1286",
+        },
+        {
+          uic: "92110008835",
+          tray: "WHT1286",
+        },
+        {
+          uic: "92110009753",
+          tray: "WHT1301",
+        },
+        {
+          uic: "92110009582",
+          tray: "WHT1301",
+        },
+        {
+          uic: "92110009810",
+          tray: "WHT1301",
+        },
+        {
+          uic: "92110009794",
+          tray: "WHT1301",
+        },
+        {
+          uic: "92110009911",
+          tray: "WHT1301",
+        },
+        {
+          uic: "92110009854",
+          tray: "WHT1301",
+        },
+        {
+          uic: "92110009052",
+          tray: "WHT1301",
+        },
+        {
+          uic: "92110009855",
+          tray: "WHT1301",
+        },
+        {
+          uic: "92110009702",
+          tray: "WHT1301",
+        },
+        {
+          uic: "92110008890",
+          tray: "WHT1301",
+        },
+        {
+          uic: "92110009124",
+          tray: "WHT1301",
+        },
+        {
+          uic: "92110009019",
+          tray: "WHT1301",
+        },
+        {
+          uic: "92110008560",
+          tray: "WHT1301",
+        },
+        {
+          uic: "92110008867",
+          tray: "WHT1301",
+        },
+        {
+          uic: "92110009694",
+          tray: "WHT1301",
+        },
+        {
+          uic: "92110009742",
+          tray: "WHT1301",
+        },
+        {
+          uic: "92110009937",
+          tray: "WHT1301",
+        },
+        {
+          uic: "92110009593",
+          tray: "WHT1301",
+        },
+        {
+          uic: "92110010017",
+          tray: "WHT1301",
+        },
+        {
+          uic: "92110009743",
+          tray: "WHT1301",
+        },
+        {
+          uic: "92110009806",
+          tray: "WHT1301",
+        },
+        {
+          uic: "92110009919",
+          tray: "WHT1301",
+        },
+        {
+          uic: "92110009849",
+          tray: "WHT1301",
+        },
+        {
+          uic: "92110008611",
+          tray: "WHT1301",
+        },
+        {
+          uic: "92110009049",
+          tray: "WHT1301",
+        },
+        {
+          uic: "92110008617",
+          tray: "WHT1301",
+        },
+        {
+          uic: "92110009108",
+          tray: "WHT1301",
+        },
+        {
+          uic: "92110008616",
+          tray: "WHT1301",
+        },
+        {
+          uic: "92110009021",
+          tray: "WHT1301",
+        },
+        {
+          uic: "92100001793",
+          tray: "WHT1486",
+        },
+        {
+          uic: "92100002315",
+          tray: "WHT1486",
+        },
+        {
+          uic: "92100002478",
+          tray: "WHT1486",
+        },
+        {
+          uic: "92090000202",
+          tray: "WHT1486",
+        },
+        {
+          uic: "92100002357",
+          tray: "WHT1486",
+        },
+        {
+          uic: "92100002387",
+          tray: "WHT1486",
+        },
+        {
+          uic: "92100002024",
+          tray: "WHT1486",
+        },
+        {
+          uic: "92100002034",
+          tray: "WHT1486",
+        },
+        {
+          uic: "92100002185",
+          tray: "WHT1486",
+        },
+        {
+          uic: "92100002000",
+          tray: "WHT1486",
+        },
+        {
+          uic: "92100002184",
+          tray: "WHT1486",
+        },
+        {
+          uic: "92100002011",
+          tray: "WHT1486",
+        },
+        {
+          uic: "92100000504",
+          tray: "WHT1486",
+        },
+        {
+          uic: "92100001801",
+          tray: "WHT1486",
+        },
+        {
+          uic: "92090000187",
+          tray: "WHT1486",
+        },
+        {
+          uic: "92100000771",
+          tray: "WHT1486",
+        },
+        {
+          uic: "92090000255",
+          tray: "WHT1486",
+        },
       ];
+      let arr1 = [
+        "92110009611",
+        "92110009721",
+        "92110009683",
+        "92110009564",
+        "92110009646",
+        "92110009842",
+        "92110009848",
+        "92110009698",
+        "92110009738",
+        "92110009731",
+        "92110009815",
+        "92110009804",
+        "92110009904",
+        "92110009929",
+        "92110008034",
+        "92110007964",
+        "92110007945",
+        "92110007954",
+        "92110008200",
+        "92110008214",
+        "92110008332",
+        "92110008320",
+        "92110008335",
+        "92110008618",
+        "92110008418",
+        "92110008477",
+        "92110008534",
+        "92110008525",
+        "92110008832",
+      ];
+      for (let y of arr1) {
+        let updateTray = await delivery.findOneAndUpdate(
+          { "uic_code.code": y },
+          {
+            $set: {
+              item_moved_to_billed_bin_done_username: "From Backend",
+              item_moved_to_billed_bin_date: Date.now(),
+              item_moved_to_billed_bin: "Yes",
+            },
+          }
+        );
+      }
+
       for (let x of arr) {
-        const deliveryData = await delivery.findOne({ "uic_code.code": x });
+        const deliveryData = await delivery.findOne({ "uic_code.code": x.uic });
         let findProduct = await products.findOne({
           vendor_sku_id: deliveryData.item_id,
         });
@@ -7338,54 +7694,26 @@ module.exports = {
             order_id: deliveryData.order_id,
             order_date: deliveryData.order_date,
             charging: deliveryData.charging,
-            audit_report: deliveryData.audit_report,
-            rdl_fls_report: deliveryData.rdl_fls_one_report,
             bqc_report: deliveryData.bqc_report,
           };
           let createTray;
-          let findTheTray = await masters.findOne({
-            code: deliveryData.stx_tray_id,
-          });
-          if (findTheTray) {
+          
             createTray = await masters.findOneAndUpdate(
-              { code: deliveryData.stx_tray_id },
+              { code: x.tray },
               {
                 $set: {
-                  sort_id: "Received From Sorting Agent After Ctx to Stx",
-                  issued_user_name: "subrata.srt.s.ggn.100074",
-                  closed_time_sorting_agent: new Date(
-                    "2023-10-16T08:55:30.469+00:00"
-                  ),
+                  sort_id: "Ready to Audit",
+                  issued_user_name: null,
                 },
                 $push: {
                   items: obj,
                 },
               }
             );
-          } else {
-            console.log("working");
-            createTray = await masters.create({
-              name: deliveryData.stx_tray_id,
-              limit: 15,
-              sort_id: "Received From Sorting Agent After Ctx to Stx",
-              type_taxanomy: "ST",
-              prefix: "tray-master",
-              display: deliveryData.stx_tray_id,
-              created_at: Date.now(),
-              model: findProduct.model_name,
-              brand: findProduct.brand_name,
-              cpc: "Sales_Gurgaon_122016",
-              warehouse: "Sales WH: DealsDray / PREXO Gurgaon",
-              items: [obj],
-              code: deliveryData.stx_tray_id,
-              closed_time_sorting_agent: new Date(
-                "2023-10-16T08:55:30.469+00:00"
-              ),
-              issued_user_name: "subrata.srt.s.ggn.100074",
-            });
-          }
+          
         }
       }
+
       return { status: 1 };
     } catch (error) {
       return error;

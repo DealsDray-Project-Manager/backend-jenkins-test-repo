@@ -1843,9 +1843,9 @@ module.exports = {
       let data = await delivery
         .create(deliveryData.validItem)
         .catch((err) => reject(err));
-      let updateToelastic = await elasticsearch.addinToElastic(
-        deliveryData.validItem
-      );
+      // let updateToelastic = await elasticsearch.addinToElastic(
+      //   deliveryData.validItem
+      // );
       deliveryData.validItem.forEach(async (doc) => {
         let updateData = await orders.updateOne(
           { order_status: "NEW", order_id: doc.order_id },
